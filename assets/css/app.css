@@ -1,0 +1,14 @@
+/** Bootstrap 4 **/
+@import "~bootstrap/dist/css/bootstrap.min.css";
+
+/** Fontawesome **/
+@import "~@fortawesome/fontawesome-free/css/all.min.css";
+
+/** startbootstrap-sb-admin **/
+@import "~startbootstrap-sb-admin/css/sb-admin.min.css";
+
+/** Custom CSS **/
+@import "custom.css";
+
+/** React Table CSS **/
+@import "~react-table/react-table.css";

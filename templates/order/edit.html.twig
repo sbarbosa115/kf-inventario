@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'order.edit.title'|trans }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            {{ 'order.edit.title'|trans }}
+        </div>
+        <div class="card-body">
+            <div
+                id="order-handler"
+                data-locations="{{ locations | json_encode }}"
+                data-warehouses="{{ warehouses | json_encode }}"
+                data-customers="{{ customers | json_encode }}"
+                data-order="{{ order | json_encode }}"
+                data-action-url="{{ url }}"
+            >
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('build/order/order-handler.js') }}"></script>
+{% endblock %}

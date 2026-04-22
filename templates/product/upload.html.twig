@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+{% form_theme form 'form/form_errors.html.twig' %}
+
+{% block title %} {{ 'product.upload.title'|trans }} {% endblock %}
+
+{% block content %}
+    <div class="card">
+        {{ form_start(form) }}
+        <div class="card-header">
+            {{ 'product.upload.title'|trans }}
+        </div>
+        <div class="card-body">
+            <p>
+                {{ 'product.upload.description'|trans }}
+                <a href="{{ path('product_template') }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-download"></i> {{ 'product.upload.donwload_template'|trans }}
+                </a>
+                <a href="{{ path('product_template', { all: true }) }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-download"></i> {{ 'product.upload.donwload_all_products'|trans }}
+                </a>
+            </p>
+            <div class="form-group">
+                {{ form_label(form.products) }}
+                {{ form_widget(form.products) }}
+                {{ form_errors(form.products) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.warehouse) }}
+                {{ form_widget(form.warehouse) }}
+                {{ form_errors(form.warehouse) }}
+            </div>
+            <div class="form-group">
+                {{ form_widget(form.upload) }}
+            </div>
+        </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

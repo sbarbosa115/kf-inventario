@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'product.update.bar-code.title'|trans }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            {{ 'product.incoming.title'|trans }}
+        </div>
+        <div class="card-body">
+            <div id="react-component"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('build/incoming.js') }}"></script>
+{% endblock %}

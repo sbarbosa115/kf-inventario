@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'order.getting_ready.title'|trans }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            {{ 'order.getting_ready.title'|trans }} #{{ order.code }}
+        </div>
+        <div class="card-body">
+            <div
+                id="getting-ready"
+                data-order="{{ order | json_encode }}"
+                data-partials="{{ partials | json_encode }}"
+                data-inventory="{{ inventory | json_encode }}"
+            >
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('build/order/getting-ready.js') }}"></script>
+{% endblock %}

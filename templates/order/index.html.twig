@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'order.index.title'|trans }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            {{ 'order.index.title'|trans }}
+        </div>
+        <div class="card-body">
+            <div id="index-orders"
+                 data-token="{{ csrf_token('delete-order') }}"
+                 data-can-delete="{{ is_granted('ROLE_CAN_DELETE_ORDERS') }}"
+                 data-can-add="{{ is_granted('ROLE_CAN_CREATE_ORDERS') }}"
+                 data-can-sync="{{ is_granted('ROLE_CAN_SYNC_ORDERS') }}"
+            >
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('build/order.js') }}"></script>
+{% endblock %}

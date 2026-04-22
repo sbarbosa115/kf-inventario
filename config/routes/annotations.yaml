@@ -1,0 +1,12 @@
+controllers:
+    resource: ../../src/Controller/
+    type: annotation
+    prefix: /admin/
+
+homepage:
+    path: /
+    controller: App\Controller\DefaultController::index
+
+app_logout:
+  path: /logout
+

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 11px;
+            color: #000;
+            margin: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        /* HEADER */
+        .header-table td {
+            vertical-align: top;
+            font-size: 11px;
+            border: none;
+        }
+
+        .header-table {
+            position: relative;
+        }
+
+        .header-logo {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 180px;
+            height: auto;
+            z-index: 10;
+        }
+
+        .company-name {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .invoice-box {
+            padding: 5px;
+            font-size: 10px;
+            width: 180px;
+            display: inline-block;
+        }
+
+        /* TABLES: scope borders only to items table */
+        .items-table th {
+            background: #f0f0f0;
+            border: 1px solid #000;
+            padding: 4px;
+            font-size: 10px;
+        }
+
+        .items-table td {
+            border: 1px solid #000;
+            padding: 4px;
+            font-size: 10px;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        /* TOTALS */
+        .totals {
+            width: 40%;
+            float: right;
+            margin-top: 10px;
+        }
+
+        .totals td {
+            border: 1px solid #000;
+        }
+
+        /* OBSERVATIONS */
+        .observations {
+            margin-top: 25px;
+            border: 1px solid #000;
+            height: 70px;
+            padding: 5px;
+            font-size: 10px;
+        }
+
+        /* FOOTER */
+        .footer {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9px;
+        }
+
+        .clear {
+            clear: both;
+        }
+
+        /* utility: add only a border */
+        .border {
+            border: 1px solid #000;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<table class="header-table">
+    <tr>
+        <!-- Invoice Info -->
+        <td width="20%" class="left">
+            <div class="invoice-box">
+                <strong>Invoice No.   </strong> <strong class="border">{{ invoice.code }}</strong><br>
+                <br>
+                <div class="border center">
+                    <strong>Invoice Date:<br>
+                    {{ invoice.createdAt|date('Y-m-d') }}
+                    </strong>
+                </div>
+            </div>
+        </td>
+
+        <!-- Empresa -->
+        <td width="40%" class="center">
+            <div class="company-name">VINTAGE FABRICATION INC</div>
+            Invoice Document<br>
+            Email: sales@klassicfab.com<br>
+            Telephone: +1 (561) 459-0015
+        </td>
+
+        <!-- Logo cell (image positioned absolute so it doesn't affect layout) -->
+        <td width="40%" class="right">
+            {% if logo_data %}
+                <img src="{{ logo_data }}" class="header-logo">
+            {% else %}
+                <img src="{{ asset('images/logo.jpeg') }}" class="header-logo">
+            {% endif %}
+        </td>
+    </tr>
+</table>
+
+<br>
+
+<!-- CLIENT INFO -->
+<div>
+    <strong>Client:</strong>
+    {% if invoice.customer %}
+        {{ (invoice.customer.firstName is defined and invoice.customer.firstName) ? invoice.customer.firstName : '' }} {{ (invoice.customer.lastName is defined and invoice.customer.lastName) ? invoice.customer.lastName : '' }}
+    {% elseif invoice.customer is not defined and invoice.customer is defined and invoice.customer.email %}
+        {{ invoice.customer.email }}
+    {% else %}
+        POS Client
+    {% endif %}
+    <br>
+    <strong>Country:</strong>
+    {% if invoice.customer is not null and invoice.customer.defaultAddress and invoice.customer.defaultAddress.city and invoice.customer.defaultAddress.city.state and invoice.customer.defaultAddress.city.state.country %}
+        {{ invoice.customer.defaultAddress.city.state.country.name }}
+    {% else %}
+        -
+    {% endif %}
+    <br>
+    <strong>City:</strong>
+    {% if invoice.customer is not null and invoice.customer.defaultAddress and invoice.customer.defaultAddress.city %}
+        {{ invoice.customer.defaultAddress.city.name }}
+    {% else %}
+        -
+    {% endif %}
+    <br>
+    <strong>Address:</strong>
+    {% if invoice.customerAddress %}
+        {{ invoice.customerAddress }}
+    {% elseif invoice.customer is not null and invoice.customer.defaultAddress %}
+        {{ invoice.customer.defaultAddress.address }}
+    {% endif %}
+    <br>
+    <strong>Telephone:</strong> {{ invoice.customer ? invoice.customer.phone : '' }}<br>
+    <strong>Email:</strong> {{ invoice.customer ? invoice.customer.email : '' }}
+    <br>
+    <strong>Payment Method:</strong> {{ paymentMethodLabel ?: '-' }}
+</div>
+
+<!-- ITEMS TABLE -->
+<table class="items-table" style="margin-top:10px">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Code</th>
+            <th>Description</th>
+            <th class="center">Qty</th>
+            <th class="right">Unit Price</th>
+            <th class="right">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in invoice.items %}
+        <tr>
+            <td class="center">{{ loop.index }}</td>
+            <td>{{ item.product ? item.product.code : '' }}</td>
+            <td>{{ item.description }}</td>
+            <td class="center">{{ item.quantity }}</td>
+            <td class="right">{{ item.unitPrice|number_format(2) }}</td>
+            <td class="right">{{ item.total|number_format(2) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- TOTALS -->
+<table class="totals">
+    <tr>
+        <td>Base</td>
+        <td class="right">{{ invoice.subtotal|number_format(2) }}</td>
+    </tr>
+    {% if invoice.taxAmount %}
+    <tr>
+        <td>Tax ({{ invoice.taxRate }}%)</td>
+        <td class="right">{{ invoice.taxAmount|number_format(2) }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+        <td><strong>Total Invoice</strong></td>
+        <td class="right"><strong>{{ invoice.total|number_format(2) }}</strong></td>
+    </tr>
+</table>
+
+<div class="clear"></div>
+
+<!-- OBSERVATIONS -->
+<div class="observations">
+    <strong>OBSERVATIONS:</strong><br>
+    {% if invoice.comment %}
+        <div style="white-space:pre-wrap">{{ invoice.comment }}</div>
+    {% endif %}
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+    www.klassicfab.com · www.kfchevy.com · www.kfvintagejdm.com
+</div>
+
+</body>
+</html>

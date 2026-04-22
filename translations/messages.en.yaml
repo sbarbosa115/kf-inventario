@@ -1,0 +1,327 @@
+confirm: "Confirm Action"
+welcome: "Welcome"
+submit: "Submit"
+edit: "Edit"
+move: "Move"
+moving: "Moving"
+close: "Close"
+cancel: "Cancel"
+save: "Save"
+options: "Options"
+upload: "Upload"
+load: "Load"
+log_in: "Log In"
+products: "Products"
+products_upload: "Upload products"
+product_list: "Product List"
+updated_successfully: "Warehouse updated successfully"
+comments: "Comments"
+product:
+  index:
+    title: "View products"
+    move_between_warehouses: "Move to Warehouse"
+    quantity: "Quantity"
+    description: "Description"
+    create_product : "Create Product"
+    sku: "SKU"
+    warehouse: "Warehouse"
+    destination_warehouse: "Destination Warehouse"
+    update_inventory_excel: "Update Selected Using Excel"
+  upload:
+    title: "Upload products"
+    description: "This form allows you upload a excel file with products to add or update them on the database."
+    upload: "Upload"
+    label_input: "Select a xls file from your computer, then click on upload to load the products."
+    donwload_template: "Download template"
+    donwload_all_products: "Download All Products"
+  uploaded_successfully: "Uploaded successfully"
+  edit:
+    title: "Edit product"
+    updated_successfully: "The product was updated successfully"
+    code: "Code"
+    title_product: "Title"
+    detail: "Detail"
+    status: "Status"
+    price: "Price"
+    english: "English"
+    spanish: "Spanish"
+    editing_english_version: "Editing English Version"
+    editing_spanish_version: "Editing Spanish Version"
+  new:
+    title: "Create product"
+    message_no_products: "This product won't be shown on the product list until you add quantities using Excel."
+    created_successfully: "The product was created successfully"
+    code: "Code"
+    title_product: "Title"
+    detail: "Detail"
+    status: "Status"
+    price: "Price"
+  template:
+    code: "Code"
+    quantity: "Quantity"
+    title: "Title"
+    description: "Description"
+    warehouse: "Warehouse"
+    products: "Products"
+    price: "Price"
+    detail: "Detail"
+    no_available_product: "Product quantity is 0"
+  xls:
+    filename: "file-upload-template"
+  update:
+    bar-code:
+      title: "Barcode Reader"
+      description: "Using this view you can update your warehouses products using a code reader machine."
+      destination: "Destination Warehouse"
+      bar_code: "Product Bar Code"
+      add_action: "Add this product"
+      add_products: "Add products to this warehouse"
+      remove_products: "Remove products from this warehouse"
+      upload: "Upload Products"
+      no_products: "No products to show"
+      select_some_warehouse: "Select some warehouse"
+      code: "Code"
+      quantity: "Quantity"
+      options: "Options"
+      product_exist: "This product exist on the database."
+      product_do_not_exist: "This product does not exist on the database, please add it before continue."
+      remove_product: "Click to remote the product from the list."
+      loading: "Checking if the product exist on remote."
+      confirm:
+        title: "Confirm action"
+        body: "Are you sure you want to update the quantity of those products for %warehouse% warehouse?"
+        action: "Update Quantity"
+        action_doing: "Updating Quantity"
+        remove_quantity: "Remove Quantities"
+  incoming:
+    title: "Incoming Products"
+    description: "Those are the incoming products that were send by other warehouses."
+    approve_all: "Approve All"
+    table:
+      description: "Description"
+      code: "Code"
+      quantity: "Quantity"
+      warehouse: "Warehouse"
+order:
+  getting_ready:
+    title: "Getting ready order"
+    code: "Code"
+    bar_code: "Bar Code"
+    description: "Using the bar-code-machine you can start adding item for this order."
+    add_action: "Add Product"
+    quantity: "Quantity"
+    product_description: "Product Description"
+    options: "Options"
+    destination: "Destination Warehouse"
+    add_products: "Add Products"
+    remove_products: "Remove Products"
+    no_products: "No products were found"
+    order_quantity: "Product Order Quantity"
+    order_left: "Aggregate Partials"
+    this_order: "This Order"
+    modal_product_not_in_order:
+      title: "You are trying to add a product that is not on the current order, please click to continue."
+      action_ok: "Continue adding"
+      error: "Error"
+    modal_product_limit_reached:
+      title: "You reached the limit of product allowed to add to this order."
+      action_ok: "Continue adding"
+      error: "Error"
+    modal_product_inventory_limit_reached:
+      title: "There is no enough quantity of this product on inventory."
+      action_ok: "Continue"
+      error: "Inventory limit reached"
+    add_partial: "Save Current"
+    inventory: "Inventory"
+    inventory_available: "Amount of products available on inventory"
+  index:
+    comments: "This order has comments"
+    sync_woocomerce_orders: "Sync Orders"
+    title: "View Orders"
+    code: "Order #"
+    source: "Source"
+    status: "Status"
+    customer: "Customer"
+    email: "Email"
+    created_at: "Creation Date"
+    address: "Address"
+    zip_code: "Zip Code"
+    city: "City"
+    state: "State"
+    country: "Country"
+    edit_order: "Edit this order"
+    sources:
+      web: 'Web'
+      phone: 'Phone'
+      unknown: 'Unknown'
+    statuses:
+      created: 'Created'
+      invoiced: 'Invoiced'
+      ready_to_send: 'Ready to Send'
+      unknown: 'Unknown'
+    date: 'Created Date'
+    options: 'Options'
+    edit: 'Edit'
+    detail: 'Order Detail'
+    order_products: 'Products Detail'
+    order_comments: 'Comments'
+    new: "Create a Order"
+    download_order: "Download"
+    download_remaining_order_products: "Remaining Products"
+    delete_order: "Delete Order"
+    confirm_delete_order: "Are you sure that you want to delete this order?"
+    confirm_change_state_to_sent: "When you change the state of an Order to sent, that action goes to update the inventory, Are you sure?"
+    view_pdf: "View as PDF"
+    download_excel: "Download as Excel"
+    getting_ready: "Getting ready this Order"
+  new:
+    title: "Create a new order"
+    first_name: "First Name"
+    last_name: "Last Name"
+    email: "Email"
+    phone: "Phone"
+    address: "Address"
+    zip_code: "Zip Code"
+    select_country: "Select Country"
+    country_required: "You must select a Country"
+    select_state: "Select State"
+    state_required: "You must select a State"
+    select_city: "Select City"
+    order_detail: "Order Detail"
+    customer_information: "Customer Information"
+    select_warehouse: "Select Warehouse"
+    comment: "Comment"
+    select_payment_methods: "Payments Methods"
+    select_status: "Select Order Status (All)"
+    select_source: "Select Order Source"
+    search_customer: "Search Customer"
+    quantity: "Quantity"
+    consecutive: "Consecutive"
+  edit:
+    title: "Editing Order"
+  pdf:
+    shipping_address: "Shipping Address"
+    billing_address: "Billing Address"
+    order_number: "Order Number"
+    email: "Email"
+    city: "City"
+    state: "State"
+    country: "Country"
+    zipCode: "Zip Code"
+    address: "Address"
+    phone: "Phone"
+    paymentMethod: "Payment Method"
+    customer: "Customer"
+    created_at: "Date"
+    warehouse: "Warehouse"
+    no_products_were_found: "This order does not have pending product"
+  xls:
+    date: "Date"
+    productCode: "Product Code"
+    quantity: "Quantity"
+    filename: "order"
+warehouses: "Warehouses"
+warehouse:
+  index:
+    title: "View warehouses"
+  edit:
+    title: "Edit warehouse"
+  form:
+    name: "Name"
+user:
+  messages:
+    updated_successfully: "The user was updated successfully."
+    created_successfully: "The user was created successfully."
+  index:
+    title: "View Users"
+    name: "Name"
+    email: "Email"
+    rol: "Rol"
+    create_user: "Create User"
+  new:
+    title: "Add User"
+    name: "Name"
+    email: "Email"
+    rol: "Rol"
+  edit:
+    title: "Edit User"
+    name: "Name"
+    email: "Email"
+    rol: "Rol"
+security:
+  login:
+    title: "Log in"
+    form:
+      username: "Username"
+      password: "Password"
+      log_in: "Log In"
+paytment_methods:
+  1: "Credit Card"
+  2: "Paypal"
+order_statuses:
+  1: 'Created'
+  2: 'Processed'
+  3: 'Completed'
+  4: 'Partial'
+  5: 'Sent'
+  6: 'Delivered'
+  all: 'All States'
+
+customer:
+  index:
+    title: 'Customers'
+    email: 'Email'
+    phone: 'Phone'
+    name: 'Name'
+    address: 'Address'
+    edit_this: 'Edit this customer'
+    options: 'Options'
+    create_customer: 'Create Customer'
+    delete: 'Delete Customer'
+    confirm_delete_customer: 'Are you sure to delete this Customer?'
+  edit:
+    title: 'Edit customer'
+    name: 'Name'
+    last_name: 'Last Name'
+    email: 'Email'
+    phone: 'Phone'
+    address: 'Address'
+    zip_code: 'Zip Code'
+    state: 'State'
+    city: 'City'
+    country: 'Country'
+  new:
+    add_address: 'Add Address'
+
+order_source:
+  1: 'Web'
+  2: 'Phone'
+
+product_statuses:
+  0: "Inactive"
+  1: "Active"
+
+create: "Create"
+update: "Update"
+
+notifications:
+  emails:
+    order_created:
+      subject: "Order #%s was created"
+      body: "A new order was created and attached to this email."
+
+invoice:
+  index:
+    title: "Invoices"
+    code: "Invoice #"
+    customer: "Customer"
+    total: "Total"
+    date: "Date"
+    options: "Options"
+    detail: "Invoice Detail"
+    view_pdf: "View as PDF"
+    close: "Close"
+  new:
+    title: "Create invoice"
+  pdf:
+    title: "Invoice"

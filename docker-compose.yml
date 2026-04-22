@@ -1,0 +1,43 @@
+version: "3.7"
+services:
+  proxy-kf:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    container_name: proxy-kf
+  web-kf:
+    build: .
+    volumes:
+      - .:/var/www/html:delegated
+      - ./Docker/php/xdebug.ini:/etc/php/8.1/mods-available/xdebug.ini
+    environment:
+      - VIRTUAL_HOST=kf.local
+    command: >
+      sh -c '
+        /etc/init.d/nginx start && /etc/init.d/php8.1-fpm start
+        supervisord
+      '
+    depends_on:
+      - proxy-kf
+    container_name: web-kf.local
+  db-kf:
+    image: mysql:5.7
+    volumes:
+      - ./Docker/mysql/my.cnf:/etc/my.cnf
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: "symfony"
+      MYSQL_USER: "symfony"
+      MYSQL_PASSWORD: "symfony"
+      MYSQL_ROOT_PASSWORD: "symfony"
+    depends_on:
+      - web-kf
+    ports:
+      - 3306:3306
+    container_name: db-kf.local
+networks:
+  default:
+    external:
+      name: kf-network

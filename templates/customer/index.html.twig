@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'customer.index.title'|trans }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            {{ 'customer.index.title'|trans }}
+        </div>
+        <div class="card-body">
+            <div
+                id="index-customer"
+                data-customers="{{ customers|json_encode }}"
+                data-token="{{ csrf_token('delete-customer') }}"
+            ></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('build/customer.js') }}"></script>
+{% endblock %}

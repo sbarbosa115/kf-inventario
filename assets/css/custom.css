@@ -1,0 +1,15 @@
+.invalid-feedback {
+    display: block;
+}
+
+.row-selected-completed {
+    background: #d0e4c6;
+}
+
+.row-selected-all-pending {
+    background: #efd2d2;
+}
+
+.row-selected-some-added {
+    background: #f3e8b6;;
+}
