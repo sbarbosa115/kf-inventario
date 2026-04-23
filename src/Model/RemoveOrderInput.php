@@ -7,20 +7,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class RemoveOrderInput
 {
-    /**
-     * @Assert\NotBlank()
-     * @CustomAssert\OrderExistById()
-     *
-     * @var string
-     */
-    public $order;
+    #[Assert\NotBlank]
+    #[CustomAssert\OrderExistById]
+    public mixed $order = null;
 
-    /**
-     * @Assert\NotBlank()
-     *
-     * @var string
-     */
-    public $token;
+    #[Assert\NotBlank]
+    public mixed $token = null;
 
     public static function createFormInput(array $removeOrderData): self
     {

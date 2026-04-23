@@ -2,45 +2,32 @@
 
 namespace App\Entity;
 
+use App\Repository\LogRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="LogRepository")
- */
+#[ORM\Entity(repositoryClass: LogRepository::class)]
 class Log
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="log")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $user;
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'log')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $user = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $event;
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $event = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $entity;
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $entity = null;
 
-    /**
-     * @ORM\Column(type="datetime")
-     */
-    private $createdAt;
+    #[ORM\Column(type: 'datetime')]
+    private ?\DateTimeInterface $createdAt = null;
 
-    /**
-     * @ORM\Column(type="text", nullable=true)
-     */
-    private $detail;
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $detail = null;
 
     public function getId(): ?int
     {

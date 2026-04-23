@@ -160,7 +160,7 @@ class OrderService
     /**
      * @throws ExceptionInterface
      */
-    public function add(array $orderData, User $user = null): array
+    public function add(array $orderData, ?User $user = null): array
     {
         $order = new Order();
         $this->setCustomerData($order, $orderData);

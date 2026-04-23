@@ -2,42 +2,31 @@
 
 namespace App\Entity;
 
+use App\Repository\StateRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\StateRepository")
- */
+#[ORM\Entity(repositoryClass: StateRepository::class)]
 class State
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $name;
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $name = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Country", inversedBy="states")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $country;
+    #[ORM\ManyToOne(targetEntity: Country::class, inversedBy: 'states')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Country $country = null;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\City", mappedBy="state")
-     */
-    private $cities;
+    #[ORM\OneToMany(targetEntity: City::class, mappedBy: 'state')]
+    private Collection $cities;
 
-    /**
-     * @ORM\Column(type="string", length=10, nullable=true)
-     */
-    private $code;
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
+    private ?string $code = null;
 
     public function __construct()
     {
@@ -73,9 +62,6 @@ class State
         return $this;
     }
 
-    /**
-     * @return Collection|City[]
-     */
     public function getCities(): Collection
     {
         return $this->cities;
@@ -95,7 +81,6 @@ class State
     {
         if ($this->cities->contains($city)) {
             $this->cities->removeElement($city);
-            // set the owning side to null (unless already changed)
             if ($city->getState() === $this) {
                 $city->setState(null);
             }

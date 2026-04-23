@@ -13,7 +13,6 @@ use App\Services\ProductService;
 use Doctrine\ORM\EntityManagerInterface;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,29 +20,24 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * @Route("/product", name="product_")
- * @IsGranted("ROLE_MANAGE_INVENTORY")
- */
+#[Route('/product', name: 'product_')]
+#[IsGranted('ROLE_MANAGE_INVENTORY')]
 class ProductController extends AbstractController
 {
-    /**
-     * @Route("/", name="product_index", methods={"get"})
-     */
+    #[Route('/', name: 'product_index', methods: ['GET'])]
     public function index(): Response
     {
         return $this->render('product/index.html.twig');
     }
 
-    /**
-     * @Route("/show/{code}", name="show", options={"expose"=true}, methods={"get"})
-     */
+    #[Route('/show/{code}', name: 'show', options: ['expose' => true], methods: ['GET'])]
     public function show(
         ProductRepository $productRepo,
         string $code
@@ -64,9 +58,7 @@ class ProductController extends AbstractController
         return new Response(json_encode($data), 200);
     }
 
-    /**
-     * @Route("/edit/{uuid}", name="update", methods={"get", "post"}, options={"expose"=true})
-     */
+    #[Route('/edit/{uuid}', name: 'update', methods: ['GET', 'POST'], options: ['expose' => true])]
     public function update(
         EntityManagerInterface $manager,
         Request $request,
@@ -88,9 +80,7 @@ class ProductController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/new", name="new", methods={"get", "post"}, options={"expose"=true})
-     */
+    #[Route('/new', name: 'new', methods: ['GET', 'POST'], options: ['expose' => true])]
     public function new(
         EntityManagerInterface $manager,
         Request $request
@@ -112,9 +102,7 @@ class ProductController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/upload", name="product_upload", methods={"get", "post"})
-     */
+    #[Route('/upload', name: 'product_upload', methods: ['GET', 'POST'])]
     public function upload(
         TranslatorInterface $translator,
         Request $request,
@@ -134,9 +122,7 @@ class ProductController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/template/{all}", defaults={"all"=false}, name="template", methods={"get", "post"}, options={"expose"=true})
-     */
+    #[Route('/template/{all}', defaults: ['all' => false], name: 'template', methods: ['GET', 'POST'], options: ['expose' => true])]
     public function uploadProductsTemplate(
         ProductRepository $productRepo,
         TranslatorInterface $translator,
@@ -187,9 +173,7 @@ class ProductController extends AbstractController
         }
     }
 
-    /**
-     * @Route("/all/{warehouse}/{status}", name="all", options={"expose"=true}, defaults={"status"=1}, methods={"get"})
-     */
+    #[Route('/all/{warehouse}/{status}', name: 'all', options: ['expose' => true], defaults: ['status' => 1], methods: ['GET'])]
     public function all(
         ProductWarehouseRepository $productWarehouseRepo,
         Warehouse $warehouse,
@@ -200,9 +184,7 @@ class ProductController extends AbstractController
         return new JsonResponse($products);
     }
 
-    /**
-     * @Route("/move/{warehouseSource}/{warehouseDestination}", name="move", options={"expose"=true}, methods={"post"})
-     */
+    #[Route('/move/{warehouseSource}/{warehouseDestination}', name: 'move', options: ['expose' => true], methods: ['POST'])]
     public function move(
         ProductService $productService,
         Request $request,
@@ -225,17 +207,13 @@ class ProductController extends AbstractController
         return new JsonResponse(['status' => true]);
     }
 
-    /**
-     * @Route("/update/bar-code", name="bar_code", methods={"get"})
-     */
+    #[Route('/update/bar-code', name: 'bar_code', methods: ['GET'])]
     public function updateBarCode(): Response
     {
         return $this->render('product/bar-code.html.twig');
     }
 
-    /**
-     * @Route("/update/bar-code/{warehouse}/add", name="bar_code_add", options={"expose"=true}, methods={"post"})
-     */
+    #[Route('/update/bar-code/{warehouse}/add', name: 'bar_code_add', options: ['expose' => true], methods: ['POST'])]
     public function addBarCode(
         ProductService $productService,
         Request $request,
@@ -256,9 +234,7 @@ class ProductController extends AbstractController
         return new JsonResponse(['status' => true]);
     }
 
-    /**
-     * @Route("/update/bar-code/{warehouse}/remove", name="bar_code_remove", options={"expose"=true}, methods={"post"})
-     */
+    #[Route('/update/bar-code/{warehouse}/remove', name: 'bar_code_remove', options: ['expose' => true], methods: ['POST'])]
     public function removeBarCode(
         ProductService $productService,
         Request $request,
@@ -279,17 +255,13 @@ class ProductController extends AbstractController
         return new JsonResponse(['status' => true]);
     }
 
-    /**
-     * @Route("/incoming", name="incoming", methods={"get"})
-     */
+    #[Route('/incoming', name: 'incoming', methods: ['GET'])]
     public function incoming(): Response
     {
         return $this->render('product/incoming.html.twig');
     }
 
-    /**
-     * @Route("/incoming/approve/{warehouse}", name="approve_incoming", methods={"post"}, options={"expose"=true})
-     */
+    #[Route('/incoming/approve/{warehouse}', name: 'approve_incoming', methods: ['POST'], options: ['expose' => true])]
     public function approveIncoming(
         ProductService $productService,
         Warehouse $warehouse

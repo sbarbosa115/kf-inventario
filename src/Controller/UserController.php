@@ -6,23 +6,19 @@ use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * @Route("/user", name="user_")
- * @IsGranted("ROLE_MANAGE_USERS")
- */
+#[Route('/user', name: 'user_')]
+#[IsGranted('ROLE_MANAGE_USERS')]
 class UserController extends AbstractController
 {
-    /**
-     * @Route("/", name="index")
-     */
+    #[Route('/', name: 'index')]
     public function index(
         UserRepository $userRepo
     ): Response {
@@ -33,9 +29,7 @@ class UserController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/new", name="user_new")
-     */
+    #[Route('/new', name: 'user_new')]
     public function new(
         Request $request,
         TranslatorInterface $translator,
@@ -60,9 +54,7 @@ class UserController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/edit/{user}", name="user_edit")
-     */
+    #[Route('/edit/{user}', name: 'user_edit')]
     public function edit(
         Request $request,
         TranslatorInterface $translator,

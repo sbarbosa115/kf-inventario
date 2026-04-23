@@ -2,72 +2,53 @@
 
 namespace App\Entity;
 
+use App\Repository\ProductRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\ProductRepository")
- * @ORM\HasLifecycleCallbacks()
- */
+#[ORM\Entity(repositoryClass: ProductRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Product
 {
     public const STATUS_ACTIVE = 1;
     public const STATUS_INACTIVE = 0;
 
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $uuid;
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $uuid = null;
 
-    /**
-     * @Assert\NotEqualTo("·")
-     * @Assert\NotEqualTo("CODE")
-     * @Assert\NotNull()
-     * @ORM\Column(type="string", length=255)
-     */
-    private $code;
+    #[Assert\NotEqualTo('·')]
+    #[Assert\NotEqualTo('CODE')]
+    #[Assert\NotNull]
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $code = null;
 
-    /**
-     * @Assert\NotEqualTo("PRODUCT")
-     * @Assert\NotNull()
-     * @ORM\Column(type="string", length=255)
-     */
-    private $title;
+    #[Assert\NotEqualTo('PRODUCT')]
+    #[Assert\NotNull]
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $title = null;
 
-    /**
-     * @ORM\Column(type="text", nullable=true)
-     */
-    private $detail;
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $detail = null;
 
-    /**
-     * @ORM\Column(type="integer", options={"default" : 0}, nullable=true)
-     */
-    private $status;
+    #[ORM\Column(type: 'integer', options: ['default' => 0], nullable: true)]
+    private ?int $status = null;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\ProductWarehouse", mappedBy="product")
-     */
-    private $productWarehouses;
+    #[ORM\OneToMany(targetEntity: ProductWarehouse::class, mappedBy: 'product')]
+    private Collection $productWarehouses;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\OrderProduct", mappedBy="product")
-     */
-    private $orderProducts;
+    #[ORM\OneToMany(targetEntity: OrderProduct::class, mappedBy: 'product')]
+    private Collection $orderProducts;
 
-    /**
-     * @ORM\Column(type="float")
-     */
-    private $price;
+    #[ORM\Column(type: 'float')]
+    private ?float $price = null;
 
     public function __construct()
     {
@@ -85,9 +66,7 @@ class Product
         return $this->uuid;
     }
 
-    /**
-     * @ORM\PrePersist
-     */
+    #[ORM\PrePersist]
     public function setUuid(): self
     {
         $uuid1 = Uuid::uuid1();
@@ -148,9 +127,6 @@ class Product
         return $this;
     }
 
-    /**
-     * @return Collection|ProductWarehouse[]
-     */
     public function getProductWarehouses(): Collection
     {
         return $this->productWarehouses;
@@ -170,7 +146,6 @@ class Product
     {
         if ($this->productWarehouses->contains($productWarehouse)) {
             $this->productWarehouses->removeElement($productWarehouse);
-            // set the owning side to null (unless already changed)
             if ($productWarehouse->getProduct() === $this) {
                 $productWarehouse->setProduct(null);
             }
@@ -195,9 +170,6 @@ class Product
         return $this;
     }
 
-    /**
-     * @return Collection|OrderProduct[]
-     */
     public function getOrderProducts(): Collection
     {
         return $this->orderProducts;

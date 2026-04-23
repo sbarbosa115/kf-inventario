@@ -19,7 +19,7 @@ class InvoiceService
         $this->customerService = $customerService;
     }
 
-    public function createFromProducts(array $data, $user = null): array
+    public function createFromProducts(array $data, ?object $user = null): array
     {
         $invoice = new Invoice();
         if (!empty($data['code'])) {

@@ -9,24 +9,20 @@ use App\Services\CustomerService;
 use App\Services\LogService;
 use InvalidArgumentException;
 use LogicException;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-/**
- * @Route("/customer", name="customer_")
- */
+#[Route('/customer', name: 'customer_')]
 class CustomerController extends AbstractController
 {
-    /**
-     * @Route("/", name="index", options={"expose"=true})
-     * @IsGranted("ROLE_MANAGE_CUSTOMERS")
-     */
+    #[Route('/', name: 'index', options: ['expose' => true])]
+    #[IsGranted('ROLE_MANAGE_CUSTOMERS')]
     public function index(
         CustomerService $customerService
     ): Response {
@@ -37,10 +33,8 @@ class CustomerController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/new", name="new", options={"expose"=true})
-     * @IsGranted("ROLE_MANAGE_CUSTOMERS")
-     */
+    #[Route('/new', name: 'new', options: ['expose' => true])]
+    #[IsGranted('ROLE_MANAGE_CUSTOMERS')]
     public function new(
         CountryRepository $countryRepo,
         CustomerService $customerService
@@ -51,10 +45,8 @@ class CustomerController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/create", name="create", options={"expose"=true}, methods={"post"})
-     * @IsGranted("ROLE_MANAGE_CUSTOMERS")
-     */
+    #[Route('/create', name: 'create', options: ['expose' => true], methods: ['POST'])]
+    #[IsGranted('ROLE_MANAGE_CUSTOMERS')]
     public function create(
         CustomerService $customerService,
         Request $request
@@ -65,10 +57,8 @@ class CustomerController extends AbstractController
         return new JsonResponse(['redirect' => $this->generateUrl('customer_index')]);
     }
 
-    /**
-     * @Route("/edit/{customer}", name="edit", options={"expose"=true})
-     * @IsGranted("ROLE_MANAGE_CUSTOMERS")
-     */
+    #[Route('/edit/{customer}', name: 'edit', options: ['expose' => true])]
+    #[IsGranted('ROLE_MANAGE_CUSTOMERS')]
     public function edit(
         CustomerService $customerService,
         CountryRepository $countryRepo,
@@ -82,10 +72,8 @@ class CustomerController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/update", name="update", options={"expose"=true})
-     * @IsGranted("ROLE_MANAGE_CUSTOMERS")
-     */
+    #[Route('/update', name: 'update', options: ['expose' => true])]
+    #[IsGranted('ROLE_MANAGE_CUSTOMERS')]
     public function update(
         CustomerService $customerService,
         Request $request
@@ -96,10 +84,8 @@ class CustomerController extends AbstractController
         return new JsonResponse(['redirect' => $this->generateUrl('customer_index')]);
     }
 
-    /**
-     * @Route("/delete", name="delete", options={"expose"=true}, methods={"DELETE"})
-     * @IsGranted("ROLE_MANAGE_CUSTOMERS")
-     */
+    #[Route('/delete', name: 'delete', options: ['expose' => true], methods: ['DELETE'])]
+    #[IsGranted('ROLE_MANAGE_CUSTOMERS')]
     public function remove(
         Request $request,
         CustomerService $customerService,

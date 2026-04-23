@@ -42,7 +42,9 @@ services:
     gedmo.listener.softdeleteable:
         class: Gedmo\SoftDeleteable\SoftDeleteableListener
         tags:
-        - { name: doctrine.event_subscriber, connection: default }
+            - { name: doctrine.event_listener, event: loadClassMetadata }
+            - { name: doctrine.event_listener, event: onFlush }
+            - { name: doctrine.event_listener, event: postFlush }
 
     order.listener.post.persist:
       class: 'App\EventListener\OrderListener'

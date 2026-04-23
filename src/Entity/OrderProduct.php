@@ -2,35 +2,26 @@
 
 namespace App\Entity;
 
+use App\Repository\OrderProductRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Routing\Exception\InvalidParameterException;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\OrderProductRepository")
- */
+#[ORM\Entity(repositoryClass: OrderProductRepository::class)]
 class OrderProduct
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
-    private $quantity;
+    #[ORM\Column(type: 'integer')]
+    private ?int $quantity = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Product", inversedBy="orderProducts")
-     */
-    private $product;
+    #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'orderProducts')]
+    private ?Product $product = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Order", inversedBy="orderProduct")
-     */
-    private $order;
+    #[ORM\ManyToOne(targetEntity: Order::class, inversedBy: 'orderProduct')]
+    private ?Order $order = null;
 
     public function getId(): ?int
     {
@@ -75,7 +66,7 @@ class OrderProduct
 
     public function getUuid(): string
     {
-        if (!$this->product instanceof product) {
+        if (!$this->product instanceof Product) {
             throw new InvalidParameterException('Product required is missing');
         }
 

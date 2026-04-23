@@ -2,47 +2,34 @@
 
 namespace App\Entity;
 
+use App\Repository\CustomerAddressRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\CustomerAddressRepository")
- */
+#[ORM\Entity(repositoryClass: CustomerAddressRepository::class)]
 class CustomerAddress
 {
     public const ADDRESS_BILLING = 1;
     public const ADDRESS_SHIPPING = 2;
 
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $zipCode;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $zipCode = null;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $address;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $address = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\City", inversedBy="customerAddresses")
-     */
-    private $city;
+    #[ORM\ManyToOne(targetEntity: City::class, inversedBy: 'customerAddresses')]
+    private ?City $city = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Customer", inversedBy="addresses")
-     */
-    private $customer;
+    #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'addresses')]
+    private ?Customer $customer = null;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     */
-    private $addressType;
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $addressType = null;
 
     public function getId(): ?int
     {

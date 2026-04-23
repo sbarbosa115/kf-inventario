@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Repository\OrderRepository;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -11,21 +12,16 @@ use Exception;
 use Gedmo\Mapping\Annotation as Gedmo;
 use InvalidArgumentException;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\OrderRepository")
- * @ORM\Table(name="`order`")
- * @Gedmo\SoftDeleteable(fieldName="deletedAt", timeAware=false, hardDelete=true)
- */
+#[ORM\Entity(repositoryClass: OrderRepository::class)]
+#[ORM\Table(name: '`order`')]
+#[Gedmo\SoftDeleteable(fieldName: 'deletedAt', timeAware: false, hardDelete: true)]
 class Order
 {
     public const SOURCE_WEB = 1;
     public const SOURCE_PHONE = 2;
 
-    //Created
     public const STATUS_CREATED = 1;
-    //Processing
     public const STATUS_PROCESSED = 2;
-    //Processed
     public const STATUS_COMPLETED = 3;
     public const STATUS_PARTIAL = 4;
     public const STATUS_SENT = 5;
@@ -34,89 +30,57 @@ class Order
     public const PAYMENT_CREDIT_CARD = 1;
     public const PAYMENT_PAYPAL = 2;
 
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $code;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $code = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Customer", inversedBy="request")
-     * @ORM\JoinColumn(nullable=true)
-     */
-    private $customer;
+    #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'request')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Customer $customer = null;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Comment", mappedBy="order")
-     */
-    private $comments;
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'order')]
+    private Collection $comments;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Warehouse", inversedBy="orders")
-     * @ORM\JoinColumn(nullable=true)
-     */
-    private $warehouse;
+    #[ORM\ManyToOne(targetEntity: Warehouse::class, inversedBy: 'orders')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Warehouse $warehouse = null;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     */
-    private $source;
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $source = null;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     */
-    private $status;
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $status = null;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     */
-    private $deletedAt;
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?DateTimeInterface $deletedAt = null;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     */
-    private $createdAt;
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?DateTimeInterface $createdAt = null;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     */
-    private $modifiedAt;
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?DateTimeInterface $modifiedAt = null;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\OrderProduct", mappedBy="order", cascade={"persist", "remove"})
-     */
-    private $orderProduct;
+    #[ORM\OneToMany(targetEntity: OrderProduct::class, mappedBy: 'order', cascade: ['persist', 'remove'])]
+    private Collection $orderProduct;
 
-    /**
-     * @ORM\Column(type="text", nullable=true)
-     */
-    private $comment;
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $comment = null;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     */
-    private $paymentMethod;
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $paymentMethod = null;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\OrderStatus", mappedBy="order", cascade={"persist"})
-     */
-    private $orderStatuses;
+    #[ORM\OneToMany(targetEntity: OrderStatus::class, mappedBy: 'order', cascade: ['persist'])]
+    private Collection $orderStatuses;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Order", cascade={"persist"})
-     */
-    private $parent;
+    #[ORM\ManyToOne(targetEntity: Order::class, cascade: ['persist'])]
+    private ?self $parent = null;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Order", mappedBy="parent")
-     */
-    private $children;
+    #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'parent')]
+    private Collection $children;
 
     /**
      * @throws Exception
@@ -161,9 +125,6 @@ class Order
         return $this;
     }
 
-    /**
-     * @return Collection|Comment[]
-     */
     public function getComments(): Collection
     {
         return $this->comments;
@@ -183,7 +144,6 @@ class Order
     {
         if ($this->comments->contains($comment)) {
             $this->comments->removeElement($comment);
-            // set the owning side to null (unless already changed)
             if ($comment->getOrder() === $this) {
                 $comment->setOrder(null);
             }
@@ -269,10 +229,8 @@ class Order
         return $this;
     }
 
-    /**
-     * @ORM\PrePersist()
-     * @ORM\PreUpdate()
-     */
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
     public function updateModifiedDatetime(): void
     {
         $this->setModifiedAt(new DateTime());
@@ -311,9 +269,6 @@ class Order
         return $this;
     }
 
-    /**
-     * @return Collection|OrderStatus[]
-     */
     public function getOrderStatuses(): Collection
     {
         return $this->orderStatuses;
@@ -333,7 +288,6 @@ class Order
     {
         if ($this->orderStatuses->contains($orderStatus)) {
             $this->orderStatuses->removeElement($orderStatus);
-            // set the owning side to null (unless already changed)
             if ($orderStatus->getOrder() === $this) {
                 $orderStatus->setOrder(null);
             }
@@ -352,9 +306,6 @@ class Order
         return $this;
     }
 
-    /**
-     * @return Collection|OrderProduct[]
-     */
     public function getProducts(): Collection
     {
         return $this->orderProduct;
@@ -394,9 +345,6 @@ class Order
         return $this;
     }
 
-    /**
-     * @return Collection|self[]
-     */
     public function getChildren(): Collection
     {
         return $this->children;
@@ -416,7 +364,6 @@ class Order
     {
         if ($this->children->contains($child)) {
             $this->children->removeElement($child);
-            // set the owning side to null (unless already changed)
             if ($child->getParent() === $this) {
                 $child->setParent(null);
             }

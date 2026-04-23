@@ -19,7 +19,7 @@ class CityRepository extends ServiceEntityRepository
         parent::__construct($registry, City::class);
     }
 
-    public function findOneByIdOrName(int $id = null, string $name = null): ?City
+    public function findOneByIdOrName(?int $id = null, ?string $name = null): ?City
     {
         $query = $this->createQueryBuilder('c');
 

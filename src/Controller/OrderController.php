@@ -25,7 +25,6 @@ use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use Psr\Log\LoggerInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,41 +33,35 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * @Route("/order", name="order_")
- */
+#[Route('/order', name: 'order_')]
 class OrderController extends AbstractController
 {
-    /**
-     * @Route("/", name="index", options={"expose"=true})
-     * @IsGranted("ROLE_CAN_READ_ORDERS")
-     */
+    #[Route('/', name: 'index', options: ['expose' => true])]
+    #[IsGranted('ROLE_CAN_READ_ORDERS')]
     public function index(): Response
     {
         return $this->render('order/index.html.twig');
     }
 
-    /**
-     * @Route("/new", name="new", options={"expose"=true})
-     * @IsGranted("ROLE_CAN_CREATE_ORDERS")
-     */
+    #[Route('/new', name: 'new', options: ['expose' => true])]
+    #[IsGranted('ROLE_CAN_CREATE_ORDERS')]
     public function new(
         CountryRepository $countryRepo,
         WarehouseRepository $warehouseRepo,
         CustomerRepository $customerRepo
     ): Response {
         $locations = $countryRepo->findAllAsArray();
-    
-        // Este corte es rápido para evitar el error
+
         if (is_array($locations) && count($locations) > 1000) {
             $locations = array_slice($locations, 0, 100);
         }
-    
+
         return $this->render('order/new.html.twig', [
             'url' => $this->generateUrl('order_create'),
             'locations' => $locations,
@@ -78,11 +71,10 @@ class OrderController extends AbstractController
     }
 
     /**
-     * @Route("/create", name="create", methods={"post"})
-     * @IsGranted("ROLE_CAN_CREATE_ORDERS")
-     *
      * @throws ExceptionInterface
      */
+    #[Route('/create', name: 'create', methods: ['POST'])]
+    #[IsGranted('ROLE_CAN_CREATE_ORDERS')]
     public function create(
         Request $request,
         OrderService $orderService,
@@ -108,11 +100,10 @@ class OrderController extends AbstractController
     }
 
     /**
-     * @Route("/edit/{order}", name="edit", options={"expose"=true})
-     * @IsGranted("ROLE_CAN_UPDATE_ORDERS")
-     *
      * @throws ExceptionInterface
      */
+    #[Route('/edit/{order}', name: 'edit', options: ['expose' => true])]
+    #[IsGranted('ROLE_CAN_UPDATE_ORDERS')]
     public function edit(
         CountryRepository $countryRepo,
         WarehouseRepository $warehouseRepo,
@@ -121,11 +112,11 @@ class OrderController extends AbstractController
         Order $order
     ): Response {
         $locations = $countryRepo->findAllAsArray();
-    
-        // Este corte es rápido para evitar el error
+
         if (is_array($locations) && count($locations) > 1000) {
             $locations = array_slice($locations, 0, 100);
         }
+
         return $this->render('order/edit.html.twig', [
             'url' => $this->generateUrl('order_update', [
                 'order' => $order->getId(),
@@ -138,11 +129,10 @@ class OrderController extends AbstractController
     }
 
     /**
-     * @Route("/update/{order}", methods={"post"}, name="update")
-     * @IsGranted("ROLE_CAN_UPDATE_ORDERS")
-     *
      * @throws ExceptionInterface
      */
+    #[Route('/update/{order}', methods: ['POST'], name: 'update')]
+    #[IsGranted('ROLE_CAN_UPDATE_ORDERS')]
     public function update(
         Request $request,
         OrderService $orderService,
@@ -156,10 +146,8 @@ class OrderController extends AbstractController
         return new JsonResponse(['status' => true, 'route' => $this->generateUrl('order_index')]);
     }
 
-    /**
-     * @Route("/all/{warehouse}", name="all", options={"expose"=true}, defaults={"status"=1}, methods={"get"})
-     * @IsGranted("ROLE_CAN_READ_ORDERS")
-     */
+    #[Route('/all/{warehouse}', name: 'all', options: ['expose' => true], defaults: ['status' => 1], methods: ['GET'])]
+    #[IsGranted('ROLE_CAN_READ_ORDERS')]
     public function all(
         OrderRepository $orderRepo,
         Warehouse $warehouse
@@ -170,11 +158,10 @@ class OrderController extends AbstractController
     }
 
     /**
-     * @Route("/detail/{order}", name="detail", options={"expose"=true}, methods={"get"})
-     * @IsGranted("ROLE_CAN_READ_ORDERS")
-     *
      * @throws ExceptionInterface
      */
+    #[Route('/detail/{order}', name: 'detail', options: ['expose' => true], methods: ['GET'])]
+    #[IsGranted('ROLE_CAN_READ_ORDERS')]
     public function detail(
         Order $order,
         OrderService $orderService
@@ -186,9 +173,7 @@ class OrderController extends AbstractController
         return $response;
     }
 
-    /**
-     * @Route("/sync-comments/{order}", name="sync_comments", options={"expose"=true}, methods={"post"})
-     */
+    #[Route('/sync-comments/{order}', name: 'sync_comments', options: ['expose' => true], methods: ['POST'])]
     public function syncComments(
         Order $order,
         CommentService $commentService,
@@ -208,10 +193,8 @@ class OrderController extends AbstractController
         return $response;
     }
 
-    /**
-     * @Route("/pdf/{order}", name="pdf", options={"expose"=true})
-     * @IsGranted("ROLE_CAN_READ_ORDERS")
-     */
+    #[Route('/pdf/{order}', name: 'pdf', options: ['expose' => true])]
+    #[IsGranted('ROLE_CAN_READ_ORDERS')]
     public function pdf(
         Order $order,
         PdfHandlerService $pdfHandlerService
@@ -228,10 +211,8 @@ class OrderController extends AbstractController
         return $response;
     }
 
-    /**
-     * @Route("/pdf/remaining/{order}", name="pdf_remaining", options={"expose"=true})
-     * @IsGranted("ROLE_CAN_READ_ORDERS")
-     */
+    #[Route('/pdf/remaining/{order}', name: 'pdf_remaining', options: ['expose' => true])]
+    #[IsGranted('ROLE_CAN_READ_ORDERS')]
     public function remainingProductsPdf(
         Order $order,
         PdfHandlerService $pdfHandlerService
@@ -248,10 +229,8 @@ class OrderController extends AbstractController
         return $response;
     }
 
-    /**
-     * @Route("/edit/status/{order}/{status}", name="change_status", methods={"post"}, options={"expose"=true})
-     * @IsGranted("ROLE_UPDATE_ORDERS")
-     */
+    #[Route('/edit/status/{order}/{status}', name: 'change_status', methods: ['POST'], options: ['expose' => true])]
+    #[IsGranted('ROLE_UPDATE_ORDERS')]
     public function changeStatus(
         Order $order,
         int $status,
@@ -267,11 +246,8 @@ class OrderController extends AbstractController
         return new JsonResponse(['status' => true]);
     }
 
-    /**
-     * @deprecated Migrated to webhooks.
-     * @Route("/sync", name="sync_orders", options={"expose"=true})
-     * @IsGranted("ROLE_CAN_SYNC_ORDERS")
-     */
+    #[Route('/sync', name: 'sync_orders', options: ['expose' => true])]
+    #[IsGranted('ROLE_CAN_SYNC_ORDERS')]
     public function syncRemoteOrders(
         WooCommerceProvider $woocommerceProvider
     ): Response {
@@ -280,10 +256,8 @@ class OrderController extends AbstractController
         return new JsonResponse(['status' => true]);
     }
 
-    /**
-     * @Route("/delete", name="delete", options={"expose"=true}, methods={"DELETE"})
-     * @IsGranted("ROLE_CAN_DELETE_ORDERS")
-     */
+    #[Route('/delete', name: 'delete', options: ['expose' => true], methods: ['DELETE'])]
+    #[IsGranted('ROLE_CAN_DELETE_ORDERS')]
     public function delete(
         Request $request,
         OrderService $orderService,
@@ -305,11 +279,7 @@ class OrderController extends AbstractController
         return new JsonResponse(['status' => true]);
     }
 
-    /**
-     * @Route("/partial/getting-ready/{order}", name="getting_ready", methods={"get"}, options={"expose"=true})
-     *
-     * @throws ExceptionInterface
-     */
+    #[Route('/partial/getting-ready/{order}', name: 'getting_ready', methods: ['GET'], options: ['expose' => true])]
     public function gettingReady(
         Order $order,
         OrderService $orderService,
@@ -322,9 +292,7 @@ class OrderController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/partial/{order}", methods={"get"})
-     */
+    #[Route('/partial/{order}', methods: ['GET'])]
     public function getPartials(Order $order): Response
     {
         return new JsonResponse([
@@ -334,9 +302,7 @@ class OrderController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/partial/{order}", name="partial", methods={"post"}, options={"expose"=true})
-     */
+    #[Route('/partial/{order}', name: 'partial', methods: ['POST'], options: ['expose' => true])]
     public function partial(
         Request $request,
         OrderService $orderService,
@@ -353,10 +319,9 @@ class OrderController extends AbstractController
     }
 
     /**
-     * @Route("/xls/{order}", name="xls", methods={"get"}, options={"expose"=true})
-     *
      * @throws Exception
      */
+    #[Route('/xls/{order}', name: 'xls', methods: ['GET'], options: ['expose' => true])]
     public function uploadProductsTemplate(
         Order $order,
         TranslatorInterface $translator
@@ -376,7 +341,6 @@ class OrderController extends AbstractController
                 throw new InvalidArgumentException('Datetime is missing.');
             }
 
-            /* @var $product OrderProduct */
             $template->getActiveSheet()->setCellValue("A{$line}", $order->getCreatedAt()->format('Y-m-d'));
             $template->getActiveSheet()->setCellValue("B{$line}", $product->getProduct()->getCode());
             $template->getActiveSheet()->setCellValue("C{$line}", $product->getQuantity());
@@ -398,9 +362,7 @@ class OrderController extends AbstractController
         return $response;
     }
 
-    /**
-     * @Route("/1H39j0jpQPsWL958v9R4", name="create_webhook", methods={"POST", "GET"}, options={"expose"=true})
-     */
+    #[Route('/1H39j0jpQPsWL958v9R4', name: 'create_webhook', methods: ['POST', 'GET'], options: ['expose' => true])]
     public function createWebhook(
         Request $request,
         LoggerInterface $logger,
@@ -414,7 +376,6 @@ class OrderController extends AbstractController
         $source = $request->headers->get('X-WC-Webhook-Source');
 
         $warehouses = $warehouseRepo->findAll();
-
         $warehouse = null;
 
         foreach ($warehouses as $warehouseItem) {
@@ -428,7 +389,6 @@ class OrderController extends AbstractController
             $order['warehouse'] = ['name' => $warehouse->getName(), 'id' => $warehouse->getId()];
             $orderModel = $orderService->add($order);
 
-            //Print only Colombia Orders
             if ($warehouse->getId() === 1) {
                 try {
                     $notificationService->sendOrderByEmail($orderRepo->find($orderModel['id']));
@@ -443,10 +403,7 @@ class OrderController extends AbstractController
         return new JsonResponse(['status' => true]);
     }
 
-    /**
-     * @TODO Delete this code.
-     * @Route("/test", name="test", methods={"GET"}, options={"expose"=true})
-     */
+    #[Route('/test', name: 'test', methods: ['GET'], options: ['expose' => true])]
     public function test(
         MailerInterface $mailer
     ): Response {

@@ -2,36 +2,27 @@
 
 namespace App\Entity;
 
+use App\Repository\CountryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\CountryRepository")
- */
+#[ORM\Entity(repositoryClass: CountryRepository::class)]
 class Country
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $name;
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $name = null;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\State", mappedBy="country", orphanRemoval=true)
-     */
-    private $states;
+    #[ORM\OneToMany(targetEntity: State::class, mappedBy: 'country', orphanRemoval: true)]
+    private Collection $states;
 
-    /**
-     * @ORM\Column(type="string", length=10, nullable=true)
-     */
-    private $code;
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
+    private ?string $code = null;
 
     public function __construct()
     {
@@ -55,9 +46,6 @@ class Country
         return $this;
     }
 
-    /**
-     * @return Collection|State[]
-     */
     public function getStates(): Collection
     {
         return $this->states;
@@ -77,7 +65,6 @@ class Country
     {
         if ($this->states->contains($state)) {
             $this->states->removeElement($state);
-            // set the owning side to null (unless already changed)
             if ($state->getCountry() === $this) {
                 $state->setCountry(null);
             }

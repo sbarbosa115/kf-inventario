@@ -30,7 +30,7 @@ class CountryRepository extends ServiceEntityRepository
             ->getArrayResult();
     }
 
-    public function findOneByIdOrName(int $id = null, string $name = null): ?Country
+    public function findOneByIdOrName(?int $id = null, ?string $name = null): ?Country
     {
         $query = $this->createQueryBuilder('c');
         if (null !== $id) {

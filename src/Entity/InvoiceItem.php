@@ -4,35 +4,36 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity()
- * @ORM\Table(name="invoice_item")
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'invoice_item')]
 class InvoiceItem
 {
-    /** @ORM\Id() @ORM\GeneratedValue() @ORM\Column(type="integer") */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /** @ORM\ManyToOne(targetEntity="App\Entity\Invoice", inversedBy="items") @ORM\JoinColumn(nullable=false) */
-    private $invoice;
+    #[ORM\ManyToOne(targetEntity: Invoice::class, inversedBy: 'items')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Invoice $invoice = null;
 
-    /** @ORM\ManyToOne(targetEntity="App\Entity\Product") */
-    private $product;
+    #[ORM\ManyToOne(targetEntity: Product::class)]
+    private ?Product $product = null;
 
-    /** @ORM\Column(type="string", length=255, nullable=true) */
-    private $description;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $description = null;
 
-    /** @ORM\Column(type="decimal", precision=12, scale=2) */
-    private $unitPrice;
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    private ?string $unitPrice = null;
 
-    /** @ORM\Column(type="integer") */
-    private $quantity;
+    #[ORM\Column(type: 'integer')]
+    private ?int $quantity = null;
 
-    /** @ORM\Column(type="decimal", precision=12, scale=2, nullable=true) */
-    private $discount;
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
+    private ?string $discount = null;
 
-    /** @ORM\Column(type="decimal", precision=12, scale=2) */
-    private $total;
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    private ?string $total = null;
 
     public function getId(): ?int
     {

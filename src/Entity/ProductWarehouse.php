@@ -2,43 +2,31 @@
 
 namespace App\Entity;
 
+use App\Repository\ProductWarehouseRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\ProductWarehouseRepository")
- */
+#[ORM\Entity(repositoryClass: ProductWarehouseRepository::class)]
 class ProductWarehouse
 {
     public const STATUS_CONFIRMED = 1;
-
     public const STATUS_PENDING_TO_CONFIRM = 0;
 
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
-    private $status;
+    #[ORM\Column(type: 'integer')]
+    private ?int $status = null;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
-    private $quantity;
+    #[ORM\Column(type: 'integer')]
+    private ?int $quantity = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Product", inversedBy="productWarehouses")
-     */
-    private $product;
+    #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'productWarehouses')]
+    private ?Product $product = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Warehouse", inversedBy="productWarehouses")
-     */
-    private $warehouse;
+    #[ORM\ManyToOne(targetEntity: Warehouse::class, inversedBy: 'productWarehouses')]
+    private ?Warehouse $warehouse = null;
 
     public function getId(): ?int
     {

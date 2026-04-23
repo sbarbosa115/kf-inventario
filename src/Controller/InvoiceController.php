@@ -4,37 +4,31 @@ namespace App\Controller;
 
 use App\Entity\Invoice;
 use App\Form\InvoiceType;
-use App\Services\InvoiceService;
-use App\Repository\InvoiceRepository;
 use App\Repository\CountryRepository;
-use App\Repository\WarehouseRepository;
 use App\Repository\CustomerRepository;
+use App\Repository\InvoiceRepository;
+use App\Repository\WarehouseRepository;
+use App\Services\InvoiceService;
 use App\Services\PdfHandlerService;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-/**
- * @Route("/invoice", name="invoice_")
- */
+#[Route('/invoice', name: 'invoice_')]
 class InvoiceController extends AbstractController
 {
-    /**
-     * @Route("/", name="index", options={"expose"=true})
-     * @IsGranted("ROLE_CAN_READ_INVOICES")
-     */
+    #[Route('/', name: 'index', options: ['expose' => true])]
+    #[IsGranted('ROLE_CAN_READ_INVOICES')]
     public function index(): Response
     {
         return $this->render('invoice/index.html.twig');
     }
 
-    /**
-     * @Route("/new", name="new", options={"expose"=true})
-     * @IsGranted("ROLE_CAN_CREATE_INVOICES")
-     */
+    #[Route('/new', name: 'new', options: ['expose' => true])]
+    #[IsGranted('ROLE_CAN_CREATE_INVOICES')]
     public function new(CountryRepository $countryRepo, WarehouseRepository $warehouseRepo, CustomerRepository $customerRepo, InvoiceRepository $invoiceRepository): Response
     {
         $locations = $countryRepo->findAllAsArray();
@@ -43,7 +37,6 @@ class InvoiceController extends AbstractController
             $locations = array_slice($locations, 0, 100);
         }
 
-        // determine suggested invoice code based on last invoice
         $lastInvoice = $invoiceRepository->findOneBy([], ['createdAt' => 'DESC']);
         $suggestedCode = '';
         if ($lastInvoice && $lastInvoice->getCode()) {
@@ -59,7 +52,6 @@ class InvoiceController extends AbstractController
                 $suggestedCode = $lastCode . '-1';
             }
         } else {
-            // fallback: year + 0001
             $suggestedCode = date('Y') . '0001';
         }
 
@@ -72,14 +64,11 @@ class InvoiceController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/create", name="create", methods={"post"})
-     * @IsGranted("ROLE_CAN_CREATE_INVOICES")
-     */
+    #[Route('/create', name: 'create', methods: ['POST'])]
+    #[IsGranted('ROLE_CAN_CREATE_INVOICES')]
     public function create(Request $request, InvoiceService $invoiceService, InvoiceRepository $invoiceRepository): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        // validate code uniqueness if provided
         if (!empty($data['code'])) {
             $existing = $invoiceRepository->findByCode($data['code']);
             if ($existing) {
@@ -92,10 +81,8 @@ class InvoiceController extends AbstractController
         return new JsonResponse(['status' => true, 'invoice' => $result]);
     }
 
-    /**
-     * @Route("/all", name="all", options={"expose"=true}, methods={"GET"})
-     * @IsGranted("ROLE_CAN_READ_INVOICES")
-     */
+    #[Route('/all', name: 'all', options: ['expose' => true], methods: ['GET'])]
+    #[IsGranted('ROLE_CAN_READ_INVOICES')]
     public function all(InvoiceRepository $invoiceRepository, InvoiceService $invoiceService): JsonResponse
     {
         $invoices = $invoiceRepository->findBy([], ['createdAt' => 'DESC']);
@@ -106,22 +93,17 @@ class InvoiceController extends AbstractController
         return new JsonResponse($data);
     }
 
-    /**
-     * @Route("/detail/{invoice}", name="detail", methods={"get"}, options={"expose"=true})
-     * @IsGranted("ROLE_CAN_READ_INVOICES")
-     */
+    #[Route('/detail/{invoice}', name: 'detail', methods: ['GET'], options: ['expose' => true])]
+    #[IsGranted('ROLE_CAN_READ_INVOICES')]
     public function detail(Invoice $invoice, InvoiceService $invoiceService): Response
     {
         return new JsonResponse($invoiceService->getInvoiceAsArray($invoice));
     }
 
-    /**
-     * @Route("/pdf/{invoice}", name="pdf", options={"expose"=true})
-     * @IsGranted("ROLE_CAN_READ_INVOICES")
-     */
+    #[Route('/pdf/{invoice}', name: 'pdf', options: ['expose' => true])]
+    #[IsGranted('ROLE_CAN_READ_INVOICES')]
     public function pdf(Invoice $invoice, PdfHandlerService $pdfHandlerService): Response
     {
-        // map stored payment keys to human-readable labels
         $paymentLabels = [
             'credit_counted' => 'Credit - counted',
             'credit_card' => 'Credit card - Paypal',
@@ -133,7 +115,6 @@ class InvoiceController extends AbstractController
             $paymentLabel = $paymentLabels[$key] ?? $key;
         }
 
-        // prepare logo as base64 data URI if a file exists to ensure Dompdf can embed it
         $logoData = null;
         $projectDir = $this->getParameter('kernel.project_dir');
         $logoCandidates = ['logo.png', 'logo.jpg', 'logo.jpeg', 'logo.gif'];

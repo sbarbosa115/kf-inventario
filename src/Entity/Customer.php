@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Repository\CustomerRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -9,56 +10,38 @@ use Gedmo\Mapping\Annotation as Gedmo;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\CustomerRepository")
- * @UniqueEntity("email")
- * @Gedmo\SoftDeleteable(fieldName="deletedAt", timeAware=false, hardDelete=true)
- */
+#[ORM\Entity(repositoryClass: CustomerRepository::class)]
+#[UniqueEntity('email')]
+#[Gedmo\SoftDeleteable(fieldName: 'deletedAt', timeAware: false, hardDelete: true)]
 class Customer
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $firstName;
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $firstName = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $lastName;
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $lastName = null;
 
-    /**
-     * @Assert\NotNull()
-     * @Assert\Email()
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $email;
+    #[Assert\NotNull]
+    #[Assert\Email]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $email = null;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $phone;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $phone = null;
 
-    /**
-     * @ORM\OneToMany(targetEntity="Order", mappedBy="customer", orphanRemoval=true)
-     */
-    private $request;
+    #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'customer', orphanRemoval: true)]
+    private Collection $request;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\CustomerAddress", mappedBy="customer",  cascade={"persist", "remove"}, orphanRemoval=true)
-     */
-    private $addresses;
+    #[ORM\OneToMany(targetEntity: CustomerAddress::class, mappedBy: 'customer', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $addresses;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     */
-    private $deletedAt;
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTime $deletedAt = null;
 
     public function __construct()
     {
@@ -119,9 +102,6 @@ class Customer
         return $this;
     }
 
-    /**
-     * @return Collection|Order[]
-     */
     public function getRequest(): Collection
     {
         return $this->request;
@@ -141,7 +121,6 @@ class Customer
     {
         if ($this->request->contains($request)) {
             $this->request->removeElement($request);
-            // set the owning side to null (unless already changed)
             if ($request->getCustomer() === $this) {
                 $request->setCustomer(null);
             }
@@ -152,22 +131,14 @@ class Customer
 
     public function getFullName(): string
     {
-        return "{$this->firstName } {$this->lastName }";
+        return "{$this->firstName} {$this->lastName}";
     }
 
-    /**
-     * Returns deletedAt.
-     *
-     * @return \DateTime
-     */
     public function getDeletedAt(): ?\DateTime
     {
         return $this->deletedAt;
     }
 
-    /**
-     * @return Collection|CustomerAddress[]
-     */
     public function getAddresses(): Collection
     {
         return $this->addresses;
@@ -187,7 +158,6 @@ class Customer
     {
         if ($this->addresses->contains($address)) {
             $this->addresses->removeElement($address);
-            // set the owning side to null (unless already changed)
             if ($address->getCustomer() === $this) {
                 $address->setCustomer(null);
             }
@@ -199,6 +169,7 @@ class Customer
     public function removeAllAddresses(): self
     {
         $this->addresses = new ArrayCollection();
+
         return $this;
     }
 

@@ -7,12 +7,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class OrderInput
 {
-    /**
-     * @Assert\Optional()
-     *
-     * @var int
-     */
-    public $id;
+    public mixed $id = null;
 
     public const STATUSES = [
         Order::STATUS_CREATED,
@@ -23,67 +18,33 @@ class OrderInput
         Order::STATUS_DELIVERED,
     ];
 
-    /**
-     * @Assert\NotBlank()
-     * @Assert\Choice(choices=OrderInput::STATUSES, message="Status not valid")
-     *
-     * @var int
-     */
-    public $status;
+    #[Assert\NotBlank]
+    #[Assert\Choice(choices: OrderInput::STATUSES, message: 'Status not valid')]
+    public mixed $status = null;
 
     public const SOURCES = [
         Order::SOURCE_PHONE,
         Order::SOURCE_WEB,
     ];
 
-    /**
-     * @Assert\NotBlank()
-     * @Assert\Choice(choices=OrderInput::SOURCES, message="Source not valid")
-     *
-     * @var int
-     */
-    public $source;
+    #[Assert\NotBlank]
+    #[Assert\Choice(choices: OrderInput::SOURCES, message: 'Source not valid')]
+    public mixed $source = null;
 
-    /**
-     * @Assert\NotBlank()
-     *
-     * @var string
-     */
-    public $createdAtAsString;
+    #[Assert\NotBlank]
+    public mixed $createdAtAsString = null;
 
     public const PAYMENT_METHOD = [
         Order::PAYMENT_CREDIT_CARD,
         Order::PAYMENT_PAYPAL,
     ];
 
-    /**
-     * @Assert\NotBlank()
-     * @Assert\Choice(choices=OrderInput::PAYMENT_METHOD, message="Payment method not valid")
-     *
-     * @var int
-     */
-    public $paymentMethod;
+    #[Assert\NotBlank]
+    #[Assert\Choice(choices: OrderInput::PAYMENT_METHOD, message: 'Payment method not valid')]
+    public mixed $paymentMethod = null;
 
-    /**
-     * @Assert\Optional()
-     *
-     * @var string
-     */
-    public $comment;
+    public mixed $comment = null;
 
-    /**
-     * @Assert\NotBlank()
-     *
-     * @var string
-     */
-    public $warehouse;
-
-    public static function createFormInput(array $removeOrderData): self
-    {
-        $new = new self();
-        $new->order = $removeOrderData['order'];
-        $new->token = $removeOrderData['token'];
-
-        return $new;
-    }
+    #[Assert\NotBlank]
+    public mixed $warehouse = null;
 }

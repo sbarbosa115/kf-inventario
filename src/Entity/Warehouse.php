@@ -2,41 +2,30 @@
 
 namespace App\Entity;
 
+use App\Repository\WarehouseRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\PersistentCollection;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\WarehouseRepository")
- */
+#[ORM\Entity(repositoryClass: WarehouseRepository::class)]
 class Warehouse
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private int $id;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
+    #[ORM\Column(type: 'string', length: 255)]
     private string $name;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\ProductWarehouse", mappedBy="warehouse")
-     */
+    #[ORM\OneToMany(targetEntity: ProductWarehouse::class, mappedBy: 'warehouse')]
     private ArrayCollection|PersistentCollection $productWarehouses;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Order", mappedBy="warehouse")
-     */
+    #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'warehouse')]
     private ArrayCollection|PersistentCollection $orders;
 
-    /**
-     * @ORM\Column(type="array")
-     */
+    #[ORM\Column(type: 'json')]
     private array $urls;
 
     public function __construct(string $name, array $urls = [])
@@ -76,7 +65,6 @@ class Warehouse
     {
         if ($this->productWarehouses->contains($productWarehouse)) {
             $this->productWarehouses->removeElement($productWarehouse);
-            // set the owning side to null (unless already changed)
             if ($productWarehouse->getWarehouse() === $this) {
                 $productWarehouse->setWarehouse(null);
             }
@@ -85,9 +73,6 @@ class Warehouse
         return $this;
     }
 
-    /**
-     * @return Collection|Order[]
-     */
     public function getOrders(): Collection
     {
         return $this->orders;
@@ -107,7 +92,6 @@ class Warehouse
     {
         if ($this->orders->contains($order)) {
             $this->orders->removeElement($order);
-            // set the owning side to null (unless already changed)
             if ($order->getWarehouse() === $this) {
                 $order->setWarehouse(null);
             }
@@ -124,6 +108,7 @@ class Warehouse
     public function setUrls(array $urls): self
     {
         $this->urls = $urls;
+
         return $this;
     }
 }

@@ -10,16 +10,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * @Route("/warehouse", name="warehouse_")
- */
+#[Route('/warehouse', name: 'warehouse_')]
 class WarehouseController extends AbstractController
 {
-    /**
-     * @Route("/", name="warehouse_index")
-     */
+    #[Route('/', name: 'warehouse_index')]
     public function index(WarehouseRepository $warehouseRepo): Response
     {
         $warehouses = $warehouseRepo->findAll();
@@ -29,9 +25,7 @@ class WarehouseController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/edit/{warehouse}", name="warehouse_edit", methods={"post", "get"})
-     */
+    #[Route('/edit/{warehouse}', name: 'warehouse_edit', methods: ['POST', 'GET'])]
     public function edit(Request $request, Warehouse $warehouse, EntityManagerInterface $em): Response
     {
         $form = $this->createForm(WarehouseType::class, $warehouse);
@@ -48,10 +42,8 @@ class WarehouseController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/all", name="all", methods={"get"}, options={"expose"=true})
-     */
-    public function all(WarehouseRepository $warehouseRepo)
+    #[Route('/all', name: 'all', methods: ['GET'], options: ['expose' => true])]
+    public function all(WarehouseRepository $warehouseRepo): JsonResponse
     {
         $warehouses = $warehouseRepo->findAllAsArray();
 

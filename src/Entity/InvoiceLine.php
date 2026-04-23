@@ -4,58 +4,38 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity()
- */
+#[ORM\Entity]
 class InvoiceLine
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Invoice", inversedBy="lines")
-     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
-     */
-    private $invoice;
+    #[ORM\ManyToOne(targetEntity: Invoice::class, inversedBy: 'lines')]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    private ?Invoice $invoice = null;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     */
-    private $productId;
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $productId = null;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $productCode;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $productCode = null;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $productTitle;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $productTitle = null;
 
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     */
-    private $unitMeasure;
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $unitMeasure = null;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
-    private $quantity = 1;
+    #[ORM\Column(type: 'integer')]
+    private int $quantity = 1;
 
-    /**
-     * @ORM\Column(type="float")
-     */
-    private $unitPrice = 0.0;
+    #[ORM\Column(type: 'float')]
+    private float $unitPrice = 0.0;
 
-    /**
-     * @ORM\Column(type="float")
-     */
-    private $total = 0.0;
+    #[ORM\Column(type: 'float')]
+    private float $total = 0.0;
 
     public function getId(): ?int
     {

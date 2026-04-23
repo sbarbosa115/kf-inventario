@@ -195,7 +195,7 @@ class CustomerService
     /**
      * @throws ExceptionInterface
      */
-    private function serializeCustomer(Customer $customer = null, array $customers = null): array
+    private function serializeCustomer(?Customer $customer = null, ?array $customers = null): array
     {
         $entityOrCollection = $customer;
         if (null !== $customers) {

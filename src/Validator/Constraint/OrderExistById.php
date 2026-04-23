@@ -4,11 +4,8 @@ namespace App\Validator\Constraint;
 
 use Symfony\Component\Validator\Constraint;
 
-/**
- * @Annotation
- * @Target({"PROPERTY", "METHOD", "ANNOTATION"})
- */
+#[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_METHOD)]
 class OrderExistById extends Constraint
 {
-    public $message = 'The given uuid does not exist on the database';
+    public string $message = 'The given uuid does not exist on the database';
 }

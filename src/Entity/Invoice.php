@@ -2,66 +2,61 @@
 
 namespace App\Entity;
 
+use App\Repository\InvoiceRepository;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\InvoiceRepository")
- * @ORM\Table(name="invoice")
- */
+#[ORM\Entity(repositoryClass: InvoiceRepository::class)]
+#[ORM\Table(name: 'invoice')]
 class Invoice
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /** @ORM\Column(type="string", length=255, nullable=true) */
-    private $code;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $code = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Customer")
-     * @ORM\JoinColumn(nullable=true)
-     */
-    private $customer;
+    #[ORM\ManyToOne(targetEntity: Customer::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Customer $customer = null;
 
-    /** @ORM\OneToMany(targetEntity="App\Entity\InvoiceItem", mappedBy="invoice", cascade={"persist", "remove"}) */
-    private $items;
+    #[ORM\OneToMany(targetEntity: InvoiceItem::class, mappedBy: 'invoice', cascade: ['persist', 'remove'])]
+    private Collection $items;
 
-    /** @ORM\Column(type="decimal", precision=12, scale=2, nullable=true) */
-    private $total;
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
+    private ?string $total = null;
 
-    /** @ORM\Column(type="integer", nullable=true) */
-    private $status;
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $status = null;
 
-    /** @ORM\Column(type="datetime", nullable=true) */
-    private $createdAt;
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?DateTimeInterface $createdAt = null;
 
-    /** @ORM\Column(type="datetime", nullable=true) */
-    private $modifiedAt;
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?DateTimeInterface $modifiedAt = null;
 
-    /** @ORM\Column(type="text", nullable=true) */
-    private $comment;
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $comment = null;
 
-    /** @ORM\Column(type="string", length=100, nullable=true) */
-    private $paymentMethod;
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $paymentMethod = null;
 
-    /** @ORM\Column(type="decimal", precision=5, scale=2, nullable=true) */
-    private $taxRate;
+    #[ORM\Column(type: 'decimal', precision: 5, scale: 2, nullable: true)]
+    private ?string $taxRate = null;
 
-    /** @ORM\Column(type="decimal", precision=12, scale=2, nullable=true) */
-    private $taxAmount;
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
+    private ?string $taxAmount = null;
 
-    /** @ORM\Column(type="string", length=255, nullable=true) */
-    private $customerNit;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $customerNit = null;
 
-    /** @ORM\Column(type="text", nullable=true) */
-    private $customerAddress;
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $customerAddress = null;
 
     public function __construct()
     {
@@ -100,7 +95,6 @@ class Invoice
         return $this;
     }
 
-    /** @return Collection|InvoiceItem[] */
     public function getItems(): Collection
     {
         return $this->items;

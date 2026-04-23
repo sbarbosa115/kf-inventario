@@ -9,7 +9,7 @@ use Doctrine\Persistence\ObjectManager;
 
 class InvoiceFixtures extends Fixture
 {
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
         $inv = new Invoice();
         $inv->setCode('INV-0001');

@@ -243,7 +243,7 @@ class ProductService
         $this->manager->flush();
     }
 
-    public function add(array $productData, Warehouse $warehouse = null): Product
+    public function add(array $productData, ?Warehouse $warehouse = null): Product
     {
         if (!\array_key_exists('uuid', $productData) && !\array_key_exists('code', $productData)) {
             throw new InvalidArgumentException('Either UUID or code was not provided');

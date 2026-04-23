@@ -6,19 +6,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class WarehouseInput
 {
-    /**
-     * @Assert\Optional()
-     *
-     * @var int
-     */
-    public $id;
+    public mixed $id = null;
 
-    /**
-     * @Assert\NotBlank()
-     *
-     * @var string
-     */
-    public $name;
+    #[Assert\NotBlank]
+    public mixed $name = null;
 
     public static function createFormInput(array $warehouseData): self
     {
