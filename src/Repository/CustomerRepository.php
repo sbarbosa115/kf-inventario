@@ -20,6 +20,49 @@ class CustomerRepository extends ServiceEntityRepository
         parent::__construct($registry, Customer::class);
     }
 
+    public function countAll(): int
+    {
+        return (int) $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Fetches a page of Customer objects with associations eager-loaded.
+     * Uses a two-step query (IDs first, then full fetch) to avoid LIMIT issues with JOINs.
+     *
+     * @return Customer[]
+     */
+    public function findPaginated(int $page, int $limit): array
+    {
+        $ids = $this->createQueryBuilder('c')
+            ->select('c.id')
+            ->orderBy('c.id', 'ASC')
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getScalarResult();
+
+        $ids = array_column($ids, 'id');
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('c')
+            ->select('c, a, city, state, country')
+            ->leftJoin('c.addresses', 'a')
+            ->leftJoin('a.city', 'city')
+            ->leftJoin('city.state', 'state')
+            ->leftJoin('state.country', 'country')
+            ->where('c.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->orderBy('c.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     /**
      * @return Customer[]
      */

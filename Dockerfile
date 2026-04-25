@@ -11,6 +11,10 @@ RUN apt update --fix-missing && \
         php8.4-xdebug php8.4-redis supervisor && \
     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt install -y nodejs
+
+
 COPY Docker/nginx/site.conf /etc/nginx/sites-available/site.conf
 COPY Docker/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY Docker/conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

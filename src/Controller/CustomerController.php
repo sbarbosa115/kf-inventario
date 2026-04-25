@@ -24,12 +24,20 @@ class CustomerController extends AbstractController
     #[Route('/', name: 'index', options: ['expose' => true])]
     #[IsGranted('ROLE_MANAGE_CUSTOMERS')]
     public function index(
-        CustomerService $customerService
+        CustomerService $customerService,
+        Request $request
     ): Response {
-        $customers = $customerService->getCustomersAsArray();
+        $page = max(1, (int) $request->query->get('page', 1));
+        $paginated = $customerService->getCustomersAsArrayPaginated($page);
 
         return $this->render('customer/index.html.twig', [
-            'customers' => $customers,
+            'customers' => $paginated['customers'],
+            'pagination' => [
+                'total' => $paginated['total'],
+                'totalPages' => $paginated['totalPages'],
+                'currentPage' => $paginated['currentPage'],
+                'limit' => $paginated['limit'],
+            ],
         ]);
     }
 

@@ -32,7 +32,7 @@ class Customers extends Component {
   }
 
   render() {
-    const { customers, token } = this.props;
+    const { customers, token, pagination } = this.props;
     const { toggleOpenModalConfirmDeleteCustomer, customerToDelete } = this.state;
     const columns = [
       {
@@ -95,10 +95,17 @@ class Customers extends Component {
         </div>
         <hr />
         <ReactTable
+          manual
           filterable
           data={customers}
           columns={columns}
           className="-striped -highlight"
+          pages={pagination.totalPages}
+          page={pagination.currentPage - 1}
+          defaultPageSize={pagination.limit}
+          onPageChange={(pageIndex) => {
+            window.location.href = `${Routing.generate('customer_index', null)}?page=${pageIndex + 1}`;
+          }}
         />
 
         {toggleOpenModalConfirmDeleteCustomer
@@ -127,4 +134,10 @@ export default Customers;
 Customers.propTypes = {
   customers: PropTypes.instanceOf(Array).isRequired,
   token: PropTypes.string.isRequired,
+  pagination: PropTypes.shape({
+    total: PropTypes.number.isRequired,
+    totalPages: PropTypes.number.isRequired,
+    currentPage: PropTypes.number.isRequired,
+    limit: PropTypes.number.isRequired,
+  }).isRequired,
 };

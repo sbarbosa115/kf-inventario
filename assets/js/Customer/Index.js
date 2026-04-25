@@ -6,4 +6,5 @@ const container = document.getElementById('index-customer');
 ReactDOM.render(<Customers
   customers={JSON.parse(container.dataset.customers)}
   token={container.dataset.token}
+  pagination={JSON.parse(container.dataset.pagination)}
 />, container);

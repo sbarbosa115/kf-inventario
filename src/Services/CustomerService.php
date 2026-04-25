@@ -211,6 +211,20 @@ class CustomerService
         return $this->serializeCustomer(null, $this->getCustomers());
     }
 
+    public function getCustomersAsArrayPaginated(int $page, int $limit = 100): array
+    {
+        $customers = $this->customerRepo->findPaginated($page, $limit);
+        $total = $this->customerRepo->countAll();
+
+        return [
+            'customers' => $this->serializeCustomer(null, $customers),
+            'total' => $total,
+            'totalPages' => (int) ceil($total / $limit),
+            'currentPage' => $page,
+            'limit' => $limit,
+        ];
+    }
+
     public function getCustomerAsArray(Customer $customer): array
     {
         return $this->serializeCustomer($customer);
