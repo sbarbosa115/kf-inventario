@@ -19,11 +19,11 @@ class UploadProductsType extends AbstractType
         $builder->add('products', FileType::class, [
             'constraints' => [
                 new Required(),
-                new File(['mimeTypes' => [
+                new File(mimeTypes: [
                     'application/vnd.ms-excel',
                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
-                ]]),
+                ]),
             ],
             'attr' => [
                 'class' => 'form-control-file',
