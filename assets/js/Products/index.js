@@ -1,5 +1,5 @@
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import React from 'react';
 import Products from './Index/Products';
 
-ReactDOM.render(<Products />, document.getElementById('react-component'));
+createRoot(document.getElementById('react-component')).render(<Products />);

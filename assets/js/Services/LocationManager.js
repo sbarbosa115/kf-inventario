@@ -4,27 +4,15 @@ export default class LocationManager {
   }
 
   static createEmptyAddress() {
-    return {
-      city: {
-        state: {
-          country: {},
-        },
-      },
-    };
+    return { city: { state: { country: {} } } };
   }
 
   static createEmptySelectObject(data) {
-    return Object.assign({
-      id: null,
-      name: 'Empty Country',
-    }, data);
+    return { id: null, name: 'Empty Country', ...data };
   }
 
-  static isDefined(variableToCheck) {
-    if (variableToCheck === undefined || variableToCheck === null) {
-      return false;
-    }
-    return true;
+  static isDefined(value) {
+    return value !== undefined && value !== null;
   }
 
   getCountries() {
@@ -32,26 +20,24 @@ export default class LocationManager {
   }
 
   getStates() {
-    return this.locations.flatMap(country => (
-      country.states.map(state => (state))
-    ));
+    return this.locations.flatMap(country => country.states.map(state => state));
   }
 
   getCities() {
-    return this.locations.flatMap(country => (
-      country.states.flatMap(state => (
-        state.cities.map(city => city)
-      ))
-    ));
+    return this.locations.flatMap(country =>
+      country.states.flatMap(state => state.cities.map(city => city))
+    );
   }
 
   getStatesByCountryId(countryId) {
-    return this.locations.filter(country => (country.id === countryId))
+    return this.locations
+      .filter(country => country.id === countryId)
       .flatMap(country => country.states);
   }
 
   getCitiesByState(stateId) {
-    return this.getStates().filter(state => (Number(state.id) === Number(stateId)))
+    return this.getStates()
+      .filter(state => Number(state.id) === Number(stateId))
       .flatMap(state => state.cities);
   }
 
@@ -66,13 +52,13 @@ export default class LocationManager {
     if (!LocationManager.isDefined(stateId)) {
       return LocationManager.createEmptySelectObject({ name: newStateName });
     }
-    return this.getStates().find(state => (state.id === Number(stateId)));
+    return this.getStates().find(state => state.id === Number(stateId));
   }
 
   getCityById(cityId, newCityName) {
     if (!LocationManager.isDefined(cityId)) {
       return LocationManager.createEmptySelectObject({ name: newCityName });
     }
-    return this.getCities().find(city => (city.id === Number(cityId)));
+    return this.getCities().find(city => city.id === Number(cityId));
   }
 }

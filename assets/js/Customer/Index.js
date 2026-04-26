@@ -1,10 +1,10 @@
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import React from 'react';
 import Customers from './Index/Customers';
 
 const container = document.getElementById('index-customer');
-ReactDOM.render(<Customers
+createRoot(container).render(<Customers
   customers={JSON.parse(container.dataset.customers)}
   token={container.dataset.token}
   pagination={JSON.parse(container.dataset.pagination)}
-/>, container);
+/>);
