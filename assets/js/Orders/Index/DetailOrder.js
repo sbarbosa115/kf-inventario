@@ -10,6 +10,7 @@ export default function DetailOrder({ orderDetailId, closeModal }) {
   const [products, setProducts] = useState([]);
   const [order, setOrder] = useState({});
   const [comments, setComments] = useState([]);
+  const [activeTab, setActiveTab] = useState('products');
 
   useEffect(() => {
     axios.get(Routing.generate('order_detail', { order: orderDetailId })).then((response) => {
@@ -76,21 +77,31 @@ export default function DetailOrder({ orderDetailId, closeModal }) {
         <hr />
         <ul className="nav nav-tabs" role="tablist">
           <li className="nav-item">
-            <a className="nav-link active" id="products-detail-tab" data-toggle="tab" href="#products-detail" role="tab" aria-controls="home" aria-selected="true">
+            <a
+              className={`nav-link${activeTab === 'products' ? ' active' : ''}`}
+              href="#products-detail"
+              role="tab"
+              onClick={(e) => { e.preventDefault(); setActiveTab('products'); }}
+            >
               {Translator.trans('order.index.order_products')}
             </a>
           </li>
           <li className="nav-item">
-            <a className="nav-link" id="order-detail-tab" data-toggle="tab" href="#order-comments" role="tab" aria-controls="profile" aria-selected="false">
+            <a
+              className={`nav-link${activeTab === 'comments' ? ' active' : ''}`}
+              href="#order-comments"
+              role="tab"
+              onClick={(e) => { e.preventDefault(); setActiveTab('comments'); }}
+            >
               {Translator.trans('order.index.order_comments')}
             </a>
           </li>
         </ul>
         <div className="tab-content">
-          <div className="tab-pane fade show active" id="products-detail" role="tabpanel" aria-labelledby="home-tab">
+          <div className={`tab-pane fade${activeTab === 'products' ? ' show active' : ''}`} id="products-detail" role="tabpanel">
             <ReactTable data={products} columns={columns} defaultPageSize={5} loading={loading} />
           </div>
-          <div className="tab-pane fade" id="order-comments" role="tabpanel" aria-labelledby="profile-tab">
+          <div className={`tab-pane fade${activeTab === 'comments' ? ' show active' : ''}`} id="order-comments" role="tabpanel">
             <hr />
             {comments.map(comment => (
               <div className="form-inline" key={comment.id}>
