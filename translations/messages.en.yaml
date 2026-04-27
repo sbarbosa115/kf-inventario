@@ -85,7 +85,7 @@ product:
       options: "Options"
       product_exist: "This product exist on the database."
       product_do_not_exist: "This product does not exist on the database, please add it before continue."
-      remove_product: "Click to remote the product from the list."
+      remove_product: "Click to remove the product from the list."
       loading: "Checking if the product exist on remote."
       confirm:
         title: "Confirm action"
@@ -95,7 +95,7 @@ product:
         remove_quantity: "Remove Quantities"
   incoming:
     title: "Incoming Products"
-    description: "Those are the incoming products that were send by other warehouses."
+    description: "These are the incoming products that were sent by other warehouses."
     approve_all: "Approve All"
     table:
       description: "Description"
@@ -165,7 +165,7 @@ order:
     detail: 'Order Detail'
     order_products: 'Products Detail'
     order_comments: 'Comments'
-    new: "Create a Order"
+    new: "Create an Order"
     download_order: "Download"
     download_remaining_order_products: "Remaining Products"
     delete_order: "Delete Order"

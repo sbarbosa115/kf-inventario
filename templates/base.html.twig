@@ -5,40 +5,7 @@
         <title>Inventory 1.4.2026 | {% block title %}{% endblock %}</title>
         <link rel="stylesheet" href="{{ asset('build/app.css') }}">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <style>
-            .sidebar .nav-item .nav-link.active {
-                font-weight: 600;
-                background-color: rgba(255,255,255,0.08);
-                border-left: 3px solid #fff;
-                padding-left: calc(1rem - 3px);
-            }
-            .sidebar-section {
-                padding: 0.6rem 1rem 0.25rem;
-                font-size: 0.65rem;
-                font-weight: 700;
-                letter-spacing: 0.1em;
-                text-transform: uppercase;
-                color: rgba(255,255,255,0.35);
-                margin-top: 0.5rem;
-            }
-            .sidebar-divider {
-                border-top: 1px solid rgba(255,255,255,0.1);
-                margin: 0.25rem 0;
-            }
-            #content-wrapper {
-                display: flex;
-                flex-direction: column;
-                min-height: calc(100vh - 56px);
-            }
-            .app-footer {
-                margin-top: auto;
-                padding: 0.75rem 1rem;
-                font-size: 0.78rem;
-                color: #adb5bd;
-                border-top: 1px solid #e9ecef;
-                background: #f8f9fa;
-            }
-        </style>
+
         {% block stylesheets %}{% endblock %}
     </head>
 
@@ -52,6 +19,11 @@
                 <button class="btn btn-link btn-sm text-white order-1 order-sm-0" id="sidebarToggle" href="#">
                     <i class="fas fa-bars"></i>
                 </button>
+                <!-- Navbar Search -->
+                <form class="d-none d-md-inline-block form-inline ml-auto mr-0 mr-md-3 my-2 my-md-0">
+
+                </form>
+                <!-- Navbar -->
                 <ul class="navbar-nav ml-auto ml-md-0">
                     <li class="nav-item dropdown no-arrow">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -61,13 +33,7 @@
                             {% endif %}
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                            <div class="dropdown-header text-muted small">
-                                {{ 'welcome'|trans }}
-                            </div>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="{{ path('app_logout') }}">
-                                <i class="fas fa-sign-out-alt fa-fw mr-1"></i> Logout
-                            </a>
+                            <a class="dropdown-item" href="{{ path('app_logout') }}">Logout</a>
                         </div>
                     </li>
                 </ul>
@@ -186,15 +152,6 @@
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
             <script src="{{ asset('build/app.js') }}"></script>
             <script src="{{ url('bazinga_jstranslation_js') }}"></script>
-            <script>
-                // Auto-dismiss flash alerts after 4 s
-                setTimeout(function () {
-                    document.querySelectorAll('.auto-dismiss').forEach(function (el) {
-                        el.classList.remove('show');
-                        setTimeout(function () { el.remove(); }, 200);
-                    });
-                }, 4000);
-            </script>
             {% block javascripts %}{% endblock %}
         </body>
     {% endblock %}

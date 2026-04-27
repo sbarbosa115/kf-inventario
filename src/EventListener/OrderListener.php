@@ -4,7 +4,8 @@ namespace App\EventListener;
 
 use App\Entity\Order;
 use App\Entity\OrderStatus;
-use  Doctrine\ORM\Event\LifecycleEventArgs;
+use Doctrine\ORM\Event\PostPersistEventArgs;
+use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\EntityManagerInterface;
 
 class OrderListener
@@ -18,7 +19,7 @@ class OrderListener
         $this->manager = $manager;
     }
 
-    public function postPersist(LifecycleEventArgs $event): void
+    public function postPersist(PostPersistEventArgs $event): void
     {
         $order = $event->getObject();
 
@@ -27,7 +28,7 @@ class OrderListener
         }
     }
 
-    public function postUpdate(LifecycleEventArgs $event): void
+    public function postUpdate(PostUpdateEventArgs $event): void
     {
         $order = $event->getObject();
         if ($order instanceof Order && null === $order->getParent()) {
