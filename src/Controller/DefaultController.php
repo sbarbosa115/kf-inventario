@@ -22,7 +22,7 @@ class DefaultController extends AbstractController
     {
         $email = (new Email())
             ->from('no-reply@klassicfab.com')
-            ->to('sbarbosa@gmail.com')
+            ->to('sbarbosa115@gmail.com')
             ->subject('Test email')
             ->text('This is a plain test email sent from the application.');
 
