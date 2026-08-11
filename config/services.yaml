@@ -15,8 +15,7 @@ parameters:
       from_name: '%env(MAILER_FROM_NAME)%'
       printer_address: '%env(MAILER_PRINTER_ADDRESS)%'
       cc:
-        - "sbarbosa115@gmail.com"
-        - "sbarbosa115@hotmail.com"
+        - "sales@klassicfab.com"
 
 services:
     # default configuration for services in *this* file
