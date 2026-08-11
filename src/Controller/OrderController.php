@@ -403,18 +403,4 @@ class OrderController extends AbstractController
         return new JsonResponse(['status' => true]);
     }
 
-    #[Route('/test', name: 'test', methods: ['GET'], options: ['expose' => true])]
-    public function test(
-        MailerInterface $mailer
-    ): Response {
-        $message = (new Email())
-            ->subject('Test from code')
-            ->text('Test form code')
-            ->from(new Address('sales@klassicfab.com'))
-            ->to(new Address('sbarbosa115@gmail.com'));
-
-        $mailer->send($message);
-
-        return new JsonResponse(['status' => true]);
-    }
 }

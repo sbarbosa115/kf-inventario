@@ -74,6 +74,10 @@ class NotificationService
             $message->to(new Address($mailerParams['printer_address']));
         }
 
+        foreach ($mailerParams['cc'] ?? [] as $ccAddress) {
+            $message->addCc(new Address($ccAddress));
+        }
+
         $this->mailer->send($message);
     }
 }
