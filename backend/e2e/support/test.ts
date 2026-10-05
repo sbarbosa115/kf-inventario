@@ -48,7 +48,10 @@ interface Fixtures {
 }
 
 export const test = base.extend<Fixtures>({
-  signedInAs: async ({browser, baseURL, viewport, locale}, provide) => {
+  signedInAs: async (
+    {browser, baseURL, viewport, locale, isMobile, hasTouch},
+    provide,
+  ) => {
     const contexts: BrowserContext[] = [];
     await provide(async (username) => {
       const storageState = await sessionOf(
@@ -60,6 +63,8 @@ export const test = base.extend<Fixtures>({
         baseURL,
         viewport,
         locale,
+        isMobile,
+        hasTouch,
         storageState,
       });
       contexts.push(context);

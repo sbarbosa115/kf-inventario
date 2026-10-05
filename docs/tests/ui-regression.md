@@ -48,7 +48,8 @@ docker compose exec php php bin/console app:smoke:prepare --seed
 
 - The browser console has no errors, and nothing is a blank page.
 - No text shows a raw translation key (`orders.title`).
-- Tables and forms look like the rest of the app (`CLAUDE.md`): the shared table, its search box and pages.
+- Tables and forms look like the rest of the app (`CLAUDE.md`): built from the kit, light and dark both readable.
+- At 390 px (a phone): no sideways scroll of the page, lists as cards, the tab bar at the bottom.
 - A success or error message appears after every save, and it belongs to *that* save.
 
 ---
@@ -92,6 +93,29 @@ or Users.
 **NAV-03 · An unknown address shows "Page not found"**
 Smoke: `e2e/auth.spec.ts`.
 Open `/admin/nothing-here` signed in: "Page not found" inside the app, with a link to the product list.
+
+**AUTH-07 · The sign-in page in Spanish**
+Smoke: `e2e/design-system.spec.ts`.
+On `/admin/login`, under the form, choose ES: "Iniciar sesión", "Usuario", "Contraseña". Reload: still Spanish. A new
+browser whose language is Spanish (es-CO) opens the sign-in page in Spanish the first time.
+
+**AUTH-08 · The name in the top bar, Sign out in its menu**
+Smoke: `e2e/design-system.spec.ts`.
+Signed in as the admin: the top bar shows `Sergio Barbosa` (not the email). Open it: the username `sbarbosa115`, the
+email and "Sign out".
+
+**NAV-04 · The rail shows icons with tooltips**
+At 1440 px, "Collapse the menu" at the bottom of the sidebar: a narrow rail of icons; hovering each shows its name
+(Products, Upload a stock sheet, Scan, …); the current page's icon is marked. "Expand the menu" brings the names back.
+
+**NAV-05 · The tab bar of the inventory clerk**
+Smoke: `e2e/design-system.spec.ts`.
+At 390 px as `inventory`: the bottom tab bar shows Products, Scan, Incoming and More; More opens the whole menu.
+
+**NAV-06 · The scan shortcut only for the inventory roles**
+Smoke: `e2e/design-system.spec.ts`.
+As `inventory`, the top bar has "Open the reader" (a barcode icon) leading to `/admin/products/barcode`. As
+`invoices`, it is not there.
 
 ## 2. Products (INV)
 
@@ -153,6 +177,10 @@ Signed in as `invoices`: no Products entry in the sidebar; opening `/admin/produ
 permission to do this."; `/api/v1/warehouses/1/stock` answers 403. Signed in as `inventory`: the list, the move and
 the form all work (INV-02 – 07 run as that account).
 
+### Product list and form, redesigned (item 1)
+
+<!-- Item 1 (products-ui) adds INV-17 – 22 here, and updates the texts of INV-01 – 08. -->
+
 **INV-09 · The upload screen links to the template and to every product**
 Smoke: `e2e/stock.spec.ts`.
 Signed in as the admin, open `/admin/product/upload` (the previous version's address): `/admin/products/upload` opens,
@@ -201,6 +229,10 @@ Smoke: `e2e/stock.spec.ts`.
 Signed in as `invoices`: no Products menu; `/admin/products/incoming` says "You do not have permission to do this.";
 an upload submitted on `/admin/products/upload` says the same.
 
+### Upload, scan and incoming, redesigned (item 2)
+
+<!-- Item 2 (warehouse-ops-ui) adds INV-23 – 30 here, and updates the texts of INV-09 – 16. -->
+
 ## 3. Warehouses (WH)
 
 <!-- Item 7 (stock-ui) adds WH-01 – 03. -->
@@ -221,6 +253,10 @@ new name. By hand: the new name appears in every warehouse list (Products, Order
 Smoke: `e2e/stock.spec.ts`.
 Signed in as `invoices` (no Warehouses entry in the sidebar), `/admin/warehouses` still lists the warehouses, as the
 previous version did (the API asks only for a signed-in user: a known gap).
+
+### Warehouse cards (item 2)
+
+<!-- Item 2 (warehouse-ops-ui) adds WH-04 – 05 here, and updates the texts of WH-01 – 03. -->
 
 ## 4. Customers (CUS)
 
@@ -260,6 +296,10 @@ exists." with a link back to the customers.
 Smoke: `e2e/customers.spec.ts`.
 Signed in as `inventory`: no Customers entry in the sidebar; `/admin/customers` says "You do not have permission to do
 this."; `/api/v1/customers` answers 403.
+
+### Customers, redesigned (item 5)
+
+<!-- Item 5 (customers-ui) adds CUS-07 – 10 here, and updates the texts of CUS-01 – 06. -->
 
 ## 5. Orders (ORD)
 
@@ -340,6 +380,10 @@ Smoke: `e2e/orders.spec.ts`.
 Signed in as `inventory`: no Orders entry in the sidebar; `/admin/orders` says "You do not have permission to do
 this."; `/api/v1/orders?warehouse_id=1` answers 403.
 
+### Orders list and detail, redesigned (item 3)
+
+<!-- Item 3 (orders-ui) adds ORD-21 – 28 here, and updates the texts of ORD-01 – 10. -->
+
 **ORD-11 · The old order form and getting-ready addresses land on the new screens**
 Smoke: `e2e/order-forms.spec.ts`.
 Signed in as the admin, open `/admin/order/new` (the previous version's address): `/admin/orders/new` opens, "Create a
@@ -419,6 +463,10 @@ skipped, no order appears twice. Delete one of the imported orders and sync agai
 `order_sync_failed`), and `docker compose logs php` (or `var/log/dev.log`) names the shop's answer. Put the right keys
 back and empty `backend/.env.local` when done.
 
+### Order form and getting ready, redesigned (item 4)
+
+<!-- Item 4 (order-forms-ui) adds ORD-29 – 34 here, and updates the texts of ORD-11 – 18 and MAIL-01 – 02. -->
+
 ## 6. Invoices (INVC)
 
 **INVC-01 · The list shows the invoices, and the old addresses land on the new screens**
@@ -464,6 +512,10 @@ Signed in as the admin: no Invoices entry in the sidebar; `/admin/invoices` says
 this."; `/api/v1/invoices` answers 403 (no role reaches the invoice roles; they are given one by one). A user with
 only `ROLE_CAN_READ_INVOICES` sees the list and the detail but no Create invoice button.
 
+### Invoices, redesigned (item 6)
+
+<!-- Item 6 (invoices-ui) adds INVC-07 – 11 here, and updates the texts of INVC-01 – 06. -->
+
 ## 7. Users (USR)
 
 **USR-01 · The list shows every account with its roles, and the old address lands on it**
@@ -501,6 +553,10 @@ Signed in as `inventory`: no Users entry in the sidebar; opening `/admin/users` 
 this."; `/api/v1/users` answers 403. By hand, as the admin: change a user's password on Edit (type a new one, Save),
 then sign in with the old one (refused) and the new one (works).
 
+
+### Users, redesigned (item 7)
+
+<!-- Item 7 (users-ui) adds USR-07 – 09 here, and updates the texts of USR-01 – 06. -->
 
 ## 8. Emails (MAIL)
 
@@ -547,3 +603,78 @@ Smoke: `e2e/webhook.spec.ts`.
 Post the sample order with `X-WC-Webhook-Source: https://unknown-shop.test` (and a new `id`). The answer is still
 `{"status":true}`; no warehouse lists the order, no email arrives, and `docker compose logs php` shows
 "Warehouse [https://unknown-shop.test] was not found".
+
+## 10. Design system (DS)
+
+The redesign's shell, kit, themes and languages (`docs/pdr/prd-redesign.md`, `docs/design/README.md`). Run at 1440 px
+and at 390 px (a phone, or the browser's device mode), in light and dark.
+
+**DS-01 · The shell at 1440 px**
+Smoke: `e2e/design-system.spec.ts`.
+Signed in as the admin at 1440 px: the KF mark and "KF Inventory" at the top of the sidebar, the groups Warehouse, Sales
+and Admin, the name `Sergio Barbosa` in the top bar. Press Tab once from the top of the page: "Skip to content" appears
+and is focused; Enter moves the focus to the page.
+
+**DS-02 · The sidebar collapses to a rail and stays so**
+Smoke: `e2e/design-system.spec.ts`.
+"Collapse the menu": the rail. Reload: still the rail. "Expand the menu": the full sidebar again.
+
+**DS-03 · The phone layout**
+Smoke (part): `e2e/design-system.spec.ts` opens the drawer, reads the tab bar and checks that Products, Orders and Scan
+do not scroll sideways at 390 px; by hand: every screen looks right at 390 px (no cut text, 44 px targets, the
+action bar above the tab bar).
+At 390 px: no sidebar; "Menu" opens the whole menu as a drawer from the left (Escape or × closes it); the tab bar at the
+bottom shows the role's first entries and More.
+
+**DS-04 · A visible focus everywhere**
+With the keyboard only (Tab, Shift+Tab, arrows), go through the shell, a list and a form in both themes: every button,
+link, input, chip, row menu and menu item shows the 2 px accent ring when focused; nothing is reached without it.
+
+**DS-05 · The tab title follows the page**
+Smoke: `e2e/design-system.spec.ts`.
+Open Orders, then a product, then a missing address: the browser tab reads "<the page's title> · KF Inventory"
+("Page not found · KF Inventory"); the sign-in page "Sign in · KF Inventory".
+
+**DS-06 · The language switch keeps the page**
+Smoke: `e2e/design-system.spec.ts`.
+On Orders, choose ES in the top bar: the menu and the page are in Spanish (Pedidos, Clientes…), the address and the
+rows of the table are the same. Reload: still Spanish. Choose EN: back to English.
+
+**DS-07 · Light, dark, or the system's**
+Smoke (part): `e2e/design-system.spec.ts` checks the theme chosen, kept after a reload, and System following the
+system's setting; by hand: no white flash when the page reloads in dark, and every screen readable in both.
+Top bar › theme › Dark: the app turns dark. Reload: dark from the first frame. Theme › System: the app follows the
+computer's light/dark setting, and changes when it changes.
+
+**DS-08 · Notifications**
+Smoke: `e2e/design-system.spec.ts` (on `/admin/_kit`).
+A success notification appears at the bottom right (bottom centre on a phone) and goes after 5 seconds; an error one
+stays until its × is pressed. A screen reader announces both.
+
+**DS-09 · No raw key in Spanish, light and dark**
+After every screen item is merged: every screen in Spanish, light and dark, at 1440 and 390 px: no `orders.title`-like
+key, no English left in the shell or the kit, nothing unreadable.
+
+**DS-10 · The camera is asked for only after the tap**
+Covered by `CameraScanner.test.tsx` with a fake detector (no real-phone run, the user's decision): the permission is
+asked only after "Start camera"; refused, the scanner says how to allow it and the typed input stays; on an address that
+is not https it says the camera needs a secure address.
+
+**DS-11 · A camera read lands once, with a tone and a vibration**
+Covered by `CameraScanner.test.tsx` with a fake detector (no real-phone run, the user's decision): a code read calls
+the screen once, with a vibration and a tone; the same label held still is counted once; the camera stays open.
+
+**DS-12 · Lighthouse accessibility**
+Chrome DevTools › Lighthouse › Accessibility on every screen, light and dark: 95 or more.
+
+**DS-13 · Signing in: show the password, Caps Lock, the error in place**
+Smoke (part): `e2e/design-system.spec.ts` shows the password and checks the inline error; by hand: with Caps Lock
+on, "Caps Lock is on" appears under the password.
+On the sign-in page, the eye button shows the password and hides it again; "Sign in" with an empty field says
+"Type your username and password." above the button, and a wrong password "Wrong username or password." in the same
+place.
+
+**DS-14 · The page not found is branded, with the way back**
+Smoke: `e2e/design-system.spec.ts`.
+Signed in, open `/admin/nothing-here`: the KF mark, "Page not found", and "Go to the product list", which opens it.
+
