@@ -9,7 +9,7 @@ final readonly class SyncResultOutput
 {
     public function __construct(
         public int $imported,
-        /** Already imported, or from a warehouse without credentials */
+        /** Already imported (deleted ones included), or not placeable (unknown SKU, no lines) */
         public int $skipped,
     ) {
     }

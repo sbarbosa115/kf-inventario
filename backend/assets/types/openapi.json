@@ -1721,7 +1721,7 @@
                         "type": "integer"
                     },
                     "skipped": {
-                        "title": "Already imported, or from a warehouse without credentials",
+                        "title": "Already imported (deleted ones included), or not placeable (unknown SKU, no lines)",
                         "type": "integer"
                     }
                 },

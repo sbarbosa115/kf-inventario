@@ -326,7 +326,7 @@ browser, wrong password shows one generic message, the sidebar shows exactly tod
 `flock -n ~/.kf-worker.lock <php> ~/kf-inventory/backend/bin/console messenger:consume mail --time-limit=55 --memory-limit=128M --env=prod --no-debug`,
 `messenger:stop-workers` after a deploy, backup before a pending migration, the `serverVersion` check), `deploy/env.local.example`
 (`APP_ENV=prod`, `APP_SECRET`, `DATABASE_URL` with `serverVersion=`, `DEFAULT_URI`, `MAILER_DSN`, `MAILER_FROM_ADDRESS`,
-`MAILER_FROM_NAME`, `MAILER_PRINTER_ADDRESS`, `WOOCOMMERCE_<N>_URL/KEY/SECRET` (item 13), `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID=1`,
+`MAILER_FROM_NAME`, `MAILER_PRINTER_ADDRESS`, `WOO_COMMERCE_URL/API_KEY/API_SECRET` (item 13), `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID=1`,
 `MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0`), `deploy/htaccess-symfony.conf`, README sections
 (Running it, Architecture table, API reference, Data model decisions — the drift and why it stays, Deploying to cPanel
 with the cutover list: document root → `backend/public`, `.env.local`, run the script, add the cron line, everyone signs
@@ -454,7 +454,7 @@ Waves: 1 → {1, 2, 3, 4}; 2 → {5, 6, 7, 8}; 3 → {9, 10, 11, 13}; 4 → {12}
    (`messenger:failed:show`). Missing mailer params → no email and a `log` row `mail` as today.
 7. **WooCommerce.** The webhook URL `/admin/order/1H39j0jpQPsWL958v9R4` does not change (public access rule, excluded from
    the SPA catch-all). "Email only when the warehouse id is 1" becomes `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID` (default 1).
-   `POST /api/v1/orders/sync` **pulls orders from the WooCommerce REST API** (user decision 2026-10-05), built by item 13: per warehouse whose `urls` hold a WooCommerce source, credentials from env (`WOOCOMMERCE_<N>_URL/KEY/SECRET`, no table change), each remote order mapped by the same `WebhookOrderMapper` the webhook uses and skipped when an order with that remote id/code already exists (idempotent), same printer email rule. Item 4 leaves the endpoint answering 501 `order_sync_unavailable`; item 13 replaces it.
+   `POST /api/v1/orders/sync` **pulls orders from the WooCommerce REST API** (user decision 2026-10-05), built by item 13: per warehouse whose `urls` hold a WooCommerce source, credentials from the existing single set `WOO_COMMERCE_URL/API_KEY/API_SECRET` (one shop, to the warehouse whose `urls` hold that address; no table change — as built by item 13), each remote order mapped by the same `WebhookOrderMapper` the webhook uses and skipped when an order with that remote id/code already exists (idempotent), same printer email rule. Item 4 leaves the endpoint answering 501 `order_sync_unavailable`; item 13 replaces it.
 8. **Cutover of screens.** Each UI item deletes its Twig templates, legacy controller actions and JS entry in the same
    change, and adds `301` rows to `config/routes/legacy_redirects.yaml` for the old GET page URLs. The Twig `base.html.twig`
    and the remaining `assets/js` go in item 12. During the split the base branch serves both the SPA (`/admin/...` new
