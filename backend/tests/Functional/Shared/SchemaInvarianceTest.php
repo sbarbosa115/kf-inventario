@@ -19,10 +19,11 @@ final class SchemaInvarianceTest extends KernelTestCase
         $em = self::getContainer()->get(EntityManagerInterface::class);
 
         $proposed = (new SchemaTool($em))->getUpdateSchemaSql($em->getMetadataFactory()->getAllMetadata());
-        // The migrations' own table is not mapped (the console's schema:update filters it out the same way).
+        // Not entities: the migrations' own table (the console's schema:update filters it out the same way) and the
+        // email queue's, which belongs to Messenger's doctrine transport (in-memory in tests).
         $proposed = array_values(array_filter(
             $proposed,
-            static fn (string $sql): bool => !str_contains($sql, 'doctrine_migration_versions'),
+            static fn (string $sql): bool => !str_contains($sql, 'doctrine_migration_versions') && !str_contains($sql, 'messenger_messages'),
         ));
 
         self::assertSame(

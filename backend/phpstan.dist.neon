@@ -9,19 +9,18 @@ parameters:
     tmpDir: var/cache/phpstan
     excludePaths:
         # The legacy Twig app and its tests: kept working while the restructure replaces them, removed by item 12
-        # (legacy-removal). New code never goes here.
-        - src/Command
-        - src/Constraints
-        - src/Controller
-        - src/DataProviders
-        - src/EventListener
-        - src/Form
-        - src/Model
-        - src/Repository
-        - src/Security
-        - src/Services
-        - src/Validator
-        - tests/Legacy
+        # (legacy-removal). New code never goes here. Optional (?): each UI item deletes what its screen used.
+        - src/Command (?)
+        - src/Constraints (?)
+        - src/Controller (?)
+        - src/DataProviders (?)
+        - src/EventListener (?)
+        - src/Form (?)
+        - src/Model (?)
+        - src/Repository (?)
+        - src/Services (?)
+        - src/Validator (?)
+        - tests/Legacy (?)
     symfony:
         # The test container: the tests run against it, and it holds every app service.
         # Warm it first: docker compose exec php php bin/console cache:warmup --env=test

@@ -13,7 +13,7 @@ $finder = (new PhpCsFixer\Finder())
     // (and test against), and item 12 deletes them.
     ->exclude([
         'src/Command', 'src/Constraints', 'src/Controller', 'src/DataProviders', 'src/EventListener', 'src/Form',
-        'src/Model', 'src/Repository', 'src/Security', 'src/Services', 'src/Validator',
+        'src/Model', 'src/Repository', 'src/Services', 'src/Validator',
         'tests/Legacy',
     ])
 ;

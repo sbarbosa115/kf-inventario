@@ -6,6 +6,10 @@
 parameters:
   locale: 'en'
   test: 'en'
+  # The printer email of a new order (Ordering): who else gets a copy, and the warehouse whose WooCommerce orders send
+  # it (the webhook: only that warehouse's shop orders are printed).
+  ordering.order_email.cc: ['sales@klassicfab.com']
+  ordering.webhook_email_warehouse_id: '%env(int:ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID)%'
   woo_commerce:
     url: '%env(WOO_COMMERCE_URL)%'
     api_key: '%env(WOO_COMMERCE_API_KEY)%'
@@ -18,29 +22,41 @@ parameters:
       - 'sales@klassicfab.com'
 
 services:
-  # default configuration for services in *this* file
   _defaults:
-    autowire: true # Automatically injects dependencies in your services.
-    autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-    public:
-      false # Allows optimizing the container by removing unused services; this also means
-      # fetching services directly from the container via $container->get() won't work.
-      # The best practice is to be explicit about your dependencies anyway.
+    autowire: true
+    autoconfigure: true
 
-  # makes classes in src/ available to be used as services
-  # this creates a service per class whose id is the fully-qualified class name
+  # A write use case's handler is registered on the command bus by implementing the marker: the Application layer
+  # never names Messenger (deptrac.yaml).
+  _instanceof:
+    App\Shared\Application\Command\CommandHandler:
+      tags: [{name: messenger.message_handler, bus: command.bus}]
+    # Handled after the command that published them has committed (App\Shared\Application\Event\EventBus).
+    App\Shared\Application\Event\EventHandler:
+      tags: [{name: messenger.message_handler, bus: command.bus}]
+
   App\:
-    resource: '../src/*'
-    exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+    resource: '../src/'
+    exclude:
+      - '../src/DependencyInjection/'
+      - '../src/Kernel.php'
+      # Data, not services: domain models, errors and events, and API input/output DTOs.
+      - '../src/*/Domain/Model/'
+      - '../src/*/Domain/Error/'
+      - '../src/*/Domain/Event/'
+      - '../src/*/UI/Http/Input/'
+      - '../src/*/UI/Http/Output/'
+      # Exceptions and the attribute an endpoint declares its response with.
+      - '../src/Shared/UI/Http/ApiException.php'
+      - '../src/Shared/UI/Http/ApiValidationException.php'
+      - '../src/Shared/UI/Http/ApiResponse.php'
+      # Needs NelmioApiDocBundle, which only dev and test install: registered below for those.
+      - '../src/Shared/UI/Http/OpenApi/'
 
-  # controllers are imported separately to make sure services can be injected
-  # as action arguments even if you don't extend any base controller class
+  # The legacy Twig app's controllers (item 12 removes them).
   App\Controller\:
     resource: '../src/Controller'
     tags: ['controller.service_arguments']
-
-  # add more service definitions when explicit configuration is needed
-  # please note that last definitions always *replace* previous ones
 
   gedmo.listener.softdeleteable:
     class: Gedmo\SoftDeleteable\SoftDeleteableListener
@@ -70,3 +86,13 @@ services:
           event: postUpdate,
           priority: 1,
         }
+
+when@dev:
+  services:
+    App\Shared\UI\Http\OpenApi\ApiResponseDescriber:
+      tags: [{name: nelmio_api_doc.route_describer, priority: -300}]
+
+when@test:
+  services:
+    App\Shared\UI\Http\OpenApi\ApiResponseDescriber:
+      tags: [{name: nelmio_api_doc.route_describer, priority: -300}]

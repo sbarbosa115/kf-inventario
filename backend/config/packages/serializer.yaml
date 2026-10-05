@@ -1,0 +1,5 @@
+framework:
+  serializer:
+    # The API's JSON is snake_case (first_name, warehouse_id…); PHP stays camelCase. The legacy Twig app builds its
+    # own serializers (new Serializer(...)), so its JSON is unchanged.
+    name_converter: serializer.name_converter.camel_case_to_snake_case
