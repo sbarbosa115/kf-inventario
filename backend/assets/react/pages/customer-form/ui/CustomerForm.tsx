@@ -1,5 +1,5 @@
 import {useState, type FormEvent} from 'react';
-import {Link, useNavigate} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {
   addressesComplete,
   createCustomer,
@@ -17,7 +17,14 @@ import type {Country} from '@/entities/location';
 import {AddressForm} from '@/widgets/address-form';
 import {ApiError, failureMessage} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {Field} from '@/shared/ui';
+import {
+  ActionBar,
+  Button,
+  Field,
+  FormLayout,
+  FormSection,
+  useToast,
+} from '@/shared/ui';
 
 /** The customer's fields and addresses. Without `customer` it creates one; with it, it edits that one. */
 export function CustomerForm({
@@ -29,6 +36,7 @@ export function CustomerForm({
 }) {
   const {t} = useTranslation();
   const navigate = useNavigate();
+  const toast = useToast();
   const [values, setValues] = useState<CustomerFormValues>(() =>
     customer ? customerToForm(customer) : emptyCustomerForm(),
   );
@@ -60,9 +68,8 @@ export function CustomerForm({
       } else {
         await createCustomer(payload);
       }
-      navigate('/admin/customers', {
-        state: {saved: customer ? 'updated' : 'created'},
-      });
+      toast.success(t(customer ? 'customers.updated' : 'customers.created'));
+      navigate('/admin/customers');
     } catch (error) {
       if (error instanceof ApiError && error.status === 422) {
         setErrors(violationsToErrors(error.body));
@@ -79,82 +86,97 @@ export function CustomerForm({
   };
 
   return (
-    <form onSubmit={submit} noValidate>
+    <FormLayout
+      onSubmit={submit}
+      label={t(
+        customer ? 'customers.form.editTitle' : 'customers.form.newTitle',
+      )}
+    >
       {failure && (
         <div className="alert alert-danger" role="alert">
           {failure}
         </div>
       )}
-      <div className="form-row">
-        <div className="col-md-6">
-          <Field
-            label={t('customers.form.firstName')}
-            error={errors.first_name}
-          >
-            <input
-              className="form-control"
-              value={values.first_name}
-              maxLength={255}
-              onChange={(event) => set('first_name', event.target.value)}
-            />
-          </Field>
+      <FormSection
+        title={t('customers.form.contact')}
+        description={t('customers.form.contactHint')}
+      >
+        <div className="form-row">
+          <div className="col-md-6">
+            <Field
+              label={t('customers.form.firstName')}
+              error={errors.first_name}
+            >
+              <input
+                className="form-control"
+                value={values.first_name}
+                maxLength={255}
+                onChange={(event) => set('first_name', event.target.value)}
+              />
+            </Field>
+          </div>
+          <div className="col-md-6">
+            <Field
+              label={t('customers.form.lastName')}
+              error={errors.last_name}
+            >
+              <input
+                className="form-control"
+                value={values.last_name}
+                maxLength={255}
+                onChange={(event) => set('last_name', event.target.value)}
+              />
+            </Field>
+          </div>
         </div>
-        <div className="col-md-6">
-          <Field label={t('customers.form.lastName')} error={errors.last_name}>
-            <input
-              className="form-control"
-              value={values.last_name}
-              maxLength={255}
-              onChange={(event) => set('last_name', event.target.value)}
-            />
-          </Field>
+        <div className="form-row">
+          <div className="col-md-6">
+            <Field label={t('customers.form.email')} error={errors.email}>
+              <input
+                type="email"
+                className="form-control"
+                value={values.email}
+                maxLength={255}
+                onChange={(event) => set('email', event.target.value)}
+              />
+            </Field>
+          </div>
+          <div className="col-md-6">
+            <Field label={t('customers.form.phone')} error={errors.phone}>
+              <input
+                type="tel"
+                className="form-control"
+                value={values.phone}
+                maxLength={255}
+                onChange={(event) => set('phone', event.target.value)}
+              />
+            </Field>
+          </div>
         </div>
-      </div>
-      <div className="form-row">
-        <div className="col-md-6">
-          <Field label={t('customers.form.email')} error={errors.email}>
-            <input
-              type="email"
-              className="form-control"
-              value={values.email}
-              maxLength={255}
-              onChange={(event) => set('email', event.target.value)}
-            />
-          </Field>
-        </div>
-        <div className="col-md-6">
-          <Field label={t('customers.form.phone')} error={errors.phone}>
-            <input
-              className="form-control"
-              value={values.phone}
-              maxLength={255}
-              onChange={(event) => set('phone', event.target.value)}
-            />
-          </Field>
-        </div>
-      </div>
-      <AddressForm
-        addresses={values.addresses}
-        locations={locations}
-        showErrors={attempted}
-        onChange={(addresses) => set('addresses', addresses)}
-      />
-      <div className="form-row mt-3">
-        <div className="col-md-6 mb-2">
-          <Link to="/admin/customers" className="btn btn-danger btn-block">
+      </FormSection>
+      <FormSection
+        title={t('customers.form.addresses')}
+        description={t('customers.form.addressesHint')}
+      >
+        <AddressForm
+          addresses={values.addresses}
+          locations={locations}
+          showErrors={attempted}
+          onChange={(addresses) => set('addresses', addresses)}
+        />
+      </FormSection>
+      <ActionBar
+        secondary={
+          <Button variant="ghost" to="/admin/customers">
             {t('common.cancel')}
-          </Link>
-        </div>
-        <div className="col-md-6 mb-2">
-          <button
-            type="submit"
-            className="btn btn-success btn-block"
-            disabled={busy}
-          >
-            {busy ? t('common.saving') : t('common.save')}
-          </button>
-        </div>
-      </div>
-    </form>
+          </Button>
+        }
+        primary={
+          <Button variant="primary" type="submit" loading={busy}>
+            {t('common.save')}
+          </Button>
+        }
+      />
+    </FormLayout>
   );
 }

@@ -4,7 +4,7 @@ import {listLocations} from '@/entities/location';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
-import {ErrorState, Loader, PageCard} from '@/shared/ui';
+import {ErrorState, PageHeader, Skeleton} from '@/shared/ui';
 import {CustomerForm} from './CustomerForm';
 
 /** New Customer (/admin/customers/new) and Edit Customer (/admin/customers/:id/edit): one form for both. */
@@ -12,15 +12,17 @@ export function CustomerFormPage() {
   const {t} = useTranslation();
   const {id} = useParams();
   return (
-    <PageCard
-      title={
-        id === undefined
-          ? t('customers.form.newTitle')
-          : t('customers.form.editTitle')
-      }
-    >
+    <>
+      <PageHeader
+        title={
+          id === undefined
+            ? t('customers.form.newTitle')
+            : t('customers.form.editTitle')
+        }
+        back="/admin/customers"
+      />
       <Loaded id={id} />
-    </PageCard>
+    </>
   );
 }
 
@@ -59,7 +61,7 @@ function Loaded({id}: {id: string | undefined}) {
     locations.data === undefined ||
     (id !== undefined && customer.data === undefined)
   ) {
-    return <Loader />;
+    return <Skeleton variant="form" />;
   }
   return <CustomerForm customer={customer.data} locations={locations.data} />;
 }
