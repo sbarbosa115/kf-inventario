@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Inventory\Domain\Model\Product;
 use App\Inventory\Domain\Model\Warehouse;
 use App\Form\ProductType;
-use App\Form\UploadProductsType;
 use App\Repository\ProductRepository;
 use App\Repository\ProductWarehouseRepository;
 use App\Services\LogService;
@@ -102,26 +101,6 @@ class ProductController extends AbstractController
         ]);
     }
 
-    #[Route('/upload', name: 'product_upload', methods: ['GET', 'POST'])]
-    public function upload(
-        TranslatorInterface $translator,
-        Request $request,
-        ProductService $productService
-    ): Response {
-        $form = $this->createForm(UploadProductsType::class);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $productService->processXls($form->getData());
-            $this->addFlash('success', $translator->trans('product.uploaded_successfully'));
-
-            return $this->redirectToRoute('product_product_index');
-        }
-
-        return $this->render('product/upload.html.twig', [
-            'form' => $form->createView(),
-        ]);
-    }
-
     #[Route('/template/{all}', defaults: ['all' => false], name: 'template', methods: ['GET', 'POST'], options: ['expose' => true])]
     public function uploadProductsTemplate(
         ProductRepository $productRepo,
@@ -207,12 +186,6 @@ class ProductController extends AbstractController
         return new JsonResponse(['status' => true]);
     }
 
-    #[Route('/update/bar-code', name: 'bar_code', methods: ['GET'])]
-    public function updateBarCode(): Response
-    {
-        return $this->render('product/bar-code.html.twig');
-    }
-
     #[Route('/update/bar-code/{warehouse}/add', name: 'bar_code_add', options: ['expose' => true], methods: ['POST'])]
     public function addBarCode(
         ProductService $productService,
@@ -253,12 +226,6 @@ class ProductController extends AbstractController
         );
 
         return new JsonResponse(['status' => true]);
-    }
-
-    #[Route('/incoming', name: 'incoming', methods: ['GET'])]
-    public function incoming(): Response
-    {
-        return $this->render('product/incoming.html.twig');
     }
 
     #[Route('/incoming/approve/{warehouse}', name: 'approve_incoming', methods: ['POST'], options: ['expose' => true])]

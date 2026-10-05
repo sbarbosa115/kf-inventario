@@ -19,8 +19,6 @@ class WarehouseControllerTest extends UserWebTestCase
 
     public function getUrlsForRegularUsers(): ?\Generator
     {
-        yield ['GET', '/admin/warehouse/'];
-        yield ['GET', '/admin/warehouse/edit/1'];
         yield ['GET', '/admin/warehouse/all'];
     }
 }

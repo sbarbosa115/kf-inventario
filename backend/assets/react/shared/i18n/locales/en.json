@@ -103,7 +103,90 @@
     }
   },
   "products": {},
-  "stock": {},
+  "stock": {
+    "warehouse": {
+      "label": "Warehouse",
+      "choose": "Select some warehouse",
+      "none": "There are no warehouses yet. Add one first."
+    },
+    "errors": {
+      "insufficient_stock": "There is not enough stock of {{code}}: {{available}} available.",
+      "stock_not_found": "There is no stock of one of these products in this warehouse.",
+      "warehouse_not_found": "This warehouse no longer exists.",
+      "product_not_found": "One of these products does not exist.",
+      "forbidden": "You do not have permission to do this."
+    },
+    "upload": {
+      "title": "Upload products",
+      "description": "This form allows you upload a excel file with products to add or update them on the database.",
+      "downloadTemplate": "Download template",
+      "downloadAll": "Download All Products",
+      "file": "Select a xls file from your computer, then click on upload to load the products.",
+      "warehouse": "Warehouse",
+      "submit": "Upload",
+      "submitting": "Uploading…",
+      "fileRequired": "Choose a spreadsheet to upload.",
+      "warehouseRequired": "Choose the warehouse the quantities go to.",
+      "done_one": "{{count}} product was stored.",
+      "done_other": "{{count}} products were stored.",
+      "unsupported_media": "The file is not an Excel spreadsheet (xls or xlsx).",
+      "invalid_spreadsheet": "The spreadsheet could not be read. Use the template and try again."
+    },
+    "barcode": {
+      "title": "Update by bar code",
+      "description": "Type or scan a bar code and press Enter: the quantity grows by one each time the same code is read. Then choose the warehouse and add or remove the products.",
+      "placeholder": "Bar code",
+      "add": "Add",
+      "code": "Code",
+      "quantity": "Quantity",
+      "options": "Options",
+      "remove": "Remove {{code}}",
+      "exists": "The product exists",
+      "missing": "The product does not exist",
+      "checking": "Checking the product…",
+      "empty": "No products read yet.",
+      "addProducts": "Add products",
+      "removeProducts": "Remove products",
+      "confirmTitle": "Confirm the products",
+      "confirmBody": "These products will go to {{warehouse}}:",
+      "confirmBodyRemove": "These products will be taken out of {{warehouse}}:",
+      "confirmAdd": "Add quantity",
+      "confirmRemove": "Remove quantity",
+      "sending": "Sending…",
+      "badQuantity": "Every quantity must be a whole number of 1 or more.",
+      "added": "The products were added to {{warehouse}}.",
+      "removed": "The products were removed from {{warehouse}}."
+    },
+    "incoming": {
+      "title": "Incoming products",
+      "approveAll": "Approve all",
+      "approving": "Approving…",
+      "approved_one": "{{count}} incoming product was approved.",
+      "approved_other": "{{count}} incoming products were approved.",
+      "empty": "Nothing is waiting for approval in this warehouse.",
+      "columns": {
+        "code": "Code",
+        "description": "Description",
+        "quantity": "Quantity",
+        "warehouse": "Warehouse"
+      }
+    },
+    "warehouses": {
+      "title": "View warehouses",
+      "columns": {
+        "id": "#",
+        "name": "Name",
+        "options": "Options"
+      },
+      "edit": "Edit",
+      "empty": "There are no warehouses yet.",
+      "editTitle": "Edit warehouse",
+      "name": "Name",
+      "required": "This value should not be blank.",
+      "tooLong": "This value is too long. It should have 255 characters or less.",
+      "updated": "Warehouse updated successfully"
+    }
+  },
   "customers": {},
   "address": {},
   "orders": {},

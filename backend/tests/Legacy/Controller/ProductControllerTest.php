@@ -42,10 +42,7 @@ class ProductControllerTest extends UserWebTestCase
     public function getUrlsForRegularUsers(): ?\Generator
     {
         yield ['GET', '/admin/product/'];
-        yield ['GET', '/admin/product/upload'];
         yield ['GET', '/admin/product/all/1'];
-        yield ['GET', '/admin/product/update/bar-code'];
-        yield ['GET', '/admin/product/incoming'];
     }
 
     private function countProducts(): void

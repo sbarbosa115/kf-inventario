@@ -13,8 +13,6 @@ Encore.setOutputPath('public/build/')
   // rest (docs/pdr/prd-restructure.md).
   .addEntry('app', './assets/js/app.js')
   .addEntry('product', './assets/js/Products/index.js')
-  .addEntry('bar-code', './assets/js/Products/BarCode.js')
-  .addEntry('incoming', './assets/js/Products/IncomingProducts.js')
   .addEntry('order', './assets/js/Orders/index.js')
   .addEntry('order/order-handler', './assets/js/Orders/orderHandler.js')
   .addEntry('order/getting-ready', './assets/js/Orders/gettingReady.js')
