@@ -102,7 +102,67 @@
       "passwordTooShort": "The password needs at least {{min}} characters."
     }
   },
-  "products": {},
+  "products": {
+    "title": "View products",
+    "warehouse": "Warehouse",
+    "columns": {
+      "code": "Code",
+      "description": "Description",
+      "title": "Title",
+      "quantity": "Quantity",
+      "price": "Price",
+      "warehouse": "Warehouse",
+      "options": "Options"
+    },
+    "edit": "Edit {{code}}",
+    "create": "Create Product",
+    "empty": "This warehouse has no products in stock. Upload a spreadsheet or move products here to add some.",
+    "noWarehouses": "There are no warehouses yet. Add one before managing stock.",
+    "selected_one": "{{count}} product selected",
+    "selected_other": "{{count}} products selected",
+    "created": "The product was created successfully.",
+    "updated": "The product was updated successfully.",
+    "moved": "The products were moved to {{warehouse}}. They arrive there as incoming products.",
+    "notFound": "This product no longer exists.",
+    "backToList": "Back to the products",
+    "move": {
+      "open": "Move to Warehouse",
+      "title": "Move to Warehouse",
+      "destination": "Destination Warehouse",
+      "noDestination": "There is no other warehouse to move products to.",
+      "quantityOf": "Quantity of {{code}}",
+      "noneAvailable": "Product quantity is 0",
+      "submit": "Move",
+      "moving": "Moving",
+      "nothingToMove": "None of the selected products has stock to move."
+    },
+    "sheet": {
+      "download": "Update Selected Using Excel"
+    },
+    "errors": {
+      "insufficient_stock": "Only {{available}} of {{code}} are available.",
+      "same_warehouse": "Source and destination warehouse cannot be the same.",
+      "product_not_found": "One of the products no longer exists. Reload the list and try again.",
+      "stock_not_found": "One of the products is no longer in this warehouse. Reload the list and try again.",
+      "warehouse_not_found": "That warehouse no longer exists. Reload the page and try again."
+    },
+    "form": {
+      "newTitle": "Create product",
+      "editTitle": "Edit product",
+      "notListedYet": "This product won't be shown on the product list until you add quantities using Excel.",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "code": "Code",
+      "title": "Title",
+      "detail": "Detail",
+      "price": "Price",
+      "required": "This value should not be blank.",
+      "notEqual": "This value should not be equal to \"{{value}}\".",
+      "invalidNumber": "This value should be a valid number.",
+      "positiveOrZero": "This value should be either positive or zero."
+    }
+  },
   "stock": {},
   "customers": {},
   "address": {},
