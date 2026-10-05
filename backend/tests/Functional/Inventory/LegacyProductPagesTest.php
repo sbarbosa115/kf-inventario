@@ -36,8 +36,8 @@ final class LegacyProductPagesTest extends ApiTestCase
 
     public function testTheLegacyRouteNamesStillBuildTheOldAddresses(): void
     {
-        $router = self::getContainer()->get(RouterInterface::class);
-        \assert($router instanceof RouterInterface);
+        /** @var RouterInterface $router */
+        $router = self::getContainer()->get('router');
 
         self::assertSame('/admin/product/', $router->generate('product_product_index'), 'base.html.twig links the product list by this name, and the legacy upload redirects to it.');
         self::assertSame('/admin/product/new', $router->generate('product_new'));

@@ -17,7 +17,10 @@ function renderAt(path: string) {
       <Routes>
         <Route path="/admin/products" element={<ListStub />} />
         <Route path="/admin/products/new" element={<ProductFormPage />} />
-        <Route path="/admin/products/:uuid/edit" element={<ProductFormPage />} />
+        <Route
+          path="/admin/products/:uuid/edit"
+          element={<ProductFormPage />}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -88,9 +91,7 @@ describe('ProductForm', () => {
         {
           error: 'validation_failed',
           message: 'Validation error',
-          violations: [
-            {field: 'title', message: 'This value is too long.'},
-          ],
+          violations: [{field: 'title', message: 'This value is too long.'}],
         },
       ],
     });

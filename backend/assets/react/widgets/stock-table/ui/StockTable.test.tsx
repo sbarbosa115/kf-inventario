@@ -183,9 +183,10 @@ describe('StockTable', () => {
     expect(
       await screen.findByText(/This warehouse has no products in stock/),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', {name: /Create Product/}),
-    ).toHaveAttribute('href', '/admin/products/new');
+    expect(screen.getByRole('link', {name: /Create Product/})).toHaveAttribute(
+      'href',
+      '/admin/products/new',
+    );
   });
 
   it('says so when there is no warehouse at all', async () => {

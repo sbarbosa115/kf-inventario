@@ -10,7 +10,9 @@ export interface ProductFormValues {
   price: string;
 }
 
-export type ProductFormErrors = Partial<Record<keyof ProductFormValues, string>>;
+export type ProductFormErrors = Partial<
+  Record<keyof ProductFormValues, string>
+>;
 
 /** The spreadsheet template's header placeholders: the API refuses them as a code or a title (ProductInput). */
 const FORBIDDEN_CODES = ['·', 'CODE'];
@@ -63,7 +65,9 @@ export function validateProductForm(
   return errors;
 }
 
-export function productFormToPayload(values: ProductFormValues): ProductPayload {
+export function productFormToPayload(
+  values: ProductFormValues,
+): ProductPayload {
   const detail = values.detail.trim();
   const price = values.price.trim();
   return {

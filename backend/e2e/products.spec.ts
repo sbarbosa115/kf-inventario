@@ -65,7 +65,9 @@ test.describe('2 Products', () => {
     await expect(stockRow(page, 'KF-02')).toBeVisible();
     await expect(stockRow(page, 'KF-01')).toHaveCount(0);
     await page.getByRole('searchbox').fill('no-such-product');
-    await expect(page.getByText('Nothing matches these filters.')).toBeVisible();
+    await expect(
+      page.getByText('Nothing matches these filters.'),
+    ).toBeVisible();
     await page.getByRole('button', {name: 'Show all'}).click();
     await expect(stockRow(page, 'KF-01')).toBeVisible();
   });
@@ -94,7 +96,9 @@ test.describe('2 Products', () => {
     const page = await signedInAs(INVENTORY);
     await page.goto('/admin/products');
     const before = await quantityOf(page, 'KF-03');
-    expect(before, 'the fixtures give KF-03 stock in Colombia').toBeGreaterThan(2);
+    expect(before, 'the fixtures give KF-03 stock in Colombia').toBeGreaterThan(
+      2,
+    );
 
     await stockRow(page, 'KF-03').getByRole('checkbox').check();
     await page.getByRole('button', {name: /Move to Warehouse/}).click();
@@ -109,14 +113,14 @@ test.describe('2 Products', () => {
       'The products were moved to Usa.',
     );
     await expect(dialog).toHaveCount(0);
-    await expect
-      .poll(() => quantityOf(page, 'KF-03'))
-      .toBe(before - 2);
+    await expect.poll(() => quantityOf(page, 'KF-03')).toBe(before - 2);
     const incoming = await page.request.get(
       '/api/v1/warehouses/2/stock?status=0',
     );
     const rows = (await incoming.json()) as {code: string; quantity: number}[];
-    expect(rows.find((r) => r.code === 'KF-03')?.quantity).toBeGreaterThanOrEqual(2);
+    expect(
+      rows.find((r) => r.code === 'KF-03')?.quantity,
+    ).toBeGreaterThanOrEqual(2);
   });
 
   test('INV-06 · a new product is created, and the form names what is missing', async ({
@@ -130,8 +134,14 @@ test.describe('2 Products', () => {
       page.getByRole('heading', {name: 'Create product'}),
     ).toBeVisible();
     await page.getByRole('button', {name: 'Save'}).click();
-    await expect(page.getByLabel('Code')).toHaveAttribute('aria-invalid', 'true');
-    await expect(page.getByLabel('Title')).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.getByLabel('Code')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    await expect(page.getByLabel('Title')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
     await page.getByLabel('Code').fill('CODE');
     await page.getByRole('button', {name: 'Save'}).click();
     await expect(
@@ -165,7 +175,9 @@ test.describe('2 Products', () => {
     await expect(page).toHaveURL(
       new RegExp(`/admin/products/${product.uuid}/edit$`),
     );
-    await expect(page.getByRole('heading', {name: 'Edit product'})).toBeVisible();
+    await expect(
+      page.getByRole('heading', {name: 'Edit product'}),
+    ).toBeVisible();
     await expect(page.getByLabel('Code')).toHaveValue(NEW_PRODUCT.code);
     await page.getByLabel('Title').fill('Smoke chair, renamed');
     await page.getByLabel('Status').selectOption({label: 'Inactive'});
@@ -179,9 +191,13 @@ test.describe('2 Products', () => {
     ).json()) as {title: string; status: number};
     expect(saved).toMatchObject({title: 'Smoke chair, renamed', status: 0});
 
-    await stockRow(page, 'KF-01').getByRole('link', {name: 'Edit KF-01'}).click();
+    await stockRow(page, 'KF-01')
+      .getByRole('link', {name: 'Edit KF-01'})
+      .click();
     await expect(page.getByLabel('Code')).toHaveValue('KF-01');
-    await page.goto('/admin/products/00000000-0000-4000-8000-000000000000/edit');
+    await page.goto(
+      '/admin/products/00000000-0000-4000-8000-000000000000/edit',
+    );
     await expect(page.getByRole('alert')).toContainText(
       'This product no longer exists.',
     );

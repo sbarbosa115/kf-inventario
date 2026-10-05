@@ -32,10 +32,8 @@ describe('the product form model', () => {
   it('refuses the template placeholders as a code or a title (the spreadsheet header rows)', () => {
     for (const code of ['CODE', '·']) {
       expect(
-        validateProductForm(
-          {...emptyProductForm(), code, title: 'Chair'},
-          t,
-        ).code,
+        validateProductForm({...emptyProductForm(), code, title: 'Chair'}, t)
+          .code,
       ).toBe(`This value should not be equal to "${code}".`);
     }
     expect(

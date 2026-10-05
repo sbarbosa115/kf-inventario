@@ -30,9 +30,8 @@ describe('ProductsPage', () => {
   it('confirms a save the product form just made', async () => {
     renderPage({saved: 'updated'});
 
-    expect(screen.getByText('The product was updated successfully.')).toHaveAttribute(
-      'role',
-      'status',
-    );
+    expect(
+      screen.getByText('The product was updated successfully.'),
+    ).toHaveAttribute('role', 'status');
   });
 });

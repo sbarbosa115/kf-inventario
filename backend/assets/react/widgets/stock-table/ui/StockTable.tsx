@@ -7,7 +7,13 @@ import {MoveStockModal} from '@/features/move-stock';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
-import {DataTable, EmptyState, ErrorState, Loader, type Column} from '@/shared/ui';
+import {
+  DataTable,
+  EmptyState,
+  ErrorState,
+  Loader,
+  type Column,
+} from '@/shared/ui';
 
 const PRICE = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
