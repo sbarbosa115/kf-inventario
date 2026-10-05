@@ -69,13 +69,11 @@ test.describe('5 Orders', () => {
       row.getByText('Jose Perez [jose.perez@example.com]'),
     ).toBeVisible();
     await expect(row.getByText('Phone')).toBeVisible();
-    // The admin reaches ROLE_UPDATE_ORDERS, not ROLE_MANAGE_ORDERS: no delete, no sync (as the legacy page).
-    await expect(page.getByRole('button', {name: /Delete Order/})).toHaveCount(
-      0,
-    );
-    await expect(page.getByRole('button', {name: 'Sync Orders'})).toHaveCount(
-      0,
-    );
+    // ROLE_ADMIN reaches ROLE_MANAGE_ORDERS (security.yaml): delete and sync, as the legacy page showed it.
+    await expect(
+      page.getByRole('button', {name: /Delete Order/}).first(),
+    ).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Sync Orders'})).toBeVisible();
     expect(errors).toEqual([]);
   });
 
@@ -113,9 +111,7 @@ test.describe('5 Orders', () => {
       .getByRole('combobox', {name: 'Status of order W00001'})
       .selectOption('Processed');
 
-    await expect(page.getByRole('status')).toHaveText(
-      'Order W00001 is now Processed.',
-    );
+    await expect(page.getByRole('status').filter({hasText: 'Order W00001 is now Processed.'})).toBeVisible();
     await page.reload();
     const again = await findOrder(page, 'W00001');
     await expect(
@@ -241,7 +237,7 @@ test.describe('5 Orders', () => {
     await row.getByRole('button', {name: 'Delete Order W00005'}).click();
     await dialog.getByRole('button', {name: 'Delete'}).click();
 
-    await expect(page.getByRole('status')).toHaveText('The order was deleted.');
+    await expect(page.getByRole('status').filter({hasText: 'The order was deleted.'})).toBeVisible();
     await expect(page.getByRole('row', {name: /W00005/})).toHaveCount(0);
   });
 

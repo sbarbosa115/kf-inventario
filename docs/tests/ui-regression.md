@@ -42,6 +42,7 @@ docker compose exec php php bin/console app:smoke:prepare --seed
 | Admin (`ROLE_ADMIN`: inventory, warehouses, orders, customers, users) | `sbarbosa115` / `123456` | `/admin/products` |
 | Inventory clerk (`ROLE_MANAGE_INVENTORY`) | `inventory` / `123456` | `/admin/products` |
 | Invoice clerk (the invoice roles + customers) | `invoices` / `123456` | `/admin/products` |
+| Sales clerk (the invoice roles + customers + inventory: invoices with products) | `sales` / `123456` | `/admin/products` |
 
 **On every screen, whatever the case says**, also check:
 
@@ -435,7 +436,7 @@ PDF; Close, the x and Escape close it. By hand: View as PDF opens the PDF in a n
 
 **INVC-03 · An invoice is created with a customer, a product and tax, its PDF opens and the list shows it**
 Smoke (part): `e2e/invoices.spec.ts` creates the invoice and checks the list and that the PDF answers.
-Create invoice: `Invoice #` already holds the next code (`INV-0002` after `INV-0001`); pick the customer in
+Signed in as `sales`, Create invoice: `Invoice #` already holds the next code (`INV-0002` after `INV-0001`); pick the customer in
 `Customer` (their name, email, phone and address fill in); pick a product in `Product 1` (the description and the unit
 price fill in); quantity 2, Sale Tax 6%: the subtotal, tax and total follow as you type; Create Invoice: the PDF opens
 in a new tab and the list shows "The invoice was created successfully." and the new row. By hand: the PDF shows the

@@ -52,6 +52,14 @@ class UserFixtures extends Fixture
                 'password' => '123456',
                 'roles' => ['ROLE_UPDATE_INVOICES', 'ROLE_CAN_READ_INVOICES', 'ROLE_CAN_CREATE_INVOICES', 'ROLE_MANAGE_CUSTOMERS', 'ROLE_USER'],
             ],
+            [
+                // Invoices with products on them: the invoice form lists a warehouse's stock (ROLE_MANAGE_INVENTORY).
+                'name' => 'Sales Clerk',
+                'email' => 'sales@kf.local',
+                'username' => 'sales',
+                'password' => '123456',
+                'roles' => ['ROLE_UPDATE_INVOICES', 'ROLE_CAN_READ_INVOICES', 'ROLE_CAN_CREATE_INVOICES', 'ROLE_MANAGE_INVENTORY', 'ROLE_MANAGE_CUSTOMERS', 'ROLE_USER'],
+            ],
         ];
 
         foreach ($items as $item) {

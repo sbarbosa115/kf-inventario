@@ -14,6 +14,8 @@ export {expect};
 export const ADMIN = 'sbarbosa115';
 export const INVENTORY = 'inventory';
 export const INVOICES = 'invoices';
+/** Invoices and the products to put on them (the invoice form lists a warehouse's stock: ROLE_MANAGE_INVENTORY). */
+export const SALES = 'sales';
 export const PASSWORD = '123456';
 
 const AUTH_DIR = path.join(process.cwd(), 'e2e', '.results', 'auth');

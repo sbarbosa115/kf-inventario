@@ -45,9 +45,7 @@ test.describe('7 Users', () => {
     await page.getByRole('button', {name: 'Save'}).click();
 
     await expect(page).toHaveURL(/\/admin\/users$/);
-    await expect(page.getByRole('status')).toHaveText(
-      'The user was created successfully.',
-    );
+    await expect(page.getByRole('status').filter({hasText: 'The user was created successfully.'})).toBeVisible();
     const row = page.getByRole('row', {name: new RegExp(NEW_USER.email)});
     await expect(row.getByText('ROLE_MANAGE_INVENTORY')).toBeVisible();
   });
@@ -70,9 +68,7 @@ test.describe('7 Users', () => {
     await page.getByLabel('ROLE_MANAGE_ORDERS').check();
     await page.getByRole('button', {name: 'Save'}).click();
 
-    await expect(page.getByRole('status')).toHaveText(
-      'The user was updated successfully.',
-    );
+    await expect(page.getByRole('status').filter({hasText: 'The user was updated successfully.'})).toBeVisible();
     const row = page.getByRole('row', {name: /Smoke Clerk Renamed/});
     await expect(row.getByText('ROLE_MANAGE_ORDERS')).toBeVisible();
     // The old password still opens the account.

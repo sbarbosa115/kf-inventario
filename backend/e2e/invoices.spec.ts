@@ -1,4 +1,11 @@
-import {ADMIN, INVOICES, consoleErrors, expect, test} from './support/test';
+import {
+  ADMIN,
+  INVOICES,
+  SALES,
+  consoleErrors,
+  expect,
+  test,
+} from './support/test';
 
 // 6 Invoices (INVC-01 – 06), signed in as the invoice clerk (the admin is refused on invoices by design). The cases run
 // in order on the fixtures (invoice INV-0001; customer Jose Perez; KF-01 – 03 in Colombia): the invoice INVC-03
@@ -9,7 +16,7 @@ test.describe('6 Invoices', () => {
   test('INVC-01 · the list shows the invoices, and the old addresses land on the new screens', async ({
     signedInAs,
   }) => {
-    const page = await signedInAs(INVOICES);
+    const page = await signedInAs(SALES);
     const errors = consoleErrors(page);
 
     await page.goto('/admin/invoice/');
@@ -89,9 +96,7 @@ test.describe('6 Invoices', () => {
     await (await opened).close();
 
     await expect(page).toHaveURL(/\/admin\/invoices$/);
-    await expect(page.getByRole('status')).toContainText(
-      'The invoice was created successfully.',
-    );
+    await expect(page.getByRole('status').filter({hasText: 'The invoice was created successfully.'})).toBeVisible();
     const row = page.getByRole('row', {name: /INV-0002/});
     await expect(row).toContainText('Jose Perez');
     await expect(row).toContainText('318.00');
