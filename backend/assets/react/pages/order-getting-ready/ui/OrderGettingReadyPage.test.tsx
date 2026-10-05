@@ -16,7 +16,11 @@ const ORDER = {
   customer: null,
   comments: [],
   products: [
-    {uuid: 'u1', quantity: 2, product: {code: 'KF-01', title: 'KF-01', detail: null}},
+    {
+      uuid: 'u1',
+      quantity: 2,
+      product: {code: 'KF-01', title: 'KF-01', detail: null},
+    },
   ],
 };
 
@@ -70,17 +74,25 @@ describe('OrderGettingReadyPage', () => {
     expect(
       await screen.findByRole('heading', {name: 'Getting ready order #W00001'}),
     ).toBeInTheDocument();
-    await userEvent.type(await screen.findByLabelText('Bar Code'), 'KF-01{Enter}');
+    await userEvent.type(
+      await screen.findByLabelText('Bar Code'),
+      'KF-01{Enter}',
+    );
     await userEvent.click(screen.getByRole('button', {name: 'Save Current'}));
 
     expect(await screen.findByText('orders list partial')).toBeInTheDocument();
-    expect(api.calls.at(-1)?.body).toEqual({items: [{uuid: 'u1', quantity: 1}]});
+    expect(api.calls.at(-1)?.body).toEqual({
+      items: [{uuid: 'u1', quantity: 1}],
+    });
   });
 
   it('says so when the order no longer exists', async () => {
     fakeApi({
       'GET /orders/9': [404, {error: 'order_not_found', message: 'Gone'}],
-      'GET /orders/9/partials': [404, {error: 'order_not_found', message: 'Gone'}],
+      'GET /orders/9/partials': [
+        404,
+        {error: 'order_not_found', message: 'Gone'},
+      ],
     });
     renderAt('/admin/orders/9/getting-ready');
 

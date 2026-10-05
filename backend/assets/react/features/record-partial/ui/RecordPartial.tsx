@@ -164,9 +164,7 @@ export function RecordPartial({
               <tr key={line.uuid} className={rowClass(line, partials, current)}>
                 <th scope="row">{index + 1}</th>
                 <td className="getting-ready__code">{line.product.code}</td>
-                <td className="getting-ready__detail">
-                  {line.product.detail}
-                </td>
+                <td className="getting-ready__detail">{line.product.detail}</td>
                 <td className="text-center">
                   <button
                     type="button"

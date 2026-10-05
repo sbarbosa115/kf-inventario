@@ -114,7 +114,9 @@ test.describe('5 Orders: the order form and getting ready', () => {
     await page.getByLabel('Quantity of product 2').fill('1');
     await page.getByLabel('Consecutive').fill(CODE);
     await page.getByLabel('Source').selectOption({label: 'Phone'});
-    await page.getByLabel('Payment Method').selectOption({label: 'Credit Card'});
+    await page
+      .getByLabel('Payment Method')
+      .selectOption({label: 'Credit Card'});
     await page.getByLabel('Status').selectOption({label: 'Created'});
     placedAt = new Date();
     await page.getByRole('button', {name: 'Create'}).click();

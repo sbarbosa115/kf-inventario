@@ -34,9 +34,7 @@ export function currentOf(current: PartialItem[], uuid: string): number {
 
 /** How many of a product (by code) the order's warehouse holds. */
 export function stockOf(partials: OrderPartials, code: string): number {
-  return (
-    partials.inventory.find((row) => same(row.code, code))?.quantity ?? 0
-  );
+  return partials.inventory.find((row) => same(row.code, code))?.quantity ?? 0;
 }
 
 /** What is still to add of an order line: ordered − shipped before − this shipment. */

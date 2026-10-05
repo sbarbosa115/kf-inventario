@@ -13,8 +13,16 @@ const ORDER: PartialOrder = {
   id: 7,
   status: 1,
   products: [
-    {uuid: UUID_1, quantity: 3, product: {code: 'KF-01', title: 'KF-01', detail: 'Chair'}},
-    {uuid: UUID_2, quantity: 2, product: {code: 'KF-02', title: 'KF-02', detail: 'Table'}},
+    {
+      uuid: UUID_1,
+      quantity: 3,
+      product: {code: 'KF-01', title: 'KF-01', detail: 'Chair'},
+    },
+    {
+      uuid: UUID_2,
+      quantity: 2,
+      product: {code: 'KF-02', title: 'KF-02', detail: 'Table'},
+    },
   ],
 };
 
@@ -193,9 +201,7 @@ describe('RecordPartial', () => {
         },
       }),
     ]);
-    expect(onSaved).toHaveBeenCalledWith(
-      expect.objectContaining({status: 4}),
-    );
+    expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({status: 4}));
   });
 
   it('says why the server refused the shipment', async () => {
@@ -228,9 +234,7 @@ describe('RecordPartial', () => {
     async (status) => {
       renderIt({...ORDER, status}, {...PARTIALS, status});
 
-      expect(
-        screen.getByRole('button', {name: 'Save Current'}),
-      ).toBeDisabled();
+      expect(screen.getByRole('button', {name: 'Save Current'})).toBeDisabled();
     },
   );
 

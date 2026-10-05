@@ -87,13 +87,13 @@ const ORDER = {
   ],
 };
 
-const BASE_ROUTES = {
+const BASE_ROUTES: Record<string, [number, unknown]> = {
   'GET /warehouses': [200, WAREHOUSES],
   'GET /locations': [200, LOCATIONS],
   'GET /customers/all': [200, [ANA]],
   'GET /warehouses/1/stock': [200, STOCK_1],
   'GET /warehouses/2/stock': [200, STOCK_2],
-} as const;
+};
 
 function OrdersList() {
   const state = useLocation().state as {saved?: string} | null;
@@ -228,9 +228,7 @@ describe('OrderFormPage', () => {
     await userEvent.type(screen.getByLabelText('Address'), '5 Elm St');
     await userEvent.type(screen.getByLabelText('Zip Code'), '0500');
     await fillOrderDetail();
-    await userEvent.click(
-      screen.getByRole('button', {name: 'Add a product'}),
-    );
+    await userEvent.click(screen.getByRole('button', {name: 'Add a product'}));
     await userEvent.type(screen.getByLabelText('Consecutive'), 'PH-1');
     await userEvent.type(screen.getByLabelText('Comment'), 'Call first');
     await userEvent.click(saveButton());

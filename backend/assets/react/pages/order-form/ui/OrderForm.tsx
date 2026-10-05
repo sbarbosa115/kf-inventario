@@ -10,11 +10,7 @@ import {ApiError, failureMessage} from '@/shared/api';
 import {useTranslation, type Translate} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
 import {ErrorState, Field} from '@/shared/ui';
-import {
-  createOrder,
-  updateOrder,
-  type OrderDetail,
-} from '../api/orderFormApi';
+import {createOrder, updateOrder, type OrderDetail} from '../api/orderFormApi';
 import {
   emptyLine,
   emptyOrderForm,
@@ -385,9 +381,7 @@ export function OrderForm({
                     aria-label={t('orderForm.quantityOf', {number})}
                     placeholder={t('orderForm.quantity')}
                     value={line.quantity}
-                    onChange={(e) =>
-                      setLine(index, {quantity: e.target.value})
-                    }
+                    onChange={(e) => setLine(index, {quantity: e.target.value})}
                   />
                 </div>
                 <div className="form-group col-3 text-nowrap">
