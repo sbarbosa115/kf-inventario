@@ -95,6 +95,62 @@ Open `/admin/nothing-here` signed in: "Page not found" inside the app, with a li
 
 <!-- Item 6 (products-ui) adds INV-01 – 08; item 7 (stock-ui) adds INV-09 – 16. -->
 
+**INV-01 · The product list opens on the first warehouse, and the old address lands on it**
+Smoke: `e2e/products.spec.ts`.
+Signed in as the admin, open `/admin/product/` (the previous version's address): `/admin/products` opens, "View
+products", the warehouse picker on Colombia, one row per product in stock there (checkbox, Code, Description, Title,
+Quantity, Price as `100.00`, Warehouse, a green Edit button). The buttons Move to Warehouse and Update Selected Using
+Excel are disabled until a row is ticked; Create Product is always there.
+
+**INV-02 · Another warehouse reloads the list; the search narrows it**
+Smoke: `e2e/products.spec.ts`.
+Pick España: "This warehouse has no products in stock…"; back to Colombia: its rows again. Type `KF-02` in the search
+box: only that row; type something no product has: "Nothing matches these filters." and "Show all" brings every row
+back. Sorting by a column header and the pages (10 rows each) work as on the other lists.
+
+**INV-03 · The selected products download as the stock spreadsheet**
+Smoke (part): `e2e/products.spec.ts` ticks two rows and checks the download is `Products.xls`.
+Tick KF-01 and KF-02 ("2 products selected"), Update Selected Using Excel: `Products.xls` downloads. By hand: open it:
+the header row (Code, Title, Detail, Quantity, Price) and exactly the two products ticked, quantity and price 0 (the
+previous version's download was empty whenever more than one row was ticked). "Select all" in the header ticks every
+row of the page shown.
+
+**INV-04 · Move to Warehouse moves the chosen quantities; they arrive as incoming**
+Smoke (part): `e2e/products.spec.ts` moves 2 of KF-03 to Usa and checks both warehouses through the list and the API.
+Tick KF-03, Move to Warehouse: a dialog lists the ticked products, each with a quantity from 1 to what Colombia holds
+(starting at 1); a product with nothing left says "Product quantity is 0". Destination Warehouse offers every warehouse
+but Colombia. Pick Usa and 2, Move: the dialog closes, "The products were moved to Usa. They arrive there as incoming
+products.", the ticks are cleared and KF-03 shows 2 fewer. By hand: Incoming products, warehouse Usa: KF-03 with 2.
+Ticking several products and leaving their quantities at 1 moves 1 of each (the previous version moved only the rows
+whose quantity had been changed).
+
+**INV-05 · A move the warehouse can no longer cover is refused, and nothing moves**
+Open the product list in two tabs on Colombia. In the first, move all of KF-01's quantity to Usa. In the second (still
+showing the old quantity), tick KF-01, Move to Warehouse, pick the old full quantity, Move: the dialog stays open with
+"Only 0 of KF-01 are available." (or the quantity left), Move can be pressed again, and closing the dialog and
+reloading shows the stock unchanged by that attempt. Close (top-right × or the Close button) never moves anything.
+
+**INV-06 · A new product is created, and the form names what is missing**
+Smoke: `e2e/products.spec.ts`.
+Create Product: "Create product", the warning "This product won't be shown on the product list until you add quantities
+using Excel.", Status Active. Save empty: Code and Title say "This value should not be blank."; Code `CODE` (or `·`)
+and Title `PRODUCT` are refused ("This value should not be equal to …"), a negative price too; nothing is sent. Fill
+Code `SMOKE-INV-06`, Title, Price `25.5`, Save: back on the list with "The product was created successfully." (the new
+product is not in the list: it has no stock yet).
+
+**INV-07 · A product is edited, from the list and from its old address**
+Smoke: `e2e/products.spec.ts`.
+Open `/admin/product/edit/<uuid>` of the product of INV-06: its form at `/admin/products/<uuid>/edit`, "Edit product",
+filled in, no warning. Change the Title, Status Inactive, Save: "The product was updated successfully.". The Edit
+button of a row opens that product's form; Cancel goes back without saving. `/admin/products/<unknown uuid>/edit` says
+"This product no longer exists." with a link back to the products.
+
+**INV-08 · A person without the inventory role is refused**
+Smoke: `e2e/products.spec.ts`.
+Signed in as `invoices`: no Products section in the sidebar; opening `/admin/products` says "You do not have
+permission to do this."; `/api/v1/warehouses/1/stock` answers 403. Signed in as `inventory`: the list, the move and
+the form all work (INV-02 – 07 run as that account).
+
 ## 3. Warehouses (WH)
 
 <!-- Item 7 (stock-ui) adds WH-01 – 03. -->
