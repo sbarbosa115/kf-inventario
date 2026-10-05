@@ -263,32 +263,33 @@ previous version did (the API asks only for a signed-in user: a known gap).
 **CUS-01 · The list shows the customers, and the old address lands on it**
 Smoke: `e2e/customers.spec.ts`.
 Signed in as the admin, open `/admin/customer/` (the previous version's address): `/admin/customers` opens, "Customers",
-a Create Customer button, one row per customer (name, email, phone, an edit and a delete button). The search box finds
-a customer of the page by name, email or phone. By hand, with more than 100 customers: page links appear under the
-table, "Page 2" shows the rest and the address says `?page=2`. `/admin/customer/new` lands on `/admin/customers/new`.
+a "Create customer" button, one row per customer (name, email, phone, city of the first address, one "⋯" menu with Edit
+and Delete). The "Search this page" box finds a customer of the page by name, email, phone or city. By hand, with more
+than 100 customers: a compact pager (Previous · "Page 2 of 13" · Next) appears under the table, the header says
+"101–200 of 1,240" and the address says `?page=2`. `/admin/customer/new` lands on `/admin/customers/new`.
 
 **CUS-02 · A customer is created with a country, state and city that did not exist**
 Smoke: `e2e/customers.spec.ts`.
-Create Customer › fill Name, Last Name, Email, Phone, Address, Zip Code; in Country type a new name and pick
+Create customer › fill Name, Last Name, Email, Phone, Address, Zip Code; in Country type a new name and pick
 `Create "…"`, then the same in State and City; Save: back on the list with "The customer was created successfully."
 and the new row. By hand: choosing an existing country offers only its states, and an existing state only its cities;
 changing the country empties State and City. A name already in the list is not offered as new.
 
 **CUS-03 · Editing shows what was saved, and addresses are added and removed**
 Smoke: `e2e/customers.spec.ts`.
-Edit the customer of CUS-02: every field and the three place names are filled; change the phone, Add Address shows a
-second address and its Remove Address takes it out (the first address has no remove button), Save: "The customer was
-updated successfully." and the row shows the new phone. By hand: save an address with a new city under an existing
+Edit the customer of CUS-02 (the row's "⋯" › Edit): every field and the three place names are filled; change the phone,
+"Add address" shows a second address card and its "Remove address" takes it out (the first address has no remove
+button), Save: the toast "The customer was updated successfully." and the row shows the new phone. By hand: save an address with a new city under an existing
 state, open it again: the city is in the City list of every other address of that state.
 
 **CUS-04 · Deleting asks first**
 Smoke: `e2e/customers.spec.ts`.
-Delete Customer › "Are you sure to delete this Customer?": Cancel keeps the row; Delete removes it with "The customer
-was deleted." By hand: the customer's orders no longer appear in the Orders list either.
+Row "⋯" › Delete › "Delete <name>? Their orders will be removed too.": Cancel keeps the row; Delete removes it with the
+toast "The customer was deleted." By hand: the customer's orders no longer appear in the Orders list either.
 
 **CUS-05 · The form names what is missing, and a customer that no longer exists says so**
 Smoke: `e2e/customers.spec.ts`.
-Create Customer, Save with everything empty: Name, Last Name, Email, Phone, Address and Zip Code say "This value should
+Create customer, Save with everything empty: Name, Last Name, Email, Phone, Address and Zip Code say "This value should
 not be blank."; nothing is sent. An email without `@` says so. `/admin/customers/999999/edit`: "This customer no longer
 exists." with a link back to the customers.
 
@@ -299,7 +300,36 @@ this."; `/api/v1/customers` answers 403.
 
 ### Customers, redesigned (item 5)
 
-<!-- Item 5 (customers-ui) adds CUS-07 – 10 here, and updates the texts of CUS-01 – 06. -->
+**CUS-07 · The header counts the page, the search says it covers this page, and a row opens the form**
+Smoke: `e2e/customers.spec.ts`.
+Open Customers: the header's subtitle reads "1–N of N" (the range of the page, the total of the API). The search box is
+named "Search this page" (the API pages without searching, so it only filters what is loaded); typing a customer's email
+leaves its row. The row's "⋯" menu has Edit and Delete and nothing else (Delete in the danger colour); no other
+button on the row. Clicking the row (not a control) opens Edit customer. By hand: a search that finds nothing says
+"Nothing matches these filters." with "Show all"; with 100+ customers the sort headers (Name, Email, Phone, City)
+sort the page.
+
+**CUS-08 · The form has Contact and Addresses sections, address cards, and Cancel leaves without saving**
+Smoke: `e2e/customers.spec.ts`.
+`/admin/customers/new`: sections "Contact" (name, last name, email, phone) and "Addresses"; each address is a card
+titled "Address 1" (with "· Billing" or "· Shipping" when the address has a type: only addresses that came from a
+shop order do); the card holds Address and Zip Code, then Country, State and City in one row (one column on a
+phone). "Add address" (secondary) sits under the cards and adds a card; every card but the first has a ghost "Remove
+address". Save and Cancel are in a bar fixed at the bottom of the screen; Cancel is not red and leaves without
+saving (typed text is gone). By hand: the three selects look like the other inputs, in both themes and with the
+keyboard (arrows choose, Enter picks, a typed name offers Create "…").
+
+**CUS-09 · On a phone the list is cards and the form is one column**
+Smoke: `e2e/customers.spec.ts` (390 × 844, touch).
+Customers: each customer is a card (name as its title, then email, phone and city, the "⋯" button at its corner),
+nothing scrolls sideways; the pager, when there is one, fits the width. The form: one column, the address card's
+fields stacked, the Save bar above the tab bar and not covering the last field.
+
+**CUS-10 · Spanish and dark, by hand**
+By hand, no smoke. Switch to ES: the list, the form and the address cards read in Spanish ("Clientes", "Crear
+cliente", "Buscar en esta página", "1–100 de 1.240", "Dirección 1 · Facturación", "Agregar dirección", "Quitar
+dirección"); no raw key, no cut-off label. Switch to dark: card borders, the address cards, the three selects (control,
+menu, options, focus ring) and the row menu are readable. Saving and deleting show a toast in the chosen language.
 
 ## 5. Orders (ORD)
 

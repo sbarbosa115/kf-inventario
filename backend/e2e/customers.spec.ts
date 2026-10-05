@@ -1,6 +1,6 @@
 import {ADMIN, INVENTORY, consoleErrors, expect, test} from './support/test';
 
-// 4 Customers (CUS-01 – 06). The cases run in order: the customer CUS-02 creates is the one CUS-03 edits and CUS-04 deletes.
+// 4 Customers (CUS-01 – 10). The cases run in order: the customer CUS-02 creates is the one CUS-03 edits and CUS-04 deletes.
 test.describe.configure({mode: 'serial'});
 
 const NEW_CUSTOMER = {
@@ -27,11 +27,11 @@ test.describe('4 Customers', () => {
     await expect(page).toHaveURL(/\/admin\/customers$/);
     await expect(page.getByRole('heading', {name: 'Customers'})).toBeVisible();
     await expect(
-      page.getByRole('link', {name: 'Create Customer'}),
+      page.getByRole('link', {name: 'Create customer'}),
     ).toBeVisible();
     await expect(page.getByRole('columnheader', {name: 'Email'})).toBeVisible();
     await expect(
-      page.getByRole('link', {name: /Edit this customer/}).first(),
+      page.getByRole('button', {name: /Actions for/}).first(),
     ).toBeVisible();
     expect(errors).toEqual([]);
   });
@@ -42,9 +42,9 @@ test.describe('4 Customers', () => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/customers');
 
-    await page.getByRole('link', {name: 'Create Customer'}).click();
+    await page.getByRole('link', {name: 'Create customer'}).click();
     await expect(
-      page.getByRole('heading', {name: 'New Customer'}),
+      page.getByRole('heading', {name: 'New customer'}),
     ).toBeVisible();
     await page.getByLabel('Name', {exact: true}).fill(NEW_CUSTOMER.first);
     await page.getByLabel('Last Name').fill(NEW_CUSTOMER.last);
@@ -83,8 +83,9 @@ test.describe('4 Customers', () => {
     await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
     await page
       .getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)})
-      .getByRole('link', {name: /Edit this customer/})
+      .getByRole('button', {name: /Actions for/})
       .click();
+    await page.getByRole('menuitem', {name: 'Edit'}).click();
 
     await expect(
       page.getByRole('heading', {name: 'Edit customer'}),
@@ -101,11 +102,11 @@ test.describe('4 Customers', () => {
     await expect(group.getByText(NEW_CUSTOMER.city)).toBeVisible();
 
     await page.getByLabel('Phone').fill('3009998877');
-    await page.getByRole('button', {name: 'Add Address'}).first().click();
+    await page.getByRole('button', {name: 'Add address'}).click();
     await expect(page.getByRole('group', {name: 'Address 2'})).toBeVisible();
     await page
       .getByRole('group', {name: 'Address 2'})
-      .getByRole('button', {name: 'Remove Address'})
+      .getByRole('button', {name: 'Remove address'})
       .click();
     await expect(page.getByRole('group', {name: 'Address 2'})).toHaveCount(0);
     await page.getByRole('button', {name: 'Save'}).click();
@@ -129,15 +130,17 @@ test.describe('4 Customers', () => {
     await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
     const row = page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)});
 
-    await row.getByRole('button', {name: /Delete Customer/}).click();
+    await row.getByRole('button', {name: /Actions for/}).click();
+    await page.getByRole('menuitem', {name: 'Delete'}).click();
     const dialog = page.getByRole('dialog');
     await expect(
-      dialog.getByText('Are you sure to delete this Customer?'),
+      dialog.getByText(/Their orders will be removed too/),
     ).toBeVisible();
     await dialog.getByRole('button', {name: 'Cancel'}).click();
     await expect(row).toBeVisible();
 
-    await row.getByRole('button', {name: /Delete Customer/}).click();
+    await row.getByRole('button', {name: /Actions for/}).click();
+    await page.getByRole('menuitem', {name: 'Delete'}).click();
     await page
       .getByRole('dialog')
       .getByRole('button', {name: 'Delete', exact: true})
@@ -186,5 +189,91 @@ test.describe('4 Customers', () => {
     );
     const answer = await page.request.get('/api/v1/customers');
     expect(answer.status()).toBe(403);
+  });
+
+  test('CUS-07 · the header counts the page, the search says it covers this page, and a row opens the form', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    await page.goto('/admin/customers');
+
+    await expect(page.getByText(/^1–\d+ of [\d,]+$/)).toBeVisible();
+    const search = page.getByRole('searchbox', {name: 'Search this page'});
+    await search.fill('jose.perez@example.com');
+    const row = page.getByRole('row', {name: /jose\.perez@example\.com/});
+    await expect(row).toBeVisible();
+
+    await row.getByRole('button', {name: /Actions for/}).click();
+    await expect(page.getByRole('menuitem')).toHaveText([/Edit/, /Delete/]);
+    await page.keyboard.press('Escape');
+
+    await row.getByText('+57 3002825566').click();
+    await expect(page).toHaveURL(/\/admin\/customers\/\d+\/edit$/);
+    await expect(
+      page.getByRole('heading', {name: 'Edit customer'}),
+    ).toBeVisible();
+  });
+
+  test('CUS-08 · the form has Contact and Addresses sections, address cards, and Cancel leaves without saving', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    await page.goto('/admin/customers/new');
+
+    await expect(page.getByRole('region', {name: 'Contact'})).toBeVisible();
+    const addresses = page.getByRole('region', {name: 'Addresses'});
+    const card = addresses.getByRole('group', {name: 'Address 1'});
+    await expect(card.getByLabel('Country', {exact: true})).toBeVisible();
+    await expect(card.getByLabel('State', {exact: true})).toBeVisible();
+    await expect(card.getByLabel('City', {exact: true})).toBeVisible();
+    await expect(
+      card.getByRole('button', {name: 'Remove address'}),
+    ).toHaveCount(0);
+    await page.getByRole('button', {name: 'Add address'}).click();
+    await expect(
+      addresses
+        .getByRole('group', {name: 'Address 2'})
+        .getByRole('button', {name: 'Remove address'}),
+    ).toBeVisible();
+
+    await page.getByLabel('Name', {exact: true}).fill('Never saved');
+    await page.getByRole('link', {name: 'Cancel'}).click();
+    await expect(page).toHaveURL(/\/admin\/customers$/);
+    await page.getByRole('searchbox', {name: 'Search this page'}).fill('Never');
+    await expect(page.getByRole('row', {name: /Never saved/})).toHaveCount(0);
+  });
+});
+
+test.describe('4 Customers, on a phone (390 px)', () => {
+  test.use({
+    viewport: {width: 390, height: 844},
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  test('CUS-09 · the list is cards, nothing scrolls sideways, and the form stacks in one column', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    const errors = consoleErrors(page);
+    await page.goto('/admin/customers');
+
+    const row = page.getByRole('row', {name: /jose\.perez@example\.com/});
+    await expect(row).toBeVisible();
+    await expect(row.getByText('Jose Perez').first()).toBeVisible();
+    await expect(row.getByRole('button', {name: /Actions for/})).toBeVisible();
+    const sideways = () =>
+      page.evaluate(
+        () =>
+          document.documentElement.scrollWidth >
+          document.documentElement.clientWidth,
+      );
+    expect(await sideways(), 'the list scrolls sideways').toBe(false);
+
+    await page.goto('/admin/customers/new');
+    await expect(page.getByRole('region', {name: 'Contact'})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Save'})).toBeVisible();
+    expect(await sideways(), 'the form scrolls sideways').toBe(false);
+    expect(errors).toEqual([]);
   });
 });
