@@ -85,19 +85,19 @@ first). Writes from another origin are refused (403).
 | `GET` | `/api/v1/users/{id}` | `ROLE_MANAGE_USERS` | 1 (501 until then) |
 | `POST` | `/api/v1/users` | `ROLE_MANAGE_USERS` | 1 (501 until then) |
 | `PUT` | `/api/v1/users/{id}` | `ROLE_MANAGE_USERS` | 1 (501 until then) |
-| `GET` | `/api/v1/warehouses` | `ROLE_USER` | 2 (501 until then) |
-| `PUT` | `/api/v1/warehouses/{id}` | `ROLE_USER` | 2 (501 until then) |
-| `GET` | `/api/v1/warehouses/{id}/stock` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `POST` | `/api/v1/warehouses/{from}/moves/{to}` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `POST` | `/api/v1/warehouses/{id}/stock/add` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `POST` | `/api/v1/warehouses/{id}/stock/remove` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `POST` | `/api/v1/warehouses/{id}/incoming/approve` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `GET` | `/api/v1/products/by-code/{code}` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `GET` | `/api/v1/products/{uuid}` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `POST` | `/api/v1/products` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `PUT` | `/api/v1/products/{uuid}` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `POST` | `/api/v1/products/upload` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `GET` | `/api/v1/products/template.xls` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
+| `GET` | `/api/v1/warehouses` | `ROLE_USER` | 2: every warehouse by id, `WarehouseOutput {id, name, urls}` |
+| `PUT` | `/api/v1/warehouses/{id}` | `ROLE_USER` | 2: `{name}` → `WarehouseOutput`; 404 `warehouse_not_found` |
+| `GET` | `/api/v1/warehouses/{id}/stock` | `ROLE_MANAGE_INVENTORY` | 2: `?status=1` (default; `0` incoming) → list `StockOutput`, by product; 404 `warehouse_not_found` |
+| `POST` | `/api/v1/warehouses/{from}/moves/{to}` | `ROLE_MANAGE_INVENTORY` | 2: `{items: [{uuid\|code, quantity}]}` → 204, arrives incoming; 409 `same_warehouse`, 404 `product_not_found`/`stock_not_found`, 422 `insufficient_stock` (`detail: {code, available}`) |
+| `POST` | `/api/v1/warehouses/{id}/stock/add` | `ROLE_MANAGE_INVENTORY` | 2: `{items: [{code, quantity}]}` → 204 (unknown codes skipped) |
+| `POST` | `/api/v1/warehouses/{id}/stock/remove` | `ROLE_MANAGE_INVENTORY` | 2: `{items: [{code, quantity}]}` → 204; 404 `stock_not_found`, 422 `insufficient_stock` |
+| `POST` | `/api/v1/warehouses/{id}/incoming/approve` | `ROLE_MANAGE_INVENTORY` | 2: → `{approved}` (rows flipped to in stock) |
+| `GET` | `/api/v1/products/by-code/{code}` | `ROLE_MANAGE_INVENTORY` | 2: `ProductOutput` with `stock: [{warehouse_id, quantity, status}]`; 404 `product_not_found` |
+| `GET` | `/api/v1/products/{uuid}` | `ROLE_MANAGE_INVENTORY` | 2: `ProductOutput`; 404 `product_not_found` |
+| `POST` | `/api/v1/products` | `ROLE_MANAGE_INVENTORY` | 2: `{code, title, detail?, status?, price?}` → 201 `ProductOutput`; 422 (code `·`/`CODE`, title `PRODUCT`) |
+| `PUT` | `/api/v1/products/{uuid}` | `ROLE_MANAGE_INVENTORY` | 2: as `POST` → `ProductOutput`; 404 `product_not_found` |
+| `POST` | `/api/v1/products/upload` | `ROLE_MANAGE_INVENTORY` | 2: multipart `file` (xls/xlsx) + `warehouse_id` → `{stored}`; 415 `unsupported_media`, 422 `invalid_spreadsheet`, 404 `warehouse_not_found` |
+| `GET` | `/api/v1/products/template.xls` | `ROLE_MANAGE_INVENTORY` | 2: `?all=1` or `?uuid[]=…` → `Products.xls` (header alone with neither) |
 | `GET` | `/api/v1/customers` | `ROLE_MANAGE_CUSTOMERS` | 3 (501 until then) |
 | `GET` | `/api/v1/customers/all` | `ROLE_MANAGE_CUSTOMERS` | 3 (501 until then) |
 | `GET` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 (501 until then) |
