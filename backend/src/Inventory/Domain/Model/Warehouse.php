@@ -3,12 +3,11 @@
 namespace App\Inventory\Domain\Model;
 
 use App\Ordering\Domain\Model\Order;
-use App\Repository\WarehouseRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: WarehouseRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'warehouse')]
 class Warehouse
 {

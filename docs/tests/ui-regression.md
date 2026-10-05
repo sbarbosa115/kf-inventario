@@ -70,9 +70,9 @@ Signed out, open `/admin/warehouses`: the sign-in page. Sign in: the Warehouses 
 Smoke: `e2e/auth.spec.ts`.
 Top bar › your email › Logout: the sign-in page. Open `/admin/products` again: the sign-in page.
 
-**AUTH-05 · A previous-version page opened signed out goes to the sign-in page**
+**AUTH-05 · A legacy 301 bookmark redirects to the React app and sign-in**
 Smoke: `e2e/auth.spec.ts`.
-Signed out, open `/admin/product/` (a legacy page, until item 12 removes them): the React sign-in page.
+Signed out, open `/admin/product/` (a legacy 301 redirect): the app redirects to `/admin/products` and then to the sign-in page.
 
 **AUTH-06 · Remember me keeps you signed in after closing the browser**
 Sign in with "Remember me" ticked, close every window of the browser, open `/admin/products`: still signed in.

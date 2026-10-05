@@ -9,13 +9,6 @@ $finder = (new PhpCsFixer\Finder())
     ->notPath('config/reference.php')
     // Already run in production and recorded by class name: never reformatted (docs/pdr/prd-restructure.md).
     ->exclude('migrations')
-    // The legacy Twig app and its tests stay byte-identical: they are the reference the restructure's items port
-    // (and test against), and item 12 deletes them.
-    ->exclude([
-        'src/Command', 'src/Constraints', 'src/Controller', 'src/DataProviders', 'src/EventListener', 'src/Form',
-        'src/Model', 'src/Repository', 'src/Services', 'src/Validator',
-        'tests/Legacy',
-    ])
 ;
 
 return (new PhpCsFixer\Config())

@@ -25,12 +25,6 @@ invoicing_controllers:
     namespace: App\Invoicing\UI\Http\Controller
   type: attribute
 
-# The legacy Twig app, until each screen is replaced (item 12 removes this entry).
-legacy_controllers:
-  resource: ../src/Controller/
-  type: attribute
-  prefix: /admin/
-
 # The React app: every path that is not an API route, a legacy route or a file gets the SPA shell. Last, so it never
 # shadows a route.
 spa_controllers:

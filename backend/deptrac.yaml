@@ -32,15 +32,6 @@ deptrac:
       collectors:
         - {type: classNameRegex, value: '#^App\\Kernel$#'}
 
-    # The legacy Twig app (src/Controller, Services, Form…), kept working while the restructure replaces it and
-    # removed by item 12 (docs/pdr/prd-restructure.md). It may use anything; nothing new may use it.
-    - name: Legacy
-      collectors:
-        - {
-            type: classNameRegex,
-            value: '#^App\\(Command|Constraints|Controller|DataProviders|EventListener|Form|Model|Repository|Security|Services|Validator)\\#',
-          }
-
     # The only outside code a domain model may name: its Doctrine and Gedmo mapping attributes, collections for its
     # children, the DBAL type names and UUIDs for its identity, the Security user contract the User model signs in
     # with, and the validation attributes the moved entities still carry (the legacy forms read them; the Input DTOs
@@ -69,9 +60,6 @@ deptrac:
   ruleset:
     Domain:
       - DomainVendor
-      # The moved entities keep #[ORM\Entity(repositoryClass: App\Repository\…)] while the legacy services call
-      # those repositories; item 12 drops the argument with them (no schema effect).
-      - Legacy
     Application:
       - Domain
       - DomainVendor
@@ -88,14 +76,6 @@ deptrac:
     UI:
       - Application
       - Domain
-      - DomainVendor
-      - Standards
-      - Vendor
-    Legacy:
-      - Domain
-      - Application
-      - Infrastructure
-      - UI
       - DomainVendor
       - Standards
       - Vendor

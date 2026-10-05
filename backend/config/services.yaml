@@ -53,11 +53,6 @@ services:
       # Needs NelmioApiDocBundle, which only dev and test install: registered below for those.
       - '../src/Shared/UI/Http/OpenApi/'
 
-  # The legacy Twig app's controllers (item 12 removes them).
-  App\Controller\:
-    resource: '../src/Controller'
-    tags: ['controller.service_arguments']
-
   # The webhook prints the orders of one warehouse only.
   App\Ordering\Application\Command\ImportShopOrderHandler:
     arguments:

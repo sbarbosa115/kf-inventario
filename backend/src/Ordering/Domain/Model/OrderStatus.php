@@ -2,11 +2,10 @@
 
 namespace App\Ordering\Domain\Model;
 
-use App\Repository\OrderStatusRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 
-#[ORM\Entity(repositoryClass: OrderStatusRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'order_status')]
 #[Gedmo\SoftDeleteable(fieldName: 'deletedAt', timeAware: false, hardDelete: true)]
 class OrderStatus

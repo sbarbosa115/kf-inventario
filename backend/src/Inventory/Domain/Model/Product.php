@@ -3,14 +3,13 @@
 namespace App\Inventory\Domain\Model;
 
 use App\Ordering\Domain\Model\OrderProduct;
-use App\Repository\ProductRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: ProductRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'product')]
 #[ORM\HasLifecycleCallbacks]
 class Product

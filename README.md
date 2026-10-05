@@ -8,10 +8,6 @@ A Symfony 8 API (`backend/src`, DDD bounded contexts) and a React app (`backend/
 Design), run in Docker locally and on a cPanel account in production. **The production database must not change**:
 read "Data model decisions" before touching an entity or a migration.
 
-The restructure onto this layout is in progress (`docs/pdr/prd-restructure.md`): the screens move one by one from
-the legacy Twig pages (`backend/src/Controller`, `backend/templates/<area>`, `backend/assets/js`) to the React app;
-until a screen's item lands, its React route links to the legacy page.
-
 ## Running it locally
 
 Everything runs in Docker; there is no PHP or Node on the host.
@@ -155,8 +151,6 @@ The "Sync Orders" button reads the shop's WooCommerce REST API with `WOO_COMMERC
 
 ## Known gaps
 
-- The restructure is in progress: the screens and endpoints marked "501 until then" above still run on the legacy
-  Twig pages (their items are in `docs/pdr/prd-restructure.md`).
 - The invoice roles are reached by no other role (as in production): an admin sees Invoices only when given them.
 - `sync-comments`, partial shipments, the order XLS and the warehouses need only `ROLE_USER` (as before); raised for
   the security audit, not changed by the restructure.

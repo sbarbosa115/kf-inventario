@@ -2,10 +2,9 @@
 
 namespace App\Inventory\Domain\Model;
 
-use App\Repository\ProductWarehouseRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: ProductWarehouseRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'product_warehouse')]
 class ProductWarehouse
 {

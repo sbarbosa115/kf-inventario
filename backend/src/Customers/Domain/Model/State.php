@@ -2,12 +2,11 @@
 
 namespace App\Customers\Domain\Model;
 
-use App\Repository\StateRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: StateRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'state')]
 class State
 {
