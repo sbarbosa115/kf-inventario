@@ -101,7 +101,42 @@ Open `/admin/nothing-here` signed in: "Page not found" inside the app, with a li
 
 ## 4. Customers (CUS)
 
-<!-- Item 8 (customers-ui) adds CUS-01 – 06. -->
+**CUS-01 · The list shows the customers, and the old address lands on it**
+Smoke: `e2e/customers.spec.ts`.
+Signed in as the admin, open `/admin/customer/` (the previous version's address): `/admin/customers` opens, "Customers",
+a Create Customer button, one row per customer (name, email, phone, an edit and a delete button). The search box finds
+a customer of the page by name, email or phone. By hand, with more than 100 customers: page links appear under the
+table, "Page 2" shows the rest and the address says `?page=2`. `/admin/customer/new` lands on `/admin/customers/new`.
+
+**CUS-02 · A customer is created with a country, state and city that did not exist**
+Smoke: `e2e/customers.spec.ts`.
+Create Customer › fill Name, Last Name, Email, Phone, Address, Zip Code; in Country type a new name and pick
+`Create "…"`, then the same in State and City; Save: back on the list with "The customer was created successfully."
+and the new row. By hand: choosing an existing country offers only its states, and an existing state only its cities;
+changing the country empties State and City. A name already in the list is not offered as new.
+
+**CUS-03 · Editing shows what was saved, and addresses are added and removed**
+Smoke: `e2e/customers.spec.ts`.
+Edit the customer of CUS-02: every field and the three place names are filled; change the phone, Add Address shows a
+second address and its Remove Address takes it out (the first address has no remove button), Save: "The customer was
+updated successfully." and the row shows the new phone. By hand: save an address with a new city under an existing
+state, open it again: the city is in the City list of every other address of that state.
+
+**CUS-04 · Deleting asks first**
+Smoke: `e2e/customers.spec.ts`.
+Delete Customer › "Are you sure to delete this Customer?": Cancel keeps the row; Delete removes it with "The customer
+was deleted." By hand: the customer's orders no longer appear in the Orders list either.
+
+**CUS-05 · The form names what is missing, and a customer that no longer exists says so**
+Smoke: `e2e/customers.spec.ts`.
+Create Customer, Save with everything empty: Name, Last Name, Email, Phone, Address and Zip Code say "This value should
+not be blank."; nothing is sent. An email without `@` says so. `/admin/customers/999999/edit`: "This customer no longer
+exists." with a link back to the customers.
+
+**CUS-06 · A person without the Customers role is refused**
+Smoke: `e2e/customers.spec.ts`.
+Signed in as `inventory`: no Customers entry in the sidebar; `/admin/customers` says "You do not have permission to do
+this."; `/api/v1/customers` answers 403.
 
 ## 5. Orders (ORD)
 
