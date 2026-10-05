@@ -376,7 +376,7 @@ page URLs get a `301` in `config/routes/legacy_redirects.yaml`, added by the ite
 
 | Item | Suite section / IDs | i18n prefix | CSS |
 |---|---|---|---|
-| 0 | 1 Authentication and shell: AUTH-01 – 05, NAV-01 – 03 | `common.*`, `nav.*`, `auth.*` | `app/styles/global.css`, `widgets/app-shell/ui/app-shell.css` |
+| 0 | 1 Authentication and shell: AUTH-01 – 06, NAV-01 – 03 | `common.*`, `nav.*`, `auth.*` | `app/styles/global.css`, `widgets/app-shell/ui/app-shell.css` |
 | 1 | 7 Users: USR-01 – 06 | `users.*` | `pages/users/ui/users.css` |
 | 4 | 9 WooCommerce webhook: HOOK-01 – 02 (manual, curl) | — | — |
 | 6 | 2 Products: INV-01 – 08 | `products.*` | `pages/products/ui/products.css` |

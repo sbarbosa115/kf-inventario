@@ -36,6 +36,22 @@ class UserFixtures extends Fixture
                 'password' => '123456',
                 'roles' => ['ROLE_ADMIN'],
             ],
+            // The accounts of docs/tests/ui-regression.md: one per kind of person the app has.
+            [
+                'name' => 'Inventory Clerk',
+                'email' => 'inventory@kf.local',
+                'username' => 'inventory',
+                'password' => '123456',
+                'roles' => ['ROLE_MANAGE_INVENTORY', 'ROLE_USER'],
+            ],
+            [
+                // No role reaches the invoice roles through the hierarchy (as in production): they are given one by one.
+                'name' => 'Invoice Clerk',
+                'email' => 'invoices@kf.local',
+                'username' => 'invoices',
+                'password' => '123456',
+                'roles' => ['ROLE_UPDATE_INVOICES', 'ROLE_CAN_READ_INVOICES', 'ROLE_CAN_CREATE_INVOICES', 'ROLE_MANAGE_CUSTOMERS', 'ROLE_USER'],
+            ],
         ];
 
         foreach ($items as $item) {
@@ -48,7 +64,9 @@ class UserFixtures extends Fixture
             $user->setEnabled(true);
             $manager->persist($user);
 
-            $this->addReference(self::DEFAULT_USER, $user);
+            if (!$this->hasReference(self::DEFAULT_USER, User::class)) {
+                $this->addReference(self::DEFAULT_USER, $user);
+            }
         }
         $manager->flush();
     }
