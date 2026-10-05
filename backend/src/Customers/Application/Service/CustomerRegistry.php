@@ -48,6 +48,11 @@ final class CustomerRegistry
             $customer = $this->customers->findByPhone($data->phone);
         }
 
+        if (null !== $customer && self::namesOnly($data)) {
+            // An order or invoice that names an existing customer by id alone: use them as they are.
+            return $customer;
+        }
+
         $customer ??= new Customer();
         $customer->setEmail($data->email);
         $customer->setFirstName($data->firstName ?? '');
@@ -161,5 +166,13 @@ final class CustomerRegistry
     private static function same(?string $a, ?string $b): bool
     {
         return null !== $a && null !== $b && 0 === strcasecmp($a, $b);
+    }
+
+    /**
+     * Only the id: no name, email, phone or address to save (the legacy forms always sent the whole customer).
+     */
+    private static function namesOnly(SaveCustomer $data): bool
+    {
+        return null === $data->firstName && null === $data->lastName && null === $data->email && null === $data->phone && [] === $data->addresses;
     }
 }

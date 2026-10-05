@@ -72,6 +72,20 @@ final class CustomerRegistryTest extends TestCase
         self::assertContains($found, $this->customers->added);
     }
 
+    public function testAnIdAloneNamesTheCustomerAndChangesNothing(): void
+    {
+        $customer = $this->customers->has(1, 'a@kf.test', '111');
+        $this->registry->addOrUpdate(new SaveCustomer(1, 'Ana', 'Diaz', 'a@kf.test', '111', [
+            new AddressData('1 Main', '33100', 1, new CityData(null, 'Miami', new StateData(null, 'Florida', 'FL', new CountryData(null, 'USA')))),
+        ]));
+
+        $found = $this->registry->addOrUpdate(new SaveCustomer(1, null, null, null, null));
+
+        self::assertSame($customer, $found);
+        self::assertSame(['Ana', 'Diaz', 'a@kf.test', '111'], [$found->getFirstName(), $found->getLastName(), $found->getEmail(), $found->getPhone()], 'An order or invoice that names its customer by id alone must not blank them.');
+        self::assertCount(1, $found->getAddresses(), 'Nor delete their addresses.');
+    }
+
     public function testSavingReplacesTheWholeAddressSet(): void
     {
         $customer = $this->customers->has(1, 'a@kf.test', '111');
