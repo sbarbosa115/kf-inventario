@@ -535,7 +535,10 @@ Post the sample order above. The answer is `{"status":true}`. Orders › warehou
 source Web, status Created, customer Hook Buyer with two addresses (billing Miami, shipping New York) and the lines
 KF-01 × 2, KF-02 × 1. Within a minute Mailpit has "Order #5501 was created" to the printer address, cc
 `sales@klassicfab.com`, with `order-<id>.pdf` attached. The same order posted with `X-WC-Webhook-Source:
-https://usa.test` (warehouse 2) is placed in Usa and sends no email.
+https://usa.test` (warehouse 2) is placed in Usa and sends no email. Posting it **again** to `https://colombia.test`
+still answers `{"status":true}` but places nothing and sends no second email (the order code is already in that
+warehouse, deleted orders included, as for "Sync Orders"); `docker compose logs php` shows "WooCommerce order [5501]
+from [https://colombia.test] is already in warehouse 1: not placed again."
 
 **HOOK-02 · An unknown shop is answered ok and nothing happens**
 Smoke: `e2e/webhook.spec.ts`.

@@ -119,7 +119,7 @@ first). Writes from another origin are refused (403).
 | `GET` | `/api/v1/invoices/{id}` | `ROLE_CAN_READ_INVOICES` | 5: `InvoiceOutput`; 404 `invoice_not_found` |
 | `POST` | `/api/v1/invoices` | `ROLE_CAN_CREATE_INVOICES` | 5: `InvoiceInput` → 201 `InvoiceOutput`; customer by `customer_id` or found/created from `customer` (as orders do); with no address typed, the customer's first is copied; line totals and `tax_rate` % tax worked out as before; 409 `invoice_code_taken` |
 | `GET` | `/api/v1/invoices/{id}/pdf` | `ROLE_CAN_READ_INVOICES` | 5: `application/pdf` (`templates/pdf/invoice.html.twig`, the logo from `public/images/`) |
-| `POST`/`GET` | `/admin/order/1H39j0jpQPsWL958v9R4` | public | 4: the WooCommerce webhook (URL and route name unchanged): warehouse by `X-WC-Webhook-Source` in `warehouse.urls`, printer email only for `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`; always `{status: true}`, failures logged; with `WOO_COMMERCE_WEBHOOK_SECRET` set, a delivery without the shop's `X-WC-Webhook-Signature` is logged and not placed (empty by default: no check, as before) |
+| `POST`/`GET` | `/admin/order/1H39j0jpQPsWL958v9R4` | public | 4: the WooCommerce webhook (URL and route name unchanged): warehouse by `X-WC-Webhook-Source` in `warehouse.urls`, printer email only for `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`; always `{status: true}`, failures logged; an order whose shop id is already an order code in that warehouse (deleted ones too, as for the sync) is logged and not placed again; with `WOO_COMMERCE_WEBHOOK_SECRET` set, a delivery without the shop's `X-WC-Webhook-Signature` is logged and not placed (empty by default: no check, as before) |
 
 ## Data model decisions
 
@@ -156,18 +156,18 @@ recommended, once the secret is copied from the shop (a wrong one refuses every 
 
 ## Known gaps
 
-The security audit of the restructure (`docs/security/audits/2026-10-05-restructure.md`) left these for a decision:
+The security audit of the restructure (`docs/security/audits/2026-10-05-restructure.md`) left these open:
 
 - **`sync-comments`, partial shipments, the order XLS and the warehouses need only `ROLE_USER`** (as before, PRD
   decision 11): any account, an invoices-only one included, can record a partial shipment (stock out, order
-  completed), replace an order's comments and rename a warehouse. Audit finding 1 (High): tighten or accept.
+  completed), replace an order's comments and rename a warehouse. Audit finding 1 (High): accepted by the user on
+  2026-10-05, same as legacy.
 - **The WooCommerce webhook is admitted by its secret path and the `X-WC-Webhook-Source` header alone** unless
   `WOO_COMMERCE_WEBHOOK_SECRET` is set (then the shop's signature is required). Set it in production (audit finding 2).
-  A delivery posted twice places two orders, as before (finding 15).
 - No login throttling, and a disabled user can still sign in (as before; the user chose to keep both). Sign-in time
   tells whether a username exists (finding 14).
 - No script/style Content-Security-Policy (the screens load Bootstrap, jQuery and Font Awesome from CDNs) and no HSTS
-  header (set it in cPanel once HTTPS is confirmed); the other security headers are sent.
+  header (set it in cPanel once HTTPS is confirmed): deferred by the user; the other security headers are sent.
 - `master` committed an `APP_SECRET` in `.env.dist`: give production a fresh one in `backend/.env.local` at cutover.
 - The invoice roles are reached by no other role (as in production): an admin sees Invoices only when given them.
 - English only: the i18n layer supports a second locale, none is written.

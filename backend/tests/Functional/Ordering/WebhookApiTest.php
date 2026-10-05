@@ -113,6 +113,53 @@ final class WebhookApiTest extends ApiTestCase
         $this->assertStatus(200, 'Public: the shops do not sign in (GET too, as before).');
     }
 
+    /**
+     * WooCommerce may deliver an order twice (a retry, a resend from the shop): the second delivery places nothing,
+     * as the sync skips an order it already has (RemoteOrderKey: the shop id is the code, per warehouse, deleted
+     * orders included). The shop still gets {status: true}.
+     */
+    public function testTheSameOrderDeliveredTwiceIsPlacedAndPrintedOnce(): void
+    {
+        $warehouse = $this->withId($this->aWarehouse('Colombia', ['https://colombia.test']), 1);
+        $this->aProduct('KF-01', $warehouse);
+        $this->aProduct('KF-02', $warehouse);
+        // One kernel for both deliveries: the log handler below sees the second one.
+        $this->client->disableReboot();
+        $logs = $this->logHandler();
+
+        $this->postWebhook('https://colombia.test', self::payload(5801));
+        $this->assertStatus(200);
+        self::assertEmailCount(1, message: 'The first delivery is printed.');
+        $answer = $this->postWebhook('https://colombia.test', self::payload(5801));
+
+        $this->assertStatus(200);
+        self::assertSame(['status' => true], $answer);
+        self::assertEmailCount(0, message: 'The second delivery is not printed again.');
+        self::assertTrue($logs->hasInfoThatContains('5801'), 'The skipped delivery is logged.');
+        $this->em()->clear();
+        self::assertSame(1, $this->em()->getRepository(Order::class)->count(['code' => '5801']), 'One order, not two.');
+    }
+
+    public function testAnOrderDeletedInTheAppIsNotBroughtBackByTheWebhook(): void
+    {
+        $warehouse = $this->aWarehouse('Usa', ['https://usa.test']);
+        $this->aProduct('KF-01', $warehouse);
+        $this->aProduct('KF-02', $warehouse);
+        $this->postWebhook('https://usa.test', self::payload(5802));
+        $this->em()->clear();
+        $order = $this->em()->getRepository(Order::class)->findOneBy(['code' => '5802']);
+        self::assertNotNull($order);
+        $this->em()->remove($order);
+        $this->em()->flush();
+
+        $this->postWebhook('https://usa.test', self::payload(5802));
+
+        $this->assertStatus(200);
+        $this->em()->clear();
+        $this->em()->getFilters()->disable('softdeleteable');
+        self::assertSame(1, $this->em()->getRepository(Order::class)->count(['code' => '5802']), 'Deleted orders count as existing, as for the sync.');
+    }
+
     public function testWithASecretASignedOrderIsPlaced(): void
     {
         $this->withWebhookSecret('s3cret');
