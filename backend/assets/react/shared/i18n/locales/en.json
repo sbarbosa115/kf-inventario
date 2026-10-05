@@ -297,7 +297,114 @@
     "required": "This value should not be blank."
   },
   "orders": {},
-  "orderForm": {},
-  "gettingReady": {},
+  "orderForm": {
+    "newTitle": "Create a new order",
+    "editTitle": "Editing Order",
+    "customerInformation": "Customer Information",
+    "searchCustomer": "Search Customer",
+    "noCustomers": "No customers match",
+    "customersUnavailable": "The existing customers could not be loaded: type the customer's details.",
+    "customerOption": "{{name}} [{{email}}] [{{phone}}]",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "comment": "Comment",
+    "orderDetail": "Order Detail",
+    "warehouse": "Warehouse",
+    "selectWarehouse": "Select Warehouse",
+    "warehouseLocked": "Remove the products to change the warehouse.",
+    "paymentMethod": "Payment Method",
+    "selectPaymentMethod": "Select a payment method",
+    "code": "Consecutive",
+    "source": "Source",
+    "selectSource": "Select Order Source",
+    "status": "Status",
+    "selectStatus": "Select Order Status",
+    "product": "Product {{number}}",
+    "selectProduct": "Select a product",
+    "noProducts": "This warehouse has no products in stock",
+    "productOption": "{{title}} ({{code}})",
+    "quantity": "Quantity",
+    "quantityOf": "Quantity of product {{number}}",
+    "addProduct": "Add a product",
+    "removeProduct": "Remove this product",
+    "create": "Create",
+    "update": "Update",
+    "incomplete": "To save, fill in the customer's first name, last name and email, the warehouse, at least one product with its quantity, the source, the payment method and the status.",
+    "created": "The order was created successfully.",
+    "updated": "The order was updated successfully.",
+    "notFound": "This order no longer exists.",
+    "backToList": "Back to the orders",
+    "statuses": {
+      "1": "Created",
+      "2": "Processed",
+      "3": "Completed",
+      "4": "Partial",
+      "5": "Sent",
+      "6": "Delivered"
+    },
+    "sources": {
+      "1": "Web",
+      "2": "Phone"
+    },
+    "paymentMethods": {
+      "1": "Credit Card",
+      "2": "Paypal"
+    },
+    "errors": {
+      "order_without_products": "Add at least one product with its quantity.",
+      "product_not_found": "One of the products no longer exists.",
+      "warehouse_not_found": "This warehouse no longer exists.",
+      "order_not_found": "This order no longer exists.",
+      "validation_failed": "Check the order: {{fields}}."
+    }
+  },
+  "gettingReady": {
+    "title": "Getting ready order #{{code}}",
+    "titleLoading": "Getting ready order",
+    "description": "Using the bar-code-machine you can start adding item for this order.",
+    "barCode": "Bar Code",
+    "addAction": "Add Product",
+    "code": "Code",
+    "productDescription": "Product Description",
+    "inventory": "Inventory",
+    "inventoryAvailable": "Amount of products available on inventory",
+    "orderQuantity": "Product Order Quantity",
+    "orderLeft": "Aggregate Partials",
+    "thisOrder": "This Order",
+    "options": "Options",
+    "addOne": "Add one",
+    "removeOne": "Remove one",
+    "noProducts": "No products were found",
+    "addPartial": "Save Current",
+    "saved": "The shipment of order #{{code}} was saved.",
+    "notFound": "This order no longer exists.",
+    "backToList": "Back to the orders",
+    "refusals": {
+      "not_in_order": {
+        "error": "Error",
+        "title": "You are trying to add a product that is not on the current order, please click to continue.",
+        "ok": "Continue adding"
+      },
+      "limit": {
+        "error": "Error",
+        "title": "You reached the limit of product allowed to add to this order.",
+        "ok": "Continue adding"
+      },
+      "no_inventory": {
+        "error": "Inventory limit reached",
+        "title": "There is no enough quantity of this product on inventory.",
+        "ok": "Continue"
+      }
+    },
+    "errors": {
+      "insufficient_stock": "The warehouse does not hold enough of {{code}} ({{available}} available).",
+      "partial_exceeds_order": "This shipment holds more than what is left of the order, or the order was already sent. Reload the page.",
+      "stock_not_found": "The warehouse has none of one of these products.",
+      "order_not_found": "This order no longer exists.",
+      "validation_failed": "Add at least one product to the shipment."
+    }
+  },
   "invoices": {}
 }
