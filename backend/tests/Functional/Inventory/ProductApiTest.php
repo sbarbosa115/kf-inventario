@@ -310,6 +310,41 @@ final class ProductApiTest extends ApiTestCase
     }
 
     /**
+     * A corrupt xls whose sector table points back at itself: PhpSpreadsheet up to 2.4.6 followed the chain until PHP
+     * ran out of memory (CVE-2026-59933, a fatal error the reader could not catch). It is refused like any unreadable
+     * file.
+     */
+    public function testAnXlsWhoseSectorChainLoopsIsInvalid(): void
+    {
+        $colombia = $this->aWarehouse('Colombia');
+        $sheet = new Spreadsheet();
+        $sheet->getActiveSheet()->fromArray([['Code', 'Title', 'Detail', 'Quantity', 'Price'], ['KF-01', 'Chair', '', 1, 1]]);
+        $path = $this->tempFile('');
+        (new Xls($sheet))->save($path);
+        $bytes = (string) file_get_contents($path);
+        // The first sector after the 512-byte header: every entry of the allocation table says "next is sector 1".
+        $bytes = substr($bytes, 0, 512).str_repeat(pack('V', 1), 128).substr($bytes, 1024);
+        file_put_contents($path, $bytes);
+
+        $this->client->request('POST', '/api/v1/products/upload', ['warehouse_id' => (string) $colombia->getId()], ['file' => new UploadedFile($path, 'stock.xls', null, null, true)], ['HTTP_ACCEPT' => 'application/json']);
+
+        $this->assertStatus(422);
+        self::assertSame('invalid_spreadsheet', $this->body()['error']);
+    }
+
+    /**
+     * Only the Excel readers are used: IOFactory would otherwise read HTML, CSV, SYLK, Gnumeric… as a spreadsheet,
+     * each a reader (and a parser) the stock sheet never needs.
+     */
+    public function testTheReaderReadsOnlyExcelFiles(): void
+    {
+        $path = $this->tempFile('<html><body><table><tr><td>KF-01</td><td>Chair</td></tr></table></body></html>');
+
+        $this->expectException(InvalidSpreadsheet::class);
+        (new PhpSpreadsheetProductSheetReader())->rows($path);
+    }
+
+    /**
      * @param list<list<mixed>> $rows
      *
      * @return array<mixed>
