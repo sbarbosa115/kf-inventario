@@ -1,27 +1,29 @@
-import {render, screen} from '@testing-library/react';
+import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {MemoryRouter, Route, Routes, useLocation} from 'react-router-dom';
+import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {ToastProvider} from '@/shared/ui';
 import {ProductFormPage} from './ProductFormPage';
 
 const UUID = '6f1c1a52-1111-4a8e-9a55-0123456789ab';
 
 function ListStub() {
-  const state = useLocation().state as {saved?: string} | null;
-  return <p>products list, saved: {state?.saved ?? 'nothing'}</p>;
+  return <p>the products list</p>;
 }
 
 function renderAt(path: string) {
   render(
     <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/admin/products" element={<ListStub />} />
-        <Route path="/admin/products/new" element={<ProductFormPage />} />
-        <Route
-          path="/admin/products/:uuid/edit"
-          element={<ProductFormPage />}
-        />
-      </Routes>
+      <ToastProvider>
+        <Routes>
+          <Route path="/admin/products" element={<ListStub />} />
+          <Route path="/admin/products/new" element={<ProductFormPage />} />
+          <Route
+            path="/admin/products/:uuid/edit"
+            element={<ProductFormPage />}
+          />
+        </Routes>
+      </ToastProvider>
     </MemoryRouter>,
   );
 }
@@ -38,28 +40,56 @@ const CHAIR = {
 };
 
 describe('ProductForm', () => {
-  it('creates an active product and goes back to the list with a confirmation', async () => {
+  it('has one Product section, the status switch last, and an action bar with Save and Cancel', async () => {
+    fakeApi({});
+    renderAt('/admin/products/new');
+
+    const section = await screen.findByRole('region', {name: 'Product'});
+    const labels = within(section)
+      .getAllByRole('textbox')
+      .map((field) => field.id);
+    expect(labels).toHaveLength(3);
+    expect(within(section).getByLabelText('Code')).toHaveClass('kf-mono');
+    expect(within(section).getByLabelText('Price')).toHaveAttribute(
+      'inputmode',
+      'decimal',
+    );
+    expect(within(section).getByText('$')).toBeInTheDocument();
+    const status = within(section).getByRole('switch', {name: 'Active'});
+    expect(status).toBeChecked();
+    expect(
+      section.compareDocumentPosition(status) &
+        Node.DOCUMENT_POSITION_CONTAINED_BY,
+    ).toBeTruthy();
+    const price = within(section).getByLabelText('Price');
+    expect(
+      price.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByRole('button', {name: 'Save'})).toHaveClass(
+      'kf-btn--primary',
+    );
+    expect(screen.getByRole('link', {name: 'Cancel'})).toHaveClass(
+      'kf-btn--ghost',
+    );
+    expect(
+      screen.queryByText(/won't be shown on the product list/),
+    ).not.toBeInTheDocument();
+  });
+
+  it('creates an active product, goes back to the list and offers the next steps in a toast', async () => {
     const api = fakeApi({'POST /products': [201, CHAIR]});
     renderAt('/admin/products/new');
 
     expect(
       await screen.findByRole('heading', {name: 'Create product'}),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "This product won't be shown on the product list until you add quantities using Excel.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText('Status')).toHaveValue('1');
     await userEvent.type(screen.getByLabelText('Code'), 'KF-04');
     await userEvent.type(screen.getByLabelText('Title'), 'Chair');
     await userEvent.type(screen.getByLabelText('Detail'), 'Oak, 45 cm');
     await userEvent.type(screen.getByLabelText('Price'), '120.50');
     await userEvent.click(screen.getByRole('button', {name: 'Save'}));
 
-    expect(
-      await screen.findByText('products list, saved: created'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('the products list')).toBeInTheDocument();
     expect(api.calls[0]!.body).toEqual({
       code: 'KF-04',
       title: 'Chair',
@@ -67,6 +97,14 @@ describe('ProductForm', () => {
       status: 1,
       price: 120.5,
     });
+    expect(screen.getByText('Product saved')).toBeInTheDocument();
+    expect(screen.getByRole('link', {name: 'Scan stock'})).toHaveAttribute(
+      'href',
+      '/admin/products/barcode',
+    );
+    expect(
+      screen.getByRole('link', {name: 'Upload a stock sheet'}),
+    ).toHaveAttribute('href', '/admin/products/upload');
   });
 
   it('does not ask the server while the code or title is missing or a template placeholder', async () => {
@@ -122,16 +160,16 @@ describe('ProductForm', () => {
     expect(screen.getByLabelText('Title')).toHaveValue('Chair');
     expect(screen.getByLabelText('Detail')).toHaveValue('Oak, 45 cm');
     expect(screen.getByLabelText('Price')).toHaveValue(120.5);
-    expect(
-      screen.queryByText(/won't be shown on the product list/),
-    ).not.toBeInTheDocument();
-    await userEvent.selectOptions(screen.getByLabelText('Status'), 'Inactive');
+    expect(screen.getByRole('switch', {name: 'Active'})).toBeChecked();
+    await userEvent.click(screen.getByRole('switch', {name: 'Active'}));
     await userEvent.clear(screen.getByLabelText('Price'));
     await userEvent.click(screen.getByRole('button', {name: 'Save'}));
 
+    expect(await screen.findByText('the products list')).toBeInTheDocument();
+    expect(screen.getByText('Product saved')).toBeInTheDocument();
     expect(
-      await screen.findByText('products list, saved: updated'),
-    ).toBeInTheDocument();
+      screen.queryByRole('link', {name: 'Scan stock'}),
+    ).not.toBeInTheDocument();
     expect(api.calls.find((call) => call.method === 'PUT')!.body).toEqual({
       code: 'KF-04',
       title: 'Chair',
@@ -163,9 +201,7 @@ describe('ProductForm', () => {
     renderAt('/admin/products/new');
     await userEvent.click(await screen.findByRole('link', {name: 'Cancel'}));
 
-    expect(
-      screen.getByText('products list, saved: nothing'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('the products list')).toBeInTheDocument();
     expect(api.calls).toHaveLength(0);
   });
 });
