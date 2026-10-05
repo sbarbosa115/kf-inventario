@@ -57,6 +57,14 @@ final class DoctrineProductRepository implements ProductRepository
         return $products;
     }
 
+    public function all(): array
+    {
+        /** @var list<Product> $products */
+        $products = $this->em->getRepository(Product::class)->findBy([], ['id' => 'ASC']);
+
+        return $products;
+    }
+
     public function add(Product $product): void
     {
         $this->em->persist($product);
