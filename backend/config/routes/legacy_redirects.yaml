@@ -23,3 +23,29 @@ user_user_edit:
   controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
   defaults: {path: /admin/users, permanent: true}
   methods: [GET]
+
+# Item 6 (products-ui): the product list and the product form.
+product_product_index:
+  path: /admin/product/
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/products, permanent: true}
+  methods: [GET]
+
+product_new:
+  path: /admin/product/new
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/products/new, permanent: true}
+  methods: [GET]
+
+# The edit address keeps the product's uuid: redirectAction passes the {uuid} attribute on to spa_product_edit.
+product_update:
+  path: /admin/product/edit/{uuid}
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+  defaults: {route: spa_product_edit, permanent: true}
+  methods: [GET]
+
+# The React app's product form, named so the redirect above can build it (the SPA's catch-all would serve it too).
+spa_product_edit:
+  path: /admin/products/{uuid}/edit
+  controller: App\Shared\UI\Http\Spa\SpaController
+  methods: [GET]

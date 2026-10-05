@@ -12,7 +12,6 @@ Encore.setOutputPath('public/build/')
   // The legacy Twig pages, one entry each: an item that replaces a screen deletes its entry; item 12 removes the
   // rest (docs/pdr/prd-restructure.md).
   .addEntry('app', './assets/js/app.js')
-  .addEntry('product', './assets/js/Products/index.js')
   .addEntry('bar-code', './assets/js/Products/BarCode.js')
   .addEntry('incoming', './assets/js/Products/IncomingProducts.js')
   .addEntry('order', './assets/js/Orders/index.js')
