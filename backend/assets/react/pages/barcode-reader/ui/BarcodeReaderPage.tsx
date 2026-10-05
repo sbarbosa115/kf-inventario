@@ -1,28 +1,45 @@
+import {listWarehouses} from '@/entities/warehouse';
 import {ScanStock} from '@/features/scan-stock';
-import {apiGet, type Schema} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {useLoad} from '@/shared/lib';
-import {EmptyState, ErrorState, Loader, PageCard} from '@/shared/ui';
+import {useLoad, useSound} from '@/shared/lib';
+import {Button, EmptyState, ErrorState, PageHeader, Skeleton} from '@/shared/ui';
 
-/** Update by bar code: read codes, then add them to or remove them from a warehouse (ROLE_MANAGE_INVENTORY). */
+/** The scan sound (a short tone per read), on or off, remembered per browser. */
+function SoundToggle() {
+  const {t} = useTranslation();
+  const [on, setOn] = useSound();
+  return (
+    <Button
+      variant="ghost"
+      icon={on ? 'fa-volume-up' : 'fa-volume-mute'}
+      aria-label={t('stock.scan.sound')}
+      aria-pressed={on}
+      onClick={() => setOn(!on)}
+    />
+  );
+}
+
+/** Scan stock: choose the warehouse and Add or Remove, scan, and send the list (ROLE_MANAGE_INVENTORY). */
 export function BarcodeReaderPage() {
   const {t} = useTranslation();
-  const {data, error, reload} = useLoad(
-    () => apiGet<Schema<'WarehouseOutput'>[]>('/warehouses'),
-    [],
-  );
+  const {data, error, reload} = useLoad(listWarehouses, []);
 
   return (
-    <PageCard title={t('stock.barcode.title')}>
+    <>
+      <PageHeader
+        title={t('stock.scan.title')}
+        subtitle={t('stock.scan.subtitle')}
+        primary={<SoundToggle />}
+      />
       {error ? (
         <ErrorState error={error} onRetry={reload} />
       ) : data === undefined ? (
-        <Loader />
+        <Skeleton variant="form" />
       ) : data.length === 0 ? (
-        <EmptyState message={t('stock.warehouse.none')} />
+        <EmptyState icon="fa-warehouse" message={t('stock.warehouse.none')} />
       ) : (
         <ScanStock warehouses={data} />
       )}
-    </PageCard>
+    </>
   );
 }

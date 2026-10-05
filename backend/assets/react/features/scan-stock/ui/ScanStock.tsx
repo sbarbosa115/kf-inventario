@@ -1,22 +1,44 @@
-import {useState, type KeyboardEvent} from 'react';
+import {useEffect, useRef, useState, type KeyboardEvent} from 'react';
 import {ApiError, failureMessage, type Schema} from '@/shared/api';
 import {useTranslation, type Translate} from '@/shared/i18n';
-import {ConfirmModal, Field} from '@/shared/ui';
+import {
+  readSetting,
+  useRememberedWarehouse,
+  writeSetting,
+  type DetectorFactory,
+} from '@/shared/lib';
+import {
+  ActionBar,
+  Button,
+  CameraScanner,
+  ConfirmModal,
+  ScanInput,
+  useToast,
+  WarehouseSwitch,
+} from '@/shared/ui';
 import {
   addStock,
-  productExists,
+  findProductByCode,
   removeStock,
   type StockItem,
 } from '../api/scanStockApi';
 import {
   isValidQuantity,
+  linesToSend,
   readCode,
-  setExists,
+  removeLine,
+  setLookup,
   setQuantity,
+  stepQuantity,
+  totals,
+  unreadCode,
+  type ScanMode,
   type ScannedLine,
 } from '../model/scanList';
+import './scan-stock.css';
 
-type Action = 'add' | 'remove';
+export const SCAN_MODE_KEY = 'kf.scanMode';
+export const SCAN_INTRO_KEY = 'kf.scanIntroSeen';
 
 function failureText(error: unknown, t: Translate): string {
   if (error instanceof ApiError) {
@@ -42,267 +64,428 @@ function failureText(error: unknown, t: Translate): string {
   return failureMessage(error, t);
 }
 
-/** The barcode reader: codes typed or scanned (Enter), checked against the products, then added to or removed from a warehouse. */
-export function ScanStock({
-  warehouses,
+/** Add or Remove, as a large segmented control (Remove in the danger colour): the mode every scan works in. */
+function ModeSwitch({
+  value,
+  onChange,
 }: {
-  warehouses: Schema<'WarehouseOutput'>[];
+  value: ScanMode;
+  onChange: (mode: ScanMode) => void;
 }) {
   const {t} = useTranslation();
-  const [text, setText] = useState('');
-  const [rows, setRows] = useState<ScannedLine[]>([]);
-  const [warehouseId, setWarehouseId] = useState('');
-  const [confirming, setConfirming] = useState<Action | null>(null);
+  const modes: {mode: ScanMode; label: string; icon: string}[] = [
+    {mode: 'add', label: t('stock.scan.modeAdd'), icon: 'fa-plus'},
+    {mode: 'remove', label: t('stock.scan.modeRemove'), icon: 'fa-minus'},
+  ];
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(event.key))
+      return;
+    event.preventDefault();
+    const next: ScanMode = value === 'add' ? 'remove' : 'add';
+    onChange(next);
+    event.currentTarget
+      .querySelector<HTMLElement>(`[data-mode="${next}"]`)
+      ?.focus();
+  };
+  return (
+    <div
+      className="kf-segmented scan-mode"
+      role="radiogroup"
+      aria-label={t('stock.scan.mode')}
+      onKeyDown={onKeyDown}
+    >
+      {modes.map(({mode, label, icon}) => (
+        <button
+          key={mode}
+          type="button"
+          role="radio"
+          data-mode={mode}
+          aria-checked={value === mode}
+          tabIndex={value === mode ? 0 : -1}
+          className={`kf-segmented__option scan-mode__option scan-mode__option--${mode}`}
+          onClick={() => onChange(mode)}
+        >
+          <i className={`fas ${icon}`} aria-hidden="true" /> {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** One code of the running list: the code, its product once known, a stepper and a way out. */
+function ScanLineRow({
+  line,
+  flashing,
+  onQuantity,
+  onStep,
+  onRemove,
+}: {
+  line: ScannedLine;
+  flashing: boolean;
+  onQuantity: (quantity: string) => void;
+  onStep: (delta: 1 | -1) => void;
+  onRemove: () => void;
+}) {
+  const {t} = useTranslation();
+  const valid = isValidQuantity(line.quantity);
+  return (
+    <li
+      className={[
+        'scan-line',
+        line.lookup === 'missing' ? 'scan-line--missing' : null,
+        flashing ? 'is-flashing' : null,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <div className="scan-line__what">
+        <span className="scan-line__code">{line.code}</span>
+        {line.lookup === 'found' && (
+          <span className="scan-line__title">{line.title}</span>
+        )}
+        {line.lookup === 'checking' && (
+          <span className="scan-line__note">{t('stock.scan.checking')}</span>
+        )}
+        {line.lookup === 'failed' && (
+          <span className="scan-line__note">
+            {t('stock.scan.notChecked')}
+          </span>
+        )}
+        {line.lookup === 'missing' && (
+          <span className="scan-line__missing">
+            <i className="fas fa-times-circle" aria-hidden="true" />{' '}
+            {t('stock.scan.notAProduct')}
+          </span>
+        )}
+      </div>
+      <div className="scan-line__count">
+        <Button
+          variant="ghost"
+          icon="fa-minus"
+          aria-label={t('stock.scan.less', {code: line.code})}
+          disabled={!valid || Number(line.quantity) <= 1}
+          onClick={() => onStep(-1)}
+        />
+        <input
+          type="text"
+          inputMode="numeric"
+          className={`form-control scan-line__quantity${valid ? '' : ' is-invalid'}`}
+          aria-label={t('stock.scan.quantityOf', {code: line.code})}
+          aria-invalid={!valid || undefined}
+          value={line.quantity}
+          onChange={(event) => onQuantity(event.target.value)}
+        />
+        <Button
+          variant="ghost"
+          icon="fa-plus"
+          aria-label={t('stock.scan.more', {code: line.code})}
+          onClick={() => onStep(1)}
+        />
+        <Button
+          variant="ghost"
+          icon="fa-times"
+          aria-label={t('stock.scan.removeLine', {code: line.code})}
+          onClick={onRemove}
+        />
+      </div>
+    </li>
+  );
+}
+
+/**
+ * The scan screen's work: the warehouse and the mode first (both remembered), then codes from the camera or typed
+ * (Enter), a running list with the products' titles, Undo last scan, and the footer that adds in one tap or removes
+ * after a confirmation. Refusals stay inline, so the scanner keeps its focus.
+ */
+export function ScanStock({
+  warehouses,
+  detector,
+}: {
+  warehouses: Schema<'WarehouseOutput'>[];
+  /** How the camera decodes frames; tests pass a fake. */
+  detector?: DetectorFactory;
+}) {
+  const {t} = useTranslation();
+  const toast = useToast();
+  const [warehouse, pickWarehouse] = useRememberedWarehouse(warehouses);
+  const [mode, setMode] = useState<ScanMode>(() =>
+    readSetting(SCAN_MODE_KEY) === 'remove' ? 'remove' : 'add',
+  );
+  const [introSeen, setIntroSeen] = useState(
+    () => readSetting(SCAN_INTRO_KEY) === '1',
+  );
+  const [lines, setLines] = useState<ScannedLine[]>([]);
+  const [history, setHistory] = useState<string[]>([]);
+  const [flash, setFlash] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [sending, setSending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
+  const scanArea = useRef<HTMLDivElement>(null);
+  const known = useRef(new Set<string>());
 
-  const warehouse = warehouses.find((w) => String(w.id) === warehouseId);
-  const allValid = rows.every((row) => isValidQuantity(row.quantity));
-  const canSend = warehouse !== undefined && rows.length > 0 && allValid;
+  useEffect(() => {
+    known.current = new Set(lines.map((line) => line.code));
+  }, [lines]);
 
-  const read = () => {
-    const code = text.trim();
-    if (code === '') return;
-    setText('');
-    setDone(null);
-    const known = rows.some((row) => row.code === code);
-    setRows((now) => readCode(now, code));
-    if (!known) {
-      productExists(code).then((exists) =>
-        setRows((now) => setExists(now, code, exists)),
-      );
-    }
+  useEffect(() => {
+    if (focusRequest > 0) scanArea.current?.querySelector('input')?.focus();
+  }, [focusRequest]);
+  const refocus = () => setFocusRequest((n) => n + 1);
+
+  const chooseMode = (next: ScanMode) => {
+    setMode(next);
+    writeSetting(SCAN_MODE_KEY, next);
   };
 
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
+  const onScan = (code: string) => {
+    setFailure(null);
+    setFlash(code);
+    setHistory((now) => [...now, code]);
+    setLines((now) => readCode(now, code));
+    if (known.current.has(code)) return;
+    known.current.add(code);
+    findProductByCode(code).then(
+      (product) =>
+        setLines((now) =>
+          product
+            ? setLookup(now, code, 'found', product.title)
+            : setLookup(now, code, 'missing'),
+        ),
+      () => setLines((now) => setLookup(now, code, 'failed')),
+    );
+  };
+
+  const undo = () => {
+    const code = history[history.length - 1];
+    if (code === undefined) return;
+    setHistory((now) => now.slice(0, -1));
+    setLines((now) => unreadCode(now, code));
+    setFlash(null);
+    refocus();
+  };
+
+  const undoRef = useRef(undo);
+  useEffect(() => {
+    undoRef.current = undo;
+  });
+  useEffect(() => {
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z')
+        return;
+      const target = event.target as HTMLInputElement | null;
+      const editing =
+        (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') &&
+        target.value !== '';
+      if (editing || document.querySelector('[role="dialog"]')) return;
       event.preventDefault();
-      read();
-    }
+      undoRef.current();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  const removeCode = (code: string) => {
+    setLines((now) => removeLine(now, code));
+    setHistory((now) => now.filter((read) => read !== code));
   };
+
+  const sent = linesToSend(lines);
+  const sum = totals(lines);
+  const missing = lines.length - sent.length;
+  const allValid = lines.every((line) => isValidQuantity(line.quantity));
+  const canSend = warehouse !== undefined && sent.length > 0 && allValid;
+  const unitsText = t('stock.count.units', {count: sum.units});
+  const productsText = t('stock.count.products', {count: sum.products});
 
   const send = async () => {
-    if (!warehouse || confirming === null) return;
-    const items: StockItem[] = rows.map((row) => ({
-      code: row.code,
-      quantity: Number(row.quantity),
+    if (!warehouse || !canSend) return;
+    const items: StockItem[] = sent.map((line) => ({
+      code: line.code,
+      quantity: Number(line.quantity),
     }));
     setSending(true);
     setFailure(null);
     try {
-      await (confirming === 'add' ? addStock : removeStock)(
-        warehouse.id,
-        items,
+      await (mode === 'add' ? addStock : removeStock)(warehouse.id, items);
+      toast.success(
+        t(mode === 'add' ? 'stock.scan.added' : 'stock.scan.removed', {
+          units: unitsText,
+          warehouse: warehouse.name,
+        }),
       );
-      setDone(
-        t(
-          confirming === 'add'
-            ? 'stock.barcode.added'
-            : 'stock.barcode.removed',
-          {
-            warehouse: warehouse.name,
-          },
-        ),
-      );
-      setRows([]);
+      setLines([]);
+      setHistory([]);
+      setFlash(null);
     } catch (error) {
       setFailure(failureText(error, t));
     } finally {
       setSending(false);
-      setConfirming(null);
+      setConfirming(false);
+      refocus();
     }
   };
 
+  const name = warehouse?.name ?? '';
+  const primary =
+    mode === 'add' ? (
+      <Button
+        variant="primary"
+        size="lg"
+        icon="fa-plus"
+        disabled={!canSend}
+        loading={sending}
+        onClick={send}
+      >
+        {t('stock.scan.addTo', {warehouse: name})}
+      </Button>
+    ) : (
+      <Button
+        variant="danger"
+        size="lg"
+        icon="fa-minus"
+        disabled={!canSend || sending}
+        onClick={() => setConfirming(true)}
+      >
+        {t('stock.scan.removeFrom', {warehouse: name})}
+      </Button>
+    );
+
   return (
-    <div>
-      <p>{t('stock.barcode.description')}</p>
-      {done && (
-        <div className="alert alert-success" role="status">
-          {done}
+    <div className="scan-stock">
+      {!introSeen && (
+        <div className="scan-stock__intro">
+          <i className="fas fa-info-circle" aria-hidden="true" />
+          <span>{t('stock.scan.intro')}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="fa-times"
+            aria-label={t('common.dismiss')}
+            onClick={() => {
+              setIntroSeen(true);
+              writeSetting(SCAN_INTRO_KEY, '1');
+            }}
+          />
         </div>
       )}
-      {failure && (
-        <div className="alert alert-danger" role="alert">
-          {failure}
+
+      <section className="scan-stock__step" aria-labelledby="scan-step-1">
+        <h2 className="scan-stock__step-title" id="scan-step-1">
+          <span className="scan-stock__step-number" aria-hidden="true">
+            1
+          </span>
+          {t('stock.scan.step1')}
+        </h2>
+        <div className="scan-stock__choices">
+          <WarehouseSwitch
+            warehouses={warehouses}
+            value={warehouse?.id ?? null}
+            onChange={pickWarehouse}
+          />
+          <ModeSwitch value={mode} onChange={chooseMode} />
         </div>
-      )}
-      <div className="form-inline">
-        <input
-          type="text"
-          className="form-control form-control-sm my-1 mr-sm-2"
-          placeholder={t('stock.barcode.placeholder')}
-          aria-label={t('stock.barcode.placeholder')}
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          onKeyDown={onKeyDown}
+      </section>
+
+      <section className="scan-stock__step" aria-labelledby="scan-step-2">
+        <h2 className="scan-stock__step-title" id="scan-step-2">
+          <span className="scan-stock__step-number" aria-hidden="true">
+            2
+          </span>
+          {t('stock.scan.step2')}
+        </h2>
+        <CameraScanner
+          onScan={onScan}
+          paused={confirming || sending}
+          detector={detector}
         />
-        <button
-          type="button"
-          className="btn btn-primary btn-sm my-2"
-          onClick={read}
-        >
-          {t('stock.barcode.add')}
-        </button>
-      </div>
+        <div ref={scanArea}>
+          <ScanInput onScan={onScan} size="lg" autoFocus />
+        </div>
+        {failure && (
+          <div className="alert alert-danger scan-stock__failure" role="alert">
+            {failure}
+          </div>
+        )}
+      </section>
 
-      <table className="table table-sm">
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">{t('stock.barcode.code')}</th>
-            <th scope="col">{t('stock.barcode.quantity')}</th>
-            <th scope="col">{t('stock.barcode.options')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={row.code}>
-              <th scope="row">{index + 1}</th>
-              <td width="75%">{row.code}</td>
-              <td>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={row.quantity}
-                  aria-label={`${t('stock.barcode.quantity')} of ${row.code}`}
-                  aria-invalid={!isValidQuantity(row.quantity) || undefined}
-                  className={`form-control form-control-sm${isValidQuantity(row.quantity) ? '' : ' is-invalid'}`}
-                  onChange={(event) =>
-                    setRows((now) =>
-                      setQuantity(now, row.code, event.target.value),
-                    )
+      <section className="scan-stock__list">
+        {lines.length === 0 ? (
+          <p className="scan-stock__empty">{t('stock.scan.empty')}</p>
+        ) : (
+          <ol className="scan-stock__lines" aria-label={t('stock.scan.list')}>
+            {lines.map((line) => {
+              const flashing = flash === line.code;
+              return (
+                <ScanLineRow
+                  key={flashing ? `${line.code}:${line.reads}` : line.code}
+                  line={line}
+                  flashing={flashing}
+                  onQuantity={(quantity) =>
+                    setLines((now) => setQuantity(now, line.code, quantity))
                   }
+                  onStep={(delta) =>
+                    setLines((now) => stepQuantity(now, line.code, delta))
+                  }
+                  onRemove={() => removeCode(line.code)}
                 />
-              </td>
-              <td>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-danger"
-                  aria-label={t('stock.barcode.remove', {code: row.code})}
-                  onClick={() =>
-                    setRows((now) => now.filter((r) => r.code !== row.code))
-                  }
-                >
-                  <i className="fas fa-trash-alt" aria-hidden="true" />
-                </button>{' '}
-                {row.exists === true && (
-                  <span
-                    className="btn btn-sm btn-success"
-                    title={t('stock.barcode.exists')}
-                  >
-                    <i className="fas fa-check-circle" aria-hidden="true" />
-                  </span>
-                )}
-                {row.exists === false && (
-                  <span
-                    className="btn btn-sm btn-danger"
-                    title={t('stock.barcode.missing')}
-                  >
-                    <i className="fas fa-times-circle" aria-hidden="true" />
-                  </span>
-                )}
-                {row.exists === null && (
-                  <span
-                    className="btn btn-sm btn-info"
-                    title={t('stock.barcode.checking')}
-                  >
-                    <i
-                      className="fas fa-circle-notch fa-spin"
-                      aria-hidden="true"
-                    />
-                  </span>
-                )}
-              </td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={4} className="text-center">
-                {t('stock.barcode.empty')}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-      {!allValid && (
-        <p className="text-danger small">{t('stock.barcode.badQuantity')}</p>
-      )}
+              );
+            })}
+          </ol>
+        )}
+      </section>
 
-      <Field label={t('stock.warehouse.label')}>
-        <select
-          className="form-control form-control-sm"
-          value={warehouseId}
-          onChange={(event) => setWarehouseId(event.target.value)}
-        >
-          <option value="">{t('stock.warehouse.choose')}</option>
-          {warehouses.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <button
-        type="button"
-        className="btn btn-primary my-2 mr-1"
-        disabled={!canSend}
-        onClick={() => setConfirming('add')}
-      >
-        {t('stock.barcode.addProducts')}
-      </button>
-      <button
-        type="button"
-        className="btn btn-danger my-2"
-        disabled={!canSend}
-        onClick={() => setConfirming('remove')}
-      >
-        {t('stock.barcode.removeProducts')}
-      </button>
+      <ActionBar
+        status={
+          <>
+            <span className="scan-stock__totals">
+              {productsText} · {unitsText}
+            </span>
+            {missing > 0 && (
+              <span className="scan-stock__left-out">
+                {t('stock.scan.leftOut', {count: missing})}
+              </span>
+            )}
+            {!allValid && (
+              <span className="scan-stock__invalid">
+                {t('stock.scan.badQuantity')}
+              </span>
+            )}
+          </>
+        }
+        secondary={
+          <Button
+            variant="secondary"
+            size="lg"
+            icon="fa-undo"
+            disabled={history.length === 0 || sending}
+            onClick={undo}
+          >
+            {t('stock.scan.undo')}
+          </Button>
+        }
+        primary={primary}
+      />
 
       {confirming && warehouse && (
         <ConfirmModal
-          title={t('stock.barcode.confirmTitle')}
-          confirmLabel={
-            sending
-              ? t('stock.barcode.sending')
-              : t(
-                  confirming === 'add'
-                    ? 'stock.barcode.confirmAdd'
-                    : 'stock.barcode.confirmRemove',
-                )
-          }
-          danger={confirming === 'remove'}
+          title={t('stock.scan.confirmRemoveTitle', {warehouse: name})}
+          confirmLabel={t('stock.scan.confirmRemove', {units: unitsText})}
+          danger
           busy={sending}
           onConfirm={send}
-          onCancel={() => setConfirming(null)}
+          onCancel={() => {
+            setConfirming(false);
+            refocus();
+          }}
         >
-          {t(
-            confirming === 'add'
-              ? 'stock.barcode.confirmBody'
-              : 'stock.barcode.confirmBodyRemove',
-            {warehouse: warehouse.name},
-          )}
-          <hr />
-          <table className="table table-sm">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">{t('stock.barcode.code')}</th>
-                <th scope="col">{t('stock.barcode.quantity')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => (
-                <tr key={row.code}>
-                  <td>{index + 1}</td>
-                  <td width="75%">{row.code}</td>
-                  <td>{row.quantity}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <p>
+            {t('stock.scan.confirmRemoveBody', {
+              units: unitsText,
+              products: productsText,
+              warehouse: name,
+            })}
+          </p>
         </ConfirmModal>
       )}
     </div>
