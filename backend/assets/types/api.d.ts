@@ -567,10 +567,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every invoice, newest first. (item 5). */
+        /** Every invoice, newest first. */
         get: operations["get_api_invoices_list"];
         put?: never;
-        /** InvoiceInput: creates an invoice. 409 invoice_code_taken. (item 5). */
+        /**
+         * InvoiceInput: creates an invoice (the customer is `customer_id`, or found by id, email or phone and updated, or
+         *     created from `customer`; with no address typed, the customer's first one is copied). 409 invoice_code_taken.
+         */
         post: operations["post_api_invoices_create"];
         delete?: never;
         options?: never;
@@ -585,7 +588,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The code the next invoice is offered. (item 5). */
+        /** The code the next invoice is offered: the newest invoice's code plus one, or the year and 0001 for the first. */
         get: operations["get_api_invoices_next_code"];
         put?: never;
         post?: never;
@@ -602,7 +605,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** One invoice. 404 invoice_not_found. (item 5). */
+        /** One invoice. 404 invoice_not_found. */
         get: operations["get_api_invoices_show"];
         put?: never;
         post?: never;
@@ -619,7 +622,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The invoice as a PDF. (item 5). */
+        /** The invoice as a PDF. 404 invoice_not_found. */
         get: operations["get_api_invoices_pdf"];
         put?: never;
         post?: never;

@@ -118,11 +118,11 @@ first). Writes from another origin are refused (403).
 | `GET` | `/api/v1/orders/{id}/pdf` | `ROLE_CAN_READ_ORDERS` | 4: `application/pdf` (`templates/pdf/order.html.twig`) |
 | `GET` | `/api/v1/orders/{id}/remaining-pdf` | `ROLE_CAN_READ_ORDERS` | 4: `application/pdf`, what is left to ship |
 | `GET` | `/api/v1/orders/{id}/xls` | `ROLE_USER` | 4: `application/vnd.ms-excel`, `file-upload-template-<code>.xls` (the legacy name) |
-| `GET` | `/api/v1/invoices` | `ROLE_CAN_READ_INVOICES` | 5 (501 until then) |
-| `GET` | `/api/v1/invoices/next-code` | `ROLE_CAN_CREATE_INVOICES` | 5 (501 until then) |
-| `GET` | `/api/v1/invoices/{id}` | `ROLE_CAN_READ_INVOICES` | 5 (501 until then) |
-| `POST` | `/api/v1/invoices` | `ROLE_CAN_CREATE_INVOICES` | 5 (501 until then) |
-| `GET` | `/api/v1/invoices/{id}/pdf` | `ROLE_CAN_READ_INVOICES` | 5 (501 until then) |
+| `GET` | `/api/v1/invoices` | `ROLE_CAN_READ_INVOICES` | 5: `InvoiceOutput[]`, newest first, with customer, lines and their products |
+| `GET` | `/api/v1/invoices/next-code` | `ROLE_CAN_CREATE_INVOICES` | 5: `{code}`: the newest invoice's code plus one (`INV-0001` → `INV-0002`, `X` → `X-1`), or the year and `0001` for the first |
+| `GET` | `/api/v1/invoices/{id}` | `ROLE_CAN_READ_INVOICES` | 5: `InvoiceOutput`; 404 `invoice_not_found` |
+| `POST` | `/api/v1/invoices` | `ROLE_CAN_CREATE_INVOICES` | 5: `InvoiceInput` → 201 `InvoiceOutput`; customer by `customer_id` or found/created from `customer` (as orders do); with no address typed, the customer's first is copied; line totals and `tax_rate` % tax worked out as before; 409 `invoice_code_taken` |
+| `GET` | `/api/v1/invoices/{id}/pdf` | `ROLE_CAN_READ_INVOICES` | 5: `application/pdf` (`templates/pdf/invoice.html.twig`, the logo from `public/images/`) |
 | `POST`/`GET` | `/admin/order/1H39j0jpQPsWL958v9R4` | public | 4: the WooCommerce webhook (URL and route name unchanged): warehouse by `X-WC-Webhook-Source` in `warehouse.urls`, printer email only for `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`; always `{status: true}`, failures logged |
 
 ## Data model decisions

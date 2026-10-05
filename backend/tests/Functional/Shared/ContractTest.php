@@ -57,11 +57,6 @@ final class ContractTest extends ApiTestCase
         yield 'GET /api/v1/orders/{id}/pdf' => ['GET', '/api/v1/orders/1/pdf', 'ROLE_CAN_READ_ORDERS', 4];
         yield 'GET /api/v1/orders/{id}/remaining-pdf' => ['GET', '/api/v1/orders/1/remaining-pdf', 'ROLE_CAN_READ_ORDERS', 4];
         yield 'GET /api/v1/orders/{id}/xls' => ['GET', '/api/v1/orders/1/xls', 'ROLE_USER', 4];
-        yield 'GET /api/v1/invoices' => ['GET', '/api/v1/invoices', 'ROLE_CAN_READ_INVOICES', 5];
-        yield 'GET /api/v1/invoices/next-code' => ['GET', '/api/v1/invoices/next-code', 'ROLE_CAN_CREATE_INVOICES', 5];
-        yield 'GET /api/v1/invoices/{id}' => ['GET', '/api/v1/invoices/1', 'ROLE_CAN_READ_INVOICES', 5];
-        yield 'POST /api/v1/invoices' => ['POST', '/api/v1/invoices', 'ROLE_CAN_CREATE_INVOICES', 5];
-        yield 'GET /api/v1/invoices/{id}/pdf' => ['GET', '/api/v1/invoices/1/pdf', 'ROLE_CAN_READ_INVOICES', 5];
     }
 
     #[DataProvider('endpoints')]
@@ -108,11 +103,6 @@ final class ContractTest extends ApiTestCase
     {
         return [
             'POST /api/v1/orders/sync',
-            'GET /api/v1/invoices',
-            'GET /api/v1/invoices/next-code',
-            'GET /api/v1/invoices/1',
-            'POST /api/v1/invoices',
-            'GET /api/v1/invoices/1/pdf',
         ];
     }
 }

@@ -963,7 +963,7 @@
         },
         "/api/v1/invoices": {
             "get": {
-                "summary": "Every invoice, newest first. (item 5).",
+                "summary": "Every invoice, newest first.",
                 "operationId": "get_api_invoices_list",
                 "responses": {
                     "200": {
@@ -982,7 +982,7 @@
                 }
             },
             "post": {
-                "summary": "InvoiceInput: creates an invoice. 409 invoice_code_taken. (item 5).",
+                "summary": "InvoiceInput: creates an invoice (the customer is `customer_id`, or found by id, email or phone and updated, or\ncreated from `customer`; with no address typed, the customer's first one is copied). 409 invoice_code_taken.",
                 "operationId": "post_api_invoices_create",
                 "responses": {
                     "201": {
@@ -1000,7 +1000,7 @@
         },
         "/api/v1/invoices/next-code": {
             "get": {
-                "summary": "The code the next invoice is offered. (item 5).",
+                "summary": "The code the next invoice is offered: the newest invoice's code plus one, or the year and 0001 for the first.",
                 "operationId": "get_api_invoices_next_code",
                 "responses": {
                     "200": {
@@ -1018,7 +1018,7 @@
         },
         "/api/v1/invoices/{id}": {
             "get": {
-                "summary": "One invoice. 404 invoice_not_found. (item 5).",
+                "summary": "One invoice. 404 invoice_not_found.",
                 "operationId": "get_api_invoices_show",
                 "parameters": [
                     {
@@ -1047,7 +1047,7 @@
         },
         "/api/v1/invoices/{id}/pdf": {
             "get": {
-                "summary": "The invoice as a PDF. (item 5).",
+                "summary": "The invoice as a PDF. 404 invoice_not_found.",
                 "operationId": "get_api_invoices_pdf",
                 "parameters": [
                     {
