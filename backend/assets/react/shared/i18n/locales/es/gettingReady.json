@@ -1,0 +1,46 @@
+{
+  "title": "Alistamiento del pedido #{{code}}",
+  "titleLoading": "Alistamiento del pedido",
+  "description": "Con el lector de código de barras puede empezar a agregar productos a este pedido.",
+  "barCode": "Código de barras",
+  "addAction": "Agregar producto",
+  "code": "Código",
+  "productDescription": "Descripción del producto",
+  "inventory": "Existencias",
+  "inventoryAvailable": "Cantidad de productos disponibles en existencias",
+  "orderQuantity": "Cantidad pedida",
+  "orderLeft": "Enviado hasta ahora",
+  "thisOrder": "Este envío",
+  "options": "Opciones",
+  "addOne": "Agregar uno",
+  "removeOne": "Quitar uno",
+  "noProducts": "No se encontraron productos",
+  "addPartial": "Guardar envío",
+  "saved": "Se guardó el envío del pedido #{{code}}.",
+  "notFound": "Este pedido ya no existe.",
+  "backToList": "Volver a los pedidos",
+  "refusals": {
+    "not_in_order": {
+      "error": "Error",
+      "title": "Está intentando agregar un producto que no está en este pedido. Haga clic para continuar.",
+      "ok": "Seguir agregando"
+    },
+    "limit": {
+      "error": "Error",
+      "title": "Alcanzó el límite de este producto para este pedido.",
+      "ok": "Seguir agregando"
+    },
+    "no_inventory": {
+      "error": "Sin existencias suficientes",
+      "title": "No hay suficiente cantidad de este producto en existencias.",
+      "ok": "Continuar"
+    }
+  },
+  "errors": {
+    "insufficient_stock": "La bodega no tiene suficiente de {{code}} ({{available}} disponibles).",
+    "partial_exceeds_order": "Este envío lleva más de lo que falta del pedido, o el pedido ya se envió. Recargue la página.",
+    "stock_not_found": "La bodega no tiene ninguno de uno de estos productos.",
+    "order_not_found": "Este pedido ya no existe.",
+    "validation_failed": "Agregue al menos un producto al envío."
+  }
+}

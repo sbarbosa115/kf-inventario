@@ -1,0 +1,30 @@
+{
+  "appName": "Inventario",
+  "loading": "Cargando…",
+  "loadFailed": "No se pudo cargar. Revise su conexión e intente de nuevo.",
+  "serverFailed": "Algo falló de nuestro lado. Intente de nuevo en un momento.",
+  "retry": "Reintentar",
+  "save": "Guardar",
+  "saving": "Guardando…",
+  "cancel": "Cancelar",
+  "close": "Cerrar",
+  "confirm": "Confirmar",
+  "delete": "Eliminar",
+  "edit": "Editar",
+  "create": "Crear",
+  "search": "Buscar",
+  "showAll": "Mostrar todo",
+  "empty": "Aún no hay nada.",
+  "filteredEmpty": "Nada coincide con estos filtros.",
+  "previous": "Anterior",
+  "next": "Siguiente",
+  "pageOf": "Página {{page}} de {{pages}}",
+  "selectAll": "Seleccionar todo",
+  "selectRow": "Seleccionar fila",
+  "footer": "Inventario © {{year}}",
+  "legacy": {
+    "title": "Esta pantalla aún está en la versión anterior",
+    "body": "Pronto pasará a la nueva aplicación. Mientras tanto, ábrala en la versión anterior.",
+    "open": "Abrir la versión anterior"
+  }
+}

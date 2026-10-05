@@ -1,0 +1,92 @@
+{
+  "title": "Pedidos",
+  "warehouse": "Bodega",
+  "statusFilter": "Estado",
+  "allStatuses": "Seleccione el estado del pedido (todos)",
+  "create": "Crear pedido",
+  "empty": "Esta bodega aún no tiene pedidos. Cree uno o sincronice los pedidos de las tiendas.",
+  "filteredEmpty": "Ningún pedido de esta bodega tiene ese estado.",
+  "noWarehouses": "Aún no hay bodegas. Agregue una antes de gestionar pedidos.",
+  "noCustomer": "Sin cliente",
+  "columns": {
+    "comments": "Comentarios",
+    "customer": "Cliente",
+    "code": "Número de pedido",
+    "source": "Origen",
+    "status": "Estado",
+    "date": "Fecha de creación",
+    "options": "Opciones"
+  },
+  "statuses": {
+    "1": "Creado",
+    "2": "Procesado",
+    "3": "Completado",
+    "4": "Parcial",
+    "5": "Enviado",
+    "6": "Entregado"
+  },
+  "sources": {
+    "web": "Web",
+    "phone": "Teléfono",
+    "unknown": "Desconocido"
+  },
+  "commentsOf": "Comentarios del pedido {{code}}: {{count}}",
+  "statusOf": "Estado del pedido {{code}}",
+  "statusChanged": "El pedido {{code}} ahora está {{status}}.",
+  "detail": "Detalle del pedido",
+  "detailOf": "Detalle del pedido {{code}}",
+  "edit": "Editar este pedido",
+  "gettingReady": "Alistar este pedido",
+  "pdf": "Ver como PDF",
+  "xls": "Descargar como Excel",
+  "delete": "Eliminar pedido",
+  "deleteOf": "Eliminar el pedido {{code}}",
+  "confirmDelete": "¿Eliminar este pedido?",
+  "confirmDeleteDetail": "Se eliminarán el pedido {{code}}, sus productos y sus comentarios.",
+  "deleted": "El pedido se eliminó.",
+  "sync": {
+    "button": "Sincronizar pedidos de las tiendas",
+    "running": "Sincronizando pedidos…",
+    "done": "{{imported}} pedidos importados, {{skipped}} omitidos."
+  },
+  "info": {
+    "source": "Origen",
+    "status": "Estado",
+    "customer": "Cliente",
+    "email": "Correo electrónico",
+    "code": "Número de pedido",
+    "createdAt": "Fecha de creación",
+    "address": "Dirección",
+    "zipCode": "Código postal",
+    "city": "Ciudad",
+    "state": "Departamento o estado",
+    "country": "País"
+  },
+  "tabs": {
+    "products": "Productos",
+    "comments": "Comentarios"
+  },
+  "products": {
+    "code": "Código",
+    "description": "Descripción",
+    "quantity": "Cantidad",
+    "empty": "Este pedido no tiene productos."
+  },
+  "remainingPdf": "Productos pendientes",
+  "downloadPdf": "Descargar",
+  "comments": {
+    "empty": "Este pedido aún no tiene comentarios.",
+    "label": "Comentario {{number}}",
+    "add": "Agregar un comentario",
+    "save": "Guardar el comentario {{number}}",
+    "remove": "Quitar el comentario {{number}}",
+    "blank": "Escriba el comentario o quítelo.",
+    "saved": "Los comentarios se guardaron."
+  },
+  "errors": {
+    "order_not_found": "Este pedido ya no existe. Recargue la lista.",
+    "order_sync_unavailable": "Traer los pedidos de las tiendas aún no está disponible.",
+    "order_sync_failed": "No se pudo conectar con las tiendas, así que no se importó ningún pedido. Intente de nuevo en un momento.",
+    "validation_failed": "El cambio fue rechazado. Recargue el pedido e intente de nuevo."
+  }
+}

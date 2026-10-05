@@ -561,6 +561,10 @@ never runs the suite; the coordinator runs it once at the barrier.
 15. The "What changed" note for the warehouse staff is a dismissible one-line banner on the Scan screen
     (`kf.scanIntroSeen`), item 2 — presentation only, no dates.
 
+16. **Coordinator note (item 0, 0.3):** ICU writes the `es-CO` short date as `5 de oct de 2026, 2:30 p. m.`, not the
+    `5 oct 2026` of answer 3; `useFormat` keeps what `Intl` writes (correct Spanish, no hand-built pattern), as the
+    answer says `Intl` decides. The catalogues' `roles` prefix starts as an empty file in both languages (item 7 fills it).
+
 ## Risks
 
 - **Muscle memory:** the barcode reader changes most (warehouse first, one-tap add). Mitigation: same route, same

@@ -1,0 +1,13 @@
+{
+  "group": "Address {{number}}",
+  "address": "Address",
+  "zipCode": "Zip Code",
+  "country": "Country",
+  "state": "State",
+  "city": "City",
+  "add": "Add Address",
+  "remove": "Remove Address",
+  "create": "Create \"{{name}}\"",
+  "noOptions": "No options",
+  "required": "This value should not be blank."
+}

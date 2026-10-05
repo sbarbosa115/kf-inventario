@@ -1,0 +1,30 @@
+{
+  "appName": "Inventory",
+  "loading": "Loading…",
+  "loadFailed": "Could not load this. Check your connection and try again.",
+  "serverFailed": "Something went wrong on our side. Try again in a moment.",
+  "retry": "Try again",
+  "save": "Save",
+  "saving": "Saving…",
+  "cancel": "Cancel",
+  "close": "Close",
+  "confirm": "Confirm",
+  "delete": "Delete",
+  "edit": "Edit",
+  "create": "Create",
+  "search": "Search",
+  "showAll": "Show all",
+  "empty": "Nothing here yet.",
+  "filteredEmpty": "Nothing matches these filters.",
+  "previous": "Previous",
+  "next": "Next",
+  "pageOf": "Page {{page}} of {{pages}}",
+  "selectAll": "Select all",
+  "selectRow": "Select row",
+  "footer": "Inventory © {{year}}",
+  "legacy": {
+    "title": "This screen is still in the previous version",
+    "body": "It moves to the new app soon. Until then, open it in the previous version.",
+    "open": "Open the previous version"
+  }
+}

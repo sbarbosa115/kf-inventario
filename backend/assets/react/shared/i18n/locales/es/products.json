@@ -1,0 +1,61 @@
+{
+  "title": "Productos",
+  "warehouse": "Bodega",
+  "columns": {
+    "code": "Código",
+    "description": "Descripción",
+    "title": "Título",
+    "quantity": "Cantidad",
+    "price": "Precio",
+    "warehouse": "Bodega",
+    "options": "Opciones"
+  },
+  "edit": "Editar {{code}}",
+  "create": "Crear producto",
+  "empty": "Esta bodega no tiene productos con existencias. Cargue una hoja de existencias o traslade productos aquí para agregarlos.",
+  "noWarehouses": "Aún no hay bodegas. Agregue una antes de gestionar existencias.",
+  "selected_one": "{{count}} producto seleccionado",
+  "selected_other": "{{count}} productos seleccionados",
+  "created": "El producto se creó correctamente.",
+  "updated": "El producto se actualizó correctamente.",
+  "moved": "Los productos se trasladaron a {{warehouse}}. Llegan allí como productos entrantes.",
+  "notFound": "Este producto ya no existe.",
+  "backToList": "Volver a los productos",
+  "move": {
+    "open": "Trasladar a bodega",
+    "title": "Trasladar a bodega",
+    "destination": "Bodega de destino",
+    "noDestination": "No hay otra bodega a la cual trasladar productos.",
+    "quantityOf": "Cantidad de {{code}}",
+    "noneAvailable": "La cantidad del producto es 0",
+    "submit": "Trasladar",
+    "moving": "Trasladando",
+    "nothingToMove": "Ninguno de los productos seleccionados tiene existencias para trasladar."
+  },
+  "sheet": {
+    "download": "Descargar hoja de existencias"
+  },
+  "errors": {
+    "insufficient_stock": "Solo hay {{available}} de {{code}} disponibles.",
+    "same_warehouse": "La bodega de origen y la de destino no pueden ser la misma.",
+    "product_not_found": "Uno de los productos ya no existe. Recargue la lista e intente de nuevo.",
+    "stock_not_found": "Uno de los productos ya no está en esta bodega. Recargue la lista e intente de nuevo.",
+    "warehouse_not_found": "Esa bodega ya no existe. Recargue la página e intente de nuevo."
+  },
+  "form": {
+    "newTitle": "Crear producto",
+    "editTitle": "Editar producto",
+    "notListedYet": "Este producto no aparecerá en la lista de productos hasta que le agregue cantidades con Excel.",
+    "status": "Estado",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "code": "Código",
+    "title": "Título",
+    "detail": "Detalle",
+    "price": "Precio",
+    "required": "Este campo no puede estar vacío.",
+    "notEqual": "Este valor no puede ser igual a \"{{value}}\".",
+    "invalidNumber": "Este valor debe ser un número válido.",
+    "positiveOrZero": "Este valor debe ser positivo o cero."
+  }
+}

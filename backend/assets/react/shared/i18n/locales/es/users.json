@@ -1,0 +1,33 @@
+{
+  "title": "Usuarios",
+  "create": "Crear usuario",
+  "columns": {
+    "id": "#",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "roles": "Roles",
+    "options": "Opciones"
+  },
+  "edit": "Editar",
+  "empty": "Aún no hay usuarios. Cree el primero.",
+  "created": "El usuario se creó correctamente.",
+  "updated": "El usuario se actualizó correctamente.",
+  "notFound": "Este usuario ya no existe.",
+  "backToList": "Volver a los usuarios",
+  "form": {
+    "newTitle": "Nuevo usuario",
+    "editTitle": "Editar usuario",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "passwordKeep": "Déjela en blanco para conservar la contraseña actual.",
+    "roles": "Roles",
+    "status": "Estado",
+    "enabled": "Activo",
+    "disabled": "Inactivo",
+    "required": "Este campo no puede estar vacío.",
+    "invalidEmail": "Este valor no es un correo electrónico válido.",
+    "passwordTooShort": "La contraseña necesita al menos {{min}} caracteres."
+  }
+}

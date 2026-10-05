@@ -1,11 +1,37 @@
-import en from './locales/en.json';
+import en from './locales/en';
+import es from './locales/es';
 
-export type Locale = 'en';
+export type Locale = 'en' | 'es';
 type Tree = {[key: string]: string | Tree};
 export type Params = Record<string, string | number>;
 export type Translate = (key: string, params?: Params) => string;
 
-const CATALOGS: Record<Locale, Tree> = {en};
+export const LOCALES: readonly Locale[] = ['en', 'es'];
+const CATALOGS: Record<Locale, Tree> = {en, es};
+/** Numbers, money and dates: the US for English, Colombia (the company's base) for Spanish (Decisions 7). */
+const INTL: Record<Locale, string> = {en: 'en-US', es: 'es-CO'};
+export const LOCALE_KEY = 'kf.locale';
+
+export function intlLocale(locale: Locale): string {
+  return INTL[locale];
+}
+
+export function isLocale(value: unknown): value is Locale {
+  return value === 'en' || value === 'es';
+}
+
+/** The remembered language (localStorage kf.locale), else the browser's (es* → es), else English. */
+export function detectLocale(): Locale {
+  try {
+    const remembered = localStorage.getItem(LOCALE_KEY);
+    if (isLocale(remembered)) return remembered;
+  } catch {
+    // Storage refused: fall through to the browser's language.
+  }
+  const language =
+    typeof navigator === 'undefined' ? '' : String(navigator.language ?? '');
+  return language.toLowerCase().startsWith('es') ? 'es' : 'en';
+}
 
 /**
  * Looks `a.b.c` up in the locale's catalog and fills {{param}} placeholders. A missing key returns the key itself, so
@@ -14,7 +40,7 @@ const CATALOGS: Record<Locale, Tree> = {en};
  */
 export function translator(locale: Locale): Translate {
   const catalog = CATALOGS[locale];
-  const rules = new Intl.PluralRules(locale);
+  const rules = new Intl.PluralRules(INTL[locale]);
   const lookup = (key: string): string | undefined => {
     let value: string | Tree | undefined = catalog;
     for (const part of key.split('.')) {

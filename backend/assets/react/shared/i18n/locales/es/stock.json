@@ -1,0 +1,84 @@
+{
+  "warehouse": {
+    "label": "Bodega",
+    "choose": "Seleccione una bodega",
+    "none": "Aún no hay bodegas. Agregue una primero."
+  },
+  "errors": {
+    "insufficient_stock": "No hay suficientes existencias de {{code}}: {{available}} disponibles.",
+    "stock_not_found": "Uno de estos productos no tiene existencias en esta bodega.",
+    "warehouse_not_found": "Esta bodega ya no existe.",
+    "product_not_found": "Uno de estos productos no existe.",
+    "forbidden": "No tiene permiso para hacer esto."
+  },
+  "upload": {
+    "title": "Cargar una hoja de existencias",
+    "description": "Este formulario permite cargar un archivo de Excel con productos para agregarlos o actualizarlos en la base de datos.",
+    "downloadTemplate": "Descargar la plantilla",
+    "downloadAll": "Descargar todos los productos",
+    "file": "Seleccione un archivo xls de su computador y luego haga clic en Cargar para subir los productos.",
+    "warehouse": "Bodega",
+    "submit": "Cargar",
+    "submitting": "Cargando…",
+    "fileRequired": "Elija una hoja de cálculo para cargar.",
+    "warehouseRequired": "Elija la bodega a la que van las cantidades.",
+    "done_one": "Se guardó {{count}} producto.",
+    "done_other": "Se guardaron {{count}} productos.",
+    "unsupported_media": "El archivo no es una hoja de cálculo de Excel (xls o xlsx).",
+    "invalid_spreadsheet": "No se pudo leer la hoja de cálculo. Use la plantilla e intente de nuevo."
+  },
+  "barcode": {
+    "title": "Actualizar por código de barras",
+    "description": "Escriba o escanee un código de barras y presione Enter: la cantidad aumenta en uno cada vez que se lee el mismo código. Luego elija la bodega y agregue o retire los productos.",
+    "placeholder": "Código de barras",
+    "add": "Agregar",
+    "code": "Código",
+    "quantity": "Cantidad",
+    "options": "Opciones",
+    "remove": "Quitar {{code}}",
+    "exists": "El producto existe",
+    "missing": "El producto no existe",
+    "checking": "Verificando el producto…",
+    "empty": "Aún no se ha leído ningún producto.",
+    "addProducts": "Agregar productos",
+    "removeProducts": "Retirar productos",
+    "confirmTitle": "Confirmar los productos",
+    "confirmBody": "Estos productos irán a {{warehouse}}:",
+    "confirmBodyRemove": "Estos productos saldrán de {{warehouse}}:",
+    "confirmAdd": "Agregar cantidad",
+    "confirmRemove": "Retirar cantidad",
+    "sending": "Enviando…",
+    "badQuantity": "Cada cantidad debe ser un número entero de 1 o más.",
+    "added": "Los productos se agregaron a {{warehouse}}.",
+    "removed": "Los productos se retiraron de {{warehouse}}."
+  },
+  "incoming": {
+    "title": "Entrantes",
+    "approveAll": "Aprobar todo",
+    "approving": "Aprobando…",
+    "approved_one": "Se aprobó {{count}} producto entrante.",
+    "approved_other": "Se aprobaron {{count}} productos entrantes.",
+    "empty": "No hay nada esperando aprobación en esta bodega.",
+    "columns": {
+      "code": "Código",
+      "description": "Descripción",
+      "quantity": "Cantidad",
+      "warehouse": "Bodega"
+    }
+  },
+  "warehouses": {
+    "title": "Bodegas",
+    "columns": {
+      "id": "#",
+      "name": "Nombre",
+      "options": "Opciones"
+    },
+    "edit": "Editar",
+    "empty": "Aún no hay bodegas.",
+    "editTitle": "Editar bodega",
+    "name": "Nombre",
+    "required": "Este campo no puede estar vacío.",
+    "tooLong": "Este valor es demasiado largo. Debe tener 255 caracteres o menos.",
+    "updated": "La bodega se actualizó correctamente."
+  }
+}

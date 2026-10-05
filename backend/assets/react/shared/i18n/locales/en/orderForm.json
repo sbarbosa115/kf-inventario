@@ -1,0 +1,63 @@
+{
+  "newTitle": "Create a new order",
+  "editTitle": "Editing Order",
+  "customerInformation": "Customer Information",
+  "searchCustomer": "Search Customer",
+  "noCustomers": "No customers match",
+  "customersUnavailable": "The existing customers could not be loaded: type the customer's details.",
+  "customerOption": "{{name}} [{{email}}] [{{phone}}]",
+  "firstName": "First Name",
+  "lastName": "Last Name",
+  "email": "Email",
+  "phone": "Phone",
+  "comment": "Comment",
+  "orderDetail": "Order Detail",
+  "warehouse": "Warehouse",
+  "selectWarehouse": "Select Warehouse",
+  "warehouseLocked": "Remove the products to change the warehouse.",
+  "paymentMethod": "Payment Method",
+  "selectPaymentMethod": "Select a payment method",
+  "code": "Consecutive",
+  "source": "Source",
+  "selectSource": "Select Order Source",
+  "status": "Status",
+  "selectStatus": "Select Order Status",
+  "product": "Product {{number}}",
+  "selectProduct": "Select a product",
+  "noProducts": "This warehouse has no products in stock",
+  "productOption": "{{title}} ({{code}})",
+  "quantity": "Quantity",
+  "quantityOf": "Quantity of product {{number}}",
+  "addProduct": "Add a product",
+  "removeProduct": "Remove this product",
+  "create": "Create",
+  "update": "Update",
+  "incomplete": "To save, fill in the customer's first name, last name and email, the warehouse, at least one product with its quantity, the source, the payment method and the status.",
+  "created": "The order was created successfully.",
+  "updated": "The order was updated successfully.",
+  "notFound": "This order no longer exists.",
+  "backToList": "Back to the orders",
+  "statuses": {
+    "1": "Created",
+    "2": "Processed",
+    "3": "Completed",
+    "4": "Partial",
+    "5": "Sent",
+    "6": "Delivered"
+  },
+  "sources": {
+    "1": "Web",
+    "2": "Phone"
+  },
+  "paymentMethods": {
+    "1": "Credit Card",
+    "2": "Paypal"
+  },
+  "errors": {
+    "order_without_products": "Add at least one product with its quantity.",
+    "product_not_found": "One of the products no longer exists.",
+    "warehouse_not_found": "This warehouse no longer exists.",
+    "order_not_found": "This order no longer exists.",
+    "validation_failed": "Check the order: {{fields}}."
+  }
+}

@@ -10,6 +10,7 @@ import '@fontsource-variable/geist-mono';
 import '@/shared/ui/styles/tokens.css';
 import '@/shared/ui/styles/bootstrap-overrides.css';
 import '@/shared/ui/styles/react-select.css';
+import '@/shared/ui/styles/kit.css';
 import './styles/global.css';
 import {App} from './App';
 

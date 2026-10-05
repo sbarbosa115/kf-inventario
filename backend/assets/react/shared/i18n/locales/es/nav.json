@@ -1,0 +1,20 @@
+{
+  "toggle": "Mostrar u ocultar el menú",
+  "account": "Cuenta",
+  "logout": "Cerrar sesión",
+  "sections": {
+    "products": "Productos",
+    "sales": "Ventas",
+    "admin": "Administración"
+  },
+  "products": "Productos",
+  "productList": "Lista de productos",
+  "productsUpload": "Cargar productos",
+  "barcode": "Lector de código de barras",
+  "incoming": "Productos entrantes",
+  "warehouses": "Bodegas",
+  "orders": "Pedidos",
+  "invoices": "Facturas",
+  "customers": "Clientes",
+  "users": "Usuarios"
+}

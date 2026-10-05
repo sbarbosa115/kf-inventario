@@ -1,0 +1,62 @@
+{
+  "title": "Facturas",
+  "create": "Crear factura",
+  "created": "La factura se creó correctamente.",
+  "empty": "Aún no hay facturas.",
+  "posClient": "Cliente de mostrador",
+  "columns": {
+    "code": "Factura",
+    "customer": "Cliente",
+    "total": "Total",
+    "date": "Fecha",
+    "options": "Opciones"
+  },
+  "detail": {
+    "title": "Detalle de la factura",
+    "viewPdf": "Ver como PDF",
+    "gone": "Esta factura ya no existe.",
+    "productCode": "Código",
+    "description": "Descripción",
+    "quantity": "Cantidad",
+    "unitPrice": "Precio unitario"
+  },
+  "form": {
+    "customer": "Cliente",
+    "pickCustomer": "Cliente",
+    "searchCustomer": "Buscar cliente",
+    "noOptions": "Sin opciones",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "code": "Factura",
+    "paymentMethod": "Método de pago",
+    "payment": {
+      "credit_counted": "Crédito - contado",
+      "credit_card": "Tarjeta de crédito - Paypal"
+    },
+    "taxRate": "Impuesto de ventas",
+    "comment": "Comentarios",
+    "items": "Ítems",
+    "warehouse": "Bodega",
+    "addAll": "Agregar todos los productos",
+    "addItem": "Agregar ítem",
+    "item": "Ítem {{number}}",
+    "product": "Producto {{number}}",
+    "productPlaceholder": "Producto",
+    "description": "Descripción {{number}}",
+    "descriptionPlaceholder": "Descripción",
+    "quantity": "Cantidad {{number}}",
+    "unitPrice": "Precio unitario {{number}}",
+    "remove": "Quitar el ítem {{number}}",
+    "subtotal": "Subtotal",
+    "tax": "Impuesto ({{rate}} %)",
+    "total": "Total",
+    "submit": "Crear factura",
+    "required": "Este campo no puede estar vacío.",
+    "noItems": "Agregue al menos un ítem a la factura.",
+    "badItems": "Cada ítem necesita una cantidad entera y un precio como 12.50.",
+    "codeTaken": "Ya existe una factura con este código.",
+    "stockFailed": "No se pudieron cargar los productos de esta bodega. Las descripciones se pueden escribir igual."
+  }
+}

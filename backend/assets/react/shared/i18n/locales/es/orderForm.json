@@ -1,0 +1,63 @@
+{
+  "newTitle": "Crear un pedido nuevo",
+  "editTitle": "Editar pedido",
+  "customerInformation": "Datos del cliente",
+  "searchCustomer": "Buscar cliente",
+  "noCustomers": "Ningún cliente coincide",
+  "customersUnavailable": "No se pudieron cargar los clientes existentes: escriba los datos del cliente.",
+  "customerOption": "{{name}} [{{email}}] [{{phone}}]",
+  "firstName": "Nombre",
+  "lastName": "Apellido",
+  "email": "Correo electrónico",
+  "phone": "Teléfono",
+  "comment": "Comentario",
+  "orderDetail": "Detalle del pedido",
+  "warehouse": "Bodega",
+  "selectWarehouse": "Seleccione la bodega",
+  "warehouseLocked": "Quite los productos para cambiar la bodega.",
+  "paymentMethod": "Método de pago",
+  "selectPaymentMethod": "Seleccione un método de pago",
+  "code": "Número de pedido",
+  "source": "Origen",
+  "selectSource": "Seleccione el origen del pedido",
+  "status": "Estado",
+  "selectStatus": "Seleccione el estado del pedido",
+  "product": "Producto {{number}}",
+  "selectProduct": "Seleccione un producto",
+  "noProducts": "Esta bodega no tiene productos con existencias",
+  "productOption": "{{title}} ({{code}})",
+  "quantity": "Cantidad",
+  "quantityOf": "Cantidad del producto {{number}}",
+  "addProduct": "Agregar un producto",
+  "removeProduct": "Quitar este producto",
+  "create": "Crear",
+  "update": "Actualizar",
+  "incomplete": "Para guardar, complete el nombre, el apellido y el correo electrónico del cliente, la bodega, al menos un producto con su cantidad, el origen, el método de pago y el estado.",
+  "created": "El pedido se creó correctamente.",
+  "updated": "El pedido se actualizó correctamente.",
+  "notFound": "Este pedido ya no existe.",
+  "backToList": "Volver a los pedidos",
+  "statuses": {
+    "1": "Creado",
+    "2": "Procesado",
+    "3": "Completado",
+    "4": "Parcial",
+    "5": "Enviado",
+    "6": "Entregado"
+  },
+  "sources": {
+    "1": "Web",
+    "2": "Teléfono"
+  },
+  "paymentMethods": {
+    "1": "Tarjeta de crédito",
+    "2": "Paypal"
+  },
+  "errors": {
+    "order_without_products": "Agregue al menos un producto con su cantidad.",
+    "product_not_found": "Uno de los productos ya no existe.",
+    "warehouse_not_found": "Esta bodega ya no existe.",
+    "order_not_found": "Este pedido ya no existe.",
+    "validation_failed": "Revise el pedido: {{fields}}."
+  }
+}

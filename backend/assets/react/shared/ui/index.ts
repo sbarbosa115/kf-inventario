@@ -7,4 +7,5 @@ export {Field} from './Field';
 export {LegacyScreen} from './LegacyScreen';
 export {Loader} from './Loader';
 export {Modal} from './Modal';
+export {Money, Num} from './Money';
 export {PageCard} from './PageCard';

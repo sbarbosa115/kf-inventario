@@ -1,0 +1,11 @@
+/* The kit's own components (@/shared/ui), on the tokens. One block per component, in the order of index.ts. */
+
+/* ---- Money, Num ------------------------------------------------------------------------------------------ */
+.kf-num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kf-num--negative {
+  color: var(--kf-danger);
+}
