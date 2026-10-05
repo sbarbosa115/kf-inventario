@@ -107,7 +107,6 @@ final class ContractTest extends ApiTestCase
     private static function notBuilt(): array
     {
         return [
-            'POST /api/v1/orders/sync',
             'GET /api/v1/invoices',
             'GET /api/v1/invoices/next-code',
             'GET /api/v1/invoices/1',

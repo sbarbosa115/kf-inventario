@@ -1,0 +1,6 @@
+# Services of the test environment only (MicroKernelTrait loads services_<env>.yaml after services.yaml).
+services:
+  # The tests never call a real WooCommerce shop: the "Sync Orders" pull reads a fake the test fills
+  # (tests/Functional/Ordering/SyncOrdersApiTest.php).
+  App\Ordering\Application\Port\RemoteOrderSource:
+    class: App\Tests\Functional\Ordering\FakeRemoteOrderSource

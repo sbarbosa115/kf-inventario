@@ -12,7 +12,9 @@ use App\Ordering\Application\Command\OrderCustomer;
 use App\Ordering\Application\Command\OrderDetails;
 use App\Ordering\Application\Command\OrderLine;
 use App\Ordering\Application\Command\PlaceOrder;
+use App\Ordering\Application\Command\SyncedOrders;
 use App\Ordering\Application\Command\SyncOrderComments;
+use App\Ordering\Application\Command\SyncRemoteOrders;
 use App\Ordering\Application\Command\UpdateOrder;
 use App\Ordering\Application\Query\Orders;
 use App\Ordering\UI\Http\Input\OrderCommentInput;
@@ -26,7 +28,6 @@ use App\Ordering\UI\Http\Output\OrderDetailOutput;
 use App\Ordering\UI\Http\Output\OrderOutput;
 use App\Ordering\UI\Http\Output\SyncResultOutput;
 use App\Shared\Application\Command\CommandBus;
-use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\ApiValidationException;
 use App\Shared\UI\Http\InputMapper;
@@ -160,14 +161,22 @@ final class OrderController extends AbstractController
     }
 
     /**
-     * Pulls new orders from the WooCommerce shops (item 13). 501 order_sync_unavailable until then; 502 order_sync_failed. (item 13).
+     * Pulls the orders the WooCommerce shops have waiting (REST API) and places the ones the app does not have yet,
+     * as the webhook would: `imported` placed, `skipped` already imported (deleted ones included) or not placeable
+     * (logged). A warehouse whose shop the app holds no keys for is not pulled. 502 order_sync_failed when a shop
+     * cannot be read (nothing is kept).
      */
     #[Route('/api/v1/orders/sync', name: 'api_orders_sync', methods: ['POST'])]
     #[IsGranted('ROLE_CAN_SYNC_ORDERS')]
     #[ApiResponse(SyncResultOutput::class, status: 202)]
     public function sync(): JsonResponse
     {
-        throw new ApiException(501, 'order_sync_unavailable', 'Pulling orders from WooCommerce is not available yet.');
+        $synced = $this->commands->dispatch(new SyncRemoteOrders());
+        if (!$synced instanceof SyncedOrders) {
+            throw new \LogicException('SyncRemoteOrdersHandler answers what it did.');
+        }
+
+        return $this->json(new SyncResultOutput($synced->imported, $synced->skipped), 202);
     }
 
     private static function details(OrderInput $input): OrderDetails
