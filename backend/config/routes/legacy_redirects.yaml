@@ -99,3 +99,35 @@ customer_edit:
   controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
   defaults: {path: /admin/customers, permanent: true}
   methods: [GET]
+
+# Item 10 (order-forms-ui): the order form (new, edit) and the getting-ready screen. The edit and getting-ready
+# addresses keep the order's id: redirectAction passes the {order} attribute on to the React routes named below.
+order_new:
+  path: /admin/order/new
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/orders/new, permanent: true}
+  methods: [GET]
+
+order_edit:
+  path: /admin/order/edit/{order}
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+  defaults: {route: spa_order_edit, permanent: true}
+  requirements: {order: '\d+'}
+  methods: [GET]
+
+order_getting_ready:
+  path: /admin/order/partial/getting-ready/{order}
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+  defaults: {route: spa_order_getting_ready, permanent: true}
+  requirements: {order: '\d+'}
+  methods: [GET]
+
+# The React app's order form and getting-ready screen, named so the redirects above can build them (the SPA's
+# catch-all would serve them too).
+spa_order_edit:
+  path: /admin/orders/{order}/edit
+  controller: App\Shared\UI\Http\Spa\SpaController
+
+spa_order_getting_ready:
+  path: /admin/orders/{order}/getting-ready
+  controller: App\Shared\UI\Http\Spa\SpaController
