@@ -2,6 +2,7 @@
 
 namespace App\Tests\Functional\Ordering;
 
+use App\Customers\Domain\Model\Country;
 use App\Customers\Domain\Model\Customer;
 use App\Customers\Domain\Model\CustomerAddress;
 use App\Inventory\Domain\Model\Warehouse;
@@ -49,8 +50,11 @@ final class WebhookApiTest extends ApiTestCase
         self::assertSame(['ana@example.com', 'Ana', 'Gomez', '555-0100'], [$customer->getEmail(), $customer->getFirstName(), $customer->getLastName(), $customer->getPhone()]);
         $addresses = $customer->getAddresses()->toArray();
         self::assertCount(2, $addresses, 'Billing and shipping, two addresses.');
-        self::assertSame([CustomerAddress::ADDRESS_BILLING, '1 Billing St', '33101', 'Miami', 'FL', 'US'], self::address($addresses[0]));
-        self::assertSame([CustomerAddress::ADDRESS_SHIPPING, '2 Shipping Ave', '10001', 'New York', 'NY', 'US'], self::address($addresses[1]));
+        // The shop sends state and country codes: Customers' rule (CustomerRegistry) finds the existing state and
+        // country by code instead of creating a "FL" state and a "US" country beside them.
+        self::assertSame([CustomerAddress::ADDRESS_BILLING, '1 Billing St', '33101', 'Miami', 'Florida', 'United States'], self::address($addresses[0]));
+        self::assertSame([CustomerAddress::ADDRESS_SHIPPING, '2 Shipping Ave', '10001', 'New York', 'New York', 'United States'], self::address($addresses[1]));
+        self::assertSame(1, $this->em()->getRepository(Country::class)->count(['code' => 'US']), 'No second United States is created.');
         self::assertNotNull($b->getId());
         self::assertNotNull($a->getId());
     }

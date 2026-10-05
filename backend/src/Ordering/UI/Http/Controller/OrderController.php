@@ -197,6 +197,8 @@ final class OrderController extends AbstractController
                     stateName: $address->city?->state?->name,
                     countryId: $address->city?->state?->country?->id,
                     countryName: $address->city?->state?->country?->name,
+                    stateCode: $address->city?->state?->code,
+                    countryCode: $address->city?->state?->country?->code,
                 ), $customer->addresses ?? []),
             ),
             lines: array_map(static fn (OrderLineInput $line) => new OrderLine($line->uuid, $line->code, $line->quantity), $input->products),
