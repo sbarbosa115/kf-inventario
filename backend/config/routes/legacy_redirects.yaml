@@ -23,3 +23,35 @@ user_user_edit:
   controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
   defaults: {path: /admin/users, permanent: true}
   methods: [GET]
+
+# Item 7 (stock-ui): upload, barcode reader, incoming products and warehouses.
+product_product_upload:
+  path: /admin/product/upload
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/products/upload, permanent: true}
+  methods: [GET]
+
+product_bar_code:
+  path: /admin/product/update/bar-code
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/products/barcode, permanent: true}
+  methods: [GET]
+
+product_incoming:
+  path: /admin/product/incoming
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/products/incoming, permanent: true}
+  methods: [GET]
+
+warehouse_warehouse_index:
+  path: /admin/warehouse/
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/warehouses, permanent: true}
+  methods: [GET]
+
+# The edit address carried the warehouse's id; the rename is a modal now, so it lands on the list.
+warehouse_warehouse_edit:
+  path: /admin/warehouse/edit/{warehouse}
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/warehouses, permanent: true}
+  methods: [GET]

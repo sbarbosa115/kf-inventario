@@ -95,9 +95,74 @@ Open `/admin/nothing-here` signed in: "Page not found" inside the app, with a li
 
 <!-- Item 6 (products-ui) adds INV-01 – 08; item 7 (stock-ui) adds INV-09 – 16. -->
 
+**INV-09 · The upload screen links to the template and to every product**
+Smoke: `e2e/stock.spec.ts`.
+Signed in as the admin, open `/admin/product/upload` (the previous version's address): `/admin/products/upload` opens,
+"Upload products", the description, Download template and Download All Products (each opens an `.xls`), a file box and a
+Warehouse list.
+
+**INV-10 · Upload names what is missing and refuses a file that is not a spreadsheet**
+Smoke: `e2e/stock.spec.ts`.
+Upload with nothing chosen: "Choose a spreadsheet to upload." and "Choose the warehouse the quantities go to."; nothing
+is sent. Choose a `.txt` file and a warehouse: "The file is not an Excel spreadsheet (xls or xlsx)."
+
+**INV-11 · A spreadsheet from the template is stored in the chosen warehouse**
+Smoke (part): `e2e/stock.spec.ts` uploads the all-products sheet and checks the confirmation.
+Download All Products, put quantities in the Quantity column of two rows and add one new row (code, title, detail,
+quantity, price), choose a warehouse and Upload: "N products were stored." with a link to the Product List. By hand:
+the product list of that warehouse shows the new product and the quantities added to the existing ones; a sheet with
+the wrong columns says "The spreadsheet could not be read. Use the template and try again."
+
+**INV-12 · The barcode reader adds a code on Enter, counts a repeated one and checks it exists**
+Smoke: `e2e/stock.spec.ts`.
+Open `/admin/product/update/bar-code`: `/admin/products/barcode` opens with "No products read yet." Type `KF-01` and
+press Enter: the box empties and the row shows quantity 1; again: still one row, quantity 2. `NOPE-404` gets the red
+cross ("The product does not exist"), `KF-01` the green check. The quantity box can be edited (0 or text turns it red
+and disables Add/Remove products) and the bin removes the row.
+
+**INV-13 · The codes read are confirmed and added to the chosen warehouse**
+Smoke: `e2e/stock.spec.ts`.
+With `KF-01` x2 read and Usa chosen, Add products opens "Confirm the products" naming Usa and the code and quantity;
+Cancel changes nothing; Add quantity shows "The products were added to Usa." and empties the list. The Usa stock list
+of the Products screen shows KF-01 with 2.
+
+**INV-14 · Removing more than the warehouse has is refused and keeps the list**
+Smoke: `e2e/stock.spec.ts`.
+Read `KF-01`, choose Usa, set the quantity to 50, Remove products, Remove quantity: "There is not enough stock of
+KF-01: 2 available." and the list is still there. With quantity 1 it shows "The products were removed from Usa." and
+Usa keeps 1.
+
+**INV-15 · Incoming products wait until "Approve all" puts them in stock**
+Smoke: `e2e/stock.spec.ts` (the move is made through the API; the Products screen's move modal is item 6's).
+After moving KF-02 x4 from Colombia to España, `/admin/product/incoming` opens `/admin/products/incoming`; pick España:
+one row (code, description, 4, España). Approve all: "1 incoming product was approved.", the list says nothing is
+waiting and Approve all is disabled. By hand: España's stock list shows KF-02 with 4 and Colombia's with 96.
+
+**INV-16 · A person without the inventory role is told so**
+Smoke: `e2e/stock.spec.ts`.
+Signed in as `invoices`: no Products menu; `/admin/products/incoming` says "You do not have permission to do this.";
+an upload submitted on `/admin/products/upload` says the same.
+
 ## 3. Warehouses (WH)
 
 <!-- Item 7 (stock-ui) adds WH-01 – 03. -->
+
+**WH-01 · The list shows every warehouse, and the old address lands on it**
+Smoke: `e2e/stock.spec.ts`.
+Signed in as the admin, open `/admin/warehouse/` (the previous version's address): `/admin/warehouses` opens, "View
+warehouses", one row per warehouse (`#`, name, an Edit button); `/admin/warehouse/edit/1` lands on the same list. The
+search box finds a row by name.
+
+**WH-02 · A warehouse is renamed in a modal, and a blank name is refused**
+Smoke: `e2e/stock.spec.ts` (it puts the name back).
+Edit on a row opens "Edit warehouse" with its name. Clear it and Save: "This value should not be blank." under the
+box, nothing is sent. Type a new name and Save: the modal closes, "Warehouse updated successfully" and the row shows the
+new name. By hand: the new name appears in every warehouse list (Products, Orders, Upload).
+
+**WH-03 · Any signed-in person can open the warehouses by address**
+Smoke: `e2e/stock.spec.ts`.
+Signed in as `invoices` (no Warehouses entry in the sidebar), `/admin/warehouses` still lists the warehouses, as the
+previous version did (the API asks only for a signed-in user: a known gap).
 
 ## 4. Customers (CUS)
 
