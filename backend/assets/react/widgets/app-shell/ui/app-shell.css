@@ -13,11 +13,11 @@
 .app-shell__sidebar {
   width: 225px;
   flex-shrink: 0;
-  background-color: #212529;
+  background-color: var(--kf-sidebar);
 }
 
 .app-shell__sidebar .nav-link {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--kf-sidebar-text);
   padding: 0.75rem 1rem;
   text-align: left;
   width: 100%;
@@ -26,12 +26,12 @@
 .app-shell__sidebar .nav-link:hover,
 .app-shell__sidebar .nav-link:focus,
 .app-shell__sidebar .nav-link.active {
-  color: #fff;
+  color: var(--kf-sidebar-active);
   text-decoration: none;
 }
 
 .app-shell__section {
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--kf-sidebar-muted);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -54,7 +54,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background-color: #f8f9fa;
+  background-color: var(--kf-bg);
 }
 
 .app-shell__content main {
@@ -64,7 +64,7 @@
 .app-shell__footer {
   text-align: center;
   font-size: 0.8rem;
-  color: #6c757d;
+  color: var(--kf-text-muted);
   padding: 1rem;
 }
 

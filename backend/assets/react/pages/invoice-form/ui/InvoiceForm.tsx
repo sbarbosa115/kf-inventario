@@ -162,6 +162,7 @@ export function InvoiceForm({
               {t('invoices.form.pickCustomer')}
             </label>
             <Select<Option>
+              classNamePrefix="kf-select"
               inputId="invoice-customer"
               isClearable
               placeholder={t('invoices.form.searchCustomer')}
@@ -334,6 +335,7 @@ export function InvoiceForm({
               >
                 <div className="col-md-5 mb-1">
                   <Select<Option>
+                    classNamePrefix="kf-select"
                     isClearable
                     aria-label={t('invoices.form.product', {number})}
                     placeholder={t('invoices.form.productPlaceholder')}

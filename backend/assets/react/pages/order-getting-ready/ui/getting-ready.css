@@ -1,14 +1,14 @@
 /* The getting-ready table's row tints (the legacy assets/css/custom.css): complete, nothing added yet, some added. */
 .getting-ready__table .row-selected-completed {
-  background: #d0e4c6;
+  background: var(--kf-accent-soft);
 }
 
 .getting-ready__table .row-selected-all-pending {
-  background: #efd2d2;
+  background: var(--kf-danger-soft);
 }
 
 .getting-ready__table .row-selected-some-added {
-  background: #f3e8b6;
+  background: var(--kf-warning-soft);
 }
 
 .getting-ready__code {

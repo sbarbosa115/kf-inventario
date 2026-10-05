@@ -110,7 +110,7 @@ function AddressRow({
     getNewOptionData: newOption,
     formatCreateLabel: (name: string) => t('address.create', {name}),
     noOptionsMessage: () => t('address.noOptions'),
-    classNamePrefix: 'address-select',
+    classNamePrefix: 'kf-select',
   };
 
   return (

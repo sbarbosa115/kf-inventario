@@ -1,22 +1,18 @@
-/* App-wide styles on top of Bootstrap 4 (the legacy pages' look). Screens keep their own CSS in their slice. */
+/* App-wide layout rules. Colours, type and Bootstrap's look come from shared/ui/styles (tokens + overrides). */
 html,
 body {
   height: 100%;
 }
 
-body {
-  background-color: #f8f9fa;
-}
-
-/* The legacy row tints (the getting-ready screen and the order statuses use them). */
+/* The legacy row tints (the getting-ready screen and the order statuses use them), on the tokens. */
 .row-selected-success {
-  background-color: #d4edda;
+  background-color: var(--kf-accent-soft);
 }
 
 .row-selected-warning {
-  background-color: #fff3cd;
+  background-color: var(--kf-warning-soft);
 }
 
 .row-selected-danger {
-  background-color: #f8d7da;
+  background-color: var(--kf-danger-soft);
 }

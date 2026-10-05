@@ -175,6 +175,7 @@ export function OrderForm({
               {t('orderForm.searchCustomer')}
             </label>
             <Select<Customer>
+              classNamePrefix="kf-select"
               inputId={`${id}-customer`}
               isClearable
               placeholder={t('orderForm.searchCustomer')}
@@ -358,6 +359,7 @@ export function OrderForm({
                     {t('orderForm.product', {number})}
                   </label>
                   <Select<ProductOption>
+                    classNamePrefix="kf-select"
                     inputId={`${id}-product-${index}`}
                     placeholder={t('orderForm.selectProduct')}
                     isDisabled={values.warehouse_id === null}
