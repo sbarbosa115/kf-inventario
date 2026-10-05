@@ -8,8 +8,9 @@ use App\Inventory\Domain\Repository\WarehouseRepository;
 use App\Shared\Application\Command\CommandHandler;
 
 /**
- * The legacy ProductService::approveProducts: every incoming row of the warehouse becomes in stock (as a row of its
- * own, beside any row already in stock, as before).
+ * Every incoming row of the warehouse becomes in stock. When the product already has a row in stock there, the
+ * incoming quantity is added to it and the incoming row goes: one row in stock per product and warehouse. (The legacy
+ * ProductService::approveProducts kept both rows, and every later lookup read only the first.).
  */
 final class ApproveIncomingHandler implements CommandHandler
 {
@@ -26,7 +27,13 @@ final class ApproveIncomingHandler implements CommandHandler
     {
         $incoming = $this->stock->ofWarehouse($this->warehouses->get($command->warehouseId), ProductWarehouse::STATUS_PENDING_TO_CONFIRM);
         foreach ($incoming as $row) {
-            $row->approve();
+            $inStock = $this->stock->findWithStatus($row->getProduct(), $row->getWarehouse(), ProductWarehouse::STATUS_CONFIRMED);
+            if (null === $inStock) {
+                $row->approve();
+                continue;
+            }
+            $inStock->addQuantity($row->getQuantity());
+            $this->stock->remove($row);
         }
 
         return \count($incoming);

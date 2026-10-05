@@ -302,6 +302,24 @@ final class StockApiTest extends ApiTestCase
         self::assertSame([['status' => self::PENDING, 'quantity' => 4]], $this->stockRows($a, $colombia), 'Another warehouse\'s incoming waits for its own approval.');
     }
 
+    public function testApprovingAddsTheIncomingToTheRowAlreadyInStock(): void
+    {
+        $espana = $this->aWarehouse('España');
+        $kf = $this->aProduct('KF-02');
+        $this->aStock($kf, $espana, 2);
+        $this->aStock($kf, $espana, 4, self::PENDING);
+
+        $body = $this->sendJson('POST', "/api/v1/warehouses/{$espana->getId()}/incoming/approve");
+
+        $this->assertStatus(200);
+        self::assertSame(['approved' => 1], $body);
+        self::assertSame(
+            [['status' => self::CONFIRMED, 'quantity' => 6]],
+            $this->stockRows($kf, $espana),
+            'One row in stock per product and warehouse: the legacy approval left two (2 and 4), and the barcode reader and shipments then read the first one only.',
+        );
+    }
+
     public function testApprovingWithNothingIncomingApprovesNothing(): void
     {
         $usa = $this->aWarehouse('Usa');

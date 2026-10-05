@@ -44,4 +44,6 @@ interface StockRepository
     public function ofProducts(Warehouse $warehouse, array $uuids): array;
 
     public function add(ProductWarehouse $stock): void;
+
+    public function remove(ProductWarehouse $stock): void;
 }

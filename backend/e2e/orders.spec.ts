@@ -173,11 +173,11 @@ test.describe('5 Orders', () => {
       .getByRole('button', {name: 'Comments of order W00004: 1'})
       .click();
     const dialog = page.getByRole('dialog', {name: 'Order Detail'});
-    await expect(dialog.getByLabel('Comment 1')).toHaveValue(
+    await expect(dialog.getByLabel('Comment 1', {exact: true})).toHaveValue(
       'Comment for W00004',
     );
     await dialog.getByRole('button', {name: 'Add a comment'}).click();
-    await dialog.getByLabel('Comment 2').fill('Smoke comment');
+    await dialog.getByLabel('Comment 2', {exact: true}).fill('Smoke comment');
     await dialog.getByRole('button', {name: 'Save comment 2'}).click();
     await expect(dialog.getByText('The comments were saved.')).toBeVisible();
     await dialog.getByRole('button', {name: 'Close'}).last().click();
@@ -185,10 +185,12 @@ test.describe('5 Orders', () => {
     await row
       .getByRole('button', {name: 'Comments of order W00004: 2'})
       .click();
-    await expect(dialog.getByLabel('Comment 2')).toHaveValue('Smoke comment');
+    await expect(dialog.getByLabel('Comment 2', {exact: true})).toHaveValue(
+      'Smoke comment',
+    );
     await dialog.getByRole('button', {name: 'Remove comment 2'}).click();
     await expect(dialog.getByText('The comments were saved.')).toBeVisible();
-    await expect(dialog.getByLabel('Comment 2')).toHaveCount(0);
+    await expect(dialog.getByLabel('Comment 2', {exact: true})).toHaveCount(0);
     await dialog.getByRole('button', {name: 'Close'}).last().click();
     await expect(
       row.getByRole('button', {name: 'Comments of order W00004: 1'}),

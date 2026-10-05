@@ -156,6 +156,12 @@ recommended, once the secret is copied from the shop (a wrong one refuses every 
 
 ## Known gaps
 
+- Production may already hold two in-stock rows of one product in one warehouse: the legacy "Approve all" kept the
+  approved row beside the one in stock (fixed: approval now adds to the row in stock). Lookups read the first row, so
+  such a product can show its stock twice and refuse a removal it could cover. Find them before or after the cutover
+  with `SELECT product_id, warehouse_id, COUNT(*) FROM product_warehouse WHERE status = 1 GROUP BY 1, 2 HAVING
+  COUNT(*) > 1` and merge them by hand (sum the quantities into the oldest row, delete the others).
+
 The security audit of the restructure (`docs/security/audits/2026-10-05-restructure.md`) left these open:
 
 - **`sync-comments`, partial shipments, the order XLS and the warehouses need only `ROLE_USER`** (as before, PRD

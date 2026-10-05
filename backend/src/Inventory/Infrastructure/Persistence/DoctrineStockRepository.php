@@ -77,4 +77,9 @@ final class DoctrineStockRepository implements StockRepository
     {
         $this->em->persist($stock);
     }
+
+    public function remove(ProductWarehouse $stock): void
+    {
+        $this->em->remove($stock);
+    }
 }
