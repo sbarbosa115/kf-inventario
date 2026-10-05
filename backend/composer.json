@@ -10,7 +10,7 @@
     "doctrine/doctrine-bundle": "^3.0",
     "doctrine/doctrine-migrations-bundle": "^3.3 || ^4.0",
     "doctrine/orm": "^3.2",
-    "dompdf/dompdf": "^2.0",
+    "dompdf/dompdf": "^3.1.6",
     "gedmo/doctrine-extensions": "^3.14",
     "guzzlehttp/guzzle": "^7.0",
     "phpdocumentor/reflection-docblock": "^5.3",

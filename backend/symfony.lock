@@ -185,12 +185,6 @@
     "phar-io/version": {
         "version": "3.2.1"
     },
-    "phenx/php-font-lib": {
-        "version": "0.5.1"
-    },
-    "phenx/php-svg-lib": {
-        "version": "v0.3.2"
-    },
     "php-cs-fixer/diff": {
         "version": "v1.3.0"
     },
