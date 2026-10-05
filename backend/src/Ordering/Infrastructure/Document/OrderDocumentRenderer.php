@@ -4,32 +4,33 @@ namespace App\Ordering\Infrastructure\Document;
 
 use App\Ordering\Application\Port\OrderDocuments;
 use App\Ordering\Domain\Model\Order;
-use Dompdf\Dompdf;
+use App\Shared\Application\Port\PdfRenderer;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
 /**
- * The order's files as the legacy OrderController and PdfHandlerService made them: the Twig templates (copied to
- * templates/pdf/) rendered by Dompdf on letter paper, and the .xls sheet with its translated headers.
+ * The order's files as the legacy OrderController made them: the Twig templates (copied to templates/pdf/) turned
+ * into a PDF by Shared's PdfRenderer (Dompdf, letter paper), and the .xls sheet with its translated headers.
  */
 final class OrderDocumentRenderer implements OrderDocuments
 {
     public function __construct(
         private readonly Environment $twig,
         private readonly TranslatorInterface $translator,
+        private readonly PdfRenderer $pdf,
     ) {
     }
 
     public function pdf(Order $order): string
     {
-        return self::toPdf($this->twig->render('pdf/order.html.twig', ['order' => $order]));
+        return $this->pdf->render($this->twig->render('pdf/order.html.twig', ['order' => $order]));
     }
 
     public function remainingPdf(Order $order): string
     {
-        return self::toPdf($this->twig->render('pdf/order-remaining.html.twig', ['order' => $order]));
+        return $this->pdf->render($this->twig->render('pdf/order-remaining.html.twig', ['order' => $order]));
     }
 
     public function spreadsheet(Order $order): string
@@ -58,15 +59,5 @@ final class OrderDocumentRenderer implements OrderDocuments
         fclose($stream);
 
         return $bytes;
-    }
-
-    private static function toPdf(string $html): string
-    {
-        $pdf = new Dompdf();
-        $pdf->loadHtml($html);
-        $pdf->setPaper('letter');
-        $pdf->render();
-
-        return (string) $pdf->output();
     }
 }
