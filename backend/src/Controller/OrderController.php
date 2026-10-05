@@ -8,11 +8,7 @@ use App\Ordering\Domain\Model\OrderProduct;
 use App\Inventory\Domain\Model\Product;
 use App\Inventory\Domain\Model\Warehouse;
 use App\Model\RemoveOrderInput;
-use App\Repository\CountryRepository;
-use App\Repository\CustomerRepository;
 use App\Repository\OrderRepository;
-use App\Repository\ProductWarehouseRepository;
-use App\Repository\WarehouseRepository;
 use App\Services\CommentService;
 use App\Services\LogService;
 use App\Services\NotificationService;
@@ -49,27 +45,6 @@ class OrderController extends AbstractController
         return $this->render('order/index.html.twig');
     }
 
-    #[Route('/new', name: 'new', options: ['expose' => true])]
-    #[IsGranted('ROLE_CAN_CREATE_ORDERS')]
-    public function new(
-        CountryRepository $countryRepo,
-        WarehouseRepository $warehouseRepo,
-        CustomerRepository $customerRepo
-    ): Response {
-        $locations = $countryRepo->findAllAsArray();
-
-        if (is_array($locations) && count($locations) > 1000) {
-            $locations = array_slice($locations, 0, 100);
-        }
-
-        return $this->render('order/new.html.twig', [
-            'url' => $this->generateUrl('order_create'),
-            'locations' => $locations,
-            'warehouses' => $warehouseRepo->findAllAsArray(),
-            'customers' => $customerRepo->findAllAsArray(),
-        ]);
-    }
-
     /**
      * @throws ExceptionInterface
      */
@@ -96,35 +71,6 @@ class OrderController extends AbstractController
             'status' => true,
             'route' => $this->generateUrl('order_index'),
             'order' => $orderModel['id'],
-        ]);
-    }
-
-    /**
-     * @throws ExceptionInterface
-     */
-    #[Route('/edit/{order}', name: 'edit', options: ['expose' => true])]
-    #[IsGranted('ROLE_CAN_UPDATE_ORDERS')]
-    public function edit(
-        CountryRepository $countryRepo,
-        WarehouseRepository $warehouseRepo,
-        CustomerRepository $customerRepo,
-        OrderService $orderService,
-        Order $order
-    ): Response {
-        $locations = $countryRepo->findAllAsArray();
-
-        if (is_array($locations) && count($locations) > 1000) {
-            $locations = array_slice($locations, 0, 100);
-        }
-
-        return $this->render('order/edit.html.twig', [
-            'url' => $this->generateUrl('order_update', [
-                'order' => $order->getId(),
-            ]),
-            'order' => $orderService->getOrderAsArray($order),
-            'locations' => $locations,
-            'warehouses' => $warehouseRepo->findAllAsArray(),
-            'customers' => $customerRepo->findAllAsArray(),
         ]);
     }
 
@@ -277,19 +223,6 @@ class OrderController extends AbstractController
         $orderService->deleteOrderById($inputModel->order);
 
         return new JsonResponse(['status' => true]);
-    }
-
-    #[Route('/partial/getting-ready/{order}', name: 'getting_ready', methods: ['GET'], options: ['expose' => true])]
-    public function gettingReady(
-        Order $order,
-        OrderService $orderService,
-        ProductWarehouseRepository $productWarehouseRepo
-    ): Response {
-        return $this->render('order/getting-ready.html.twig', [
-            'order' => $orderService->getOrderAsArray($order),
-            'partials' => $order->getAggregatePartials(),
-            'inventory' => $productWarehouseRepo->getOrderProductsOnInventoryAsArray($order),
-        ]);
     }
 
     #[Route('/partial/{order}', methods: ['GET'])]

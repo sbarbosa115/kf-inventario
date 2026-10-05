@@ -13,8 +13,6 @@ Encore.setOutputPath('public/build/')
   // rest (docs/pdr/prd-restructure.md).
   .addEntry('app', './assets/js/app.js')
   .addEntry('order', './assets/js/Orders/index.js')
-  .addEntry('order/order-handler', './assets/js/Orders/orderHandler.js')
-  .addEntry('order/getting-ready', './assets/js/Orders/gettingReady.js')
   // No split chunks and one runtime per entry while the legacy templates load build/<entry>.js by hand: each entry
   // must be self-contained. Item 12 switches to splitEntryChunks() + enableSingleRuntimeChunk() as tacoma does.
   .disableSingleRuntimeChunk()
