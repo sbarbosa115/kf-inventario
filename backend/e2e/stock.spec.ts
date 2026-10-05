@@ -72,8 +72,14 @@ test.describe('2 Products: upload, barcode reader, incoming', () => {
     await page.getByLabel('Warehouse').selectOption({label: 'España'});
     await page.getByRole('button', {name: 'Upload', exact: true}).click();
 
-    await expect(page.getByRole('status').filter({hasText: /products? w(as|ere) stored\./})).toBeVisible();
-    await expect(page.getByRole('link', {name: 'Product List'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: /products? w(as|ere) stored\./}),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('status').getByRole('link', {name: 'Product List'}),
+    ).toBeVisible();
   });
 
   test('INV-12 · the barcode reader adds a code on Enter, counts a repeated one and checks it exists', async ({
@@ -127,7 +133,11 @@ test.describe('2 Products: upload, barcode reader, incoming', () => {
     await expect(dialog.getByRole('cell', {name: 'KF-01'})).toBeVisible();
     await dialog.getByRole('button', {name: 'Add quantity'}).click();
 
-    await expect(page.getByRole('status').filter({hasText: 'The products were added to Usa.'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: 'The products were added to Usa.'}),
+    ).toBeVisible();
     await expect(page.getByText('No products read yet.')).toBeVisible();
     const stock = await page.request.get('/api/v1/warehouses/2/stock');
     const rows = (await stock.json()) as {code: string; quantity: number}[];
@@ -155,7 +165,11 @@ test.describe('2 Products: upload, barcode reader, incoming', () => {
     await page.getByLabel('Quantity of KF-01').fill('1');
     await page.getByRole('button', {name: 'Remove products'}).click();
     await page.getByRole('button', {name: 'Remove quantity'}).click();
-    await expect(page.getByRole('status').filter({hasText: 'The products were removed from Usa.'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: 'The products were removed from Usa.'}),
+    ).toBeVisible();
     const stock = await page.request.get('/api/v1/warehouses/2/stock');
     const rows = (await stock.json()) as {code: string; quantity: number}[];
     expect(rows.find((row) => row.code === 'KF-01')?.quantity).toBe(1);
@@ -179,7 +193,11 @@ test.describe('2 Products: upload, barcode reader, incoming', () => {
 
     await page.getByRole('button', {name: /Approve all/}).click();
 
-    await expect(page.getByRole('status').filter({hasText: '1 incoming product was approved.'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: '1 incoming product was approved.'}),
+    ).toBeVisible();
     await expect(
       page.getByText('Nothing is waiting for approval in this warehouse.'),
     ).toBeVisible();
@@ -258,7 +276,11 @@ test.describe('3 Warehouses', () => {
 
     await dialog.getByLabel('Name').fill('Miami');
     await dialog.getByRole('button', {name: 'Save'}).click();
-    await expect(page.getByRole('status').filter({hasText: 'Warehouse updated successfully'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: 'Warehouse updated successfully'}),
+    ).toBeVisible();
     await expect(page.getByRole('row', {name: /Miami/})).toBeVisible();
 
     // The other specs know the fixtures' name: put it back.

@@ -85,13 +85,15 @@ test.describe('5 Orders', () => {
     await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
 
     await page
-      .getByRole('combobox', {name: 'Status'})
+      .getByRole('combobox', {name: 'Status', exact: true})
       .selectOption('Delivered');
     await expect(page.getByRole('row', {name: /W00006/})).toBeVisible();
     await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
     await expect(page.getByRole('row', {name: /W00001/})).toHaveCount(0);
 
-    await page.getByRole('combobox', {name: 'Status'}).selectOption('');
+    await page
+      .getByRole('combobox', {name: 'Status', exact: true})
+      .selectOption('');
     await page.getByRole('combobox', {name: 'Warehouse'}).selectOption('Usa');
     await expect(
       page.getByText(
@@ -111,7 +113,11 @@ test.describe('5 Orders', () => {
       .getByRole('combobox', {name: 'Status of order W00001'})
       .selectOption('Processed');
 
-    await expect(page.getByRole('status').filter({hasText: 'Order W00001 is now Processed.'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: 'Order W00001 is now Processed.'}),
+    ).toBeVisible();
     await page.reload();
     const again = await findOrder(page, 'W00001');
     await expect(
@@ -237,7 +243,9 @@ test.describe('5 Orders', () => {
     await row.getByRole('button', {name: 'Delete Order W00005'}).click();
     await dialog.getByRole('button', {name: 'Delete'}).click();
 
-    await expect(page.getByRole('status').filter({hasText: 'The order was deleted.'})).toBeVisible();
+    await expect(
+      page.getByRole('status').filter({hasText: 'The order was deleted.'}),
+    ).toBeVisible();
     await expect(page.getByRole('row', {name: /W00005/})).toHaveCount(0);
   });
 

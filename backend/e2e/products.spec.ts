@@ -109,7 +109,11 @@ test.describe('2 Products', () => {
     await dialog.getByLabel('Quantity of KF-03').selectOption('2');
     await dialog.getByRole('button', {name: 'Move', exact: true}).click();
 
-    await expect(page.getByRole('status').filter({hasText: 'The products were moved to Usa.'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: 'The products were moved to Usa.'}),
+    ).toBeVisible();
     await expect(dialog).toHaveCount(0);
     await expect.poll(() => quantityOf(page, 'KF-03')).toBe(before - 2);
     const incoming = await page.request.get(
@@ -152,7 +156,11 @@ test.describe('2 Products', () => {
     await page.getByRole('button', {name: 'Save'}).click();
 
     await expect(page).toHaveURL(/\/admin\/products$/);
-    await expect(page.getByRole('status').filter({hasText: 'The product was created successfully.'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: 'The product was created successfully.'}),
+    ).toBeVisible();
     const created = await page.request.get(
       `/api/v1/products/by-code/${NEW_PRODUCT.code}`,
     );
@@ -179,7 +187,11 @@ test.describe('2 Products', () => {
     await page.getByLabel('Status').selectOption({label: 'Inactive'});
     await page.getByRole('button', {name: 'Save'}).click();
 
-    await expect(page.getByRole('status').filter({hasText: 'The product was updated successfully.'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: 'The product was updated successfully.'}),
+    ).toBeVisible();
     const saved = (await (
       await page.request.get(`/api/v1/products/${product.uuid}`)
     ).json()) as {title: string; status: number};

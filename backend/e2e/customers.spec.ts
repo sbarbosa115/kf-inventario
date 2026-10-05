@@ -64,7 +64,11 @@ test.describe('4 Customers', () => {
     await page.getByRole('button', {name: 'Save'}).click();
 
     await expect(page).toHaveURL(/\/admin\/customers$/);
-    await expect(page.getByRole('status').filter({hasText: 'The customer was created successfully.'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: 'The customer was created successfully.'}),
+    ).toBeVisible();
     await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
@@ -106,7 +110,11 @@ test.describe('4 Customers', () => {
     await expect(page.getByRole('group', {name: 'Address 2'})).toHaveCount(0);
     await page.getByRole('button', {name: 'Save'}).click();
 
-    await expect(page.getByRole('status').filter({hasText: 'The customer was updated successfully.'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: 'The customer was updated successfully.'}),
+    ).toBeVisible();
     await page.getByRole('searchbox').fill('3009998877');
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
@@ -135,7 +143,9 @@ test.describe('4 Customers', () => {
       .getByRole('button', {name: 'Delete', exact: true})
       .click();
 
-    await expect(page.getByRole('status').filter({hasText: 'The customer was deleted.'})).toBeVisible();
+    await expect(
+      page.getByRole('status').filter({hasText: 'The customer was deleted.'}),
+    ).toBeVisible();
     await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),

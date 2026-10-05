@@ -1,13 +1,6 @@
-import {
-  ADMIN,
-  INVOICES,
-  SALES,
-  consoleErrors,
-  expect,
-  test,
-} from './support/test';
+import {ADMIN, SALES, consoleErrors, expect, test} from './support/test';
 
-// 6 Invoices (INVC-01 – 06), signed in as the invoice clerk (the admin is refused on invoices by design). The cases run
+// 6 Invoices (INVC-01 – 06), signed in as the sales clerk (invoice roles + inventory: the form lists products) (the admin is refused on invoices by design). The cases run
 // in order on the fixtures (invoice INV-0001; customer Jose Perez; KF-01 – 03 in Colombia): the invoice INVC-03
 // creates is INV-0002, which INVC-05 then finds taken.
 test.describe.configure({mode: 'serial'});
@@ -48,7 +41,7 @@ test.describe('6 Invoices', () => {
   test('INVC-02 · the detail opens in a dialog with the lines and the PDF link', async ({
     signedInAs,
   }) => {
-    const page = await signedInAs(INVOICES);
+    const page = await signedInAs(SALES);
     await page.goto('/admin/invoices');
 
     await page.getByRole('button', {name: 'Invoice Detail: INV-0001'}).click();
@@ -64,7 +57,7 @@ test.describe('6 Invoices', () => {
   test('INVC-03 · an invoice is created with a customer, a product and tax, its PDF opens and the list shows it', async ({
     signedInAs,
   }) => {
-    const page = await signedInAs(INVOICES);
+    const page = await signedInAs(SALES);
     const errors = consoleErrors(page);
     await page.goto('/admin/invoices');
 
@@ -96,7 +89,11 @@ test.describe('6 Invoices', () => {
     await (await opened).close();
 
     await expect(page).toHaveURL(/\/admin\/invoices$/);
-    await expect(page.getByRole('status').filter({hasText: 'The invoice was created successfully.'})).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({hasText: 'The invoice was created successfully.'}),
+    ).toBeVisible();
     const row = page.getByRole('row', {name: /INV-0002/});
     await expect(row).toContainText('Jose Perez');
     await expect(row).toContainText('318.00');
@@ -112,7 +109,7 @@ test.describe('6 Invoices', () => {
   test('INVC-04 · Add all products puts every product of the warehouse on the invoice, and an item can be removed', async ({
     signedInAs,
   }) => {
-    const page = await signedInAs(INVOICES);
+    const page = await signedInAs(SALES);
     await page.goto('/admin/invoices/new');
 
     await expect(page.getByLabel('Description 1')).toHaveValue('');
@@ -132,7 +129,7 @@ test.describe('6 Invoices', () => {
   test('INVC-05 · an invoice needs an item, and a code already used is refused', async ({
     signedInAs,
   }) => {
-    const page = await signedInAs(INVOICES);
+    const page = await signedInAs(SALES);
     await page.goto('/admin/invoices/new');
 
     await page.getByRole('button', {name: 'Create Invoice'}).click();
