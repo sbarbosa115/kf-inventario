@@ -34,9 +34,7 @@ export function OrderGettingReadyPage() {
       </div>
     );
   } else if (error) {
-    content = (
-<ErrorState error={error} onRetry={partials.reload} />
-    );
+    content = <ErrorState error={error} onRetry={partials.reload} />;
   } else if (partials.data === undefined) {
     content = <Loader />;
   } else {
