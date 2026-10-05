@@ -1,7 +1,8 @@
 import type {ReactNode} from 'react';
 import {Navigate, useLocation} from 'react-router-dom';
 import {useSession} from '@/entities/session';
-import {ErrorState, Loader} from '@/shared/ui';
+import {ErrorState} from '@/shared/ui';
+import {ShellSkeleton} from '@/widgets/app-shell';
 
 /** A signed-in page: nobody signed in goes to the sign-in page, and comes back here after it. */
 export function RequireSession({children}: {children: ReactNode}) {
@@ -9,7 +10,7 @@ export function RequireSession({children}: {children: ReactNode}) {
   const location = useLocation();
 
   if (error) return <ErrorState error={error} onRetry={refresh} />;
-  if (session === undefined) return <Loader />;
+  if (session === undefined) return <ShellSkeleton />;
   if (session === null) {
     return (
       <Navigate

@@ -1,27 +1,36 @@
-import {render, screen} from '@testing-library/react';
+import {fireEvent, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {SessionProvider} from '@/entities/session';
+import {I18nProvider} from '@/shared/i18n';
 import {fakeApi} from '@/shared/test/fakeApi';
 import {LoginPage} from './LoginPage';
 
 function renderLogin() {
   render(
-    <SessionProvider>
-      <MemoryRouter initialEntries={['/admin/login']}>
-        <Routes>
-          <Route path="/admin/login" element={<LoginPage />} />
-          <Route path="/admin/products" element={<p>products page</p>} />
-        </Routes>
-      </MemoryRouter>
-    </SessionProvider>,
+    <I18nProvider locale="en">
+      <SessionProvider>
+        <MemoryRouter initialEntries={['/admin/login']}>
+          <Routes>
+            <Route path="/admin/login" element={<LoginPage />} />
+            <Route path="/admin/products" element={<p>products page</p>} />
+          </Routes>
+        </MemoryRouter>
+      </SessionProvider>
+    </I18nProvider>,
   );
 }
 
+const signedOut: Record<string, [number, unknown]> = {
+  'GET /auth/me': [401, {error: 'unauthorized', message: 'Sign in first.'}],
+};
+
 describe('LoginPage', () => {
+  afterEach(() => localStorage.clear());
+
   it('signs in and opens the product list', async () => {
     const api = fakeApi({
-      'GET /auth/me': [401, {error: 'unauthorized', message: 'Sign in first.'}],
+      ...signedOut,
       'POST /auth/login': [
         200,
         {
@@ -35,10 +44,14 @@ describe('LoginPage', () => {
     });
     renderLogin();
 
-    await userEvent.type(await screen.findByLabelText('Username'), 'ana');
+    expect(
+      await screen.findByRole('heading', {level: 1, name: 'Sign in'}),
+    ).toBeVisible();
+    expect(document.title).toBe('Sign in · KF Inventory');
+    await userEvent.type(screen.getByLabelText('Username'), 'ana');
     await userEvent.type(screen.getByLabelText('Password'), 'secret');
     await userEvent.click(screen.getByLabelText('Remember me'));
-    await userEvent.click(screen.getByRole('button', {name: 'Log In'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Sign in'}));
 
     expect(await screen.findByText('products page')).toBeInTheDocument();
     expect(api.calls.find((c) => c.method === 'POST')?.body).toEqual({
@@ -48,9 +61,9 @@ describe('LoginPage', () => {
     });
   });
 
-  it('says the username or password is wrong, without saying which', async () => {
+  it('says the username or password is wrong, without saying which, above the button', async () => {
     fakeApi({
-      'GET /auth/me': [401, {error: 'unauthorized', message: 'Sign in first.'}],
+      ...signedOut,
       'POST /auth/login': [
         401,
         {error: 'invalid_credentials', message: 'Wrong username or password.'},
@@ -60,17 +73,47 @@ describe('LoginPage', () => {
 
     await userEvent.type(await screen.findByLabelText('Username'), 'ana');
     await userEvent.type(screen.getByLabelText('Password'), 'nope');
-    await userEvent.click(screen.getByRole('button', {name: 'Log In'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Sign in'}));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Wrong username or password.',
     );
+    expect(screen.getByRole('button', {name: 'Sign in'})).toBeEnabled();
   });
 
-  it('keeps Log In disabled until both fields are filled', async () => {
-    fakeApi({'GET /auth/me': [401, {error: 'unauthorized', message: ''}]});
+  it('keeps the button usable and names what is missing instead', async () => {
+    const api = fakeApi({...signedOut});
     renderLogin();
 
-    expect(await screen.findByRole('button', {name: 'Log In'})).toBeDisabled();
+    const button = await screen.findByRole('button', {name: 'Sign in'});
+    expect(button).toBeEnabled();
+    await userEvent.click(button);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Type your username and password.',
+    );
+    expect(screen.getByLabelText('Username')).toHaveFocus();
+    expect(api.calls.some((c) => c.method === 'POST')).toBe(false);
+  });
+
+  it('shows the password and warns about Caps Lock', async () => {
+    fakeApi({...signedOut});
+    renderLogin();
+
+    const password = await screen.findByLabelText('Password');
+    await userEvent.click(screen.getByRole('button', {name: 'Show password'}));
+    expect(password).toHaveAttribute('type', 'text');
+    fireEvent.keyDown(password, {key: 'A', modifierCapsLock: true});
+    expect(screen.getByText('Caps Lock is on')).toBeInTheDocument();
+  });
+
+  it('switches to Spanish under the form', async () => {
+    fakeApi({...signedOut});
+    renderLogin();
+
+    await userEvent.click(await screen.findByRole('radio', {name: 'Español'}));
+    expect(
+      screen.getByRole('heading', {level: 1, name: 'Iniciar sesión'}),
+    ).toBeVisible();
+    expect(screen.getByLabelText('Usuario')).toBeInTheDocument();
   });
 });

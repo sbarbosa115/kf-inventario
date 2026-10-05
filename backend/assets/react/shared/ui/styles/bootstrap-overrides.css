@@ -482,6 +482,15 @@ input[type='file'].form-control-file {
   margin-bottom: 0;
 }
 
+/* A legacy table without a .table-responsive box scrolls inside itself on narrow screens, never the page. */
+@media (max-width: 1023px) {
+  .table:not(.kf-table) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
 /* ---- Cards, alerts, badges -------------------------------------------------------------------------------- */
 .card {
   background-color: var(--kf-surface);

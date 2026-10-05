@@ -220,7 +220,7 @@ test.describe('2 Products', () => {
       'You do not have permission to do this.',
     );
     await expect(
-      page.getByRole('link', {name: 'Product List', exact: true}),
+      page.getByRole('link', {name: 'Products', exact: true}),
     ).toHaveCount(0);
     const answer = await page.request.get('/api/v1/warehouses/1/stock');
     expect(answer.status()).toBe(403);

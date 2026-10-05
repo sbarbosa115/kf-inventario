@@ -1,4 +1,4 @@
-import {useId, useState, type KeyboardEvent} from 'react';
+import {useId, useState, type KeyboardEvent, type Ref} from 'react';
 import {useTranslation} from '@/shared/i18n';
 
 /** A password input with show/hide and a Caps Lock hint. */
@@ -10,6 +10,7 @@ export function PasswordField({
   error,
   required,
   name,
+  inputRef,
 }: {
   label: string;
   value: string;
@@ -18,6 +19,7 @@ export function PasswordField({
   error?: string | null;
   required?: boolean;
   name?: string;
+  inputRef?: Ref<HTMLInputElement>;
 }) {
   const {t} = useTranslation();
   const id = useId();
@@ -34,6 +36,7 @@ export function PasswordField({
       <label htmlFor={id}>{label}</label>
       <div className="kf-password__control">
         <input
+          ref={inputRef}
           id={id}
           name={name}
           type={shown ? 'text' : 'password'}

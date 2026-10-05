@@ -1,13 +1,100 @@
-.login {
+/* Sign in: the olive brand panel and the form side by side from 900 px, one column below. */
+.kf-login {
+  display: grid;
+  grid-template-columns: minmax(320px, 5fr) 7fr;
   min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--kf-bg);
+}
+
+.kf-login__brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--kf-space-3);
+  padding: var(--kf-space-8);
+  background-color: var(--kf-sidebar);
+  color: var(--kf-sidebar-text);
+}
+
+.kf-login__name {
+  margin: var(--kf-space-3) 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.kf-login__tagline {
+  max-width: 32ch;
+  margin: 0;
+  color: var(--kf-sidebar-muted);
+}
+
+.kf-login__panel {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--kf-sidebar);
-  padding: 1rem;
+  padding: var(--kf-space-6) var(--kf-space-4);
 }
 
-.login__card {
+.kf-login__card {
   width: 100%;
-  max-width: 24rem;
+  max-width: 400px;
+}
+
+.kf-login__mark-small {
+  display: none;
+  margin-bottom: var(--kf-space-4);
+}
+
+.kf-login__title {
+  margin-bottom: var(--kf-space-5);
+  font-size: var(--kf-text-title);
+}
+
+.kf-login__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kf-space-2);
+  margin-bottom: var(--kf-space-3);
+  padding: var(--kf-space-2) var(--kf-space-3);
+  border-left: 3px solid var(--kf-danger);
+  border-radius: 4px;
+  background-color: var(--kf-danger-soft);
+  color: var(--kf-text);
+  font-size: var(--kf-text-sm);
+}
+
+.kf-login__error i {
+  margin-top: 3px;
+  color: var(--kf-danger);
+}
+
+.kf-login__submit {
+  width: 100%;
+}
+
+.kf-login__language {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--kf-space-5);
+}
+
+@media (max-width: 899px) {
+  .kf-login {
+    grid-template-columns: 1fr;
+  }
+
+  .kf-login__brand {
+    display: none;
+  }
+
+  .kf-login__mark-small {
+    display: block;
+  }
+
+  .kf-login__panel {
+    align-items: flex-start;
+    padding-top: var(--kf-space-8);
+  }
 }

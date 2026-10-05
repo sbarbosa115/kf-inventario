@@ -37,8 +37,11 @@ export function RowMenu({
   trigger,
   triggerClassName = 'kf-btn kf-btn--ghost kf-btn--sm kf-btn--icon',
   align = 'end',
+  header,
 }: {
   actions: RowAction[];
+  /** Text above the items (the account menu shows who is signed in); not an item. */
+  header?: ReactNode;
   /** The button's accessible name: "Actions for KF-01". */
   label?: string;
   /** What the button shows; "⋯" by default. */
@@ -165,6 +168,7 @@ export function RowMenu({
             onKeyDown={onMenuKey}
             onClick={(event) => event.stopPropagation()}
           >
+            {header && <div className="kf-menu__header">{header}</div>}
             {actions.map((action) => {
               const role =
                 action.checked === undefined ? 'menuitem' : 'menuitemradio';

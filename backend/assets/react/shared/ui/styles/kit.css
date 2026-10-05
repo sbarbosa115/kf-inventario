@@ -1273,3 +1273,10 @@
   background-color: var(--kf-warning-soft);
   color: var(--kf-text);
 }
+
+.kf-menu__header {
+  margin-bottom: var(--kf-space-1);
+  padding: var(--kf-space-2) var(--kf-space-3);
+  border-bottom: 1px solid var(--kf-border);
+  font-size: var(--kf-text-sm);
+}

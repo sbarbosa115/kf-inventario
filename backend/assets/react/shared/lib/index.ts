@@ -12,7 +12,10 @@ export {
 } from './theme';
 export type {Theme, ThemePreference} from './theme';
 export {useLoad} from './useLoad';
-export {usePageTitle} from './usePageTitle';
+export {useCurrentPageTitle, usePageTitle} from './usePageTitle';
+export {useRememberedWarehouse, WAREHOUSE_KEY} from './useRememberedWarehouse';
+export {DESKTOP_QUERY, useViewport} from './useViewport';
+export type {Viewport} from './useViewport';
 export {createDetector, DEFAULT_FORMATS} from './barcodeDetector';
 export type {
   BarcodeFormat,

@@ -57,7 +57,7 @@ docker compose exec php php bin/console app:smoke:prepare --seed
 
 **AUTH-01 · Signing in opens the product list**
 Smoke: `e2e/auth.spec.ts`.
-Open `/admin/login`, sign in as the admin. The product list opens and the top bar shows `sbarbosa115@gmail.com`.
+Open `/admin/login`, sign in as the admin ("Sign in"). The product list opens and the top bar shows the name `Sergio Barbosa`.
 
 **AUTH-02 · A wrong password is refused**
 Smoke: `e2e/auth.spec.ts`.
@@ -67,9 +67,9 @@ Sign in as `sbarbosa115` with a wrong password: "Wrong username or password." an
 Smoke: `e2e/auth.spec.ts`.
 Signed out, open `/admin/warehouses`: the sign-in page. Sign in: the Warehouses page opens.
 
-**AUTH-04 · Logout ends the session**
+**AUTH-04 · Sign out ends the session**
 Smoke: `e2e/auth.spec.ts`.
-Top bar › your email › Logout: the sign-in page. Open `/admin/products` again: the sign-in page.
+Top bar › your name › Sign out: the sign-in page. Open `/admin/products` again: the sign-in page.
 
 **AUTH-05 · A legacy 301 bookmark redirects to the React app and sign-in**
 Smoke: `e2e/auth.spec.ts`.
@@ -81,12 +81,13 @@ Without it, the same steps end on the sign-in page.
 
 **NAV-01 · The admin sees every section they had**
 Smoke: `e2e/auth.spec.ts`.
-Signed in as the admin: Products (Product List, Upload products, Barcode reader, Incoming products), Warehouses,
-Orders, Customers, Users. No Invoices (the admin role does not include the invoice roles, as before).
+Signed in as the admin: Warehouse (Products, Upload a stock sheet, Scan, Incoming, Warehouses), Sales (Orders,
+Customers), Admin (Users). No Invoices (the admin role does not include the invoice roles, as before).
 
-**NAV-02 · The inventory clerk sees the products menu only**
+**NAV-02 · The inventory clerk sees the warehouse entries only**
 Smoke: `e2e/auth.spec.ts`.
-Signed in as `inventory`: Products and its four entries; no Warehouses, Orders, Invoices, Customers or Users.
+Signed in as `inventory`: Products, Upload a stock sheet, Scan and Incoming; no Warehouses, Orders, Invoices, Customers
+or Users.
 
 **NAV-03 · An unknown address shows "Page not found"**
 Smoke: `e2e/auth.spec.ts`.
@@ -148,7 +149,7 @@ button of a row opens that product's form; Cancel goes back without saving. `/ad
 
 **INV-08 · A person without the inventory role is refused**
 Smoke: `e2e/products.spec.ts`.
-Signed in as `invoices`: no Products section in the sidebar; opening `/admin/products` says "You do not have
+Signed in as `invoices`: no Products entry in the sidebar; opening `/admin/products` says "You do not have
 permission to do this."; `/api/v1/warehouses/1/stock` answers 403. Signed in as `inventory`: the list, the move and
 the form all work (INV-02 – 07 run as that account).
 
@@ -166,7 +167,7 @@ is sent. Choose a `.txt` file and a warehouse: "The file is not an Excel spreads
 **INV-11 · A spreadsheet from the template is stored in the chosen warehouse**
 Smoke (part): `e2e/stock.spec.ts` uploads the all-products sheet and checks the confirmation.
 Download All Products, put quantities in the Quantity column of two rows and add one new row (code, title, detail,
-quantity, price), choose a warehouse and Upload: "N products were stored." with a link to the Product List. By hand:
+quantity, price), choose a warehouse and Upload: "N products were stored." with a link to Products. By hand:
 the product list of that warehouse shows the new product and the quantities added to the existing ones; a sheet with
 the wrong columns says "The spreadsheet could not be read. Use the template and try again."
 

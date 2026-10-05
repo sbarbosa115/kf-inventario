@@ -1,179 +1,313 @@
-import {useState, type ReactNode} from 'react';
-import {Link, NavLink, useLocation} from 'react-router-dom';
-import {useCan, useSession} from '@/entities/session';
+import {useEffect, useRef, useState, type ReactNode} from 'react';
+import {Link, useLocation} from 'react-router-dom';
+import {useSession} from '@/entities/session';
+import {APP_NAME} from '@/shared/config';
 import {useTranslation} from '@/shared/i18n';
+import {
+  readSetting,
+  useCurrentPageTitle,
+  useViewport,
+  writeSetting,
+} from '@/shared/lib';
+import {LanguageSwitch, RowMenu, ThemeSwitch, useFocusTrap} from '@/shared/ui';
+import {
+  activeEntry,
+  entriesFor,
+  GROUPS,
+  tabsFor,
+  type NavEntry,
+} from '../model/entries';
 import './app-shell.css';
 
+const SIDEBAR_KEY = 'kf.sidebar';
+
 /**
- * The frame of every signed-in page: the top bar with the person's email and Logout, the sidebar with the entries
- * their roles open (the same rules as the legacy base.html.twig), and the page.
+ * The frame of every signed-in page. From 1024 px: a sidebar (collapsible to a rail of icons, remembered) with the
+ * entries the person's roles open. Below: a drawer behind "Menu" and a bottom tab bar. Only one navigation is in
+ * the page at a time, so no link name appears twice. The top bar: the scan shortcut, language, theme, the account.
  */
 export function AppShell({children}: {children: ReactNode}) {
   const {t} = useTranslation();
   const {session} = useSession();
-  const [collapsed, setCollapsed] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
+  const {pathname} = useLocation();
+  const viewport = useViewport();
+  const pageTitle = useCurrentPageTitle();
+  const [rail, setRail] = useState(() => readSetting(SIDEBAR_KEY) === 'rail');
+  // The drawer remembers the address it was opened on: following one of its links closes it.
+  const [drawerAt, setDrawerAt] = useState<string | null>(null);
+  const roles = session?.roles ?? [];
+  const entries = entriesFor(roles);
+  const active = activeEntry(pathname, entries);
+  const compact = viewport === 'compact';
+  const drawer = compact && drawerAt === pathname;
+  const name = session?.name || session?.username || '';
+
+  useEffect(() => {
+    document.body.classList.toggle('kf-has-tabbar', compact);
+    return () => document.body.classList.remove('kf-has-tabbar');
+  }, [compact]);
+
+  const toggleRail = () => {
+    writeSetting(SIDEBAR_KEY, rail ? 'full' : 'rail');
+    setRail(!rail);
+  };
+  const behindDrawer = compact && drawer;
 
   return (
-    <div className="app-shell">
-      <nav className="navbar navbar-expand navbar-dark bg-dark static-top">
-        <Link className="navbar-brand mr-1" to="/admin/products">
-          <i className="fas fa-boxes mr-1" aria-hidden="true" />
-          {t('common.appName')}
-        </Link>
-        <button
-          type="button"
-          className="btn btn-link btn-sm text-white"
-          aria-label={t('nav.toggle')}
-          aria-expanded={!collapsed}
-          onClick={() => setCollapsed((now) => !now)}
-        >
-          <i className="fas fa-bars" aria-hidden="true" />
-        </button>
-        <ul className="navbar-nav ml-auto">
-          <li className="nav-item dropdown">
-            <button
-              type="button"
-              className="btn btn-link nav-link dropdown-toggle"
-              aria-haspopup="true"
-              aria-expanded={accountOpen}
-              onClick={() => setAccountOpen((now) => !now)}
-            >
-              <i className="fas fa-user-circle fa-fw" aria-hidden="true" />{' '}
-              {session?.email ?? session?.username}
-            </button>
-            {accountOpen && (
-              <div className="dropdown-menu dropdown-menu-right show">
-                <Link className="dropdown-item" to="/admin/logout">
-                  {t('nav.logout')}
-                </Link>
-              </div>
+    <div
+      className={`kf-shell${compact ? ' kf-shell--compact' : ''}${!compact && rail ? ' kf-shell--rail' : ''}`}
+    >
+      <a className="kf-skip" href="#main">
+        {t('nav.skip')}
+      </a>
+      {!compact && (
+        <aside className="kf-sidebar">
+          <Brand compact={rail} />
+          <nav className="kf-sidebar__nav" aria-label={t('nav.main')}>
+            <Groups entries={entries} active={active} rail={rail} />
+          </nav>
+          <button
+            type="button"
+            className="kf-sidebar__collapse"
+            aria-expanded={!rail}
+            aria-label={rail ? t('nav.expand') : t('nav.collapse')}
+            title={rail ? t('nav.expand') : t('nav.collapse')}
+            onClick={toggleRail}
+          >
+            <i
+              className={`fas ${rail ? 'fa-angles-right' : 'fa-angles-left'}`}
+              aria-hidden="true"
+            />
+            {!rail && <span aria-hidden="true">{t('nav.collapse')}</span>}
+          </button>
+        </aside>
+      )}
+      <div className="kf-shell__body" aria-hidden={behindDrawer || undefined}>
+        <header className="kf-topbar">
+          {compact && (
+            <>
+              <button
+                type="button"
+                className="kf-topbar__icon"
+                aria-label={t('nav.menu')}
+                aria-expanded={drawer}
+                onClick={() => setDrawerAt(pathname)}
+              >
+                <i className="fas fa-bars" aria-hidden="true" />
+              </button>
+              <img
+                className="kf-topbar__mark"
+                src="/images/kf-mark.svg"
+                alt=""
+                width="28"
+                height="28"
+              />
+              <span className="kf-topbar__title">{pageTitle ?? APP_NAME}</span>
+            </>
+          )}
+          <div className="kf-topbar__end">
+            {roles.includes('ROLE_MANAGE_INVENTORY') && (
+              <Link
+                className="kf-topbar__icon"
+                to="/admin/products/barcode"
+                aria-label={t('nav.scanShortcut')}
+                title={t('nav.scanShortcut')}
+              >
+                <i className="fas fa-barcode" aria-hidden="true" />
+              </Link>
             )}
-          </li>
-        </ul>
-      </nav>
-      <div className="app-shell__wrapper">
-        {!collapsed && <Sidebar />}
-        <div className="app-shell__content">
-          <main className="container-fluid pt-3">{children}</main>
-          <footer className="app-shell__footer">
+            <LanguageSwitch />
+            <ThemeSwitch className="kf-topbar__icon" />
+            <RowMenu
+              label={name || t('nav.account')}
+              triggerClassName="kf-topbar__account"
+              trigger={
+                <>
+                  <span className="kf-topbar__avatar" aria-hidden="true">
+                    {initials(name)}
+                  </span>
+                  <span className="kf-topbar__name">{name}</span>
+                  <i className="fas fa-chevron-down" aria-hidden="true" />
+                </>
+              }
+              header={
+                <>
+                  <div className="kf-topbar__menu-user">
+                    {session?.username}
+                  </div>
+                  {session?.email && (
+                    <div className="kf-topbar__menu-email">{session.email}</div>
+                  )}
+                </>
+              }
+              actions={[
+                {
+                  label: t('nav.logout'),
+                  icon: 'fa-right-from-bracket',
+                  href: '/admin/logout',
+                },
+              ]}
+            />
+          </div>
+        </header>
+        <main id="main" className="kf-main" tabIndex={-1}>
+          <div className="kf-main__inner">{children}</div>
+          <footer className="kf-main__footer">
             {t('common.footer', {year: new Date().getFullYear()})}
           </footer>
-        </div>
+        </main>
       </div>
+      {compact && !drawer && (
+        <nav className="kf-tabbar" aria-label={t('nav.tabs')}>
+          {tabsFor(entries).map((entry) => (
+            <Link
+              key={entry.key}
+              to={entry.to}
+              className="kf-tabbar__item"
+              aria-current={entry.key === active ? 'page' : undefined}
+            >
+              <i className={`fas ${entry.icon}`} aria-hidden="true" />
+              <span>{t(entry.label)}</span>
+            </Link>
+          ))}
+          <button
+            type="button"
+            className="kf-tabbar__item"
+            aria-expanded={false}
+            onClick={() => setDrawerAt(pathname)}
+          >
+            <i className="fas fa-ellipsis" aria-hidden="true" />
+            <span>{t('nav.more')}</span>
+          </button>
+        </nav>
+      )}
+      {compact && drawer && (
+        <Drawer
+          entries={entries}
+          active={active}
+          onClose={() => setDrawerAt(null)}
+        />
+      )}
     </div>
   );
 }
 
-function Sidebar() {
-  const {t} = useTranslation();
-  const {pathname} = useLocation();
-  const inventory = useCan('ROLE_MANAGE_INVENTORY');
-  const warehouses = useCan('ROLE_MANAGE_WAREHOUSES');
-  const orders = useCan('ROLE_UPDATE_ORDERS');
-  const invoices = useCan('ROLE_UPDATE_INVOICES');
-  const customers = useCan('ROLE_MANAGE_CUSTOMERS');
-  const users = useCan('ROLE_MANAGE_USERS');
-  const [productsOpen, setProductsOpen] = useState(
-    pathname.startsWith('/admin/products'),
-  );
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+}
 
+function Brand({compact = false}: {compact?: boolean}) {
   return (
-    <nav className="app-shell__sidebar" aria-label={t('nav.sections.products')}>
-      <ul className="navbar-nav">
-        {(inventory || warehouses) && (
-          <li className="app-shell__section">{t('nav.sections.products')}</li>
-        )}
-        {inventory && (
-          <li className="nav-item">
-            <button
-              type="button"
-              className={`btn btn-link nav-link dropdown-toggle${pathname.startsWith('/admin/products') ? ' active' : ''}`}
-              aria-expanded={productsOpen}
-              onClick={() => setProductsOpen((now) => !now)}
-            >
-              <i className="fas fa-fw fa-boxes" aria-hidden="true" />{' '}
-              {t('nav.products')}
-            </button>
-            {productsOpen && (
-              <ul className="app-shell__submenu">
-                <Entry to="/admin/products" end label={t('nav.productList')} />
-                <Entry
-                  to="/admin/products/upload"
-                  label={t('nav.productsUpload')}
-                />
-                <Entry to="/admin/products/barcode" label={t('nav.barcode')} />
-                <Entry
-                  to="/admin/products/incoming"
-                  label={t('nav.incoming')}
-                />
-              </ul>
-            )}
-          </li>
-        )}
-        {warehouses && (
-          <Entry
-            to="/admin/warehouses"
-            icon="fa-warehouse"
-            label={t('nav.warehouses')}
-          />
-        )}
-        {(orders || invoices || customers) && (
-          <li className="app-shell__section">{t('nav.sections.sales')}</li>
-        )}
-        {orders && (
-          <Entry
-            to="/admin/orders"
-            icon="fa-shopping-cart"
-            label={t('nav.orders')}
-          />
-        )}
-        {invoices && (
-          <Entry
-            to="/admin/invoices"
-            icon="fa-file-invoice-dollar"
-            label={t('nav.invoices')}
-          />
-        )}
-        {customers && (
-          <Entry
-            to="/admin/customers"
-            icon="fa-users"
-            label={t('nav.customers')}
-          />
-        )}
-        {users && (
-          <>
-            <li className="app-shell__section">{t('nav.sections.admin')}</li>
-            <Entry
-              to="/admin/users"
-              icon="fa-user-cog"
-              label={t('nav.users')}
-            />
-          </>
-        )}
-      </ul>
-    </nav>
+    <Link className="kf-brand" to="/admin/products" title={APP_NAME}>
+      <img
+        className="kf-brand__mark"
+        src="/images/kf-mark.svg"
+        alt=""
+        width="32"
+        height="32"
+      />
+      <span className={compact ? 'sr-only' : 'kf-brand__name'}>{APP_NAME}</span>
+    </Link>
   );
 }
 
-function Entry({
-  to,
-  label,
-  icon,
-  end = false,
+function Groups({
+  entries,
+  active,
+  rail = false,
+  onNavigate,
 }: {
-  to: string;
-  label: string;
-  icon?: string;
-  end?: boolean;
+  entries: NavEntry[];
+  active: string | undefined;
+  rail?: boolean;
+  onNavigate?: () => void;
 }) {
+  const {t} = useTranslation();
   return (
-    <li className="nav-item">
-      <NavLink to={to} end={end} className="nav-link">
-        {icon && <i className={`fas fa-fw ${icon}`} aria-hidden="true" />}{' '}
-        {label}
-      </NavLink>
-    </li>
+    <>
+      {GROUPS.map((group) => {
+        const mine = entries.filter((entry) => entry.group === group);
+        if (mine.length === 0) return null;
+        return (
+          <div key={group} className="kf-nav-group">
+            <p className={rail ? 'sr-only' : 'kf-nav-group__label'}>
+              {t(`nav.sections.${group}`)}
+            </p>
+            <ul className="kf-nav-group__list">
+              {mine.map((entry) => (
+                <li key={entry.key}>
+                  <Link
+                    to={entry.to}
+                    className="kf-nav-link"
+                    aria-current={entry.key === active ? 'page' : undefined}
+                    title={rail ? t(entry.label) : undefined}
+                    onClick={onNavigate}
+                  >
+                    <i
+                      className={`fas fa-fw ${entry.icon}`}
+                      aria-hidden="true"
+                    />
+                    <span className={rail ? 'sr-only' : undefined}>
+                      {t(entry.label)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+function Drawer({
+  entries,
+  active,
+  onClose,
+}: {
+  entries: NavEntry[];
+  active: string | undefined;
+  onClose: () => void;
+}) {
+  const {t} = useTranslation();
+  const panel = useRef<HTMLDivElement>(null);
+  useFocusTrap(panel, onClose);
+  return (
+    <div className="kf-drawer">
+      <div
+        className="kf-drawer__backdrop"
+        aria-hidden="true"
+        onClick={onClose}
+      />
+      <div
+        ref={panel}
+        className="kf-drawer__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('nav.main')}
+        tabIndex={-1}
+      >
+        <div className="kf-drawer__header">
+          <Brand />
+          <button
+            type="button"
+            className="kf-topbar__icon"
+            aria-label={t('nav.closeMenu')}
+            onClick={onClose}
+          >
+            <i className="fas fa-times" aria-hidden="true" />
+          </button>
+        </div>
+        <nav className="kf-sidebar__nav" aria-label={t('nav.main')}>
+          <Groups entries={entries} active={active} onNavigate={onClose} />
+        </nav>
+      </div>
+    </div>
   );
 }

@@ -30,5 +30,6 @@ export {ToastProvider, useToast} from './Toast';
 export type {ToastApi} from './Toast';
 export {ClearFilters, FilterChips, SearchBox, Toolbar} from './Toolbar';
 export type {ChipOption} from './Toolbar';
+export {useFocusTrap} from './useFocusTrap';
 export {WarehouseSwitch} from './WarehouseSwitch';
 export type {WarehouseOption} from './WarehouseSwitch';

@@ -35,6 +35,15 @@ you add (`.claude/gate.d/compose-cpus` checks it).
 - **The order email** goes to `MAILER_PRINTER_ADDRESS` with `sales@klassicfab.com` in cc (`ordering.order_email.cc`),
   subject "Order #<code> was created", the order PDF attached. Webhook orders send it only for warehouse
   `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`.
-- **Screens look like the legacy ones:** Bootstrap 4 CSS, Font Awesome, the dark SB Admin shell. Build lists with
-  `DataTable`, dialogs with `Modal`/`ConfirmModal`, form fields with `Field`, frames with `PageCard`
-  (`@/shared/ui`); every string through `useTranslation()` under the slice's i18n prefix.
+- **Screens are built from the kit only** (`@/shared/ui`; `docs/design/README.md` says which component when; the
+  dev-only page `/admin/_kit` shows them all): `PageHeader` (one primary action), `Toolbar` with `FilterChips` /
+  `SearchBox` / `WarehouseSwitch`, `DataTable` (at most one visible row action, the rest in its "⋯" `RowMenu`; card
+  mode under 600 px), `StatusBadge` (never colour alone), `Money`/`Num`/`useFormat()` for every figure, `SlideOver` for
+  details and quick edits, pages with `FormLayout` + `FormSection` + `ActionBar` for forms, `ConfirmModal` before a
+  destructive or state-changing action, `useToast()` after a save, `Skeleton` while loading. Bootstrap 4 stays under
+  it. Colours, type, space and z-index come from the tokens (`shared/ui/styles/tokens.css`, light and dark): a slice's
+  own CSS uses `var(--kf-*)` only — no hex colour outside `tokens.css` (a test checks), no screen-local button or
+  table styles. Danger is for destructive actions only; Cancel and Close are never red. Every string goes through
+  `useTranslation()` under the slice's prefix, in **both** `locales/en/<prefix>.json` and `locales/es/<prefix>.json`
+  (a test keeps their keys identical; the glossary is in `docs/design/README.md`). Smoke specs match link and button
+  names with `exact: true` where the shell has a similar one ("Products", "Scan", "More").

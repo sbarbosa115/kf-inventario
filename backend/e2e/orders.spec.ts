@@ -272,7 +272,9 @@ test.describe('5 Orders', () => {
   }) => {
     const page = await signedInAs(INVENTORY);
     await page.goto('/admin/products');
-    await expect(page.getByRole('link', {name: 'Product List'})).toBeVisible();
+    await expect(
+      page.getByRole('link', {name: 'Products', exact: true}),
+    ).toBeVisible();
     await expect(page.getByRole('link', {name: 'Orders'})).toHaveCount(0);
 
     await page.goto('/admin/orders');

@@ -78,7 +78,7 @@ test.describe('2 Products: upload, barcode reader, incoming', () => {
         .filter({hasText: /products? w(as|ere) stored\./}),
     ).toBeVisible();
     await expect(
-      page.getByRole('status').getByRole('link', {name: 'Product List'}),
+      page.getByRole('status').getByRole('link', {name: 'Products'}),
     ).toBeVisible();
   });
 
