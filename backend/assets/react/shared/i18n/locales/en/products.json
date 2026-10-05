@@ -1,30 +1,39 @@
 {
-  "title": "View products",
-  "warehouse": "Warehouse",
-  "columns": {
-    "code": "Code",
-    "description": "Description",
-    "title": "Title",
-    "quantity": "Quantity",
-    "price": "Price",
-    "warehouse": "Warehouse",
-    "options": "Options"
-  },
-  "edit": "Edit {{code}}",
-  "create": "Create Product",
-  "empty": "This warehouse has no products in stock. Upload a spreadsheet or move products here to add some.",
+  "title": "Products",
+  "create": "Create product",
   "noWarehouses": "There are no warehouses yet. Add one before managing stock.",
+  "empty": "This warehouse has no products in stock. Upload a stock sheet or move products here to add some.",
   "selected_one": "{{count}} product selected",
   "selected_other": "{{count}} products selected",
-  "created": "The product was created successfully.",
-  "updated": "The product was updated successfully.",
-  "moved": "The products were moved to {{warehouse}}. They arrive there as incoming products.",
+  "search": "Search products",
+  "filters": {
+    "label": "Stock",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock"
+  },
+  "kpi": {
+    "products": "Products",
+    "units": "Units",
+    "value": "Stock value"
+  },
+  "columns": {
+    "code": "Code",
+    "title": "Title",
+    "detail": "Detail",
+    "quantity": "Quantity",
+    "price": "Price"
+  },
+  "actions": {
+    "edit": "Edit"
+  },
+  "moved": "Moved to {{warehouse}}. The products arrive there as incoming.",
   "notFound": "This product no longer exists.",
   "backToList": "Back to the products",
   "move": {
-    "open": "Move to Warehouse",
-    "title": "Move to Warehouse",
-    "destination": "Destination Warehouse",
+    "open": "Move to warehouse",
+    "title": "Move to warehouse",
+    "summary": "From {{source}}",
+    "destination": "Destination warehouse",
     "noDestination": "There is no other warehouse to move products to.",
     "quantityOf": "Quantity of {{code}}",
     "noneAvailable": "Product quantity is 0",
@@ -33,7 +42,7 @@
     "nothingToMove": "None of the selected products has stock to move."
   },
   "sheet": {
-    "download": "Update Selected Using Excel"
+    "download": "Download stock sheet"
   },
   "errors": {
     "insufficient_stock": "Only {{available}} of {{code}} are available.",
@@ -45,14 +54,19 @@
   "form": {
     "newTitle": "Create product",
     "editTitle": "Edit product",
-    "notListedYet": "This product won't be shown on the product list until you add quantities using Excel.",
+    "section": "Product",
+    "sectionHelp": "What the warehouse and the invoices call it.",
     "status": "Status",
+    "statusHelp": "An inactive product stays on file but is no longer offered.",
     "active": "Active",
-    "inactive": "Inactive",
     "code": "Code",
     "title": "Title",
     "detail": "Detail",
     "price": "Price",
+    "saved": "Product saved",
+    "nextUpload": "Or add many at once from a sheet.",
+    "scanStock": "Scan stock",
+    "uploadSheet": "Upload a stock sheet",
     "required": "This value should not be blank.",
     "notEqual": "This value should not be equal to \"{{value}}\".",
     "invalidNumber": "This value should be a valid number.",

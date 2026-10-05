@@ -1,29 +1,38 @@
 {
   "title": "Productos",
-  "warehouse": "Bodega",
-  "columns": {
-    "code": "Código",
-    "description": "Descripción",
-    "title": "Título",
-    "quantity": "Cantidad",
-    "price": "Precio",
-    "warehouse": "Bodega",
-    "options": "Opciones"
-  },
-  "edit": "Editar {{code}}",
   "create": "Crear producto",
-  "empty": "Esta bodega no tiene productos con existencias. Cargue una hoja de existencias o traslade productos aquí para agregarlos.",
   "noWarehouses": "Aún no hay bodegas. Agregue una antes de gestionar existencias.",
+  "empty": "Esta bodega no tiene productos con existencias. Cargue una hoja de existencias o traslade productos aquí para agregarlos.",
   "selected_one": "{{count}} producto seleccionado",
   "selected_other": "{{count}} productos seleccionados",
-  "created": "El producto se creó correctamente.",
-  "updated": "El producto se actualizó correctamente.",
-  "moved": "Los productos se trasladaron a {{warehouse}}. Llegan allí como productos entrantes.",
+  "search": "Buscar productos",
+  "filters": {
+    "label": "Existencias",
+    "inStock": "Con existencias",
+    "outOfStock": "Sin existencias"
+  },
+  "kpi": {
+    "products": "Productos",
+    "units": "Unidades",
+    "value": "Valor de las existencias"
+  },
+  "columns": {
+    "code": "Código",
+    "title": "Título",
+    "detail": "Detalle",
+    "quantity": "Cantidad",
+    "price": "Precio"
+  },
+  "actions": {
+    "edit": "Editar"
+  },
+  "moved": "Trasladado a {{warehouse}}. Los productos llegan allí como entrantes.",
   "notFound": "Este producto ya no existe.",
   "backToList": "Volver a los productos",
   "move": {
     "open": "Trasladar a bodega",
     "title": "Trasladar a bodega",
+    "summary": "Desde {{source}}",
     "destination": "Bodega de destino",
     "noDestination": "No hay otra bodega a la cual trasladar productos.",
     "quantityOf": "Cantidad de {{code}}",
@@ -45,14 +54,19 @@
   "form": {
     "newTitle": "Crear producto",
     "editTitle": "Editar producto",
-    "notListedYet": "Este producto no aparecerá en la lista de productos hasta que le agregue cantidades con Excel.",
+    "section": "Producto",
+    "sectionHelp": "Cómo lo llaman la bodega y las facturas.",
     "status": "Estado",
+    "statusHelp": "Un producto inactivo queda registrado, pero ya no se ofrece.",
     "active": "Activo",
-    "inactive": "Inactivo",
     "code": "Código",
     "title": "Título",
     "detail": "Detalle",
     "price": "Precio",
+    "saved": "Producto guardado",
+    "nextUpload": "O agregue muchos a la vez desde una hoja.",
+    "scanStock": "Escanear existencias",
+    "uploadSheet": "Cargar una hoja de existencias",
     "required": "Este campo no puede estar vacío.",
     "notEqual": "Este valor no puede ser igual a \"{{value}}\".",
     "invalidNumber": "Este valor debe ser un número válido.",
