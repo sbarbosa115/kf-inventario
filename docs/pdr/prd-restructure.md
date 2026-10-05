@@ -200,7 +200,7 @@ C5 (`docs/db/schema-from-migrations.sql`), C3 (expect only the `InvoiceLine` map
 composer.json composer.lock symfony.lock package.json webpack.config.js phpunit.xml.dist .env .env.dist .env.test`.
 Delete from git: `Dockerfile`, `docker-compose.yml`, `Docker/`, `composer.phar`, `yarn.lock`, `.eslintrc.json`,
 `public/error_log`, `public/php.ini`, `public/.user.ini`, `public/index.html`, `public/js/fos_js_routes.*`,
-`public/bundles/*`, `assets/app.js`, `assets/bootstrap.js`, `assets/controllers.json`, `assets/controllers/`,
+`public/bundles/*` (but not `public/js/fos_js_routes.*`: the legacy pages need them until item 12), `assets/app.js`, `assets/bootstrap.js`, `assets/controllers.json`, `assets/controllers/`,
 `assets/styles/`; `.idea/` gitignored. Create: `docker-compose.yml` (php, worker, nginx, database `${DB_IMAGE:-mysql:8.0}`
 with `--character-set-server=utf8 --collation-server=utf8_unicode_ci --default-authentication-plugin=mysql_native_password`,
 node, mailpit, e2e profile; host ports `HTTP_PORT:-8080`, `DB_PORT:-3306`, `MAILPIT_PORT:-8025`; `cpus` on every service),
@@ -216,8 +216,8 @@ the Twig app answers at `:8080/admin/login` (sign in with the fixtures' `sbarbos
 
 **0.3 Tooling, then one style commit.** Composer: add `symfony/messenger`, `symfony/doctrine-messenger`, `symfony/clock`,
 `symfony/runtime`; dev `phpstan/phpstan` + `extension-installer` + `phpstan-symfony/doctrine/phpunit`,
-`deptrac/deptrac`, `dama/doctrine-test-bundle`, `nelmio/api-doc-bundle`; remove `friendsofsymfony/jsrouting-bundle`,
-`willdurand/js-translation-bundle` (and their bundles/routes/`public/bundles`) (keep `automattic/woocommerce`: item 13 uses it), `phpmd/phpmd`,
+`deptrac/deptrac`, `dama/doctrine-test-bundle`, `nelmio/api-doc-bundle`; keep `friendsofsymfony/jsrouting-bundle` and
+`willdurand/js-translation-bundle` (the legacy pages read `public/js/fos_js_routes.json` and the Bazinga translations; item 12 removes both), keep `automattic/woocommerce` (item 13 uses it); remove `phpmd/phpmd`,
 `symfony/web-link`; keep `symfony/form` until item 12 (legacy pages). Configs copied from tacoma and adapted:
 `.php-cs-fixer.dist.php`, `phpstan.dist.neon` (level **6**, `excludePaths` the legacy dirs with the reason),
 `deptrac.yaml` (+ `Legacy` layer), `deptrac.contexts.yaml` (Identity, Inventory, Customers, Ordering, Invoicing, Audit,
