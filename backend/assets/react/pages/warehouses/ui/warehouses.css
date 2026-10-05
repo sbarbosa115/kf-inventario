@@ -1,0 +1,55 @@
+/* Warehouses as cards: the name, and the shop addresses whose orders arrive there. */
+.warehouse-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: var(--kf-space-3);
+  max-width: var(--kf-content-max);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.warehouse-card {
+  display: grid;
+  align-content: start;
+  gap: var(--kf-space-2);
+  height: 100%;
+  min-width: 0;
+  padding: var(--kf-space-4);
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-surface);
+}
+
+.warehouse-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--kf-space-2);
+  min-width: 0;
+}
+
+.warehouse-card__label {
+  margin: var(--kf-space-2) 0 0;
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-label);
+  font-weight: 500;
+}
+
+.warehouse-card__urls {
+  display: grid;
+  gap: var(--kf-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--kf-text-muted);
+  font-family: var(--kf-font-mono);
+  font-size: var(--kf-text-sm);
+  overflow-wrap: anywhere;
+}
+
+.warehouse-card__none {
+  margin: 0;
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+}
