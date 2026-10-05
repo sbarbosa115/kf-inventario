@@ -46,6 +46,14 @@ final class DoctrineLocationRepository implements LocationRepository
         if (null === $id && null === $name) {
             return null;
         }
+        if (null === $id) {
+            // Added earlier in this same request, not flushed yet: a query cannot see it.
+            foreach ($this->em->getUnitOfWork()->getScheduledEntityInsertions() as $pending) {
+                if ($pending instanceof $class && 0 === strcasecmp((string) $pending->getName(), (string) $name)) {
+                    return $pending;
+                }
+            }
+        }
         $query = $this->em->createQueryBuilder()->select('l')->from($class, 'l');
         if (null !== $id) {
             $query->where('l.id = :id')->setParameter('id', $id);
