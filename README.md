@@ -99,7 +99,7 @@ first). Writes from another origin are refused (403).
 | `POST` | `/api/v1/products/upload` | `ROLE_MANAGE_INVENTORY` | 2: multipart `file` (xls/xlsx) + `warehouse_id` → `{stored}`; 415 `unsupported_media`, 422 `invalid_spreadsheet`, 404 `warehouse_not_found` |
 | `GET` | `/api/v1/products/template.xls` | `ROLE_MANAGE_INVENTORY` | 2: `?all=1` or `?uuid[]=…` → `Products.xls` (header alone with neither) |
 | `GET` | `/api/v1/customers` | `ROLE_MANAGE_CUSTOMERS` | 3 |
-| `GET` | `/api/v1/customers/all` | `ROLE_MANAGE_CUSTOMERS` | 3 |
+| `GET` | `/api/v1/customers/all` | `ROLE_MANAGE_CUSTOMERS`, `ROLE_CAN_CREATE_ORDERS`, `ROLE_CAN_UPDATE_ORDERS` or `ROLE_CAN_CREATE_INVOICES` | 3: every customer (`CustomerOutput[]`, those without an address too) for the order and invoice pickers; any role whose legacy form embedded the list |
 | `GET` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 |
 | `POST` | `/api/v1/customers` | `ROLE_MANAGE_CUSTOMERS` | 3 |
 | `PUT` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 |

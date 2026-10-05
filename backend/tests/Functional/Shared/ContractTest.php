@@ -16,6 +16,8 @@ final class ContractTest extends ApiTestCase
     use SignsIn;
 
     /**
+     * The role column: the role the endpoint asks for, or several separated by "|" when any one of them opens it.
+     *
      * @return iterable<string, array{string, string, string, int}>
      */
     public static function endpoints(): iterable
@@ -38,7 +40,8 @@ final class ContractTest extends ApiTestCase
         yield 'POST /api/v1/products/upload' => ['POST', '/api/v1/products/upload', 'ROLE_MANAGE_INVENTORY', 2];
         yield 'GET /api/v1/products/template.xls' => ['GET', '/api/v1/products/template.xls', 'ROLE_MANAGE_INVENTORY', 2];
         yield 'GET /api/v1/customers' => ['GET', '/api/v1/customers', 'ROLE_MANAGE_CUSTOMERS', 3];
-        yield 'GET /api/v1/customers/all' => ['GET', '/api/v1/customers/all', 'ROLE_MANAGE_CUSTOMERS', 3];
+        // The legacy order (new, edit) and new-invoice pages embedded every customer: their roles read the pickers' list.
+        yield 'GET /api/v1/customers/all' => ['GET', '/api/v1/customers/all', 'ROLE_MANAGE_CUSTOMERS|ROLE_CAN_CREATE_ORDERS|ROLE_CAN_UPDATE_ORDERS|ROLE_CAN_CREATE_INVOICES', 3];
         yield 'GET /api/v1/customers/{id}' => ['GET', '/api/v1/customers/1', 'ROLE_MANAGE_CUSTOMERS', 3];
         yield 'POST /api/v1/customers' => ['POST', '/api/v1/customers', 'ROLE_MANAGE_CUSTOMERS', 3];
         yield 'PUT /api/v1/customers/{id}' => ['PUT', '/api/v1/customers/1', 'ROLE_MANAGE_CUSTOMERS', 3];
@@ -88,7 +91,7 @@ final class ContractTest extends ApiTestCase
         }
         // Every account also holds ROLE_USER (the API, like the legacy /admin/ pages, asks for it first): the
         // ROLE_CAN_* roles and ROLE_MANAGE_CUSTOMERS do not reach it through the hierarchy.
-        $this->signInAs(array_values(array_unique([$role, 'ROLE_USER'])));
+        $this->signInAs(array_values(array_unique([...explode('|', $role), 'ROLE_USER'])));
 
         $body = $this->sendJson($method, $path);
 

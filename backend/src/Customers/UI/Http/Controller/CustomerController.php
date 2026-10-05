@@ -11,6 +11,7 @@ use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\ApiValidationException;
 use App\Shared\UI\Http\InputMapper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,6 +21,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class CustomerController extends AbstractController
 {
     private const MAX_PER_PAGE = 100;
+
+    /** The legacy customers screen, and the order (new, edit) and new-invoice pages that embedded every customer. */
+    private const PICKER_ROLES = "is_granted('ROLE_MANAGE_CUSTOMERS') or is_granted('ROLE_CAN_CREATE_ORDERS') or is_granted('ROLE_CAN_UPDATE_ORDERS') or is_granted('ROLE_CAN_CREATE_INVOICES')";
 
     public function __construct(
         private readonly Customers $customers,
@@ -49,10 +53,12 @@ final class CustomerController extends AbstractController
     }
 
     /**
-     * Every customer, for the order and invoice pickers (those without an address too).
+     * Every customer, for the order and invoice pickers (those without an address too). Whoever the legacy order and
+     * invoice forms embedded the list for reads it: ROLE_MANAGE_CUSTOMERS, ROLE_CAN_CREATE_ORDERS,
+     * ROLE_CAN_UPDATE_ORDERS or ROLE_CAN_CREATE_INVOICES.
      */
     #[Route('/api/v1/customers/all', name: 'api_customers_all', methods: ['GET'])]
-    #[IsGranted('ROLE_MANAGE_CUSTOMERS')]
+    #[IsGranted(new Expression(self::PICKER_ROLES))]
     #[ApiResponse(CustomerOutput::class, list: true)]
     public function all(): JsonResponse
     {

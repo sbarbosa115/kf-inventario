@@ -523,7 +523,7 @@
         },
         "/api/v1/customers/all": {
             "get": {
-                "summary": "Every customer, for the order and invoice pickers (those without an address too).",
+                "summary": "Every customer, for the order and invoice pickers (those without an address too). Whoever the legacy order and\ninvoice forms embedded the list for reads it: ROLE_MANAGE_CUSTOMERS, ROLE_CAN_CREATE_ORDERS,\nROLE_CAN_UPDATE_ORDERS or ROLE_CAN_CREATE_INVOICES.",
                 "operationId": "get_api_customers_all",
                 "responses": {
                     "200": {

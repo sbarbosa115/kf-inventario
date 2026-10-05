@@ -340,7 +340,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every customer, for the order and invoice pickers (those without an address too). */
+        /**
+         * Every customer, for the order and invoice pickers (those without an address too). Whoever the legacy order and
+         *     invoice forms embedded the list for reads it: ROLE_MANAGE_CUSTOMERS, ROLE_CAN_CREATE_ORDERS,
+         *     ROLE_CAN_UPDATE_ORDERS or ROLE_CAN_CREATE_INVOICES.
+         */
         get: operations["get_api_customers_all"];
         put?: never;
         post?: never;

@@ -9,6 +9,7 @@ use App\Customers\Domain\Model\CustomerAddress;
 use App\Customers\Domain\Model\State;
 use App\Tests\Support\ApiTestCase;
 use App\Tests\Support\SignsIn;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class CustomerApiTest extends ApiTestCase
 {
@@ -92,6 +93,38 @@ final class CustomerApiTest extends ApiTestCase
         $emails = array_column($all, 'email');
         self::assertContains('bare@kf.test', $emails, 'A customer without an address is not hidden from the pickers.');
         self::assertContains('ana@kf.test', $emails);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function pickerRoles(): iterable
+    {
+        yield 'the customers screen' => ['ROLE_MANAGE_CUSTOMERS'];
+        yield 'the legacy new-order page' => ['ROLE_CAN_CREATE_ORDERS'];
+        yield 'the legacy edit-order page' => ['ROLE_CAN_UPDATE_ORDERS'];
+        yield 'the legacy new-invoice page' => ['ROLE_CAN_CREATE_INVOICES'];
+    }
+
+    #[DataProvider('pickerRoles')]
+    public function testEveryoneWhoseLegacyFormEmbeddedTheCustomerListReadsIt(string $role): void
+    {
+        $this->signInAs([$role, 'ROLE_USER']);
+        $this->save($this->customer('Picked', 'picked@kf.test', '1'));
+
+        $all = $this->getJson('/api/v1/customers/all');
+
+        $this->assertStatus(200, "The legacy order and invoice forms embedded every customer for {$role}: the picker must keep working.");
+        self::assertContains('picked@kf.test', array_column($all, 'email'));
+    }
+
+    public function testTheListForPickersIsRefusedToAnAccountWithNoFormThatShowsIt(): void
+    {
+        $this->signInAs(['ROLE_USER']);
+
+        $this->getJson('/api/v1/customers/all');
+
+        $this->assertStatus(403, 'Only the customers screen and the order and invoice forms list every customer.');
     }
 
     public function testCreatingWithANewCityStateAndCountryCreatesThemOnce(): void
