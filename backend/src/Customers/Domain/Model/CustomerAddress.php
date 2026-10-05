@@ -2,7 +2,6 @@
 
 namespace App\Customers\Domain\Model;
 
-use App\Repository\CustomerAddressRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]

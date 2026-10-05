@@ -2,7 +2,6 @@
 
 namespace App\Inventory\Domain\Model;
 
-use App\Repository\ProductWarehouseRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]

@@ -5,7 +5,6 @@ namespace App\Ordering\Domain\Model;
 use App\Customers\Domain\Model\Customer;
 use App\Inventory\Domain\Model\Product;
 use App\Inventory\Domain\Model\Warehouse;
-use App\Repository\OrderRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
