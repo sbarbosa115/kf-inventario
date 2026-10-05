@@ -44,7 +44,15 @@ deptrac:
       collectors:
         - {
             type: classNameRegex,
-            value: '#^App\\Inventory\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\)#',
+            value: '#^App\\Inventory\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\(?!Http\\(Input|Output)\\))#',
+          }
+    # Inventory's request and response DTOs: an order or invoice endpoint takes and answers the same shapes (an address,
+    # a customer, a warehouse, a stock row) instead of copies of them.
+    - name: InventoryHttp
+      collectors:
+        - {
+            type: classNameRegex,
+            value: '#^App\\Inventory\\UI\\Http\\(Input|Output)\\#',
           }
     - name: InventoryApi
       collectors:
@@ -57,7 +65,15 @@ deptrac:
       collectors:
         - {
             type: classNameRegex,
-            value: '#^App\\Customers\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\)#',
+            value: '#^App\\Customers\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\(?!Http\\(Input|Output)\\))#',
+          }
+    # Customers's request and response DTOs: an order or invoice endpoint takes and answers the same shapes (an address,
+    # a customer, a warehouse, a stock row) instead of copies of them.
+    - name: CustomersHttp
+      collectors:
+        - {
+            type: classNameRegex,
+            value: '#^App\\Customers\\UI\\Http\\(Input|Output)\\#',
           }
     - name: CustomersApi
       collectors:
@@ -119,15 +135,35 @@ deptrac:
     DomainModels: [DomainModels, Shared, Legacy]
     Identity: [Shared, IdentityApi, DomainModels]
     IdentityApi: [Shared, Identity, DomainModels]
-    Inventory: [Shared, InventoryApi, DomainModels]
+    Inventory: [Shared, InventoryApi, InventoryHttp, DomainModels]
+    InventoryHttp: [Shared, Inventory, InventoryApi, DomainModels]
     InventoryApi: [Shared, Inventory, DomainModels]
-    Customers: [Shared, CustomersApi, DomainModels]
+    Customers: [Shared, CustomersApi, CustomersHttp, DomainModels]
+    CustomersHttp: [Shared, Customers, CustomersApi, DomainModels]
     CustomersApi: [Shared, Customers, DomainModels]
     # An order's customer is found or created through Customers (CustomerRegistry); its stock comes from Inventory.
-    Ordering: [Shared, OrderingApi, DomainModels, CustomersApi, InventoryApi]
+    Ordering:
+      [
+        Shared,
+        OrderingApi,
+        DomainModels,
+        CustomersApi,
+        InventoryApi,
+        CustomersHttp,
+        InventoryHttp,
+      ]
     OrderingApi: [Shared, Ordering, DomainModels, CustomersApi, InventoryApi]
     # An invoice's customer comes from Customers; its lines may name an Inventory product.
-    Invoicing: [Shared, InvoicingApi, DomainModels, CustomersApi, InventoryApi]
+    Invoicing:
+      [
+        Shared,
+        InvoicingApi,
+        DomainModels,
+        CustomersApi,
+        InventoryApi,
+        CustomersHttp,
+        InventoryHttp,
+      ]
     InvoicingApi: [Shared, Invoicing, DomainModels, CustomersApi, InventoryApi]
     # The activity log implements Shared's ActivityLog port and records the signed-in user.
     Audit: [Shared, AuditApi, DomainModels]

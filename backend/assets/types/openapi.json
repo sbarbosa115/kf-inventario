@@ -1,0 +1,1950 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "KF Inventory API",
+        "description": "The JSON API behind the React UI.",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "summary": "{\"username\", \"password\", \"remember_me\"?}: the session starts and the answer is who signed in. 401\ninvalid_credentials for a wrong username or password.",
+                "operationId": "post_api_auth_login",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "summary": "Ends the session: 204.",
+                "operationId": "post_api_auth_logout",
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "summary": "Who is signed in. 401 when nobody is.",
+                "operationId": "get_api_auth_me",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "summary": "Every user, by name. (item 1)",
+                "operationId": "get_api_users_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/UserOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "UserInput: creates a user. 422 when invalid. (item 1)",
+                "operationId": "post_api_users_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "summary": "One user. 404 user_not_found. (item 1)",
+                "operationId": "get_api_users_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "UserInput: edits a user; a blank password keeps the current one. (item 1)",
+                "operationId": "put_api_users_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/by-code/{code}": {
+            "get": {
+                "summary": "A product by its code (the barcode reader). 404 product_not_found. (item 2)",
+                "operationId": "get_api_products_by_code",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[^/]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{uuid}": {
+            "get": {
+                "summary": "A product by uuid. 404 product_not_found. (item 2)",
+                "operationId": "get_api_products_show",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[0-9a-f-]{36}"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "ProductInput: edits a product. (item 2)",
+                "operationId": "put_api_products_update",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[0-9a-f-]{36}"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products": {
+            "post": {
+                "summary": "ProductInput: creates a product. (item 2)",
+                "operationId": "post_api_products_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/upload": {
+            "post": {
+                "summary": "multipart: `file` (xls/xlsx, the template's columns) and `warehouse_id`. 415 unsupported_media; 422 invalid_spreadsheet. (item 2)",
+                "operationId": "post_api_products_upload",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UploadResultOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products/template.xls": {
+            "get": {
+                "summary": "The stock spreadsheet: `all=1` for every product, or `uuid[]=\u2026` for the selected ones (an xls attachment). (item 2)",
+                "operationId": "get_api_products_template",
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/warehouses/{id}/stock": {
+            "get": {
+                "summary": "The warehouse's stock rows with `status` (1 in stock, default; 0 incoming). (item 2)",
+                "operationId": "get_api_stock_list",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/StockOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/warehouses/{from}/moves/{to}": {
+            "post": {
+                "summary": "StockLinesInput: moves quantities to another warehouse (they arrive as incoming). 204; 409 same_warehouse; 404 stock_not_found; 422 insufficient_stock. (item 2)",
+                "operationId": "post_api_stock_move",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/warehouses/{id}/stock/add": {
+            "post": {
+                "summary": "StockLinesInput (by code): the barcode reader adds stock. 204. (item 2)",
+                "operationId": "post_api_stock_add",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/warehouses/{id}/stock/remove": {
+            "post": {
+                "summary": "StockLinesInput (by code): the barcode reader removes stock. 204; 422 insufficient_stock. (item 2)",
+                "operationId": "post_api_stock_remove",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/warehouses/{id}/incoming/approve": {
+            "post": {
+                "summary": "Approves every incoming row of the warehouse. (item 2)",
+                "operationId": "post_api_stock_approve_incoming",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApprovedOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/warehouses": {
+            "get": {
+                "summary": "Every warehouse (as /admin/warehouse/all: any signed-in user). (item 2)",
+                "operationId": "get_api_warehouses_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/WarehouseOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/warehouses/{id}": {
+            "put": {
+                "summary": "WarehouseInput: renames a warehouse (as the legacy edit: any signed-in user). (item 2)",
+                "operationId": "put_api_warehouses_rename",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WarehouseOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customers": {
+            "get": {
+                "summary": "`page` (1\u2026), `per_page` (100 by default, as before). (item 3)",
+                "operationId": "get_api_customers_page",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CustomerOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "CustomerInput: creates a customer. (item 3)",
+                "operationId": "post_api_customers_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomerOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customers/all": {
+            "get": {
+                "summary": "Every customer, for the order and invoice pickers. (item 3)",
+                "operationId": "get_api_customers_all",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CustomerOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customers/{id}": {
+            "get": {
+                "summary": "One customer. 404 customer_not_found. (item 3)",
+                "operationId": "get_api_customers_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomerOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "CustomerInput: edits a customer and replaces their addresses. (item 3)",
+                "operationId": "put_api_customers_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomerOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Deletes a customer (soft delete, as before). 204. (item 3)",
+                "operationId": "delete_api_customers_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/locations": {
+            "get": {
+                "summary": "Every country with its states and their cities. (item 3)",
+                "operationId": "get_api_locations_tree",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CountryOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/orders": {
+            "get": {
+                "summary": "`warehouse_id`: that warehouse's orders, newest first. (item 4)",
+                "operationId": "get_api_orders_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/OrderOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "OrderInput: places an order; the printer gets its email. 422 order_without_products. (item 4)",
+                "operationId": "post_api_orders_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderDetailOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{id}": {
+            "get": {
+                "summary": "One order. 404 order_not_found. (item 4)",
+                "operationId": "get_api_orders_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderDetailOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "OrderInput: edits an order. (item 4)",
+                "operationId": "put_api_orders_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderDetailOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Deletes an order (its products and comments, then the order: soft delete). 204. (item 4)",
+                "operationId": "delete_api_orders_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{id}/status": {
+            "post": {
+                "summary": "OrderStatusInput: moves the order to another status. (item 4)",
+                "operationId": "post_api_orders_status",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderDetailOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{id}/comments": {
+            "put": {
+                "summary": "OrderCommentsInput: the order's comments as they should be (as before: any signed-in user). (item 4)",
+                "operationId": "put_api_orders_comments",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "comments"
+                                    ],
+                                    "properties": {
+                                        "comments": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OrderCommentOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/sync": {
+            "post": {
+                "summary": "Pulls new orders from the WooCommerce shops (item 13). 501 order_sync_unavailable until then; 502 order_sync_failed. (item 13)",
+                "operationId": "post_api_orders_sync",
+                "responses": {
+                    "202": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SyncResultOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{id}/pdf": {
+            "get": {
+                "summary": "The order as a PDF (the printer's). (item 4)",
+                "operationId": "get_api_orders_pdf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{id}/remaining-pdf": {
+            "get": {
+                "summary": "What is left to ship, as a PDF. (item 4)",
+                "operationId": "get_api_orders_remaining_pdf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{id}/xls": {
+            "get": {
+                "summary": "The order as a spreadsheet (as before: any signed-in user). (item 4)",
+                "operationId": "get_api_orders_xls",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{id}/partials": {
+            "get": {
+                "summary": "What was shipped, what is left, and the stock (as before: any signed-in user). (item 4)",
+                "operationId": "get_api_orders_partials",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderPartialsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "PartialInput: records a partial shipment. 409 partial_exceeds_order. (item 4)",
+                "operationId": "post_api_orders_partials_record",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderPartialsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/invoices": {
+            "get": {
+                "summary": "Every invoice, newest first. (item 5)",
+                "operationId": "get_api_invoices_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/InvoiceOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "InvoiceInput: creates an invoice. 409 invoice_code_taken. (item 5)",
+                "operationId": "post_api_invoices_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvoiceOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/invoices/next-code": {
+            "get": {
+                "summary": "The code the next invoice is offered. (item 5)",
+                "operationId": "get_api_invoices_next_code",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NextInvoiceCodeOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/invoices/{id}": {
+            "get": {
+                "summary": "One invoice. 404 invoice_not_found. (item 5)",
+                "operationId": "get_api_invoices_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvoiceOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/invoices/{id}/pdf": {
+            "get": {
+                "summary": "The invoice as a PDF. (item 5)",
+                "operationId": "get_api_invoices_pdf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "SessionOutput": {
+                "required": [
+                    "id",
+                    "username",
+                    "roles"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "UserOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "username",
+                    "roles",
+                    "enabled"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "roles": {
+                        "title": "The roles assigned (not the ones reached through the hierarchy)",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ProductStockOutput": {
+                "required": [
+                    "warehouse_id",
+                    "quantity",
+                    "status"
+                ],
+                "properties": {
+                    "warehouse_id": {
+                        "type": "integer"
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "title": "1: in stock; 0: incoming",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ProductOutput": {
+                "required": [
+                    "id",
+                    "uuid",
+                    "code",
+                    "title",
+                    "status",
+                    "stock"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "detail": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "title": "1: active; 0: inactive",
+                        "type": "integer"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "stock": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProductStockOutput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "UploadResultOutput": {
+                "required": [
+                    "stored"
+                ],
+                "properties": {
+                    "stored": {
+                        "title": "Rows stored (created or added to)",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "WarehouseRefOutput": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "StockOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "quantity",
+                    "product_id",
+                    "uuid",
+                    "code",
+                    "title",
+                    "warehouse"
+                ],
+                "properties": {
+                    "id": {
+                        "title": "The stock row",
+                        "type": "integer"
+                    },
+                    "status": {
+                        "title": "1: in stock; 0: incoming, waiting for approval",
+                        "type": "integer"
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    },
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "uuid": {
+                        "title": "The product's",
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "detail": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "warehouse": {
+                        "$ref": "#/components/schemas/WarehouseRefOutput"
+                    }
+                },
+                "type": "object"
+            },
+            "ApprovedOutput": {
+                "required": [
+                    "approved"
+                ],
+                "properties": {
+                    "approved": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "WarehouseOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "urls"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "urls": {
+                        "title": "The X-WC-Webhook-Source values that send orders here",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CountryRefOutput": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "StateRefOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "country"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "country": {
+                        "$ref": "#/components/schemas/CountryRefOutput"
+                    }
+                },
+                "type": "object"
+            },
+            "CityRefOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "state"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "$ref": "#/components/schemas/StateRefOutput"
+                    }
+                },
+                "type": "object"
+            },
+            "AddressOutput": {
+                "required": [
+                    "id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "zip_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address_type": {
+                        "title": "1: billing; 2: shipping (as the WooCommerce webhook stores them)",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "city": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CityRefOutput"
+                            }
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "CustomerOutput": {
+                "required": [
+                    "id",
+                    "addresses"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "addresses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AddressOutput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CityOutput": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "StateOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "cities"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cities": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CityOutput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CountryOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "states"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "states": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StateOutput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "CustomerRefOutput": {
+                "required": [
+                    "id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "OrderOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "source",
+                    "comments_count"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "title": "1 created, 2 processed, 3 completed, 4 partial, 5 sent, 6 delivered",
+                        "type": "integer"
+                    },
+                    "source": {
+                        "title": "1 web (WooCommerce), 2 phone",
+                        "type": "integer"
+                    },
+                    "payment_method": {
+                        "title": "1 credit card, 2 PayPal",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "comment": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "title": "ISO 8601",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "warehouse": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/WarehouseRefOutput"
+                            }
+                        ]
+                    },
+                    "customer": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CustomerRefOutput"
+                            }
+                        ]
+                    },
+                    "comments_count": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "OrderCommentOutput": {
+                "required": [
+                    "id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "content": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "OrderLineProductOutput": {
+                "required": [
+                    "code",
+                    "title"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "detail": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "OrderLineOutput": {
+                "required": [
+                    "uuid",
+                    "quantity",
+                    "product"
+                ],
+                "properties": {
+                    "uuid": {
+                        "title": "The product's",
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    },
+                    "product": {
+                        "$ref": "#/components/schemas/OrderLineProductOutput"
+                    }
+                },
+                "type": "object"
+            },
+            "OrderDetailOutput": {
+                "required": [
+                    "id",
+                    "status",
+                    "source",
+                    "comments",
+                    "products"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "integer"
+                    },
+                    "source": {
+                        "type": "integer"
+                    },
+                    "payment_method": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "comment": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "title": "ISO 8601",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "warehouse": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/WarehouseRefOutput"
+                            }
+                        ]
+                    },
+                    "customer": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CustomerOutput"
+                            }
+                        ]
+                    },
+                    "comments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OrderCommentOutput"
+                        }
+                    },
+                    "products": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OrderLineOutput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "SyncResultOutput": {
+                "required": [
+                    "imported",
+                    "skipped"
+                ],
+                "properties": {
+                    "imported": {
+                        "type": "integer"
+                    },
+                    "skipped": {
+                        "title": "Already imported, or from a warehouse without credentials",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "PartialLineProductOutput": {
+                "required": [
+                    "code"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PartialLineOutput": {
+                "required": [
+                    "uuid",
+                    "quantity",
+                    "product"
+                ],
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    },
+                    "product": {
+                        "$ref": "#/components/schemas/PartialLineProductOutput"
+                    }
+                },
+                "type": "object"
+            },
+            "PendingLineOutput": {
+                "required": [
+                    "uuid",
+                    "quantity"
+                ],
+                "properties": {
+                    "uuid": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "OrderPartialsOutput": {
+                "required": [
+                    "order_id",
+                    "status",
+                    "products_aggregate",
+                    "pending",
+                    "inventory"
+                ],
+                "properties": {
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "integer"
+                    },
+                    "products_aggregate": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PartialLineOutput"
+                        }
+                    },
+                    "pending": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PendingLineOutput"
+                        }
+                    },
+                    "inventory": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StockOutput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "InvoiceProductOutput": {
+                "required": [
+                    "id",
+                    "code"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "InvoiceItemOutput": {
+                "required": [
+                    "id",
+                    "quantity",
+                    "unit_price",
+                    "total"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    },
+                    "unit_price": {
+                        "type": "string"
+                    },
+                    "discount": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "string"
+                    },
+                    "product": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/InvoiceProductOutput"
+                            }
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "InvoiceOutput": {
+                "required": [
+                    "id",
+                    "items"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "customer": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CustomerRefOutput"
+                            }
+                        ]
+                    },
+                    "customer_nit": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "customer_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "comment": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "payment_method": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/InvoiceItemOutput"
+                        }
+                    },
+                    "subtotal": {
+                        "title": "total minus tax_amount",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tax_rate": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tax_amount": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "title": "ISO 8601",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "NextInvoiceCodeOutput": {
+                "required": [
+                    "code"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    }
+}
