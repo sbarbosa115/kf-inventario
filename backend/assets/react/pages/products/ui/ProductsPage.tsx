@@ -1,8 +1,22 @@
+import {useLocation} from 'react-router-dom';
 import {useTranslation} from '@/shared/i18n';
-import {LegacyScreen} from '@/shared/ui';
+import {PageCard} from '@/shared/ui';
+import {StockTable} from '@/widgets/stock-table';
 
-/** Until item 6 builds this screen: a link to its legacy page (docs/pdr/prd-restructure.md). */
+/** View products (ROLE_MANAGE_INVENTORY): a warehouse's stock, moves between warehouses, the stock spreadsheet. */
 export function ProductsPage() {
   const {t} = useTranslation();
-  return <LegacyScreen title={t('nav.productList')} href={'/admin/product/'} />;
+  const saved = (useLocation().state as {saved?: 'created' | 'updated'} | null)
+    ?.saved;
+
+  return (
+    <PageCard title={t('products.title')}>
+      {saved && (
+        <div className="alert alert-success" role="status">
+          {t(`products.${saved}`)}
+        </div>
+      )}
+      <StockTable />
+    </PageCard>
+  );
 }

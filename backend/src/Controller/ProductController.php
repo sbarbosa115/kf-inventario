@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Inventory\Domain\Model\Product;
 use App\Inventory\Domain\Model\Warehouse;
-use App\Form\ProductType;
 use App\Repository\ProductRepository;
 use App\Repository\ProductWarehouseRepository;
 use App\Services\LogService;
@@ -30,12 +29,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[IsGranted('ROLE_MANAGE_INVENTORY')]
 class ProductController extends AbstractController
 {
-    #[Route('/', name: 'product_index', methods: ['GET'])]
-    public function index(): Response
-    {
-        return $this->render('product/index.html.twig');
-    }
-
     #[Route('/show/{code}', name: 'show', options: ['expose' => true], methods: ['GET'])]
     public function show(
         ProductRepository $productRepo,
@@ -55,50 +48,6 @@ class ProductController extends AbstractController
         ]]);
 
         return new Response(json_encode($data), 200);
-    }
-
-    #[Route('/edit/{uuid}', name: 'update', methods: ['GET', 'POST'], options: ['expose' => true])]
-    public function update(
-        EntityManagerInterface $manager,
-        Request $request,
-        Product $product
-    ): Response {
-        $form = $this->createForm(ProductType::class, $product);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $manager->persist($product);
-            $manager->flush();
-
-            $this->addFlash('success', 'product.edit.updated_successfully');
-
-            return $this->redirectToRoute('product_product_index');
-        }
-
-        return $this->render('product/edit.html.twig', [
-            'form' => $form->createView(),
-        ]);
-    }
-
-    #[Route('/new', name: 'new', methods: ['GET', 'POST'], options: ['expose' => true])]
-    public function new(
-        EntityManagerInterface $manager,
-        Request $request
-    ): Response {
-        $product = new Product();
-        $form = $this->createForm(ProductType::class, $product);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $manager->persist($product);
-            $manager->flush();
-
-            $this->addFlash('success', 'product.new.updated_successfully');
-
-            return $this->redirectToRoute('product_product_index');
-        }
-
-        return $this->render('product/new.html.twig', [
-            'form' => $form->createView(),
-        ]);
     }
 
     #[Route('/template/{all}', defaults: ['all' => false], name: 'template', methods: ['GET', 'POST'], options: ['expose' => true])]
