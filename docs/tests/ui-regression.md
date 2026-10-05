@@ -264,6 +264,80 @@ this."; `/api/v1/customers` answers 403.
 <!-- Item 9 (orders-ui) adds ORD-01 – 10; item 10 (order-forms-ui) adds ORD-11 – 18; item 13 (woocommerce-sync) adds
      ORD-19 – 20. -->
 
+Twelve fixture orders (W00001 – W00012) are on the first warehouse, Colombia: W00001 – W00006 by phone with the
+statuses Created … Delivered, W00007 – W00012 from the web likewise, each with one comment and three products. Delete
+and Sync Orders need `ROLE_MANAGE_ORDERS`, which the admin does not reach: ORD-08 and ORD-09 sign in as a user who
+holds it (the smoke spec creates `smoke-orders` / `123456` with `ROLE_MANAGE_ORDERS` and `ROLE_UPDATE_ORDERS`; by
+hand, give those two roles to the user of USR-02).
+
+**ORD-01 · The list shows the first warehouse's orders, and the old address lands on it**
+Smoke: `e2e/orders.spec.ts`.
+Signed in as the admin, open `/admin/order/` (the previous version's address): `/admin/orders` opens, "View Orders", a
+warehouse picker on Colombia, a status picker on "Select Order Status (All)", Create an Order, and one row per order
+(newest first, ten a page): a comments count, "Jose Perez [jose.perez@example.com]", the order number, Phone or Web,
+the status in a select, the date (the day the fixtures were loaded, as `05 Oct 2026`), and Order Detail, edit, getting-ready, PDF and Excel buttons. No
+Delete and no Sync button for the admin (as before). The search box finds an order by its number or customer. The
+sidebar's Orders entry opens the same list.
+
+**ORD-02 · Another warehouse and a status narrow the list**
+Smoke: `e2e/orders.spec.ts`.
+Pick Delivered in the status picker: only W00006 and W00012 remain. Pick "Select Order Status (All)" again, then the
+warehouse Usa: "This warehouse has no orders yet. Create one, or sync the orders of the shops." By hand: with a
+status that no order of the warehouse has, "No order of this warehouse has that status." and Show all brings every
+order back.
+
+**ORD-03 · A status changes in its row and stays changed**
+Smoke: `e2e/orders.spec.ts`.
+In W00001's row choose Processed: "Order W00001 is now Processed." and the row keeps it after a reload of the page. By
+hand: the order's stock in the Products list has not changed.
+
+**ORD-04 · Choosing Sent opens the getting-ready screen instead**
+Smoke: `e2e/orders.spec.ts`.
+In W00002's row choose Sent: the order's getting-ready screen opens (`/admin/orders/<id>/getting-ready`); back on the
+list, W00002 is still Processed (sending takes stock out, so only that screen does it). The getting-ready button of a
+row opens the same screen.
+
+**ORD-05 · The detail shows the order, its customer and its products**
+Smoke: `e2e/orders.spec.ts`.
+Order Detail on W00003: a dialog "Order Detail" with Source Phone, Status Completed, Customer Jose Perez, his email,
+the order number, the creation date (as `October 5, 2026`), and the customer's first address (address, zip code, city,
+state, country); the Products Detail tab lists KF-01, KF-02 and KF-03 with 50 each. Close, the × and Escape close it.
+By hand: an order whose customer has no address shows no address line; a webhook order without a customer says "No
+customer".
+
+**ORD-06 · Comments are added, edited and removed from the detail**
+Smoke: `e2e/orders.spec.ts`.
+W00004's comments count (1) opens the detail on the Comments tab: "Comment for W00004" in a box with its save and
+remove buttons. The + button adds an empty box and puts the cursor in it; type "Smoke comment" and its save button:
+"The comments were saved."; close: the count says 2. Reopen, remove the second comment: saved, the count says 1. By
+hand: saving an empty new box says "Write the comment, or remove it." and sends nothing; edit the first comment, save,
+reopen: the new text is there.
+
+**ORD-07 · The order's documents download**
+Smoke (part): `e2e/orders.spec.ts` checks that the PDF and Excel buttons of W00001 and the detail's Remaining Products
+answer a PDF, an Excel file and a PDF.
+By hand: the PDF button opens the order's PDF in a new tab (its products and customer); Excel downloads
+`file-upload-template-W00001.xls` with the order's products; in the detail, Download is the same PDF and Remaining
+Products lists what is left to ship.
+
+**ORD-08 · Deleting an order asks first**
+Smoke: `e2e/orders.spec.ts`.
+As the user holding `ROLE_MANAGE_ORDERS`: each row has a red delete button. On W00005: "Are you sure that you want to
+delete this order?"; Cancel keeps it; Delete: "The order was deleted." and the row is gone. By hand: W00005's old
+detail address (`/api/v1/orders/<id>`) answers 404.
+
+**ORD-09 · Sync Orders says what it did**
+Smoke (part): `e2e/orders.spec.ts` checks that the button, for the user holding `ROLE_MANAGE_ORDERS`, answers with a
+message (imported/skipped, or why it could not).
+By hand, with the shops' credentials in `backend/.env.local` (item 13): the icon turns while it runs and cannot be
+pressed twice; then "N orders imported, M skipped." and the new orders are in the list; a second press imports 0.
+With a wrong key: "The shops could not be reached, so no order was imported. Try again in a moment."
+
+**ORD-10 · A person without the orders roles is refused**
+Smoke: `e2e/orders.spec.ts`.
+Signed in as `inventory`: no Orders entry in the sidebar; `/admin/orders` says "You do not have permission to do
+this."; `/api/v1/orders?warehouse_id=1` answers 403.
+
 ## 6. Invoices (INVC)
 
 <!-- Item 11 (invoices-ui) adds INVC-01 – 06. -->
