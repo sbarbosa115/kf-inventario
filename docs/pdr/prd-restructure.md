@@ -526,3 +526,42 @@ Waves: 1 → {1, 2, 3, 4}; 2 → {5, 6, 7, 8}; 3 → {9, 10, 11, 13}; 4 → {12}
 - /home/sbarbosa/Development/kf-inventory/migrations/Version20220514135034.php (the `DROP TABLE migration_versions` guard; with the `getName()` guards in the other 23 files, what makes a fresh DB buildable)
 - /home/sbarbosa/Development/kf-inventory/config/packages/security.yaml (role hierarchy to copy byte-for-byte; the webhook public rule; replaced by the json_login firewall)
 - /home/sbarbosa/Development/tacoma/backend/src/Shared/UI/Http/ApiExceptionSubscriber.php (with the rest of `tacoma/backend/src/Shared`, `deptrac*.yaml`, `docker-compose.yml` and `deploy/cpanel-update.sh`: the shape item 0 copies)
+
+## Timeline
+
+Recorded with `timeline.py`, from 2026-10-05 11:20 to 2026-10-05 16:11. Active time leaves out the pauses.
+
+| Step | Started | Active | Wall clock |
+|---|---|---|---|
+| Plan | 2026-10-05 11:20 | 29m | 29m |
+| Branch and stack | 2026-10-05 11:48 | 0m | 0m |
+| Item 0 (contract) | 2026-10-05 11:48 | 1h 2m | 1h 2m |
+| Build test-first | 2026-10-05 12:51 | 9m | 9m |
+| Merging the items | 2026-10-05 13:00 | 1h 9m | 1h 9m |
+| Barrier (waiting for the items) | 2026-10-05 14:09 | 0m | 0m |
+| Gate | 2026-10-05 14:09 | 2m | 2m |
+| Full PHPUnit + Vitest | 2026-10-05 14:11 | 1m | 1m |
+| Security audit | 2026-10-05 14:11 | 52m | 52m |
+| Regression run (smoke, then manual) | 2026-10-05 15:03 | 48m | 48m |
+| Finish (docs, CI) | 2026-10-05 15:52 | 0m | 0m |
+| Definition of done | 2026-10-05 15:52 | 18m | 18m |
+| Pull request | 2026-10-05 16:10 | 1m | 1m |
+| **Total** | | **4h 51m** | **4h 51m** |
+
+The items of the split (from git: branch created → merged into the base branch):
+
+| Item | Started | Merged | Took |
+|---|---|---|---|
+| customers-api | 2026-10-05 12:51 | 2026-10-05 13:00 | 9m |
+| customers-ui | 2026-10-05 13:15 | 2026-10-05 13:30 | 15m |
+| identity | 2026-10-05 12:51 | 2026-10-05 13:02 | 11m |
+| inventory-api | 2026-10-05 12:51 | 2026-10-05 13:06 | 16m |
+| invoices-ui | 2026-10-05 13:32 | 2026-10-05 13:47 | 15m |
+| invoicing-api | 2026-10-05 13:21 | 2026-10-05 13:29 | 8m |
+| legacy-removal | 2026-10-05 13:55 | 2026-10-05 14:08 | 13m |
+| order-forms-ui | 2026-10-05 13:32 | 2026-10-05 13:52 | 20m |
+| ordering-api | 2026-10-05 12:51 | 2026-10-05 13:12 | 22m |
+| orders-ui | 2026-10-05 13:32 | 2026-10-05 13:53 | 21m |
+| products-ui | 2026-10-05 13:15 | 2026-10-05 13:30 | 15m |
+| stock-ui | 2026-10-05 13:15 | 2026-10-05 13:26 | 11m |
+| woocommerce-sync | 2026-10-05 13:21 | 2026-10-05 13:34 | 14m |
