@@ -1,21 +1,23 @@
 {
-  "title": "View Orders",
-  "warehouse": "Warehouse",
-  "statusFilter": "Status",
-  "allStatuses": "Select Order Status (All)",
-  "create": "Create an Order",
-  "empty": "This warehouse has no orders yet. Create one, or sync the orders of the shops.",
-  "filteredEmpty": "No order of this warehouse has that status.",
+  "title": "Orders",
+  "create": "Create order",
   "noWarehouses": "There are no warehouses yet. Add one before managing orders.",
+  "empty": "This warehouse has no orders yet. Create one, or sync the orders of the shops.",
   "noCustomer": "No customer",
+  "filters": {
+    "label": "Order filters",
+    "status": "Status",
+    "search": "Order number or customer",
+    "from": "Created from",
+    "to": "Created to"
+  },
   "columns": {
-    "comments": "Comments",
+    "code": "Order",
     "customer": "Customer",
-    "code": "Order #",
     "source": "Source",
     "status": "Status",
-    "date": "Created Date",
-    "options": "Options"
+    "created": "Created",
+    "comments": "Comments"
   },
   "statuses": {
     "1": "Created",
@@ -30,50 +32,55 @@
     "phone": "Phone",
     "unknown": "Unknown"
   },
+  "openDetail": "Open order {{code}}",
   "commentsOf": "Comments of order {{code}}: {{count}}",
-  "statusOf": "Status of order {{code}}",
-  "statusChanged": "Order {{code}} is now {{status}}.",
-  "detail": "Order Detail",
-  "detailOf": "Order Detail of {{code}}",
-  "edit": "Edit this order",
-  "gettingReady": "Getting ready this Order",
-  "pdf": "View as PDF",
-  "xls": "Download as Excel",
-  "delete": "Delete Order",
-  "deleteOf": "Delete Order {{code}}",
-  "confirmDelete": "Are you sure that you want to delete this order?",
-  "confirmDeleteDetail": "Order {{code}}, its products and its comments will be removed.",
-  "deleted": "The order was deleted.",
+  "actions": {
+    "edit": "Edit",
+    "gettingReady": "Getting ready",
+    "pdf": "Order PDF",
+    "remainingPdf": "Remaining products PDF",
+    "xls": "Excel sheet",
+    "documents": "Documents",
+    "delete": "Delete"
+  },
+  "status": {
+    "menu": "Status of order {{code}}",
+    "confirmTitle": "Mark {{code}} as {{status}}?",
+    "confirmBody": "The order moves from {{from}} to {{status}}. Its stock does not change.",
+    "confirm": "Mark as {{status}}",
+    "changed": "Order {{code}} is now {{status}}."
+  },
+  "delete": {
+    "title": "Delete order {{code}}?",
+    "body": "Its products and comments are removed with it. This cannot be undone.",
+    "confirm": "Delete order",
+    "done": "Order {{code}} was deleted."
+  },
   "sync": {
-    "button": "Sync Orders",
-    "running": "Syncing orders…",
+    "button": "Sync shop orders",
+    "running": "Syncing shop orders…",
     "done": "{{imported}} orders imported, {{skipped}} skipped."
   },
-  "info": {
+  "detail": {
+    "title": "Order {{code}}",
+    "facts": "Order facts",
     "source": "Source",
-    "status": "Status",
+    "warehouse": "Warehouse",
+    "created": "Created",
     "customer": "Customer",
     "email": "Email",
-    "code": "Order #",
-    "createdAt": "Creation Date",
+    "phone": "Phone",
     "address": "Address",
-    "zipCode": "Zip Code",
-    "city": "City",
-    "state": "State",
-    "country": "Country"
-  },
-  "tabs": {
-    "products": "Products Detail",
+    "noAddress": "No address on file.",
+    "products": "Products",
     "comments": "Comments"
   },
   "products": {
     "code": "Code",
-    "description": "Description",
-    "quantity": "Quantity",
+    "title": "Product",
+    "quantity": "Ordered",
     "empty": "This order has no products."
   },
-  "remainingPdf": "Remaining Products",
-  "downloadPdf": "Download",
   "comments": {
     "empty": "This order has no comments yet.",
     "label": "Comment {{number}}",

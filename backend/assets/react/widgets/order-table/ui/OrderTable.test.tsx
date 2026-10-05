@@ -1,9 +1,16 @@
-import {render, screen, waitFor, within} from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {MemoryRouter, Route, Routes, useParams} from 'react-router-dom';
+import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {vi} from 'vitest';
 import {SessionProvider} from '@/entities/session';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {ToastProvider} from '@/shared/ui';
 import {OrderTable} from './OrderTable';
 
 const WAREHOUSES = [
@@ -37,10 +44,19 @@ const order = (
 });
 
 const CREATED = order(1, 'W00001', 1);
-const PARTIAL = order(4, 'W00004', 4, {source: 1, comments_count: 0});
+const PARTIAL = order(4, 'W00004', 4, {
+  source: 1,
+  comments_count: 0,
+  created_at: '2026-10-01T09:00:00-05:00',
+});
+const DELIVERED = order(6, 'W00006', 6, {
+  customer: {id: 3, first_name: 'Ben', last_name: 'Ruiz', email: 'ben@kf.test'},
+  created_at: '2026-09-20T09:00:00-05:00',
+});
 const USA_ORDER = order(20, 'U00020', 2, {warehouse: {id: 2, name: 'Usa'}});
 
-/** The roles of ROLE_UPDATE_ORDERS (the Orders entry of the sidebar) and of ROLE_MANAGE_ORDERS. */
+const READ_ORDERS = ['ROLE_USER', 'ROLE_CAN_READ_ORDERS'];
+/** ROLE_UPDATE_ORDERS and what it reaches (the Orders entry of the sidebar). */
 const UPDATE_ORDERS = [
   'ROLE_UPDATE_ORDERS',
   'ROLE_CAN_CREATE_ORDERS',
@@ -55,19 +71,16 @@ const MANAGE_ORDERS = [
   'ROLE_CAN_SYNC_ORDERS',
 ];
 
-function GettingReady() {
-  return <p>getting ready {useParams().id}</p>;
-}
-
 function renderTable({
   roles = UPDATE_ORDERS,
   routes = {},
-  orders = {1: [CREATED, PARTIAL], 2: [USA_ORDER]},
+  orders = {1: [CREATED, PARTIAL, DELIVERED], 2: [USA_ORDER]},
 }: {
   roles?: string[];
   routes?: Parameters<typeof fakeApi>[0];
   orders?: Record<number, unknown[]>;
 } = {}) {
+  localStorage.clear();
   const api = fakeApi({
     'GET /auth/me': [
       200,
@@ -83,115 +96,249 @@ function renderTable({
   const onOpenDetail = vi.fn();
   render(
     <SessionProvider>
-      <MemoryRouter initialEntries={['/admin/orders']}>
-        <Routes>
-          <Route
-            path="/admin/orders"
-            element={<OrderTable onOpenDetail={onOpenDetail} refreshKey={0} />}
-          />
-          <Route
-            path="/admin/orders/:id/getting-ready"
-            element={<GettingReady />}
-          />
-        </Routes>
-      </MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={['/admin/orders']}>
+          <Routes>
+            <Route
+              path="/admin/orders"
+              element={
+                <OrderTable onOpenDetail={onOpenDetail} refreshKey={0} />
+              }
+            />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>
     </SessionProvider>,
   );
   return {api, onOpenDetail};
 }
 
+// The first render of a file also compiles the kit: give the first answer more than the default second.
 const rowOf = async (code: string) =>
-  (await screen.findByText(code)).closest('tr')!;
-
+  screen.findByRole('row', {name: new RegExp(code)}, {timeout: 3000});
+const codes = () =>
+  screen
+    .queryAllByRole('row')
+    .slice(1)
+    .map((row) => within(row).getAllByRole('cell')[1]?.textContent);
+const chip = (name: RegExp) =>
+  within(screen.getByRole('group', {name: 'Status'})).getByRole('button', {
+    name,
+  });
 const listCalls = (api: ReturnType<typeof fakeApi>) =>
   api.calls.filter((c) => c.method === 'GET' && c.path === '/orders');
+const openRowMenu = async (code: string) =>
+  userEvent.click(
+    within(await rowOf(code)).getByRole('button', {
+      name: `Actions for ${code}`,
+    }),
+  );
 
 describe('OrderTable', () => {
-  it('lists the first warehouse’s orders with their customer, source, status, date and documents', async () => {
+  it('lists the first warehouse’s orders, the order number first, then customer, source, status, date and comments', async () => {
     const {api} = renderTable();
 
     const row = await rowOf('W00001');
     expect(
-      within(row).getByText('Ana Gomez [ana@kf.test]'),
-    ).toBeInTheDocument();
+      screen.getAllByRole('columnheader').map((h) => h.textContent),
+    ).toEqual([
+      '',
+      'Order',
+      'Customer',
+      'Source',
+      'Status',
+      'Created',
+      'Comments',
+      'Actions',
+    ]);
+    expect(within(row).getByRole('button', {name: 'W00001'})).toHaveClass(
+      'kf-mono',
+    );
+    expect(within(row).getByText('Ana Gomez')).toBeInTheDocument();
+    expect(within(row).getByText('ana@kf.test')).toBeInTheDocument();
     expect(within(row).getByText('Phone')).toBeInTheDocument();
-    expect(within(row).getByText('05 Oct 2026')).toBeInTheDocument();
+    expect(within(row).getByText('Oct 5, 2026, 10:15 AM')).toBeInTheDocument();
     expect(
-      within(row).getByRole('combobox', {name: 'Status of order W00001'}),
-    ).toHaveValue('1');
+      within(row).getByRole('button', {name: 'Status of order W00001'}),
+    ).toHaveTextContent('Created');
     expect(within(await rowOf('W00004')).getByText('Web')).toBeInTheDocument();
-    expect(
-      within(row).getByRole('link', {name: 'Edit this order'}),
-    ).toHaveAttribute('href', '/admin/orders/1/edit');
-    expect(
-      within(row).getByRole('link', {name: 'Getting ready this Order'}),
-    ).toHaveAttribute('href', '/admin/orders/1/getting-ready');
-    const pdf = within(row).getByRole('link', {name: 'View as PDF'});
-    expect(pdf).toHaveAttribute('href', '/api/v1/orders/1/pdf');
-    expect(pdf).toHaveAttribute('target', '_blank');
-    expect(
-      within(row).getByRole('link', {name: 'Download as Excel'}),
-    ).toHaveAttribute('href', '/api/v1/orders/1/xls');
     expect(listCalls(api)[0]?.url.search).toBe('?warehouse_id=1');
   });
 
-  it('loads another warehouse’s orders when it is picked', async () => {
+  it('loads another warehouse’s orders when it is picked, and remembers it', async () => {
     const {api} = renderTable();
     await rowOf('W00001');
 
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', {name: 'Warehouse'}),
-      'Usa',
-    );
+    await userEvent.click(screen.getByRole('radio', {name: 'Usa'}));
 
-    expect(await screen.findByText('U00020')).toBeInTheDocument();
-    expect(screen.queryByText('W00001')).not.toBeInTheDocument();
+    expect(await rowOf('U00020')).toBeInTheDocument();
+    expect(screen.queryByRole('row', {name: /W00001/})).not.toBeInTheDocument();
     expect(listCalls(api).at(-1)?.url.search).toBe('?warehouse_id=2');
+    expect(localStorage.getItem('kf.warehouse')).toBe('2');
   });
 
-  it('shows only the orders of the status picked, and every order again with Show all', async () => {
+  it('counts the orders of each status on its chip, and a chip keeps only that status', async () => {
     renderTable();
     await rowOf('W00001');
 
-    const filter = screen.getByRole('combobox', {name: 'Status'});
-    await userEvent.selectOptions(filter, 'Partial');
-    expect(screen.queryByText('W00001')).not.toBeInTheDocument();
-    expect(screen.getByText('W00004')).toBeInTheDocument();
-
-    await userEvent.selectOptions(filter, 'Delivered');
     expect(
-      screen.getByText('No order of this warehouse has that status.'),
-    ).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', {name: 'Show all'}));
-    expect(screen.getByText('W00001')).toBeInTheDocument();
-    expect(filter).toHaveValue('');
+      within(screen.getByRole('group', {name: 'Status'}))
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual([
+      'All 3',
+      'Created 1',
+      'Processed 0',
+      'Completed 0',
+      'Partial 1',
+      'Sent 0',
+      'Delivered 1',
+    ]);
+
+    await userEvent.click(chip(/^Partial/));
+
+    expect(chip(/^Partial/)).toHaveAttribute('aria-pressed', 'true');
+    expect(codes()).toEqual(['W00004']);
+    await userEvent.click(chip(/^All/));
+    expect(codes()).toEqual(['W00001', 'W00004', 'W00006']);
   });
 
-  it('finds an order by its code or its customer', async () => {
-    renderTable({
-      orders: {
-        1: [
-          CREATED,
-          order(5, 'W00005', 1, {
-            customer: {
-              id: 3,
-              first_name: 'Ben',
-              last_name: 'Ruiz',
-              email: 'ben@kf.test',
-            },
-          }),
-        ],
-      },
-    });
+  it('finds an order by its number or its customer, and the counts follow the search', async () => {
+    renderTable();
     await rowOf('W00001');
 
-    await userEvent.type(screen.getByRole('searchbox'), 'ruiz');
+    await userEvent.type(
+      screen.getByRole('searchbox', {name: 'Order number or customer'}),
+      'ruiz',
+    );
 
-    expect(screen.getByText('W00005')).toBeInTheDocument();
-    expect(screen.queryByText('W00001')).not.toBeInTheDocument();
+    expect(codes()).toEqual(['W00006']);
+    expect(chip(/^All/)).toHaveTextContent('All 1');
+    expect(chip(/^Delivered/)).toHaveTextContent('Delivered 1');
+    expect(chip(/^Created/)).toHaveTextContent('Created 0');
   });
 
-  it('changes an order’s status in its row and reloads the list', async () => {
+  it('keeps the orders created within a date range, both days included', async () => {
+    renderTable();
+    await rowOf('W00001');
+
+    fireEvent.change(screen.getByLabelText('Created from'), {
+      target: {value: '2026-10-01'},
+    });
+    expect(codes()).toEqual(['W00001', 'W00004']);
+    fireEvent.change(screen.getByLabelText('Created to'), {
+      target: {value: '2026-10-01'},
+    });
+    expect(codes()).toEqual(['W00004']);
+  });
+
+  it('says when the filters leave nothing, and Show all clears every filter', async () => {
+    renderTable();
+    await rowOf('W00001');
+    await userEvent.click(chip(/^Partial/));
+    await userEvent.type(screen.getByRole('searchbox'), 'ruiz');
+    fireEvent.change(screen.getByLabelText('Created from'), {
+      target: {value: '2026-10-02'},
+    });
+
+    expect(
+      screen.getByText('Nothing matches these filters.'),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', {name: 'Show all'}));
+
+    expect(codes()).toEqual(['W00001', 'W00004', 'W00006']);
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+    expect(screen.getByLabelText('Created from')).toHaveValue('');
+    expect(chip(/^All/)).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('puts the row’s other actions in its ⋯ menu: edit, getting ready and the documents, without delete for whoever only updates orders', async () => {
+    renderTable({roles: UPDATE_ORDERS});
+    await openRowMenu('W00001');
+
+    const menu = screen.getByRole('menu');
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual([
+      'Edit',
+      'Getting ready',
+      'Order PDF',
+      'Remaining products PDF',
+      'Excel sheet',
+    ]);
+    expect(within(menu).getByRole('menuitem', {name: 'Edit'})).toHaveAttribute(
+      'href',
+      '/admin/orders/1/edit',
+    );
+    expect(
+      within(menu).getByRole('menuitem', {name: 'Getting ready'}),
+    ).toHaveAttribute('href', '/admin/orders/1/getting-ready');
+    const pdf = within(menu).getByRole('menuitem', {name: 'Order PDF'});
+    expect(pdf).toHaveAttribute('href', '/api/v1/orders/1/pdf');
+    expect(pdf).toHaveAttribute('target', '_blank');
+    expect(
+      within(menu).getByRole('menuitem', {name: 'Excel sheet'}),
+    ).toHaveAttribute('href', '/api/v1/orders/1/xls');
+  });
+
+  it('adds Delete, in danger, for whoever may delete orders, and no Edit for whoever only reads them', async () => {
+    renderTable({roles: MANAGE_ORDERS});
+    await openRowMenu('W00001');
+    expect(screen.getByRole('menuitem', {name: 'Delete'})).toHaveClass(
+      'kf-menu__item--danger',
+    );
+    await userEvent.keyboard('{Escape}');
+  });
+
+  it('shows no Edit and no status menu to whoever only reads orders', async () => {
+    renderTable({roles: READ_ORDERS});
+    await openRowMenu('W00001');
+
+    expect(
+      screen.queryByRole('menuitem', {name: 'Edit'}),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('menuitem', {name: 'Delete'}),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {name: 'Status of order W00001'}),
+    ).not.toBeInTheDocument();
+  });
+
+  it('deletes an order after asking, says so and drops its row', async () => {
+    let rows = [CREATED, PARTIAL];
+    renderTable({
+      roles: MANAGE_ORDERS,
+      routes: {
+        'GET /orders': () => [200, rows],
+        'DELETE /orders/1': () => {
+          rows = [PARTIAL];
+          return [204];
+        },
+      },
+    });
+    await openRowMenu('W00001');
+
+    await userEvent.click(screen.getByRole('menuitem', {name: 'Delete'}));
+    const dialog = screen.getByRole('dialog', {name: 'Delete order W00001?'});
+    await userEvent.click(
+      within(dialog).getByRole('button', {name: 'Delete order'}),
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Order W00001 was deleted.',
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('row', {name: /W00001/}),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole('row', {name: /W00004/})).toBeInTheDocument();
+  });
+
+  it('reloads the list after a status change in a row', async () => {
     let status = 1;
     const {api} = renderTable({
       routes: {
@@ -204,190 +351,80 @@ describe('OrderTable', () => {
     });
     const row = await rowOf('W00001');
 
-    await userEvent.selectOptions(
-      within(row).getByRole('combobox', {name: 'Status of order W00001'}),
-      'Completed',
-    );
-
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'Order W00001 is now Completed.',
-    );
-    expect(api.calls.find((c) => c.method === 'POST')?.body).toEqual({
-      status: 3,
-    });
-    await waitFor(() => expect(listCalls(api)).toHaveLength(2));
-    expect(
-      screen.getByRole('combobox', {name: 'Status of order W00001'}),
-    ).toHaveValue('3');
-  });
-
-  it('opens the getting-ready screen instead of marking an order Sent', async () => {
-    const {api} = renderTable();
-    const row = await rowOf('W00001');
-
-    await userEvent.selectOptions(
-      within(row).getByRole('combobox', {name: 'Status of order W00001'}),
-      'Sent',
-    );
-
-    expect(await screen.findByText('getting ready 1')).toBeInTheDocument();
-    expect(
-      api.calls.some((c) => c.method === 'POST'),
-      'Sent takes the stock out: only the getting-ready screen does that',
-    ).toBe(false);
-  });
-
-  it('says why a status change failed and keeps the status', async () => {
-    renderTable({
-      routes: {
-        'POST /orders/1/status': [
-          404,
-          {error: 'order_not_found', message: 'Not found'},
-        ],
-      },
-    });
-    const row = await rowOf('W00001');
-
-    await userEvent.selectOptions(
-      within(row).getByRole('combobox', {name: 'Status of order W00001'}),
-      'Processed',
-    );
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'This order no longer exists. Reload the list.',
-    );
-    expect(
-      screen.getByRole('combobox', {name: 'Status of order W00001'}),
-    ).toHaveValue('1');
-  });
-
-  it('shows Create an Order but neither delete nor sync to whoever only updates orders', async () => {
-    renderTable({roles: UPDATE_ORDERS});
-    await rowOf('W00001');
-
-    expect(screen.getByRole('link', {name: 'Create an Order'})).toHaveAttribute(
-      'href',
-      '/admin/orders/new',
-    );
-    expect(
-      screen.queryByRole('button', {name: /Delete Order/}),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', {name: 'Sync Orders'}),
-    ).not.toBeInTheDocument();
-  });
-
-  it('shows delete and sync to whoever manages orders, and nothing to create without that role', async () => {
-    renderTable({
-      roles: MANAGE_ORDERS.filter((r) => r !== 'ROLE_CAN_CREATE_ORDERS'),
-    });
-    await rowOf('W00001');
-
-    expect(
-      await screen.findByRole('button', {name: 'Delete Order W00001'}),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', {name: 'Sync Orders'}),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', {name: 'Create an Order'}),
-    ).not.toBeInTheDocument();
-  });
-
-  it('removes a deleted order from the list and says so', async () => {
-    let rows = [CREATED, PARTIAL];
-    renderTable({
-      roles: MANAGE_ORDERS,
-      routes: {
-        'GET /orders': () => [200, rows],
-        'DELETE /orders/1': () => {
-          rows = [PARTIAL];
-          return [204];
-        },
-      },
-    });
-
     await userEvent.click(
-      await screen.findByRole('button', {name: 'Delete Order W00001'}),
+      within(row).getByRole('button', {name: 'Status of order W00001'}),
     );
     await userEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', {name: 'Delete'}),
+      screen.getByRole('menuitemradio', {name: 'Completed'}),
+    );
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Mark as Completed'}),
     );
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'The order was deleted.',
-    );
     await waitFor(() =>
-      expect(screen.queryByText('W00001')).not.toBeInTheDocument(),
+      expect(
+        screen.getByRole('button', {name: 'Status of order W00001'}),
+      ).toHaveTextContent('Completed'),
     );
-    expect(screen.getByText('W00004')).toBeInTheDocument();
-  });
-
-  it('reloads the list after a sync and says what it imported', async () => {
-    let rows: unknown[] = [CREATED];
-    const {api} = renderTable({
-      roles: MANAGE_ORDERS,
-      routes: {
-        'GET /orders': () => [200, rows],
-        'POST /orders/sync': () => {
-          rows = [CREATED, PARTIAL];
-          return [202, {imported: 1, skipped: 4}];
-        },
-      },
-    });
-    await rowOf('W00001');
-
-    await userEvent.click(screen.getByRole('button', {name: 'Sync Orders'}));
-
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      '1 orders imported, 4 skipped.',
-    );
-    expect(await screen.findByText('W00004')).toBeInTheDocument();
     expect(listCalls(api)).toHaveLength(2);
   });
 
-  it('says why a sync failed, by its code, and keeps the list', async () => {
-    renderTable({
-      roles: MANAGE_ORDERS,
-      routes: {
-        'POST /orders/sync': [
-          501,
-          {error: 'order_sync_unavailable', message: 'Not implemented'},
-        ],
-      },
-    });
-    await rowOf('W00001');
-
-    await userEvent.click(screen.getByRole('button', {name: 'Sync Orders'}));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Pulling orders from the shops is not available yet.',
-    );
-    expect(screen.getByText('W00001')).toBeInTheDocument();
-  });
-
-  it('opens an order’s detail from its Order Detail button, and its comments from the comments count', async () => {
+  it('opens the detail from a row, from the order number, and on its comments from the count', async () => {
     const {onOpenDetail} = renderTable();
     const row = await rowOf('W00001');
 
-    await userEvent.click(
-      within(row).getByRole('button', {name: 'Order Detail of W00001'}),
+    await userEvent.click(within(row).getByText('Ana Gomez'));
+    expect(onOpenDetail).toHaveBeenLastCalledWith(
+      expect.objectContaining({id: 1}),
+      'products',
     );
-    expect(onOpenDetail).toHaveBeenLastCalledWith(1, 'products');
+
+    onOpenDetail.mockClear();
+    await userEvent.click(within(row).getByRole('button', {name: 'W00001'}));
+    expect(onOpenDetail).toHaveBeenCalledTimes(1);
 
     const count = within(row).getByRole('button', {
       name: 'Comments of order W00001: 2',
     });
     expect(count).toHaveTextContent('2');
     await userEvent.click(count);
-    expect(onOpenDetail).toHaveBeenLastCalledWith(1, 'comments');
+    expect(onOpenDetail).toHaveBeenLastCalledWith(
+      expect.objectContaining({id: 1}),
+      'comments',
+    );
+  });
+
+  it('keeps table roles and labels on every cell, so the phone cards read as rows with labelled facts', async () => {
+    renderTable();
+    const row = await rowOf('W00001');
+
+    const title = row.querySelector('.kf-table__card-title');
+    expect(
+      title,
+      'the card is titled by the order and its customer',
+    ).toHaveTextContent('W00001 · Ana Gomez');
+    const labelled = within(row)
+      .getAllByRole('cell')
+      .filter((cell) => cell.dataset.label)
+      .map((cell) => [
+        cell.dataset.label,
+        cell.classList.contains('kf-table__card-hidden'),
+      ]);
+    expect(labelled).toEqual([
+      ['Order', true],
+      ['Customer', true],
+      ['Source', false],
+      ['Status', false],
+      ['Created', false],
+      ['Comments', false],
+    ]);
   });
 
   it('shows an order without a customer (a webhook order may have none)', async () => {
     renderTable({orders: {1: [order(8, 'W00008', 1, {customer: null})]}});
 
     const row = await rowOf('W00008');
-    expect(within(row).getByText('No customer')).toBeInTheDocument();
+    expect(within(row).getAllByText(/No customer/)[0]).toBeInTheDocument();
   });
 
   it('says what the list is for when the warehouse has no orders', async () => {

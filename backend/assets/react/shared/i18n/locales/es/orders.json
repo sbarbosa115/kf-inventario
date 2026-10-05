@@ -1,21 +1,23 @@
 {
   "title": "Pedidos",
-  "warehouse": "Bodega",
-  "statusFilter": "Estado",
-  "allStatuses": "Seleccione el estado del pedido (todos)",
   "create": "Crear pedido",
-  "empty": "Esta bodega aún no tiene pedidos. Cree uno o sincronice los pedidos de las tiendas.",
-  "filteredEmpty": "Ningún pedido de esta bodega tiene ese estado.",
   "noWarehouses": "Aún no hay bodegas. Agregue una antes de gestionar pedidos.",
+  "empty": "Esta bodega aún no tiene pedidos. Cree uno o sincronice los pedidos de las tiendas.",
   "noCustomer": "Sin cliente",
+  "filters": {
+    "label": "Filtros de pedidos",
+    "status": "Estado",
+    "search": "Número de pedido o cliente",
+    "from": "Creado desde",
+    "to": "Creado hasta"
+  },
   "columns": {
-    "comments": "Comentarios",
+    "code": "Pedido",
     "customer": "Cliente",
-    "code": "Número de pedido",
     "source": "Origen",
     "status": "Estado",
-    "date": "Fecha de creación",
-    "options": "Opciones"
+    "created": "Creado",
+    "comments": "Comentarios"
   },
   "statuses": {
     "1": "Creado",
@@ -30,50 +32,55 @@
     "phone": "Teléfono",
     "unknown": "Desconocido"
   },
+  "openDetail": "Abrir el pedido {{code}}",
   "commentsOf": "Comentarios del pedido {{code}}: {{count}}",
-  "statusOf": "Estado del pedido {{code}}",
-  "statusChanged": "El pedido {{code}} ahora está {{status}}.",
-  "detail": "Detalle del pedido",
-  "detailOf": "Detalle del pedido {{code}}",
-  "edit": "Editar este pedido",
-  "gettingReady": "Alistar este pedido",
-  "pdf": "Ver como PDF",
-  "xls": "Descargar como Excel",
-  "delete": "Eliminar pedido",
-  "deleteOf": "Eliminar el pedido {{code}}",
-  "confirmDelete": "¿Eliminar este pedido?",
-  "confirmDeleteDetail": "Se eliminarán el pedido {{code}}, sus productos y sus comentarios.",
-  "deleted": "El pedido se eliminó.",
+  "actions": {
+    "edit": "Editar",
+    "gettingReady": "Alistamiento",
+    "pdf": "PDF del pedido",
+    "remainingPdf": "PDF de productos pendientes",
+    "xls": "Hoja de Excel",
+    "documents": "Documentos",
+    "delete": "Eliminar"
+  },
+  "status": {
+    "menu": "Estado del pedido {{code}}",
+    "confirmTitle": "¿Marcar {{code}} como {{status}}?",
+    "confirmBody": "El pedido pasa de {{from}} a {{status}}. Sus existencias no cambian.",
+    "confirm": "Marcar como {{status}}",
+    "changed": "El pedido {{code}} ahora está {{status}}."
+  },
+  "delete": {
+    "title": "¿Eliminar el pedido {{code}}?",
+    "body": "Sus productos y comentarios se eliminan con él. Esto no se puede deshacer.",
+    "confirm": "Eliminar pedido",
+    "done": "El pedido {{code}} se eliminó."
+  },
   "sync": {
     "button": "Sincronizar pedidos de las tiendas",
-    "running": "Sincronizando pedidos…",
+    "running": "Sincronizando pedidos de las tiendas…",
     "done": "{{imported}} pedidos importados, {{skipped}} omitidos."
   },
-  "info": {
+  "detail": {
+    "title": "Pedido {{code}}",
+    "facts": "Datos del pedido",
     "source": "Origen",
-    "status": "Estado",
+    "warehouse": "Bodega",
+    "created": "Creado",
     "customer": "Cliente",
     "email": "Correo electrónico",
-    "code": "Número de pedido",
-    "createdAt": "Fecha de creación",
+    "phone": "Teléfono",
     "address": "Dirección",
-    "zipCode": "Código postal",
-    "city": "Ciudad",
-    "state": "Departamento o estado",
-    "country": "País"
-  },
-  "tabs": {
+    "noAddress": "No hay una dirección registrada.",
     "products": "Productos",
     "comments": "Comentarios"
   },
   "products": {
     "code": "Código",
-    "description": "Descripción",
-    "quantity": "Cantidad",
+    "title": "Producto",
+    "quantity": "Pedido",
     "empty": "Este pedido no tiene productos."
   },
-  "remainingPdf": "Productos pendientes",
-  "downloadPdf": "Descargar",
   "comments": {
     "empty": "Este pedido aún no tiene comentarios.",
     "label": "Comentario {{number}}",
