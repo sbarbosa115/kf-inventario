@@ -151,9 +151,7 @@ describe('ScanStock', () => {
     expect(
       api.calls.filter((c) => c.path === '/products/by-code/KF-01'),
     ).toHaveLength(1);
-    expect(
-      await screen.findByText('2 products · 3 units'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('2 products · 3 units')).toBeInTheDocument();
   });
 
   it('undoes the last scan with the button and with Ctrl+Z', async () => {

@@ -52,9 +52,7 @@ describe('IncomingStockPage', () => {
     expect(
       screen.getByText('in Colombia · 2 products · 8 units'),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', {name: 'Approve all (2)'}),
-    ).toBeEnabled();
+    expect(screen.getByRole('button', {name: 'Approve all (2)'})).toBeEnabled();
     expect(
       api.calls.find((c) => c.path === '/warehouses/1/stock')?.url.search,
     ).toBe('?status=0');
@@ -92,7 +90,9 @@ describe('IncomingStockPage', () => {
     renderPage();
 
     await screen.findByText('KF-01');
-    await userEvent.click(screen.getByRole('button', {name: 'Approve all (2)'}));
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Approve all (2)'}),
+    );
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveTextContent(
       "Approve 2 products, 8 units, into Colombia's stock?",

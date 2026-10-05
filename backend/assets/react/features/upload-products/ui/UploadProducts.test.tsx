@@ -30,8 +30,7 @@ const aSheet = () =>
   new File(['x'.repeat(3000)], 'products.xlsx', {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
-const notASheet = () =>
-  new File(['notes'], 'notes.txt', {type: 'text/plain'});
+const notASheet = () => new File(['notes'], 'notes.txt', {type: 'text/plain'});
 
 const fileBox = () => screen.getByLabelText('Stock sheet');
 const upload = () => screen.getByRole('button', {name: 'Upload'});

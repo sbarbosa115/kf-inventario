@@ -43,9 +43,7 @@ describe('ApproveIncomingButton', () => {
   it('says in its label how many products wait', () => {
     fakeApi({});
     renderButton();
-    expect(
-      screen.getByRole('button', {name: 'Approve all (2)'}),
-    ).toBeEnabled();
+    expect(screen.getByRole('button', {name: 'Approve all (2)'})).toBeEnabled();
   });
 
   it('is disabled with nothing incoming', () => {
@@ -60,7 +58,9 @@ describe('ApproveIncomingButton', () => {
     const api = fakeApi({});
     const onApproved = renderButton();
 
-    await userEvent.click(screen.getByRole('button', {name: 'Approve all (2)'}));
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Approve all (2)'}),
+    );
     const dialog = screen.getByRole('dialog', {
       name: 'Approve everything incoming?',
     });
@@ -82,7 +82,9 @@ describe('ApproveIncomingButton', () => {
     });
     const onApproved = renderButton();
 
-    await userEvent.click(screen.getByRole('button', {name: 'Approve all (2)'}));
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Approve all (2)'}),
+    );
     await userEvent.click(
       screen.getByRole('button', {name: 'Approve 2 products'}),
     );
@@ -104,7 +106,9 @@ describe('ApproveIncomingButton', () => {
     });
     const onApproved = renderButton();
 
-    await userEvent.click(screen.getByRole('button', {name: 'Approve all (2)'}));
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Approve all (2)'}),
+    );
     await userEvent.click(
       screen.getByRole('button', {name: 'Approve 2 products'}),
     );

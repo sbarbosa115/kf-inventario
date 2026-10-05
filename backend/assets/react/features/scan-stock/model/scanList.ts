@@ -68,10 +68,7 @@ export function stepQuantity(
   );
 }
 
-export function removeLine(
-  lines: ScannedLine[],
-  code: string,
-): ScannedLine[] {
+export function removeLine(lines: ScannedLine[], code: string): ScannedLine[] {
   return lines.filter((line) => line.code !== code);
 }
 

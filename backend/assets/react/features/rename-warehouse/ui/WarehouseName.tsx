@@ -109,7 +109,9 @@ export function WarehouseName({
       <input
         ref={box}
         className={`form-control warehouse-rename__box${error ? ' is-invalid' : ''}`}
-        aria-label={t('stock.warehouses.nameLabel', {warehouse: warehouse.name})}
+        aria-label={t('stock.warehouses.nameLabel', {
+          warehouse: warehouse.name,
+        })}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${errorId} ${hintId}` : hintId}
         value={name}

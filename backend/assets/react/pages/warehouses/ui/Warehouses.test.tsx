@@ -37,8 +37,12 @@ describe('WarehousesPage', () => {
     ).toBeInTheDocument();
     expect(await screen.findAllByRole('article')).toHaveLength(2);
     const colombia = await card('Colombia');
-    expect(within(colombia).getByText('https://shop-co.test')).toBeInTheDocument();
-    expect(within(colombia).getByText('https://shop-two.test')).toBeInTheDocument();
+    expect(
+      within(colombia).getByText('https://shop-co.test'),
+    ).toBeInTheDocument();
+    expect(
+      within(colombia).getByText('https://shop-two.test'),
+    ).toBeInTheDocument();
     expect(
       within(await card('Usa')).getByText('No shop sends its orders here.'),
     ).toBeInTheDocument();

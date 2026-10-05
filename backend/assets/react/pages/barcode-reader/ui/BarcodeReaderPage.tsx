@@ -2,7 +2,13 @@ import {listWarehouses} from '@/entities/warehouse';
 import {ScanStock} from '@/features/scan-stock';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad, useSound} from '@/shared/lib';
-import {Button, EmptyState, ErrorState, PageHeader, Skeleton} from '@/shared/ui';
+import {
+  Button,
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  Skeleton,
+} from '@/shared/ui';
 
 /** The scan sound (a short tone per read), on or off, remembered per browser. */
 function SoundToggle() {

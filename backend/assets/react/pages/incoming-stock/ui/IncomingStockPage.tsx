@@ -143,7 +143,9 @@ export function IncomingStockPage() {
               loading={rows === undefined && !incoming.error}
               error={incoming.error}
               onRetry={incoming.reload}
-              rowClassName={() => (leaving ? 'incoming-row--leaving' : undefined)}
+              rowClassName={() =>
+                leaving ? 'incoming-row--leaving' : undefined
+              }
             />
           )}
         </>

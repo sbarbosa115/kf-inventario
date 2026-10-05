@@ -78,7 +78,9 @@ function ModeSwitch({
     {mode: 'remove', label: t('stock.scan.modeRemove'), icon: 'fa-minus'},
   ];
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(event.key))
+    if (
+      !['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(event.key)
+    )
       return;
     event.preventDefault();
     const next: ScanMode = value === 'add' ? 'remove' : 'add';
@@ -147,9 +149,7 @@ function ScanLineRow({
           <span className="scan-line__note">{t('stock.scan.checking')}</span>
         )}
         {line.lookup === 'failed' && (
-          <span className="scan-line__note">
-            {t('stock.scan.notChecked')}
-          </span>
+          <span className="scan-line__note">{t('stock.scan.notChecked')}</span>
         )}
         {line.lookup === 'missing' && (
           <span className="scan-line__missing">

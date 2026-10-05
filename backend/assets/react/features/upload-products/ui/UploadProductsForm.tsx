@@ -117,7 +117,9 @@ export function UploadProductsForm({
                 warehouse: stored.warehouse.name,
               })}
             </p>
-            <p className="upload-result__next">{t('stock.upload.storedNext')}</p>
+            <p className="upload-result__next">
+              {t('stock.upload.storedNext')}
+            </p>
           </div>
           <Button
             variant="secondary"
@@ -138,7 +140,11 @@ export function UploadProductsForm({
             <h2 className="upload-step__title">{t('stock.upload.step1')}</h2>
             <p className="upload-step__text">{t('stock.upload.step1Text')}</p>
             <div className="upload-step__actions">
-              <Button variant="secondary" icon="fa-download" href={TEMPLATE_URL}>
+              <Button
+                variant="secondary"
+                icon="fa-download"
+                href={TEMPLATE_URL}
+              >
                 {t('stock.upload.downloadTemplate')}
               </Button>
               <Button
@@ -194,7 +200,9 @@ export function UploadProductsForm({
                 className="fas fa-file-excel upload-drop__icon"
                 aria-hidden="true"
               />
-              <span className="upload-drop__text">{t('stock.upload.drop')}</span>
+              <span className="upload-drop__text">
+                {t('stock.upload.drop')}
+              </span>
               <span className="upload-drop__hint" id={hintId}>
                 {t('stock.upload.dropHint')}
               </span>
