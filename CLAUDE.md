@@ -38,6 +38,3 @@ you add (`.claude/gate.d/compose-cpus` checks it).
 - **Screens look like the legacy ones:** Bootstrap 4 CSS, Font Awesome, the dark SB Admin shell. Build lists with
   `DataTable`, dialogs with `Modal`/`ConfirmModal`, form fields with `Field`, frames with `PageCard`
   (`@/shared/ui`); every string through `useTranslation()` under the slice's i18n prefix.
-- **Legacy code is the reference, not a place for new code.** `src/{Controller,Services,Form,Repository,…}`,
-  `templates/<area>`, `assets/js` and `tests/Legacy` stay as they were until the item that replaces a screen
-  deletes what only that screen used (item 12 deletes the rest). Read them for the behaviour to keep.
