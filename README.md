@@ -105,25 +105,25 @@ first). Writes from another origin are refused (403).
 | `PUT` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 |
 | `DELETE` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 |
 | `GET` | `/api/v1/locations` | `ROLE_USER` | 3 |
-| `GET` | `/api/v1/orders` | `ROLE_CAN_READ_ORDERS` | 4 (501 until then) |
-| `GET` | `/api/v1/orders/{id}` | `ROLE_CAN_READ_ORDERS` | 4 (501 until then) |
-| `POST` | `/api/v1/orders` | `ROLE_CAN_CREATE_ORDERS` | 4 (501 until then) |
-| `PUT` | `/api/v1/orders/{id}` | `ROLE_CAN_UPDATE_ORDERS` | 4 (501 until then) |
-| `POST` | `/api/v1/orders/{id}/status` | `ROLE_UPDATE_ORDERS` | 4 (501 until then) |
-| `PUT` | `/api/v1/orders/{id}/comments` | `ROLE_USER` | 4 (501 until then) |
-| `DELETE` | `/api/v1/orders/{id}` | `ROLE_CAN_DELETE_ORDERS` | 4 (501 until then) |
+| `GET` | `/api/v1/orders` | `ROLE_CAN_READ_ORDERS` | 4: `?warehouse_id=` (required) → that warehouse's `OrderOutput[]`, newest first, orders without a customer included |
+| `GET` | `/api/v1/orders/{id}` | `ROLE_CAN_READ_ORDERS` | 4: `OrderDetailOutput`; 404 `order_not_found` (also once deleted) |
+| `POST` | `/api/v1/orders` | `ROLE_CAN_CREATE_ORDERS` | 4: `OrderInput` → 201 `OrderDetailOutput`; customer by id, else email, else phone (updated), or created; queues the printer email; 422 `order_without_products`, 404 `product_not_found`/`warehouse_not_found` |
+| `PUT` | `/api/v1/orders/{id}` | `ROLE_CAN_UPDATE_ORDERS` | 4: `OrderInput` (its products replace the order's; comments untouched) → `OrderDetailOutput` |
+| `POST` | `/api/v1/orders/{id}/status` | `ROLE_UPDATE_ORDERS` | 4: `{status: 1-6}` → `OrderDetailOutput` (a status history row; stock untouched) |
+| `PUT` | `/api/v1/orders/{id}/comments` | `ROLE_USER` | 4: `{comments: [{id\|null, content}]}` → `{comments}`; a comment left out is detached from the order |
+| `DELETE` | `/api/v1/orders/{id}` | `ROLE_CAN_DELETE_ORDERS` | 4: 204; lines deleted, comments and order soft-deleted |
 | `POST` | `/api/v1/orders/sync` | `ROLE_CAN_SYNC_ORDERS` | 13 (501 until then) |
-| `GET` | `/api/v1/orders/{id}/partials` | `ROLE_USER` | 4 (501 until then) |
-| `POST` | `/api/v1/orders/{id}/partials` | `ROLE_USER` | 4 (501 until then) |
-| `GET` | `/api/v1/orders/{id}/pdf` | `ROLE_CAN_READ_ORDERS` | 4 (501 until then) |
-| `GET` | `/api/v1/orders/{id}/remaining-pdf` | `ROLE_CAN_READ_ORDERS` | 4 (501 until then) |
-| `GET` | `/api/v1/orders/{id}/xls` | `ROLE_USER` | 4 (501 until then) |
+| `GET` | `/api/v1/orders/{id}/partials` | `ROLE_USER` | 4: `OrderPartialsOutput` (shipped so far, pending, the warehouse's stock of the order's products) |
+| `POST` | `/api/v1/orders/{id}/partials` | `ROLE_USER` | 4: `{items: [{uuid, quantity}]}` → `OrderPartialsOutput`; the whole order in stock → status 5, else a partial (status 4); stock taken out; 409 `partial_exceeds_order`, 422 `insufficient_stock` |
+| `GET` | `/api/v1/orders/{id}/pdf` | `ROLE_CAN_READ_ORDERS` | 4: `application/pdf` (`templates/pdf/order.html.twig`) |
+| `GET` | `/api/v1/orders/{id}/remaining-pdf` | `ROLE_CAN_READ_ORDERS` | 4: `application/pdf`, what is left to ship |
+| `GET` | `/api/v1/orders/{id}/xls` | `ROLE_USER` | 4: `application/vnd.ms-excel`, `file-upload-template-<code>.xls` (the legacy name) |
 | `GET` | `/api/v1/invoices` | `ROLE_CAN_READ_INVOICES` | 5 (501 until then) |
 | `GET` | `/api/v1/invoices/next-code` | `ROLE_CAN_CREATE_INVOICES` | 5 (501 until then) |
 | `GET` | `/api/v1/invoices/{id}` | `ROLE_CAN_READ_INVOICES` | 5 (501 until then) |
 | `POST` | `/api/v1/invoices` | `ROLE_CAN_CREATE_INVOICES` | 5 (501 until then) |
 | `GET` | `/api/v1/invoices/{id}/pdf` | `ROLE_CAN_READ_INVOICES` | 5 (501 until then) |
-| `POST`/`GET` | `/admin/order/1H39j0jpQPsWL958v9R4` | public | the WooCommerce webhook (URL unchanged; legacy controller until item 4) |
+| `POST`/`GET` | `/admin/order/1H39j0jpQPsWL958v9R4` | public | 4: the WooCommerce webhook (URL and route name unchanged): warehouse by `X-WC-Webhook-Source` in `warehouse.urls`, printer email only for `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`; always `{status: true}`, failures logged |
 
 ## Data model decisions
 

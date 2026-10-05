@@ -641,7 +641,7 @@
         },
         "/api/v1/orders": {
             "get": {
-                "summary": "`warehouse_id`: that warehouse's orders, newest first. (item 4).",
+                "summary": "`warehouse_id`: that warehouse's orders, newest first (the list filters and pages them in the browser).",
                 "operationId": "get_api_orders_list",
                 "responses": {
                     "200": {
@@ -660,7 +660,7 @@
                 }
             },
             "post": {
-                "summary": "OrderInput: places an order; the printer gets its email. 422 order_without_products. (item 4).",
+                "summary": "OrderInput: places an order (the customer is found by id, email or phone and updated, or created); the printer\ngets its email. 422 order_without_products; 404 product_not_found, warehouse_not_found.",
                 "operationId": "post_api_orders_create",
                 "responses": {
                     "201": {
@@ -678,7 +678,7 @@
         },
         "/api/v1/orders/{id}": {
             "get": {
-                "summary": "One order. 404 order_not_found. (item 4).",
+                "summary": "One order with its customer (and addresses), comments and products. 404 order_not_found.",
                 "operationId": "get_api_orders_show",
                 "parameters": [
                     {
@@ -705,7 +705,7 @@
                 }
             },
             "put": {
-                "summary": "OrderInput: edits an order. (item 4).",
+                "summary": "OrderInput: edits an order (its comments are not touched: PUT \u2026/comments). 404 order_not_found.",
                 "operationId": "put_api_orders_update",
                 "parameters": [
                     {
@@ -732,7 +732,7 @@
                 }
             },
             "delete": {
-                "summary": "Deletes an order (its products and comments, then the order: soft delete). 204. (item 4).",
+                "summary": "Deletes an order: its product lines and comments, then the order (soft delete: it is not found any more). 204.",
                 "operationId": "delete_api_orders_delete",
                 "parameters": [
                     {
@@ -754,7 +754,7 @@
         },
         "/api/v1/orders/{id}/status": {
             "post": {
-                "summary": "OrderStatusInput: moves the order to another status. (item 4).",
+                "summary": "OrderStatusInput: moves the order to another status (a status history row; stock is not touched).",
                 "operationId": "post_api_orders_status",
                 "parameters": [
                     {
@@ -783,7 +783,7 @@
         },
         "/api/v1/orders/{id}/comments": {
             "put": {
-                "summary": "OrderCommentsInput: the order's comments as they should be (as before: any signed-in user). (item 4).",
+                "summary": "OrderCommentsInput: the order's comments as they should be: no id adds one (signed by you), an id edits it, a\ncomment left out leaves the order. As before: any signed-in user.",
                 "operationId": "put_api_orders_comments",
                 "parameters": [
                     {
@@ -841,7 +841,7 @@
         },
         "/api/v1/orders/{id}/pdf": {
             "get": {
-                "summary": "The order as a PDF (the printer's). (item 4).",
+                "summary": "The order as a PDF (the printer's).",
                 "operationId": "get_api_orders_pdf",
                 "parameters": [
                     {
@@ -863,7 +863,7 @@
         },
         "/api/v1/orders/{id}/remaining-pdf": {
             "get": {
-                "summary": "What is left to ship, as a PDF. (item 4).",
+                "summary": "What is left to ship, as a PDF.",
                 "operationId": "get_api_orders_remaining_pdf",
                 "parameters": [
                     {
@@ -885,7 +885,7 @@
         },
         "/api/v1/orders/{id}/xls": {
             "get": {
-                "summary": "The order as a spreadsheet (as before: any signed-in user). (item 4).",
+                "summary": "The order's products as a spreadsheet (date, product code, quantity). As before: any signed-in user, and the\nfile is named after product.xls.filename and the order code.",
                 "operationId": "get_api_orders_xls",
                 "parameters": [
                     {
@@ -907,7 +907,7 @@
         },
         "/api/v1/orders/{id}/partials": {
             "get": {
-                "summary": "What was shipped, what is left, and the stock (as before: any signed-in user). (item 4).",
+                "summary": "What was shipped, what is left, and the warehouse's stock of the order's products. As before: any signed-in\nuser.",
                 "operationId": "get_api_orders_partials",
                 "parameters": [
                     {
@@ -934,7 +934,7 @@
                 }
             },
             "post": {
-                "summary": "PartialInput: records a partial shipment. 409 partial_exceeds_order. (item 4).",
+                "summary": "PartialInput: ships these products now. Exactly the whole order, in stock: the order is sent (status 5);\notherwise a partial shipment (status 4). Either way the products leave the order's warehouse. 409\npartial_exceeds_order (more than what is left, or the order is already sent); 422 insufficient_stock.",
                 "operationId": "post_api_orders_partials_record",
                 "parameters": [
                     {

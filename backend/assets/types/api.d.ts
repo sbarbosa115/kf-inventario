@@ -393,10 +393,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `warehouse_id`: that warehouse's orders, newest first. (item 4). */
+        /** `warehouse_id`: that warehouse's orders, newest first (the list filters and pages them in the browser). */
         get: operations["get_api_orders_list"];
         put?: never;
-        /** OrderInput: places an order; the printer gets its email. 422 order_without_products. (item 4). */
+        /**
+         * OrderInput: places an order (the customer is found by id, email or phone and updated, or created); the printer
+         *     gets its email. 422 order_without_products; 404 product_not_found, warehouse_not_found.
+         */
         post: operations["post_api_orders_create"];
         delete?: never;
         options?: never;
@@ -411,12 +414,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** One order. 404 order_not_found. (item 4). */
+        /** One order with its customer (and addresses), comments and products. 404 order_not_found. */
         get: operations["get_api_orders_show"];
-        /** OrderInput: edits an order. (item 4). */
+        /** OrderInput: edits an order (its comments are not touched: PUT …/comments). 404 order_not_found. */
         put: operations["put_api_orders_update"];
         post?: never;
-        /** Deletes an order (its products and comments, then the order: soft delete). 204. (item 4). */
+        /** Deletes an order: its product lines and comments, then the order (soft delete: it is not found any more). 204. */
         delete: operations["delete_api_orders_delete"];
         options?: never;
         head?: never;
@@ -432,7 +435,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** OrderStatusInput: moves the order to another status. (item 4). */
+        /** OrderStatusInput: moves the order to another status (a status history row; stock is not touched). */
         post: operations["post_api_orders_status"];
         delete?: never;
         options?: never;
@@ -448,7 +451,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** OrderCommentsInput: the order's comments as they should be (as before: any signed-in user). (item 4). */
+        /**
+         * OrderCommentsInput: the order's comments as they should be: no id adds one (signed by you), an id edits it, a
+         *     comment left out leaves the order. As before: any signed-in user.
+         */
         put: operations["put_api_orders_comments"];
         post?: never;
         delete?: never;
@@ -481,7 +487,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The order as a PDF (the printer's). (item 4). */
+        /** The order as a PDF (the printer's). */
         get: operations["get_api_orders_pdf"];
         put?: never;
         post?: never;
@@ -498,7 +504,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** What is left to ship, as a PDF. (item 4). */
+        /** What is left to ship, as a PDF. */
         get: operations["get_api_orders_remaining_pdf"];
         put?: never;
         post?: never;
@@ -515,7 +521,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The order as a spreadsheet (as before: any signed-in user). (item 4). */
+        /**
+         * The order's products as a spreadsheet (date, product code, quantity). As before: any signed-in user, and the
+         *     file is named after product.xls.filename and the order code.
+         */
         get: operations["get_api_orders_xls"];
         put?: never;
         post?: never;
@@ -532,10 +541,17 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** What was shipped, what is left, and the stock (as before: any signed-in user). (item 4). */
+        /**
+         * What was shipped, what is left, and the warehouse's stock of the order's products. As before: any signed-in
+         *     user.
+         */
         get: operations["get_api_orders_partials"];
         put?: never;
-        /** PartialInput: records a partial shipment. 409 partial_exceeds_order. (item 4). */
+        /**
+         * PartialInput: ships these products now. Exactly the whole order, in stock: the order is sent (status 5);
+         *     otherwise a partial shipment (status 4). Either way the products leave the order's warehouse. 409
+         *     partial_exceeds_order (more than what is left, or the order is already sent); 422 insufficient_stock.
+         */
         post: operations["post_api_orders_partials_record"];
         delete?: never;
         options?: never;

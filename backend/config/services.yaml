@@ -58,6 +58,18 @@ services:
     resource: '../src/Controller'
     tags: ['controller.service_arguments']
 
+  # The webhook prints the orders of one warehouse only.
+  App\Ordering\Application\Command\ImportShopOrderHandler:
+    arguments:
+      $printedWarehouseId: '%ordering.webhook_email_warehouse_id%'
+
+  App\Ordering\Infrastructure\Mail\OrderCreatedMailer:
+    arguments:
+      $fromAddress: '%env(MAILER_FROM_ADDRESS)%'
+      $fromName: '%env(MAILER_FROM_NAME)%'
+      $printerAddress: '%env(MAILER_PRINTER_ADDRESS)%'
+      $cc: '%ordering.order_email.cc%'
+
   gedmo.listener.softdeleteable:
     class: Gedmo\SoftDeleteable\SoftDeleteableListener
     tags:
@@ -65,8 +77,10 @@ services:
       - {name: doctrine.event_listener, event: onFlush}
       - {name: doctrine.event_listener, event: postFlush}
 
+  # The order's status history (moved from App\EventListener\OrderListener): the same two tags, one listener each, so
+  # every insert or update of an order writes exactly one order_status row.
   order.listener.post.persist:
-    class: 'App\EventListener\OrderListener'
+    class: 'App\Ordering\Infrastructure\Persistence\OrderStatusHistoryListener'
     arguments: ['@doctrine.orm.entity_manager']
     tags:
       - {
@@ -77,7 +91,7 @@ services:
         }
 
   order.listener.post.update:
-    class: 'App\EventListener\OrderListener'
+    class: 'App\Ordering\Infrastructure\Persistence\OrderStatusHistoryListener'
     arguments: ['@doctrine.orm.entity_manager']
     tags:
       - {
