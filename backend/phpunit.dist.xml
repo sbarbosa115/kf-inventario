@@ -25,11 +25,6 @@
         <testsuite name="functional">
             <directory>tests/Functional</directory>
         </testsuite>
-        <!-- The legacy Twig app's tests, already broken on master (Symfony 4 test APIs): kept as the reference the
-             restructure's items port into unit/functional tests, never run by default, deleted by item 12. -->
-        <testsuite name="legacy">
-            <directory>tests/Legacy</directory>
-        </testsuite>
     </testsuites>
 
     <extensions>

@@ -121,18 +121,9 @@ deptrac:
             value: '#^App\\Audit\\(Application|Domain\\Event)\\#',
           }
 
-    # The legacy Twig app (see deptrac.yaml), removed by item 12.
-    - name: Legacy
-      collectors:
-        - {
-            type: classNameRegex,
-            value: '#^App\\(Command|Constraints|Controller|DataProviders|EventListener|Form|Model|Repository|Security|Services|Validator)\\#',
-          }
-
   ruleset:
     Shared: ~
-    # Legacy: the repositoryClass argument the moved entities keep until item 12 (see deptrac.yaml).
-    DomainModels: [DomainModels, Shared, Legacy]
+    DomainModels: [DomainModels, Shared]
     Identity: [Shared, IdentityApi, DomainModels]
     IdentityApi: [Shared, Identity, DomainModels]
     Inventory: [Shared, InventoryApi, InventoryHttp, DomainModels]
@@ -168,20 +159,3 @@ deptrac:
     # The activity log implements Shared's ActivityLog port and records the signed-in user.
     Audit: [Shared, AuditApi, DomainModels]
     AuditApi: [Shared, Audit, DomainModels]
-    Legacy:
-      [
-        Shared,
-        DomainModels,
-        Identity,
-        IdentityApi,
-        Inventory,
-        InventoryApi,
-        Customers,
-        CustomersApi,
-        Ordering,
-        OrderingApi,
-        Invoicing,
-        InvoicingApi,
-        Audit,
-        AuditApi,
-      ]

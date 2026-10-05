@@ -21,8 +21,6 @@ export default tseslint.config(
       'var/**',
       'assets/types/api.d.ts',
       'e2e/.results/**',
-      // The legacy Twig app's scripts: replaced screen by screen and deleted by item 12 (legacy-removal).
-      'assets/js/**',
     ],
   },
   js.configs.recommended,
