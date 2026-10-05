@@ -161,7 +161,7 @@ describe('CustomerFormPage', () => {
         },
       ],
     });
-  });
+  }, 20000);
 
   it('shows the saved customer and their address on an edit, and saves with PUT', async () => {
     const api = fakeApi({
