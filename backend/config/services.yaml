@@ -65,8 +65,10 @@ services:
       - {name: doctrine.event_listener, event: onFlush}
       - {name: doctrine.event_listener, event: postFlush}
 
+  # The order's status history (moved from App\EventListener\OrderListener): the same two tags, one listener each, so
+  # every insert or update of an order writes exactly one order_status row.
   order.listener.post.persist:
-    class: 'App\EventListener\OrderListener'
+    class: 'App\Ordering\Infrastructure\Persistence\OrderStatusHistoryListener'
     arguments: ['@doctrine.orm.entity_manager']
     tags:
       - {
@@ -77,7 +79,7 @@ services:
         }
 
   order.listener.post.update:
-    class: 'App\EventListener\OrderListener'
+    class: 'App\Ordering\Infrastructure\Persistence\OrderStatusHistoryListener'
     arguments: ['@doctrine.orm.entity_manager']
     tags:
       - {
