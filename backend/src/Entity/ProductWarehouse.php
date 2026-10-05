@@ -92,9 +92,7 @@ class ProductWarehouse
     public function subQuantity(int $quantity): void
     {
         if ($quantity > $this->quantity) {
-            throw new \InvalidArgumentException(
-                'The quantity to subtraction should be less than the product one.'
-            );
+            throw new \InvalidArgumentException('The quantity to subtraction should be less than the product one.');
         }
         $this->quantity -= $quantity;
     }

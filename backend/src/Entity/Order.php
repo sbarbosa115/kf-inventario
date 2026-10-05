@@ -3,14 +3,10 @@
 namespace App\Entity;
 
 use App\Repository\OrderRepository;
-use DateTime;
-use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Exception;
 use Gedmo\Mapping\Annotation as Gedmo;
-use InvalidArgumentException;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
@@ -56,13 +52,13 @@ class Order
     private ?int $status = null;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
-    private ?DateTimeInterface $deletedAt = null;
+    private ?\DateTimeInterface $deletedAt = null;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
-    private ?DateTimeInterface $createdAt = null;
+    private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
-    private ?DateTimeInterface $modifiedAt = null;
+    private ?\DateTimeInterface $modifiedAt = null;
 
     #[ORM\OneToMany(targetEntity: OrderProduct::class, mappedBy: 'order', cascade: ['persist', 'remove'])]
     private Collection $orderProduct;
@@ -76,19 +72,19 @@ class Order
     #[ORM\OneToMany(targetEntity: OrderStatus::class, mappedBy: 'order', cascade: ['persist'])]
     private Collection $orderStatuses;
 
-    #[ORM\ManyToOne(targetEntity: Order::class, cascade: ['persist'])]
+    #[ORM\ManyToOne(targetEntity: self::class, cascade: ['persist'])]
     private ?self $parent = null;
 
-    #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'parent')]
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent')]
     private Collection $children;
 
     /**
-     * @throws Exception
+     * @throws \Exception
      */
     public function __construct()
     {
         if (null === $this->getCreatedAt()) {
-            $this->setCreatedAt(new DateTime());
+            $this->setCreatedAt(new \DateTime());
         }
         $this->comments = new ArrayCollection();
         $this->orderProduct = new ArrayCollection();
@@ -193,36 +189,36 @@ class Order
         return $this;
     }
 
-    public function getDeletedAt(): ?DateTimeInterface
+    public function getDeletedAt(): ?\DateTimeInterface
     {
         return $this->deletedAt;
     }
 
-    public function setDeletedAt(?DateTimeInterface $deletedAt): self
+    public function setDeletedAt(?\DateTimeInterface $deletedAt): self
     {
         $this->deletedAt = $deletedAt;
 
         return $this;
     }
 
-    public function getCreatedAt(): ?DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTimeInterface $createdAt): self
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getModifiedAt(): ?DateTimeInterface
+    public function getModifiedAt(): ?\DateTimeInterface
     {
         return $this->modifiedAt;
     }
 
-    public function setModifiedAt(?DateTimeInterface $modifiedAt): self
+    public function setModifiedAt(?\DateTimeInterface $modifiedAt): self
     {
         $this->modifiedAt = $modifiedAt;
 
@@ -233,13 +229,13 @@ class Order
     #[ORM\PreUpdate]
     public function updateModifiedDatetime(): void
     {
-        $this->setModifiedAt(new DateTime());
+        $this->setModifiedAt(new \DateTime());
     }
 
     public function getCreatedAtAsString(): string
     {
-        if (!$this->getCreatedAt() instanceof DateTime) {
-            throw new InvalidArgumentException('Datetime on order is mandatory.');
+        if (!$this->getCreatedAt() instanceof \DateTime) {
+            throw new \InvalidArgumentException('Datetime on order is mandatory.');
         }
 
         return $this->getCreatedAt()->format('Y-m-d H:i:s');
@@ -323,7 +319,7 @@ class Order
 
     public function isProductInOrder(Product $product): bool
     {
-        /** @var $productInOrder OrderProduct */
+        /** @var OrderProduct $productInOrder */
         foreach ($this->orderProduct as $productInOrder) {
             if ($product->getUuid() === $productInOrder->getUuid()) {
                 return true;
@@ -413,7 +409,7 @@ class Order
             if (false !== $productKey) {
                 $leftProductQuantity = $orderProduct->getQuantity() - $aggregatePartials[$productKey]['quantity'];
                 if ($leftProductQuantity < 0) {
-                    throw new InvalidArgumentException('The pending quantity for this product is below that 0.');
+                    throw new \InvalidArgumentException('The pending quantity for this product is below that 0.');
                 }
             }
 

@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\InvoiceRepository;
-use DateTime;
-use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -35,10 +33,10 @@ class Invoice
     private ?int $status = null;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
-    private ?DateTimeInterface $createdAt = null;
+    private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
-    private ?DateTimeInterface $modifiedAt = null;
+    private ?\DateTimeInterface $modifiedAt = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $comment = null;
@@ -62,7 +60,7 @@ class Invoice
     {
         $this->items = new ArrayCollection();
         if (null === $this->getCreatedAt()) {
-            $this->setCreatedAt(new DateTime());
+            $this->setCreatedAt(new \DateTime());
         }
     }
 
@@ -146,24 +144,24 @@ class Invoice
         return $this;
     }
 
-    public function getCreatedAt(): ?DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTimeInterface $createdAt): self
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getModifiedAt(): ?DateTimeInterface
+    public function getModifiedAt(): ?\DateTimeInterface
     {
         return $this->modifiedAt;
     }
 
-    public function setModifiedAt(?DateTimeInterface $modifiedAt): self
+    public function setModifiedAt(?\DateTimeInterface $modifiedAt): self
     {
         $this->modifiedAt = $modifiedAt;
 
@@ -247,7 +245,7 @@ class Invoice
         $total = 0.0;
         foreach ($this->getItems() as $item) {
             $line = $item->getTotal();
-            if ($line !== null && $line !== '') {
+            if (null !== $line && '' !== $line) {
                 $total += (float) $line;
             }
         }
