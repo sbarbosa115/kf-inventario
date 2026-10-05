@@ -63,11 +63,7 @@ final class OrderPresenter
             warehouse: self::warehouse($order->getWarehouse()),
             customer: self::customer($order->getCustomer()),
             comments: $this->comments($order),
-            products: array_map(static fn (OrderProduct $line) => new OrderLineOutput(
-                $line->getUuid(),
-                (int) $line->getQuantity(),
-                new OrderLineProductOutput((string) $line->getProduct()?->getCode(), (string) $line->getProduct()?->getTitle(), $line->getProduct()?->getDetail()),
-            ), $order->getOrderProducts()->getValues()),
+            products: self::lines($order),
         );
     }
 
@@ -86,7 +82,9 @@ final class OrderPresenter
     {
         return new OrderPartialsOutput(
             orderId: (int) $partials['order']->getId(),
+            code: $partials['order']->getCode(),
             status: (int) $partials['order']->getStatus(),
+            products: self::lines($partials['order']),
             productsAggregate: array_map(static fn (array $line) => new PartialLineOutput($line['uuid'], (int) $line['quantity'], new PartialLineProductOutput($line['product']['code'])), $partials['aggregate']),
             pending: array_map(static fn (array $line) => new PendingLineOutput($line['uuid'], $line['quantity']), $partials['pending']),
             inventory: array_map(static fn (ProductWarehouse $row) => new StockOutput(
@@ -102,6 +100,18 @@ final class OrderPresenter
                 warehouse: new WarehouseRefOutput((int) $row->getWarehouse()?->getId(), (string) $row->getWarehouse()?->getName()),
             ), $partials['inventory']),
         );
+    }
+
+    /**
+     * @return list<OrderLineOutput>
+     */
+    private static function lines(Order $order): array
+    {
+        return array_map(static fn (OrderProduct $line) => new OrderLineOutput(
+            $line->getUuid(),
+            (int) $line->getQuantity(),
+            new OrderLineProductOutput((string) $line->getProduct()?->getCode(), (string) $line->getProduct()?->getTitle(), $line->getProduct()?->getDetail()),
+        ), $order->getOrderProducts()->getValues());
     }
 
     private static function warehouse(?Warehouse $warehouse): ?WarehouseRefOutput

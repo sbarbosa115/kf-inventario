@@ -907,7 +907,7 @@
         },
         "/api/v1/orders/{id}/partials": {
             "get": {
-                "summary": "What was shipped, what is left, and the warehouse's stock of the order's products. As before: any signed-in\nuser.",
+                "summary": "The order's code and lines, what was shipped, what is left, and the warehouse's stock of the order's products:\nall the getting-ready screen shows. As before: any signed-in user.",
                 "operationId": "get_api_orders_partials",
                 "parameters": [
                     {
@@ -1776,6 +1776,7 @@
                 "required": [
                     "order_id",
                     "status",
+                    "products",
                     "products_aggregate",
                     "pending",
                     "inventory"
@@ -1784,8 +1785,18 @@
                     "order_id": {
                         "type": "integer"
                     },
+                    "code": {
+                        "type": "string",
+                        "nullable": true
+                    },
                     "status": {
                         "type": "integer"
+                    },
+                    "products": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/OrderLineOutput"
+                        }
                     },
                     "products_aggregate": {
                         "type": "array",

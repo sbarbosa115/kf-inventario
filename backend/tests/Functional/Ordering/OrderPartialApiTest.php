@@ -120,4 +120,25 @@ final class OrderPartialApiTest extends ApiTestCase
         $this->sendJson('POST', "/api/v1/orders/{$id}/partials", ['items' => []]);
         $this->assertStatus(422);
     }
+
+    public function testASignedInUserWithNoOrderRoleLoadsEverythingTheGettingReadyScreenShows(): void
+    {
+        $this->signInAs(['ROLE_MANAGE_ORDERS'], 'manager');
+        $warehouse = $this->aWarehouse();
+        [$a, $b] = [$this->aProduct('KF-A', $warehouse), $this->aProduct('KF-B', $warehouse)];
+        $id = $this->placeOrder($warehouse, $this->aCustomer(), [[$a, 3], [$b, 4]], ['code' => 'READY-1']);
+        $this->signInAs(['ROLE_USER'], 'packer');
+
+        $state = $this->getJson("/api/v1/orders/{$id}/partials");
+
+        $this->assertStatus(200, 'The legacy getting-ready page asked only for ROLE_USER (decision 11).');
+        self::assertSame('READY-1', $state['code'], 'The screen titles itself with the order code.');
+        self::assertCount(2, $state['products'], "The screen lists the order's lines from this endpoint alone.");
+        self::assertSame(3, $state['products'][0]['quantity']);
+        self::assertSame(['code' => 'KF-A', 'title' => 'Title KF-A', 'detail' => 'Detail KF-A'], $state['products'][0]['product']);
+        self::assertSame(array_column($state['pending'], 'uuid'), array_column($state['products'], 'uuid'), 'A line and its pending row share the line uuid.');
+
+        $this->getJson("/api/v1/orders/{$id}");
+        $this->assertStatus(403, 'The order detail stays ROLE_CAN_READ_ORDERS: the screen must not need it.');
+    }
 }

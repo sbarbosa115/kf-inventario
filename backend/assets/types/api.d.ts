@@ -547,8 +547,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * What was shipped, what is left, and the warehouse's stock of the order's products. As before: any signed-in
-         *     user.
+         * The order's code and lines, what was shipped, what is left, and the warehouse's stock of the order's products:
+         *     all the getting-ready screen shows. As before: any signed-in user.
          */
         get: operations["get_api_orders_partials"];
         put?: never;
@@ -827,7 +827,9 @@ export interface components {
         };
         OrderPartialsOutput: {
             order_id: number;
+            code?: string | null;
             status: number;
+            products: components["schemas"]["OrderLineOutput"][];
             products_aggregate: components["schemas"]["PartialLineOutput"][];
             pending: components["schemas"]["PendingLineOutput"][];
             inventory: components["schemas"]["StockOutput"][];

@@ -32,8 +32,8 @@ final class OrderPartialController extends AbstractController
     }
 
     /**
-     * What was shipped, what is left, and the warehouse's stock of the order's products. As before: any signed-in
-     * user.
+     * The order's code and lines, what was shipped, what is left, and the warehouse's stock of the order's products:
+     * all the getting-ready screen shows. As before: any signed-in user.
      */
     #[Route('/api/v1/orders/{id}/partials', name: 'api_orders_partials', methods: ['GET'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_USER')]
