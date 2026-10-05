@@ -362,45 +362,6 @@ class OrderController extends AbstractController
         return $response;
     }
 
-    #[Route('/1H39j0jpQPsWL958v9R4', name: 'create_webhook', methods: ['POST', 'GET'], options: ['expose' => true])]
-    public function createWebhook(
-        Request $request,
-        LoggerInterface $logger,
-        WooCommerceProvider $commerceProvider,
-        OrderService $orderService,
-        WarehouseRepository $warehouseRepo,
-        NotificationService $notificationService,
-        OrderRepository $orderRepo
-    ): Response {
-        $content = $request->getContent();
-        $source = $request->headers->get('X-WC-Webhook-Source');
-
-        $warehouses = $warehouseRepo->findAll();
-        $warehouse = null;
-
-        foreach ($warehouses as $warehouseItem) {
-            if (in_array($source, $warehouseItem->getUrls())) {
-                $warehouse = $warehouseItem;
-            }
-        }
-
-        if ($warehouse instanceof Warehouse) {
-            $order = $commerceProvider->transformOrder(json_decode($content));
-            $order['warehouse'] = ['name' => $warehouse->getName(), 'id' => $warehouse->getId()];
-            $orderModel = $orderService->add($order);
-
-            if ($warehouse->getId() === 1) {
-                try {
-                    $notificationService->sendOrderByEmail($orderRepo->find($orderModel['id']));
-                } catch (\Throwable $e) {
-                    $logger->error(sprintf('Failed to send order email for webhook order %s: %s', $orderModel['id'] ?? 'n/a', $e->getMessage()));
-                }
-            }
-        } else {
-            $logger->error(sprintf('Warehouse [%s] was not found', $source));
-        }
-
-        return new JsonResponse(['status' => true]);
-    }
-
+    // The WooCommerce webhook (/admin/order/1H39j0jpQPsWL958v9R4, route order_create_webhook) moved to
+    // App\Ordering\UI\Http\Controller\WooCommerceWebhookController: one route, same URL.
 }

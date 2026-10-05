@@ -58,6 +58,11 @@ services:
     resource: '../src/Controller'
     tags: ['controller.service_arguments']
 
+  # The webhook prints the orders of one warehouse only.
+  App\Ordering\Application\Command\ImportShopOrderHandler:
+    arguments:
+      $printedWarehouseId: '%ordering.webhook_email_warehouse_id%'
+
   App\Ordering\Infrastructure\Mail\OrderCreatedMailer:
     arguments:
       $fromAddress: '%env(MAILER_FROM_ADDRESS)%'
