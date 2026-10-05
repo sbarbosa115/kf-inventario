@@ -1,5 +1,10 @@
 {
   "group": "Dirección {{number}}",
+  "groupTyped": "Dirección {{number}} · {{type}}",
+  "type": {
+    "billing": "Facturación",
+    "shipping": "Envío"
+  },
   "address": "Dirección",
   "zipCode": "Código postal",
   "country": "País",

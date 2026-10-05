@@ -1,12 +1,17 @@
 {
   "group": "Address {{number}}",
+  "groupTyped": "Address {{number}} · {{type}}",
+  "type": {
+    "billing": "Billing",
+    "shipping": "Shipping"
+  },
   "address": "Address",
   "zipCode": "Zip Code",
   "country": "Country",
   "state": "State",
   "city": "City",
-  "add": "Add Address",
-  "remove": "Remove Address",
+  "add": "Add address",
+  "remove": "Remove address",
   "create": "Create \"{{name}}\"",
   "noOptions": "No options",
   "required": "This value should not be blank."
