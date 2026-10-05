@@ -111,3 +111,117 @@ describe('DataTable', () => {
     expect(retry).toHaveBeenCalled();
   });
 });
+
+describe('DataTable, the kit additions', () => {
+  it('puts the secondary actions of a row in one named menu', async () => {
+    const onEdit = vi.fn();
+    render(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        rowLabel={(r) => r.code}
+        rowActions={(r) => [
+          {label: 'Edit', onSelect: () => onEdit(r.code)},
+          {label: 'Delete', danger: true, onSelect: vi.fn()},
+        ]}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Actions for KF-01'}),
+    );
+    await userEvent.click(screen.getByRole('menuitem', {name: 'Edit'}));
+    expect(onEdit).toHaveBeenCalledWith('KF-01');
+  });
+
+  it('shows the selection bar with the count and the selected rows', async () => {
+    function WithBar() {
+      const [selected, setSelected] = useState<Set<string | number>>(new Set());
+      return (
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          selected={selected}
+          onSelectedChange={setSelected}
+          selectionBar={(picked) => (
+            <button type="button">
+              Move {picked.map((r) => r.code).join(' ')}
+            </button>
+          )}
+        />
+      );
+    }
+    render(<WithBar />);
+
+    expect(screen.queryByText(/selected/)).not.toBeInTheDocument();
+    const boxes = screen.getAllByRole('checkbox', {name: 'Select row'});
+    await userEvent.click(boxes[0]!);
+    await userEvent.click(boxes[1]!);
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {name: 'Move KF-02 KF-01'}),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', {name: 'Clear'}));
+    expect(screen.queryByText('2 selected')).not.toBeInTheDocument();
+  });
+
+  it('loads as skeleton rows announced once, never a spinner', () => {
+    const {container} = render(
+      <DataTable
+        columns={columns}
+        rows={undefined}
+        rowKey={(r: Row) => r.id}
+        skeletonRows={4}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading');
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(4);
+    expect(container.querySelector('.spinner-border')).toBeNull();
+  });
+
+  it('keeps table roles and labels every cell, so the phone cards read as a table', () => {
+    render(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        cardTitle={(r) => r.code}
+        cardFacts={['quantity']}
+      />,
+    );
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(4);
+    const cells = screen.getAllByRole('cell');
+    expect(
+      cells.find((c) => c.getAttribute('data-label') === 'Quantity'),
+    ).toBeTruthy();
+    expect(
+      cells.filter((c) => c.getAttribute('data-label') === 'Code')[0],
+    ).toHaveClass('kf-table__card-hidden');
+    expect(screen.getAllByRole('cell', {name: 'KF-02'})[0]).toHaveClass(
+      'kf-table__card-title',
+    );
+  });
+
+  it('opens a row on click, but not when one of its controls is used', async () => {
+    const onRowClick = vi.fn();
+    render(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        onRowClick={onRowClick}
+        primaryAction={(r) => <button type="button">Open {r.code}</button>}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('cell', {name: 'AB-77'}));
+    expect(onRowClick).toHaveBeenCalledWith(rows[2]);
+    await userEvent.click(screen.getByRole('button', {name: 'Open KF-01'}));
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+  });
+});

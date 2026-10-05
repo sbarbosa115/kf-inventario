@@ -1,5 +1,5 @@
 {
-  "appName": "Inventory",
+  "appName": "KF Inventory",
   "loading": "Loading…",
   "loadFailed": "Could not load this. Check your connection and try again.",
   "serverFailed": "Something went wrong on our side. Try again in a moment.",
@@ -21,10 +21,58 @@
   "pageOf": "Page {{page}} of {{pages}}",
   "selectAll": "Select all",
   "selectRow": "Select row",
-  "footer": "Inventory © {{year}}",
-  "legacy": {
-    "title": "This screen is still in the previous version",
-    "body": "It moves to the new app soon. Until then, open it in the previous version.",
-    "open": "Open the previous version"
+  "footer": "KF Inventory © {{year}}",
+  "dismiss": "Dismiss",
+  "more": "More",
+  "actions": "Actions",
+  "actionsFor": "Actions for {{name}}",
+  "selected_one": "{{count}} selected",
+  "selected_other": "{{count}} selected",
+  "clearSelection": "Clear",
+  "clearFilters": "Clear filters",
+  "all": "All",
+  "clearSearch": "Clear the search",
+  "back": "Back",
+  "saved": "Saved",
+  "notifications": "Notifications",
+  "warehouse": "Warehouse",
+  "password": {
+    "show": "Show password",
+    "hide": "Hide password",
+    "capsLock": "Caps Lock is on"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "es": "Español"
+  },
+  "theme": {
+    "label": "Theme",
+    "current": "Theme: {{theme}}",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "sound": {
+    "on": "Sound on",
+    "off": "Sound off"
+  },
+  "scan": {
+    "label": "Barcode",
+    "placeholder": "Scan or type a code, then Enter"
+  },
+  "camera": {
+    "label": "Camera",
+    "start": "Start camera",
+    "stop": "Stop camera",
+    "asking": "Waiting for permission to use the camera…",
+    "scanning": "Point the camera at a barcode.",
+    "denied": "The camera was not allowed. Allow it in the browser’s site settings, or type the code instead.",
+    "noCamera": "No camera was found on this device. Type the code instead.",
+    "insecure": "The camera needs a secure address (https). Type the code instead.",
+    "failed": "The camera could not start. Type the code instead.",
+    "torchOn": "Turn the light on",
+    "torchOff": "Turn the light off",
+    "read": "Read {{code}}"
   }
 }

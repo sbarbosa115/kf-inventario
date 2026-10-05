@@ -1,8 +1,9 @@
-import {useMemo, useState, type ReactNode} from 'react';
+import {useMemo, useState, type MouseEvent, type ReactNode} from 'react';
 import {useTranslation} from '@/shared/i18n';
 import {EmptyState} from './EmptyState';
 import {ErrorState} from './ErrorState';
-import {Loader} from './Loader';
+import {RowMenu, type RowAction} from './RowMenu';
+import {SearchBox} from './Toolbar';
 
 export interface Column<Row> {
   /** Unique within the table. */
@@ -13,14 +14,18 @@ export interface Column<Row> {
   sortValue?: (row: Row) => string | number | null;
   /** The text the search box matches in this column. */
   searchValue?: (row: Row) => string | number | null;
-  /** Right-aligned (numbers, actions). */
+  /** Right-aligned and tabular (numbers, money). */
   numeric?: boolean;
+  /** Codes, SKUs, order numbers: Geist Mono. */
+  mono?: boolean;
 }
 
 interface Props<Row> {
   columns: Column<Row>[];
   rows: Row[] | undefined;
   rowKey: (row: Row) => string | number;
+  /** How a row is named in "Actions for …" (the code, the name); the rowKey by default. */
+  rowLabel?: (row: Row) => string;
   loading?: boolean;
   error?: unknown;
   onRetry?: () => void;
@@ -35,16 +40,39 @@ interface Props<Row> {
   onSelectedChange?: (selected: Set<string | number>) => void;
   /** Class of a row (the legacy screens tint rows by status). */
   rowClassName?: (row: Row) => string | undefined;
+  /** The row's secondary actions, in one "⋯" menu (at most one visible action per row: primaryAction). */
+  rowActions?: (row: Row) => RowAction[];
+  /** The one visible action of a row. */
+  primaryAction?: (row: Row) => ReactNode;
+  /** Clicking a row (not one of its controls) opens it. */
+  onRowClick?: (row: Row) => void;
+  /** Appears with "N selected" while rows are selected, sticky: what to do with them. */
+  selectionBar?: (rows: Row[]) => ReactNode;
+  /** 44 px rows by default; 52 px comfortable. */
+  density?: 'default' | 'comfortable';
+  /** Skeleton rows while loading. */
+  skeletonRows?: number;
+  /** Under 600 px rows become cards: their title… */
+  cardTitle?: (row: Row) => ReactNode;
+  /** …and the columns shown on them (every column when not given). */
+  cardFacts?: string[];
+  /** The header stays in view while the page scrolls. */
+  stickyHeader?: boolean;
 }
 
+const INTERACTIVE = 'a, button, input, select, textarea, label, [role="menu"]';
+
 /**
- * Every list's table: search, sort by a header, pages, row selection, and its loading, error, empty and
- * "filtered to nothing" states. Data is filtered and paged in the browser (the lists hold one warehouse's rows).
+ * Every list's table: search, sort by a header, pages, row selection with its bar, a row menu, and its loading
+ * (skeleton rows), error, empty and "filtered to nothing" states. Data is filtered and paged in the browser.
+ * Under 600 px the rows become cards in CSS; the elements carry explicit table roles so locators by role work at
+ * every width.
  */
 export function DataTable<Row>({
   columns,
   rows,
   rowKey,
+  rowLabel,
   loading = false,
   error,
   onRetry,
@@ -54,6 +82,15 @@ export function DataTable<Row>({
   selected,
   onSelectedChange,
   rowClassName,
+  rowActions,
+  primaryAction,
+  onRowClick,
+  selectionBar,
+  density = 'default',
+  skeletonRows = 6,
+  cardTitle,
+  cardFacts,
+  stickyHeader = false,
 }: Props<Row>) {
   const {t} = useTranslation();
   const [query, setQuery] = useState('');
@@ -93,9 +130,9 @@ export function DataTable<Row>({
       : visible;
 
   if (error) return <ErrorState error={error} onRetry={onRetry} />;
-  if (loading || rows === undefined) return <Loader />;
 
   const selectable = selected !== undefined && onSelectedChange !== undefined;
+  const hasActions = rowActions !== undefined || primaryAction !== undefined;
   const allShownSelected =
     shown.length > 0 && shown.every((row) => selected?.has(rowKey(row)));
   const toggle = (keys: (string | number)[], on: boolean) => {
@@ -103,22 +140,77 @@ export function DataTable<Row>({
     keys.forEach((key) => (on ? next.add(key) : next.delete(key)));
     onSelectedChange?.(next);
   };
+  const selectedRows = (rows ?? []).filter((row) => selected?.has(rowKey(row)));
+  const hiddenOnCard = (key: string) =>
+    cardFacts !== undefined && !cardFacts.includes(key);
+  const tableClass = [
+    'kf-table',
+    density === 'comfortable' ? 'kf-table--comfortable' : null,
+    stickyHeader ? 'kf-table--sticky' : null,
+    onRowClick ? 'kf-table--clickable' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  if (loading || rows === undefined) {
+    return (
+      <div className="kf-table-wrap" role="status" aria-busy="true">
+        <span className="sr-only">{t('common.loading')}</span>
+        <table
+          className={`${tableClass} kf-table--skeleton`}
+          aria-hidden="true"
+        >
+          <tbody>
+            {Array.from({length: skeletonRows}, (_, i) => (
+              <tr key={i}>
+                {selectable && <td className="kf-table__select" />}
+                {columns.map((column) => (
+                  <td key={column.key}>
+                    <span className="kf-skeleton__block" />
+                  </td>
+                ))}
+                {hasActions && <td className="kf-table__actions" />}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  const clickRow = (row: Row) => (event: MouseEvent<HTMLElement>) => {
+    if ((event.target as HTMLElement).closest(INTERACTIVE)) return;
+    onRowClick?.(row);
+  };
 
   return (
-    <div>
+    <div className="kf-data-table">
       {searchable && (
-        <div className="form-inline mb-2">
-          <input
-            type="search"
-            className="form-control form-control-sm"
-            placeholder={t('common.search')}
-            aria-label={t('common.search')}
+        <div className="kf-data-table__search">
+          <SearchBox
             value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
+            onChange={(value) => {
+              setQuery(value);
               setPage(1);
             }}
           />
+        </div>
+      )}
+      {selectable && selectionBar && selectedRows.length > 0 && (
+        <div className="kf-selection-bar">
+          <span className="kf-selection-bar__count">
+            {t('common.selected', {count: selectedRows.length})}
+          </span>
+          <div className="kf-selection-bar__actions">
+            {selectionBar(selectedRows)}
+          </div>
+          <button
+            type="button"
+            className="kf-btn kf-btn--ghost kf-btn--sm"
+            onClick={() => onSelectedChange(new Set())}
+          >
+            <span className="kf-btn__label">{t('common.clearSelection')}</span>
+          </button>
         </div>
       )}
       {rows.length === 0 ? (
@@ -129,20 +221,24 @@ export function DataTable<Row>({
           action={
             <button
               type="button"
-              className="btn btn-sm btn-outline-secondary"
+              className="kf-btn kf-btn--secondary kf-btn--sm"
               onClick={() => setQuery('')}
             >
-              {t('common.showAll')}
+              <span className="kf-btn__label">{t('common.showAll')}</span>
             </button>
           }
         />
       ) : (
-        <div className="table-responsive">
-          <table className="table table-sm table-striped table-hover">
-            <thead>
-              <tr>
+        <div className="kf-table-wrap">
+          <table className={tableClass} role="table">
+            <thead role="rowgroup">
+              <tr role="row">
                 {selectable && (
-                  <th scope="col" style={{width: '2rem'}}>
+                  <th
+                    role="columnheader"
+                    scope="col"
+                    className="kf-table__select"
+                  >
                     <input
                       type="checkbox"
                       aria-label={t('common.selectAll')}
@@ -153,11 +249,19 @@ export function DataTable<Row>({
                     />
                   </th>
                 )}
+                {cardTitle && (
+                  <th
+                    role="columnheader"
+                    scope="col"
+                    className="kf-table__card-title"
+                  />
+                )}
                 {columns.map((column) => (
                   <th
                     key={column.key}
+                    role="columnheader"
                     scope="col"
-                    className={column.numeric ? 'text-right' : undefined}
+                    className={column.numeric ? 'kf-table__num' : undefined}
                     aria-sort={
                       sort?.key === column.key
                         ? sort.desc
@@ -169,7 +273,7 @@ export function DataTable<Row>({
                     {column.sortValue ? (
                       <button
                         type="button"
-                        className="btn btn-link btn-sm p-0 text-reset font-weight-bold"
+                        className="kf-table__sort"
                         onClick={() =>
                           setSort((now) => ({
                             key: column.key,
@@ -178,39 +282,93 @@ export function DataTable<Row>({
                         }
                       >
                         {column.header}
+                        <i
+                          className={`fas ${sort?.key === column.key ? (sort.desc ? 'fa-arrow-down' : 'fa-arrow-up') : 'fa-sort'} kf-table__sort-icon`}
+                          aria-hidden="true"
+                        />
                       </button>
                     ) : (
                       column.header
                     )}
                   </th>
                 ))}
+                {hasActions && (
+                  <th
+                    role="columnheader"
+                    scope="col"
+                    className="kf-table__actions"
+                  >
+                    <span className="sr-only">{t('common.actions')}</span>
+                  </th>
+                )}
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup">
               {shown.map((row) => {
                 const key = rowKey(row);
+                const isSelected = selected?.has(key) ?? false;
+                const actions = rowActions?.(row) ?? [];
                 return (
-                  <tr key={key} className={rowClassName?.(row)}>
+                  <tr
+                    key={key}
+                    role="row"
+                    className={
+                      [rowClassName?.(row), isSelected ? 'is-selected' : null]
+                        .filter(Boolean)
+                        .join(' ') || undefined
+                    }
+                    onClick={onRowClick ? clickRow(row) : undefined}
+                  >
                     {selectable && (
-                      <td>
+                      <td role="cell" className="kf-table__select">
                         <input
                           type="checkbox"
                           aria-label={t('common.selectRow')}
-                          checked={selected.has(key)}
+                          checked={isSelected}
                           onChange={(event) =>
                             toggle([key], event.target.checked)
                           }
                         />
                       </td>
                     )}
+                    {cardTitle && (
+                      <td role="cell" className="kf-table__card-title">
+                        {cardTitle(row)}
+                      </td>
+                    )}
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        className={column.numeric ? 'text-right' : undefined}
+                        role="cell"
+                        data-label={column.header}
+                        className={
+                          [
+                            column.numeric ? 'kf-table__num' : null,
+                            column.mono ? 'kf-table__mono' : null,
+                            hiddenOnCard(column.key)
+                              ? 'kf-table__card-hidden'
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' ') || undefined
+                        }
                       >
                         {column.render(row)}
                       </td>
                     ))}
+                    {hasActions && (
+                      <td role="cell" className="kf-table__actions">
+                        {primaryAction?.(row)}
+                        {actions.length > 0 && (
+                          <RowMenu
+                            actions={actions}
+                            label={t('common.actionsFor', {
+                              name: rowLabel?.(row) ?? String(key),
+                            })}
+                          />
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -219,25 +377,25 @@ export function DataTable<Row>({
         </div>
       )}
       {pages > 1 && (
-        <nav className="d-flex align-items-center justify-content-end">
+        <nav className="kf-pager">
           <button
             type="button"
-            className="btn btn-sm btn-outline-secondary mr-2"
+            className="kf-btn kf-btn--secondary kf-btn--sm"
             disabled={current <= 1}
             onClick={() => setPage(current - 1)}
           >
-            {t('common.previous')}
+            <span className="kf-btn__label">{t('common.previous')}</span>
           </button>
-          <span className="small text-muted mr-2">
+          <span className="kf-pager__label">
             {t('common.pageOf', {page: current, pages})}
           </span>
           <button
             type="button"
-            className="btn btn-sm btn-outline-secondary"
+            className="kf-btn kf-btn--secondary kf-btn--sm"
             disabled={current >= pages}
             onClick={() => setPage(current + 1)}
           >
-            {t('common.next')}
+            <span className="kf-btn__label">{t('common.next')}</span>
           </button>
         </nav>
       )}

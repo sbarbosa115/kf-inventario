@@ -1,9 +1,10 @@
-import {useEffect, useId, useRef, type ReactNode} from 'react';
+import {useId, useRef, type ReactNode} from 'react';
 import {useTranslation} from '@/shared/i18n';
+import {useFocusTrap} from './useFocusTrap';
 
 /**
- * A dialog over the page (Bootstrap 4's look, no jQuery): Escape and the close button call onClose, the focus moves
- * into it when it opens and back when it closes.
+ * A dialog over the page (Bootstrap 4's markup on the tokens, no jQuery): Escape and the close button call onClose,
+ * the focus moves into it, stays inside it while it is open, and goes back when it closes.
  */
 export function Modal({
   title,
@@ -21,21 +22,7 @@ export function Modal({
   const {t} = useTranslation();
   const titleId = useId();
   const dialog = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    dialog.current?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    document.body.classList.add('modal-open');
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.classList.remove('modal-open');
-      previous?.focus();
-    };
-  }, [onClose]);
+  useFocusTrap(dialog, onClose);
 
   return (
     <>

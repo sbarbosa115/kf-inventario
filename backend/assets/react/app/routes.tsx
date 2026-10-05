@@ -63,6 +63,12 @@ const UserFormPage = lazy(() =>
   import('@/pages/user-form').then((m) => ({default: m.UserFormPage})),
 );
 
+// The kit's specimen page (docs/design/README.md): development only, never in a production build.
+const KitPage =
+  process.env.NODE_ENV !== 'production'
+    ? lazy(() => import('@/pages/kit').then((m) => ({default: m.KitPage})))
+    : null;
+
 function SignedIn() {
   return (
     <RequireSession>
@@ -117,6 +123,7 @@ export function AppRoutes() {
         <Route path="/admin/users" element={<UsersPage />} />
         <Route path="/admin/users/new" element={<UserFormPage />} />
         <Route path="/admin/users/:id/edit" element={<UserFormPage />} />
+        {KitPage && <Route path="/admin/_kit" element={<KitPage />} />}
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

@@ -12,7 +12,12 @@ import '@/shared/ui/styles/bootstrap-overrides.css';
 import '@/shared/ui/styles/react-select.css';
 import '@/shared/ui/styles/kit.css';
 import './styles/global.css';
+import {applyTheme, watchSystemTheme} from '@/shared/lib';
 import {App} from './App';
+
+// The inline script of spa.html.twig chose the theme before the first paint; from here the app keeps it.
+applyTheme();
+watchSystemTheme();
 
 const root = document.getElementById('root');
 if (root) {
