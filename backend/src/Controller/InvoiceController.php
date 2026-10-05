@@ -4,10 +4,7 @@ namespace App\Controller;
 
 use App\Invoicing\Domain\Model\Invoice;
 use App\Form\InvoiceType;
-use App\Repository\CountryRepository;
-use App\Repository\CustomerRepository;
 use App\Repository\InvoiceRepository;
-use App\Repository\WarehouseRepository;
 use App\Services\InvoiceService;
 use App\Services\PdfHandlerService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,50 +17,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/invoice', name: 'invoice_')]
 class InvoiceController extends AbstractController
 {
-    #[Route('/', name: 'index', options: ['expose' => true])]
-    #[IsGranted('ROLE_CAN_READ_INVOICES')]
-    public function index(): Response
-    {
-        return $this->render('invoice/index.html.twig');
-    }
-
-    #[Route('/new', name: 'new', options: ['expose' => true])]
-    #[IsGranted('ROLE_CAN_CREATE_INVOICES')]
-    public function new(CountryRepository $countryRepo, WarehouseRepository $warehouseRepo, CustomerRepository $customerRepo, InvoiceRepository $invoiceRepository): Response
-    {
-        $locations = $countryRepo->findAllAsArray();
-
-        if (is_array($locations) && count($locations) > 1000) {
-            $locations = array_slice($locations, 0, 100);
-        }
-
-        $lastInvoice = $invoiceRepository->findOneBy([], ['createdAt' => 'DESC']);
-        $suggestedCode = '';
-        if ($lastInvoice && $lastInvoice->getCode()) {
-            $lastCode = $lastInvoice->getCode();
-            if (preg_match('/^(.*?)(\d+)$/', $lastCode, $matches)) {
-                $prefix = $matches[1];
-                $num = $matches[2];
-                $next = str_pad((string) ((int) $num + 1), strlen($num), '0', STR_PAD_LEFT);
-                $suggestedCode = $prefix . $next;
-            } elseif (is_numeric($lastCode)) {
-                $suggestedCode = (string) ((int) $lastCode + 1);
-            } else {
-                $suggestedCode = $lastCode . '-1';
-            }
-        } else {
-            $suggestedCode = date('Y') . '0001';
-        }
-
-        return $this->render('invoice/new.html.twig', [
-            'url' => $this->generateUrl('invoice_create'),
-            'locations' => $locations,
-            'warehouses' => $warehouseRepo->findAllAsArray(),
-            'customers' => $customerRepo->findAllAsArray(),
-            'suggestedCode' => $suggestedCode,
-        ]);
-    }
-
     #[Route('/create', name: 'create', methods: ['POST'])]
     #[IsGranted('ROLE_CAN_CREATE_INVOICES')]
     public function create(Request $request, InvoiceService $invoiceService, InvoiceRepository $invoiceRepository): JsonResponse

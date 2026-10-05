@@ -99,3 +99,17 @@ customer_edit:
   controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
   defaults: {path: /admin/customers, permanent: true}
   methods: [GET]
+
+# Item 11 (invoices-ui): the Invoices list and the invoice form. The JSON and PDF actions of the legacy controller
+# (all, detail, pdf, create) stay until item 12.
+invoice_index:
+  path: /admin/invoice/
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/invoices, permanent: true}
+  methods: [GET]
+
+invoice_new:
+  path: /admin/invoice/new
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/invoices/new, permanent: true}
+  methods: [GET]

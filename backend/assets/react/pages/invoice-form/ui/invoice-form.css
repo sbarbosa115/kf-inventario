@@ -1,0 +1,12 @@
+/* The invoice form's line rows: the product select needs room for its menu over the next row. */
+.invoice-form__line {
+  align-items: flex-start;
+}
+
+.invoice-form__line-total {
+  line-height: calc(1.5em + 0.75rem + 2px);
+}
+
+.invoice-form__totals {
+  min-width: 14rem;
+}

@@ -285,7 +285,48 @@ back and empty `backend/.env.local` when done.
 
 ## 6. Invoices (INVC)
 
-<!-- Item 11 (invoices-ui) adds INVC-01 – 06. -->
+**INVC-01 · The list shows the invoices, and the old addresses land on the new screens**
+Smoke: `e2e/invoices.spec.ts`.
+Signed in as `invoices`, open `/admin/invoice/` (the previous version's address): `/admin/invoices` opens, "Invoices",
+a Create invoice button, one row per invoice (`Invoice #`, customer as `First Last [email]` or "POS Client", total, date
+as `05 Oct 2026`, an Invoice Detail button and a PDF button that opens in a new tab). The search box finds a row by
+code, customer, total or date; a search that matches nothing says so and "Show all" brings the rows back.
+`/admin/invoice/new` lands on `/admin/invoices/new`.
+
+**INVC-02 · The detail opens in a dialog with the lines and the PDF link**
+Smoke: `e2e/invoices.spec.ts`.
+Invoice Detail on INV-0001: a dialog with the code, the customer (or "POS Client"), the date, a row per line (product
+code, description, quantity, unit price, total), the total (with subtotal and tax when the invoice has tax) and View as
+PDF; Close, the x and Escape close it. By hand: View as PDF opens the PDF in a new tab.
+
+**INVC-03 · An invoice is created with a customer, a product and tax, its PDF opens and the list shows it**
+Smoke (part): `e2e/invoices.spec.ts` creates the invoice and checks the list and that the PDF answers.
+Create invoice: `Invoice #` already holds the next code (`INV-0002` after `INV-0001`); pick the customer in
+`Customer` (their name, email, phone and address fill in); pick a product in `Product 1` (the description and the unit
+price fill in); quantity 2, Sale Tax 6%: the subtotal, tax and total follow as you type; Create Invoice: the PDF opens
+in a new tab and the list shows "The invoice was created successfully." and the new row. By hand: the PDF shows the
+code, the customer, the lines and the 6% tax; with no customer picked and nothing typed, the invoice is a "POS Client";
+typing a new customer (with a country, state and city that did not exist) creates it, and it is then in the Customers
+list and in the customer picker.
+
+**INVC-04 · Add all products puts every product of the warehouse on the invoice, and an item can be removed**
+Smoke: `e2e/invoices.spec.ts`.
+Warehouse Colombia › Add all products: one item per product of its stock (KF-01, KF-02, KF-03) with its price, the
+total adds them up; a product already on the invoice is not added twice. Remove item takes one out and the total
+follows; Add item adds an empty one. Changing the Warehouse changes the products offered, not the items already added.
+
+**INVC-05 · An invoice needs an item, and a code already used is refused**
+Smoke: `e2e/invoices.spec.ts`.
+Create Invoice with nothing typed: "Please add at least one invoice item." and nothing is sent. A quantity of 0 or a
+price with three decimals says what is wrong. An item with a description only (no product) is accepted. With the code
+of an existing invoice (`INV-0001`): "An invoice with this code already exists." under `Invoice #`, no PDF opens and
+the typed items stay.
+
+**INVC-06 · The admin is refused on invoices**
+Smoke: `e2e/invoices.spec.ts`.
+Signed in as the admin: no Invoices entry in the sidebar; `/admin/invoices` says "You do not have permission to do
+this."; `/api/v1/invoices` answers 403 (no role reaches the invoice roles; they are given one by one). A user with
+only `ROLE_CAN_READ_INVOICES` sees the list and the detail but no Create invoice button.
 
 ## 7. Users (USR)
 

@@ -299,5 +299,66 @@
   "orders": {},
   "orderForm": {},
   "gettingReady": {},
-  "invoices": {}
+  "invoices": {
+    "title": "Invoices",
+    "create": "Create invoice",
+    "created": "The invoice was created successfully.",
+    "empty": "There are no invoices yet.",
+    "posClient": "POS Client",
+    "columns": {
+      "code": "Invoice #",
+      "customer": "Customer",
+      "total": "Total",
+      "date": "Date",
+      "options": "Options"
+    },
+    "detail": {
+      "title": "Invoice Detail",
+      "viewPdf": "View as PDF",
+      "gone": "This invoice no longer exists.",
+      "productCode": "Code",
+      "description": "Description",
+      "quantity": "Quantity",
+      "unitPrice": "Unit Price"
+    },
+    "form": {
+      "customer": "Customer",
+      "pickCustomer": "Customer",
+      "searchCustomer": "Search customer",
+      "noOptions": "No options",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "phone": "Phone",
+      "code": "Invoice #",
+      "paymentMethod": "Payment Method",
+      "payment": {
+        "credit_counted": "Credit - counted",
+        "credit_card": "Credit card - Paypal"
+      },
+      "taxRate": "Sale Tax",
+      "comment": "Comments",
+      "items": "Items",
+      "warehouse": "Warehouse",
+      "addAll": "Add all products",
+      "addItem": "Add item",
+      "item": "Item {{number}}",
+      "product": "Product {{number}}",
+      "productPlaceholder": "Product",
+      "description": "Description {{number}}",
+      "descriptionPlaceholder": "Description",
+      "quantity": "Quantity {{number}}",
+      "unitPrice": "Unit price {{number}}",
+      "remove": "Remove item {{number}}",
+      "subtotal": "Subtotal",
+      "tax": "Tax ({{rate}}%)",
+      "total": "Total",
+      "submit": "Create Invoice",
+      "required": "This value should not be blank.",
+      "noItems": "Please add at least one invoice item.",
+      "badItems": "Every item needs a whole quantity and a price like 12.50.",
+      "codeTaken": "An invoice with this code already exists.",
+      "stockFailed": "Could not load the products of this warehouse. Descriptions can still be typed."
+    }
+  }
 }
