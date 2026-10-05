@@ -79,4 +79,23 @@ product_update:
 spa_product_edit:
   path: /admin/products/{uuid}/edit
   controller: App\Shared\UI\Http\Spa\SpaController
+
+# Item 8 (customers-ui): the Customers screens.
+customer_index:
+  path: /admin/customer/
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/customers, permanent: true}
+  methods: [GET]
+
+customer_new:
+  path: /admin/customer/new
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/customers/new, permanent: true}
+  methods: [GET]
+
+# The edit address carried the customer's id in a form a static redirect cannot rewrite: it lands on the list.
+customer_edit:
+  path: /admin/customer/edit/{customer}
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/customers, permanent: true}
   methods: [GET]

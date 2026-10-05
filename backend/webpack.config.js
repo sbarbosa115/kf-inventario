@@ -15,9 +15,6 @@ Encore.setOutputPath('public/build/')
   .addEntry('order', './assets/js/Orders/index.js')
   .addEntry('order/order-handler', './assets/js/Orders/orderHandler.js')
   .addEntry('order/getting-ready', './assets/js/Orders/gettingReady.js')
-  .addEntry('customer', './assets/js/Customer/Index.js')
-  .addEntry('customer/edit', './assets/js/Customer/Edit.js')
-  .addEntry('customer/new', './assets/js/Customer/New.js')
   // Invoices: the list and the form (Index.js imports New.js); the master branch's config had lost this entry.
   .addEntry('invoice', './assets/js/Invoice/Index.js')
   // No split chunks and one runtime per entry while the legacy templates load build/<entry>.js by hand: each entry
