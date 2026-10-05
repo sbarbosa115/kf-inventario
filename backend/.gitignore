@@ -33,3 +33,4 @@ yarn-error.log
 # cPanel writes this one (the PHP handler and INI settings); deploy/cpanel-update.sh appends the front-controller rules.
 /public/.htaccess
 /public/.htaccess.before-kf
+/bin/.phpunit/
