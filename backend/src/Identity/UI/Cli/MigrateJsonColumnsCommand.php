@@ -35,12 +35,12 @@ final class MigrateJsonColumnsCommand extends Command
                 $raw = $row[$column];
 
                 json_decode($raw);
-                if (json_last_error() === JSON_ERROR_NONE) {
+                if (\JSON_ERROR_NONE === json_last_error()) {
                     continue;
                 }
 
                 $unserialized = @unserialize($raw);
-                if ($unserialized === false) {
+                if (false === $unserialized) {
                     $io->warning("id={$row['id']}: cannot unserialize '{$raw}' — skipping");
                     continue;
                 }
@@ -51,11 +51,12 @@ final class MigrateJsonColumnsCommand extends Command
                     [$json, $row['id']]
                 );
                 $io->text("id={$row['id']}: '{$raw}' → '{$json}'");
-                $totalUpdated++;
+                ++$totalUpdated;
             }
         }
 
         $io->success("Done. {$totalUpdated} row(s) updated.");
+
         return Command::SUCCESS;
     }
 }

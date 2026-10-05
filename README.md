@@ -81,10 +81,10 @@ first). Writes from another origin are refused (403).
 | `POST` | `/api/v1/auth/login` | public | 0: `{username, password, remember_me?}` → the session; 401 `invalid_credentials` |
 | `POST` | `/api/v1/auth/logout` | `ROLE_USER` | 0: 204 |
 | `GET` | `/api/v1/auth/me` | `ROLE_USER` | 0: who is signed in, with every reachable role; 401 signed out |
-| `GET` | `/api/v1/users` | `ROLE_MANAGE_USERS` | 1 (501 until then) |
-| `GET` | `/api/v1/users/{id}` | `ROLE_MANAGE_USERS` | 1 (501 until then) |
-| `POST` | `/api/v1/users` | `ROLE_MANAGE_USERS` | 1 (501 until then) |
-| `PUT` | `/api/v1/users/{id}` | `ROLE_MANAGE_USERS` | 1 (501 until then) |
+| `GET` | `/api/v1/users` | `ROLE_MANAGE_USERS` | 1: every user by name, `UserOutput {id, name, username, email, roles, enabled}` (never the password) |
+| `GET` | `/api/v1/users/{id}` | `ROLE_MANAGE_USERS` | 1: one user; 404 `user_not_found` |
+| `POST` | `/api/v1/users` | `ROLE_MANAGE_USERS` | 1: `{name, username, email, password, roles, enabled}` → 201; the password is required, `roles` only the nine the screen assigns, else 422 |
+| `PUT` | `/api/v1/users/{id}` | `ROLE_MANAGE_USERS` | 1: same body; a blank or missing `password` keeps the current hash; 404 `user_not_found` |
 | `GET` | `/api/v1/warehouses` | `ROLE_USER` | 2 (501 until then) |
 | `PUT` | `/api/v1/warehouses/{id}` | `ROLE_USER` | 2 (501 until then) |
 | `GET` | `/api/v1/warehouses/{id}/stock` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |

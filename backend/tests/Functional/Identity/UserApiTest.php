@@ -96,6 +96,17 @@ final class UserApiTest extends ApiTestCase
         self::assertNull($this->em()->getRepository(User::class)->findOneBy(['username' => 'n']));
     }
 
+    public function testTheNineRolesOfTheLegacyFormAreAccepted(): void
+    {
+        $this->signInAs(['ROLE_MANAGE_USERS']);
+        $nine = ['ROLE_ADMIN', 'ROLE_MANAGE_INVENTORY', 'ROLE_MANAGE_ORDERS', 'ROLE_UPDATE_ORDERS', 'ROLE_UPDATE_INVOICES', 'ROLE_CAN_READ_INVOICES', 'ROLE_CAN_CREATE_INVOICES', 'ROLE_MANAGE_USERS', 'ROLE_MANAGE_WAREHOUSES'];
+
+        $created = $this->sendJson('POST', '/api/v1/users', ['name' => 'N', 'username' => 'n', 'email' => 'n@kf.test', 'password' => 'secret1', 'roles' => $nine]);
+
+        $this->assertStatus(201);
+        self::assertSame($nine, $created['roles']);
+    }
+
     public function testARoleOutsideTheNineTheScreenAssignsIsRefused(): void
     {
         $this->signInAs(['ROLE_MANAGE_USERS']);

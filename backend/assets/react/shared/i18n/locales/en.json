@@ -69,7 +69,39 @@
       "home": "Go to the product list"
     }
   },
-  "users": {},
+  "users": {
+    "title": "View Users",
+    "create": "Create User",
+    "columns": {
+      "id": "#",
+      "name": "Name",
+      "email": "Email",
+      "roles": "Rol",
+      "options": "Options"
+    },
+    "edit": "Edit",
+    "empty": "There are no users yet. Create the first one.",
+    "created": "The user was created successfully.",
+    "updated": "The user was updated successfully.",
+    "notFound": "This user no longer exists.",
+    "backToList": "Back to the users",
+    "form": {
+      "newTitle": "Add User",
+      "editTitle": "Edit User",
+      "name": "Name",
+      "email": "Email",
+      "username": "Username",
+      "password": "Password",
+      "passwordKeep": "Leave blank to keep the current password.",
+      "roles": "Rol",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "required": "This value should not be blank.",
+      "invalidEmail": "This value is not a valid email address.",
+      "passwordTooShort": "The password needs at least {{min}} characters."
+    }
+  },
   "products": {},
   "stock": {},
   "customers": {},

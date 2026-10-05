@@ -67,7 +67,7 @@ final class UserController extends AbstractController
         }
 
         /** @var CreatedUser $created */
-        $created = $this->bus->dispatch(new CreateUser($input->name, $input->username, $input->email, $input->password, array_values($input->roles), $input->enabled));
+        $created = $this->bus->dispatch(new CreateUser($input->name, $input->username, $input->email, $input->password, $input->roles, $input->enabled));
 
         return $this->json(self::present($this->users->get($created->id())), 201);
     }
@@ -82,7 +82,7 @@ final class UserController extends AbstractController
     {
         $input = $this->input($request);
 
-        $this->bus->dispatch(new UpdateUser($id, $input->name, $input->username, $input->email, $input->password, array_values($input->roles), $input->enabled));
+        $this->bus->dispatch(new UpdateUser($id, $input->name, $input->username, $input->email, $input->password, $input->roles, $input->enabled));
 
         return $this->json(self::present($this->users->get($id)));
     }
