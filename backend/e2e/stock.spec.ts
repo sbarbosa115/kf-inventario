@@ -109,7 +109,8 @@ test.describe('2 Products: upload, barcode reader, incoming', () => {
     ).toBeVisible();
     await page.getByRole('button', {name: 'Remove NOPE-404'}).click();
     await expect(page.getByRole('row', {name: /NOPE-404/})).toHaveCount(0);
-    expect(errors).toEqual([]);
+    // An unknown code is looked up and answered 404 on purpose (the red cross); the browser logs that request.
+    expect(errors.filter((e) => !e.includes('status of 404'))).toEqual([]);
   });
 
   test('INV-13 · the codes read are confirmed and added to the chosen warehouse', async ({

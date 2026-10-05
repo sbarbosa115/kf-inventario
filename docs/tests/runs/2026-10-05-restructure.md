@@ -25,6 +25,7 @@ the last row is green.
 |---|---|---|---|---|
 | 1 | 2026-10-05 15:03 | `757d2d0` | Not green: 30 passed, 6 failed, 31 skipped | CUS-02, INVC-03, ORD-01, INV-06, INV-10, USR-02; skipped: CUS-03, CUS-04, CUS-05, CUS-06, INVC-04, INVC-05, INVC-06, ORD-02, ORD-03, ORD-04, ORD-05, ORD-06, ORD-07, ORD-08, ORD-09, ORD-10, INV-07, INV-08, INV-11, INV-12, INV-13, INV-14, INV-15, INV-16, WH-01, WH-02, WH-03, USR-03, USR-04, USR-05, USR-06 |
 | 2 | 2026-10-05 15:07 | `787f0af` | Not green: 45 passed, 3 failed, 19 skipped | INVC-03, ORD-02, INV-11; skipped: INVC-04, INVC-05, INVC-06, ORD-03, ORD-04, ORD-05, ORD-06, ORD-07, ORD-08, ORD-09, ORD-10, INV-12, INV-13, INV-14, INV-15, INV-16, WH-01, WH-02, WH-03 |
+| 3 | 2026-10-05 15:11 | `6ba65cd` | Not green: 49 passed, 3 failed, 15 skipped | INVC-03, ORD-05, INV-12; skipped: INVC-04, INVC-05, INVC-06, ORD-06, ORD-07, ORD-08, ORD-09, ORD-10, INV-13, INV-14, INV-15, INV-16, WH-01, WH-02, WH-03 |
 <!-- smoke.py adds a row per run of the whole suite -->
 
 ### Smoke findings
@@ -46,6 +47,12 @@ the last row is green.
 6. **ORD-02 · test.** `{name: 'Status'}` also matched each row's "Status of order …" select: exact match.
 7. **INV-11 · test.** "Product List" is both the sidebar entry and the link in the upload's confirmation: the spec
    looks inside the confirmation.
+
+8. **INVC-03 (attempt 3) · test.** Enter was pressed before the warehouse's stock had loaded into the picker, so
+   nothing was picked; the spec clicks the listed option.
+9. **ORD-05 · test.** It expected 50 of KF-01 on W00003, whose fixture holds 20 (the case text said 50 too: fixed).
+10. **INV-12 · test.** The barcode reader looks an unknown code up on purpose and the API answers 404 (the red
+    cross); the browser logs that request as a console error. The spec ignores exactly that one.
 
 ## Manual run
 

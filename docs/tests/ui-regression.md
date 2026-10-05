@@ -302,7 +302,7 @@ row opens the same screen.
 Smoke: `e2e/orders.spec.ts`.
 Order Detail on W00003: a dialog "Order Detail" with Source Phone, Status Completed, Customer Jose Perez, his email,
 the order number, the creation date (as `October 5, 2026`), and the customer's first address (address, zip code, city,
-state, country); the Products Detail tab lists KF-01, KF-02 and KF-03 with 50 each. Close, the × and Escape close it.
+state, country); the Products Detail tab lists KF-01, KF-02 and KF-03 with 20 each. Close, the × and Escape close it.
 By hand: an order whose customer has no address shows no address line; a webhook order without a customer says "No
 customer".
 
@@ -422,7 +422,7 @@ back and empty `backend/.env.local` when done.
 
 **INVC-01 · The list shows the invoices, and the old addresses land on the new screens**
 Smoke: `e2e/invoices.spec.ts`.
-Signed in as `invoices`, open `/admin/invoice/` (the previous version's address): `/admin/invoices` opens, "Invoices",
+Signed in as `sales`, open `/admin/invoice/` (the previous version's address): `/admin/invoices` opens, "Invoices",
 a Create invoice button, one row per invoice (`Invoice #`, customer as `First Last [email]` or "POS Client", total, date
 as `05 Oct 2026`, an Invoice Detail button and a PDF button that opens in a new tab). The search box finds a row by
 code, customer, total or date; a search that matches nothing says so and "Show all" brings the rows back.

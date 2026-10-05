@@ -72,7 +72,8 @@ test.describe('6 Invoices', () => {
       'jose.perez@example.com',
     );
     await page.getByLabel('Product 1').fill('KF-02');
-    await page.keyboard.press('Enter');
+    // Click the option once it is listed: Enter before the warehouse's stock has loaded picks nothing.
+    await page.getByRole('option', {name: 'KF-02 (KF-02)'}).click();
     await expect(page.getByLabel('Description 1')).toHaveValue('KF-02');
     await expect(page.getByLabel('Unit price 1')).toHaveValue('150');
     await page.getByLabel('Quantity 1').fill('2');

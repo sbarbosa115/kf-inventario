@@ -155,7 +155,8 @@ test.describe('5 Orders', () => {
     await expect(
       dialog.getByRole('tab', {name: 'Products Detail'}),
     ).toHaveAttribute('aria-selected', 'true');
-    await expect(dialog.getByRole('row', {name: /KF-01/})).toContainText('50');
+    // W00003 holds 20 of each product (src/DataFixtures/OrderFixtures.php).
+    await expect(dialog.getByRole('row', {name: /KF-01/})).toContainText('20');
     await dialog.getByRole('button', {name: 'Close'}).last().click();
     await expect(dialog).toBeHidden();
     expect(errors).toEqual([]);
