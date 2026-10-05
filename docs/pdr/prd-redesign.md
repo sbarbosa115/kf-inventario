@@ -64,6 +64,10 @@ rule changes: everything below is presentation over today's endpoints.
    it looks and works.
 6. **Dark mode: yes** — light, dark, or follow the system, from the top bar.
 7. **NIT:** not added (no new logic).
+8. **Spanish:** our translations are final, no native review; a Spanish proofreading pass runs at the barrier.
+9. **Production serves HTTPS** (confirmed).
+10. **No real-phone camera tests:** DS-10/11 are covered by `CameraScanner`'s tests with a fake detector and are not
+    run by hand.
 
 ---
 
@@ -427,7 +431,8 @@ in `docs/tests/ui-regression.md`. *Verify:* `AppShell.test.tsx` (role rules, rai
 role, no duplicate link names), `LoginPage.test.tsx`; the **whole smoke suite green**; by eye at 390: the drawer,
 the tab bar, no horizontal scroll on any current screen.
 
-**0.6 Scanning on a phone over HTTPS in dev.** `CameraScanner` is already in 0.4; this step makes it testable on a
+**0.6 Scanning on a phone over HTTPS in dev — dropped** (the user, 2026-10-05: no real-phone camera tests; no
+nginx 443 block, no new port). What it was: `CameraScanner` is already in 0.4; this step makes it testable on a
 real phone: `docker/nginx/default.conf` gains a second `server { listen 443 ssl; }` block with a self-signed
 certificate generated once by `docker/nginx/entrypoint.sh` (openssl, into a named volume) and `docker-compose.yml`
 publishes `${HTTPS_PORT:-8443}:443` (`.env.example` documents it; `gate.d/compose-cpus` unchanged, no new service).
@@ -476,8 +481,9 @@ DS-07 theme Dark sets `data-theme="dark"`, survives a reload; System follows `pr
 `emulateMedia`; by hand: no flash, colours) · DS-08 a toast appears for 5 s with `role="status"`, an error toast
 stays until dismissed (smoke, on `/admin/_kit`) · DS-09 no raw key on any screen in Spanish, light and dark
 (manual, after the barrier) · DS-10 camera permission asked only after the tap; denied → the explanation and the
-typed input (manual, phone) · DS-11 a camera read lands in the list, the same label held still is counted once,
-tone and vibration (manual, phone) · DS-12 Lighthouse accessibility ≥ 95 on every screen, both themes (manual) ·
+typed input (covered by `CameraScanner.test.tsx` with a fake detector; not run by hand) · DS-11 a camera read
+lands in the list, the same label held still is counted once, tone and vibration (covered by
+`CameraScanner.test.tsx` with a fake detector; not run by hand) · DS-12 Lighthouse accessibility ≥ 95 on every screen, both themes (manual) ·
 DS-13 sign-in: show password, Caps Lock hint, the error inline (smoke part) · DS-14 not-found page is branded with
 the way back (smoke). AUTH-07 the sign-in page in Spanish (smoke) · AUTH-08 the name in the top bar and "Sign out"
 in the menu (smoke) · NAV-04 the rail shows icons with tooltips (manual) · NAV-05 the tab bar for the inventory
@@ -536,7 +542,8 @@ never runs the suite; the coordinator runs it once at the barrier.
    otherwise `@zxing/browser` (pure JS, no WASM, no CDN; rejected: `barcode-detector`/zxing-wasm, which fetches a
    WASM file from jsDelivr by default, and `html5-qrcode`, unmaintained). The ZXing chunk is loaded only when the
    camera starts. Formats: CODE_128, CODE_39, EAN_13, EAN_8, UPC_A, QR_CODE. The camera needs a secure origin:
-   production must serve HTTPS (cPanel AutoSSL; the user confirms); dev gets a self-signed HTTPS port (0.6).
+   production serves HTTPS (cPanel AutoSSL; confirmed by the user); no dev HTTPS port (0.6 dropped): on plain
+   `http://<host-ip>` the component says the camera needs a secure address and offers the typed input.
 10. **Dependencies added by item 0 only:** `@fontsource-variable/geist`, `@fontsource-variable/geist-mono`,
     `@zxing/browser`, `@zxing/library`. Items add none.
 11. **Figures are computed from the loaded lists** (counts per status, units, stock value, incoming totals,
@@ -564,13 +571,13 @@ never runs the suite; the coordinator runs it once at the barrier.
 - **Playwright strict mode** fails on duplicate link names: the shell renders one navigation at a time (Decision
   in "Shell"), and `AppShell.test.tsx` asserts there is one link per entry.
 - **Camera support varies:** `BarcodeDetector` only on Chrome/Android; ZXing's decode rate on low-light labels is
-  lower; iOS Safari needs HTTPS with a trusted certificate even in dev. The typed input is always there, and the
-  manual run covers DS-10/11 on both phones.
+  lower; iOS Safari needs HTTPS. The typed input is always there; DS-10/11 are covered by `CameraScanner`'s tests with a
+  fake detector (no real-phone run, the user's decision).
 - **Bundle size:** two variable fonts (~90 KB woff2 each) and the ZXing chunk (~300 KB, lazy). Checked in 0.1.
 - **Dark mode on Bootstrap 4:** Bootstrap has no dark theme; the overrides cover the components the app uses. The
   kit page in dark is the checklist; anything missed shows up in DS-09/12.
-- **Translation quality:** item 0 and the items write the Spanish; a native speaker reviews the `es/*.json` files
-  before release (open question 2).
+- **Translation quality:** item 0 and the items write the Spanish; the translations are final (no native
+  review, the user's decision); a Spanish proofreading pass runs at the barrier.
 - **Logo resolution:** the reference is a 180 px PNG; the traced SVG is close, not exact, until a vector arrives.
 - **Merge conflicts in `docs/tests/ui-regression.md`:** every item edits it. Mitigation: item 0 writes the stub
   subsections so items change different, non-adjacent blocks; the coordinator resolves the rest while merging.
@@ -580,14 +587,13 @@ never runs the suite; the coordinator runs it once at the barrier.
 1. **Four WooCommerce shops, one set of sync keys** (recorded, out of scope). The webhook already receives every
    shop's orders, but "Sync shop orders" (`WOO_COMMERCE_URL/_API_KEY/_API_SECRET`) pulls from one shop only. Making
    it pull all four is logic and belongs to a separate small PRD, or it stays as it is.
-2. **Spanish review:** who on the team reviews the Spanish texts (`shared/i18n/locales/es/*.json`) before release?
 
 ## Acceptance
 
 `dod.py` green; `npm test` includes the contrast, key-parity and no-hex tests; the whole smoke suite green with the
 updated specs plus `design-system.spec.ts`; a manual run of the DS-* and the items' new cases at 1440 and 390 px,
-in English and Spanish, light and dark; the scan screens on a real Android phone and an iPhone over HTTPS
-(DS-10/11); Lighthouse accessibility ≥ 95 on every screen (DS-12); the before/after screenshots of every screen in
+in English and Spanish, light and dark; DS-10/11 by `CameraScanner`'s tests (no real-phone run, the user's
+decision); Lighthouse accessibility ≥ 95 on every screen (DS-12); the before/after screenshots of every screen in
 `docs/design/after/` next to `docs/design/audit/`.
 
 ### Critical Files for Implementation
