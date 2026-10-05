@@ -65,10 +65,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every user, by name. (item 1) */
+        /** Every user, by name. (item 1). */
         get: operations["get_api_users_list"];
         put?: never;
-        /** UserInput: creates a user. 422 when invalid. (item 1) */
+        /** UserInput: creates a user. 422 when invalid. (item 1). */
         post: operations["post_api_users_create"];
         delete?: never;
         options?: never;
@@ -83,9 +83,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** One user. 404 user_not_found. (item 1) */
+        /** One user. 404 user_not_found. (item 1). */
         get: operations["get_api_users_show"];
-        /** UserInput: edits a user; a blank password keeps the current one. (item 1) */
+        /** UserInput: edits a user; a blank password keeps the current one. (item 1). */
         put: operations["put_api_users_update"];
         post?: never;
         delete?: never;
@@ -101,7 +101,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A product by its code (the barcode reader). 404 product_not_found. (item 2) */
+        /** A product by its code (the barcode reader). 404 product_not_found. (item 2). */
         get: operations["get_api_products_by_code"];
         put?: never;
         post?: never;
@@ -118,9 +118,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A product by uuid. 404 product_not_found. (item 2) */
+        /** A product by uuid. 404 product_not_found. (item 2). */
         get: operations["get_api_products_show"];
-        /** ProductInput: edits a product. (item 2) */
+        /** ProductInput: edits a product. (item 2). */
         put: operations["put_api_products_update"];
         post?: never;
         delete?: never;
@@ -138,7 +138,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** ProductInput: creates a product. (item 2) */
+        /** ProductInput: creates a product. (item 2). */
         post: operations["post_api_products_create"];
         delete?: never;
         options?: never;
@@ -155,7 +155,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** multipart: `file` (xls/xlsx, the template's columns) and `warehouse_id`. 415 unsupported_media; 422 invalid_spreadsheet. (item 2) */
+        /** multipart: `file` (xls/xlsx, the template's columns) and `warehouse_id`. 415 unsupported_media; 422 invalid_spreadsheet. (item 2). */
         post: operations["post_api_products_upload"];
         delete?: never;
         options?: never;
@@ -170,7 +170,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The stock spreadsheet: `all=1` for every product, or `uuid[]=…` for the selected ones (an xls attachment). (item 2) */
+        /** The stock spreadsheet: `all=1` for every product, or `uuid[]=…` for the selected ones (an xls attachment). (item 2). */
         get: operations["get_api_products_template"];
         put?: never;
         post?: never;
@@ -187,7 +187,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The warehouse's stock rows with `status` (1 in stock, default; 0 incoming). (item 2) */
+        /** The warehouse's stock rows with `status` (1 in stock, default; 0 incoming). (item 2). */
         get: operations["get_api_stock_list"];
         put?: never;
         post?: never;
@@ -206,7 +206,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** StockLinesInput: moves quantities to another warehouse (they arrive as incoming). 204; 409 same_warehouse; 404 stock_not_found; 422 insufficient_stock. (item 2) */
+        /** StockLinesInput: moves quantities to another warehouse (they arrive as incoming). 204; 409 same_warehouse; 404 stock_not_found; 422 insufficient_stock. (item 2). */
         post: operations["post_api_stock_move"];
         delete?: never;
         options?: never;
@@ -223,7 +223,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** StockLinesInput (by code): the barcode reader adds stock. 204. (item 2) */
+        /** StockLinesInput (by code): the barcode reader adds stock. 204. (item 2). */
         post: operations["post_api_stock_add"];
         delete?: never;
         options?: never;
@@ -240,7 +240,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** StockLinesInput (by code): the barcode reader removes stock. 204; 422 insufficient_stock. (item 2) */
+        /** StockLinesInput (by code): the barcode reader removes stock. 204; 422 insufficient_stock. (item 2). */
         post: operations["post_api_stock_remove"];
         delete?: never;
         options?: never;
@@ -257,7 +257,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Approves every incoming row of the warehouse. (item 2) */
+        /** Approves every incoming row of the warehouse. (item 2). */
         post: operations["post_api_stock_approve_incoming"];
         delete?: never;
         options?: never;
@@ -272,7 +272,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every warehouse (as /admin/warehouse/all: any signed-in user). (item 2) */
+        /** Every warehouse (as /admin/warehouse/all: any signed-in user). (item 2). */
         get: operations["get_api_warehouses_list"];
         put?: never;
         post?: never;
@@ -290,7 +290,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** WarehouseInput: renames a warehouse (as the legacy edit: any signed-in user). (item 2) */
+        /** WarehouseInput: renames a warehouse (as the legacy edit: any signed-in user). (item 2). */
         put: operations["put_api_warehouses_rename"];
         post?: never;
         delete?: never;
@@ -306,10 +306,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `page` (1…), `per_page` (100 by default, as before). (item 3) */
+        /** `page` (1…), `per_page` (100 by default, as before). (item 3). */
         get: operations["get_api_customers_page"];
         put?: never;
-        /** CustomerInput: creates a customer. (item 3) */
+        /** CustomerInput: creates a customer. (item 3). */
         post: operations["post_api_customers_create"];
         delete?: never;
         options?: never;
@@ -324,7 +324,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every customer, for the order and invoice pickers. (item 3) */
+        /** Every customer, for the order and invoice pickers. (item 3). */
         get: operations["get_api_customers_all"];
         put?: never;
         post?: never;
@@ -341,12 +341,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** One customer. 404 customer_not_found. (item 3) */
+        /** One customer. 404 customer_not_found. (item 3). */
         get: operations["get_api_customers_show"];
-        /** CustomerInput: edits a customer and replaces their addresses. (item 3) */
+        /** CustomerInput: edits a customer and replaces their addresses. (item 3). */
         put: operations["put_api_customers_update"];
         post?: never;
-        /** Deletes a customer (soft delete, as before). 204. (item 3) */
+        /** Deletes a customer (soft delete, as before). 204. (item 3). */
         delete: operations["delete_api_customers_delete"];
         options?: never;
         head?: never;
@@ -360,7 +360,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every country with its states and their cities. (item 3) */
+        /** Every country with its states and their cities. (item 3). */
         get: operations["get_api_locations_tree"];
         put?: never;
         post?: never;
@@ -377,10 +377,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `warehouse_id`: that warehouse's orders, newest first. (item 4) */
+        /** `warehouse_id`: that warehouse's orders, newest first (the list filters and pages them in the browser). */
         get: operations["get_api_orders_list"];
         put?: never;
-        /** OrderInput: places an order; the printer gets its email. 422 order_without_products. (item 4) */
+        /**
+         * OrderInput: places an order (the customer is found by id, email or phone and updated, or created); the printer
+         *     gets its email. 422 order_without_products; 404 product_not_found, warehouse_not_found.
+         */
         post: operations["post_api_orders_create"];
         delete?: never;
         options?: never;
@@ -395,12 +398,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** One order. 404 order_not_found. (item 4) */
+        /** One order with its customer (and addresses), comments and products. 404 order_not_found. */
         get: operations["get_api_orders_show"];
-        /** OrderInput: edits an order. (item 4) */
+        /** OrderInput: edits an order (its comments are not touched: PUT …/comments). 404 order_not_found. */
         put: operations["put_api_orders_update"];
         post?: never;
-        /** Deletes an order (its products and comments, then the order: soft delete). 204. (item 4) */
+        /** Deletes an order: its product lines and comments, then the order (soft delete: it is not found any more). 204. */
         delete: operations["delete_api_orders_delete"];
         options?: never;
         head?: never;
@@ -416,7 +419,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** OrderStatusInput: moves the order to another status. (item 4) */
+        /** OrderStatusInput: moves the order to another status (a status history row; stock is not touched). */
         post: operations["post_api_orders_status"];
         delete?: never;
         options?: never;
@@ -432,7 +435,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** OrderCommentsInput: the order's comments as they should be (as before: any signed-in user). (item 4) */
+        /**
+         * OrderCommentsInput: the order's comments as they should be: no id adds one (signed by you), an id edits it, a
+         *     comment left out leaves the order. As before: any signed-in user.
+         */
         put: operations["put_api_orders_comments"];
         post?: never;
         delete?: never;
@@ -450,7 +456,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Pulls new orders from the WooCommerce shops (item 13). 501 order_sync_unavailable until then; 502 order_sync_failed. (item 13) */
+        /** Pulls new orders from the WooCommerce shops (item 13). 501 order_sync_unavailable until then; 502 order_sync_failed. (item 13). */
         post: operations["post_api_orders_sync"];
         delete?: never;
         options?: never;
@@ -465,7 +471,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The order as a PDF (the printer's). (item 4) */
+        /** The order as a PDF (the printer's). */
         get: operations["get_api_orders_pdf"];
         put?: never;
         post?: never;
@@ -482,7 +488,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** What is left to ship, as a PDF. (item 4) */
+        /** What is left to ship, as a PDF. */
         get: operations["get_api_orders_remaining_pdf"];
         put?: never;
         post?: never;
@@ -499,7 +505,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The order as a spreadsheet (as before: any signed-in user). (item 4) */
+        /**
+         * The order's products as a spreadsheet (date, product code, quantity). As before: any signed-in user, and the
+         *     file is named after product.xls.filename and the order code.
+         */
         get: operations["get_api_orders_xls"];
         put?: never;
         post?: never;
@@ -516,10 +525,17 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** What was shipped, what is left, and the stock (as before: any signed-in user). (item 4) */
+        /**
+         * What was shipped, what is left, and the warehouse's stock of the order's products. As before: any signed-in
+         *     user.
+         */
         get: operations["get_api_orders_partials"];
         put?: never;
-        /** PartialInput: records a partial shipment. 409 partial_exceeds_order. (item 4) */
+        /**
+         * PartialInput: ships these products now. Exactly the whole order, in stock: the order is sent (status 5);
+         *     otherwise a partial shipment (status 4). Either way the products leave the order's warehouse. 409
+         *     partial_exceeds_order (more than what is left, or the order is already sent); 422 insufficient_stock.
+         */
         post: operations["post_api_orders_partials_record"];
         delete?: never;
         options?: never;
@@ -534,10 +550,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every invoice, newest first. (item 5) */
+        /** Every invoice, newest first. (item 5). */
         get: operations["get_api_invoices_list"];
         put?: never;
-        /** InvoiceInput: creates an invoice. 409 invoice_code_taken. (item 5) */
+        /** InvoiceInput: creates an invoice. 409 invoice_code_taken. (item 5). */
         post: operations["post_api_invoices_create"];
         delete?: never;
         options?: never;
@@ -552,7 +568,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The code the next invoice is offered. (item 5) */
+        /** The code the next invoice is offered. (item 5). */
         get: operations["get_api_invoices_next_code"];
         put?: never;
         post?: never;
@@ -569,7 +585,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** One invoice. 404 invoice_not_found. (item 5) */
+        /** One invoice. 404 invoice_not_found. (item 5). */
         get: operations["get_api_invoices_show"];
         put?: never;
         post?: never;
@@ -586,7 +602,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The invoice as a PDF. (item 5) */
+        /** The invoice as a PDF. (item 5). */
         get: operations["get_api_invoices_pdf"];
         put?: never;
         post?: never;
