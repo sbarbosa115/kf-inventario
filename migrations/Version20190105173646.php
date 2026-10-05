@@ -15,7 +15,7 @@ final class Version20190105173646 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE comment DROP FOREIGN KEY FK_9474526C427EB8A5');
         $this->addSql('DROP INDEX IDX_9474526C427EB8A5 ON comment');
@@ -27,7 +27,7 @@ final class Version20190105173646 extends AbstractMigration
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE comment DROP FOREIGN KEY FK_9474526C8D9F6D38');
         $this->addSql('DROP INDEX IDX_9474526C8D9F6D38 ON comment');

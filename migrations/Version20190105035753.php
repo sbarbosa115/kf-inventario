@@ -15,7 +15,7 @@ final class Version20190105035753 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE log RENAME INDEX idx_f08fc65ca76ed395 TO IDX_8F3F68C5A76ED395');
         $this->addSql('ALTER TABLE order_product DROP INDEX UNIQ_2530ADE64584665A, ADD INDEX IDX_2530ADE64584665A (product_id)');
@@ -26,7 +26,7 @@ final class Version20190105035753 extends AbstractMigration
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE log RENAME INDEX idx_8f3f68c5a76ed395 TO IDX_F08FC65CA76ED395');
         $this->addSql('ALTER TABLE order_product DROP INDEX IDX_2530ADE64584665A, ADD UNIQUE INDEX UNIQ_2530ADE64584665A (product_id)');

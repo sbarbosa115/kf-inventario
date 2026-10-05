@@ -20,7 +20,7 @@ final class Version20190520215545 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE `order` CHANGE customer_id customer_id INT DEFAULT NULL');
         $this->addSql('ALTER TABLE `order` CHANGE warehouse_id warehouse_id INT DEFAULT NULL');
@@ -31,7 +31,7 @@ final class Version20190520215545 extends AbstractMigration
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE `order` CHANGE customer_id customer_id INT NOT NULL');
         $this->addSql('ALTER TABLE `order` CHANGE warehouse_id warehouse_id INT NOT NULL');

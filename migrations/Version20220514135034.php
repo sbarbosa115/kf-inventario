@@ -20,7 +20,11 @@ final class Version20220514135034 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('DROP TABLE migration_versions');
+        $this->addSql('DROP TABLE IF EXISTS migration_versions');
+        // Production got warehouse.url outside the migrations; a fresh database needs it before it is dropped below.
+        if (!$schema->getTable('warehouse')->hasColumn('url')) {
+            $this->addSql('ALTER TABLE warehouse ADD url VARCHAR(255) NOT NULL');
+        }
         $this->addSql('ALTER TABLE warehouse ADD urls LONGTEXT NOT NULL COMMENT \'(DC2Type:array)\', DROP url');
     }
 

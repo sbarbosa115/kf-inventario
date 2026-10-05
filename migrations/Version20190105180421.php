@@ -15,7 +15,7 @@ final class Version20190105180421 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE comment DROP INDEX UNIQ_9474526CA76ED395, ADD INDEX IDX_9474526CA76ED395 (user_id)');
         $this->addSql('ALTER TABLE comment CHANGE user_id user_id INT DEFAULT NULL');
@@ -24,7 +24,7 @@ final class Version20190105180421 extends AbstractMigration
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE comment DROP INDEX IDX_9474526CA76ED395, ADD UNIQUE INDEX UNIQ_9474526CA76ED395 (user_id)');
         $this->addSql('ALTER TABLE comment CHANGE user_id user_id INT NOT NULL');

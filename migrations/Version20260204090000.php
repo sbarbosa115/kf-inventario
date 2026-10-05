@@ -16,7 +16,7 @@ final class Version20260204090000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('CREATE TABLE invoice (id INT AUTO_INCREMENT NOT NULL, code VARCHAR(255) DEFAULT NULL, customer_id INT DEFAULT NULL, total NUMERIC(12, 2) DEFAULT NULL, status INT DEFAULT NULL, created_at DATETIME DEFAULT NULL, modified_at DATETIME DEFAULT NULL, comment LONGTEXT DEFAULT NULL, INDEX IDX_INVOICE_CUSTOMER (customer_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE invoice_item (id INT AUTO_INCREMENT NOT NULL, invoice_id INT NOT NULL, product_id INT DEFAULT NULL, description VARCHAR(255) DEFAULT NULL, unit_price NUMERIC(12, 2) NOT NULL, quantity INT NOT NULL, discount NUMERIC(12, 2) DEFAULT NULL, total NUMERIC(12, 2) NOT NULL, INDEX IDX_INVOICEITEM_INVOICE (invoice_id), INDEX IDX_INVOICEITEM_PRODUCT (product_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
@@ -27,7 +27,7 @@ final class Version20260204090000 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE invoice_item DROP FOREIGN KEY FK_INVOICEITEM_INVOICE');
         $this->addSql('ALTER TABLE invoice_item DROP FOREIGN KEY FK_INVOICEITEM_PRODUCT');
