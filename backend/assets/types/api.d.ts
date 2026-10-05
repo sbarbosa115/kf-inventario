@@ -65,10 +65,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every user, by name. (item 1). */
+        /** Every user, by name. */
         get: operations["get_api_users_list"];
         put?: never;
-        /** UserInput: creates a user. 422 when invalid. (item 1). */
+        /** UserInput: creates a user. The password is required. 422 when invalid. */
         post: operations["post_api_users_create"];
         delete?: never;
         options?: never;
@@ -83,9 +83,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** One user. 404 user_not_found. (item 1). */
+        /** One user. 404 user_not_found. */
         get: operations["get_api_users_show"];
-        /** UserInput: edits a user; a blank password keeps the current one. (item 1). */
+        /** UserInput: edits a user; a blank password keeps the current one. 404 user_not_found, 422 when invalid. */
         put: operations["put_api_users_update"];
         post?: never;
         delete?: never;

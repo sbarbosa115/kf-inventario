@@ -55,7 +55,7 @@
         },
         "/api/v1/users": {
             "get": {
-                "summary": "Every user, by name. (item 1).",
+                "summary": "Every user, by name.",
                 "operationId": "get_api_users_list",
                 "responses": {
                     "200": {
@@ -74,7 +74,7 @@
                 }
             },
             "post": {
-                "summary": "UserInput: creates a user. 422 when invalid. (item 1).",
+                "summary": "UserInput: creates a user. The password is required. 422 when invalid.",
                 "operationId": "post_api_users_create",
                 "responses": {
                     "201": {
@@ -92,7 +92,7 @@
         },
         "/api/v1/users/{id}": {
             "get": {
-                "summary": "One user. 404 user_not_found. (item 1).",
+                "summary": "One user. 404 user_not_found.",
                 "operationId": "get_api_users_show",
                 "parameters": [
                     {
@@ -119,7 +119,7 @@
                 }
             },
             "put": {
-                "summary": "UserInput: edits a user; a blank password keeps the current one. (item 1).",
+                "summary": "UserInput: edits a user; a blank password keeps the current one. 404 user_not_found, 422 when invalid.",
                 "operationId": "put_api_users_update",
                 "parameters": [
                     {

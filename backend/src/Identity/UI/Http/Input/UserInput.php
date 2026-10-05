@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 final class UserInput
 {
     /** The roles the Users screen assigns (UserType's list). */
-    public const ROLES = ['ROLE_ADMIN', 'ROLE_MANAGE_INVENTORY', 'ROLE_MANAGE_ORDERS', 'ROLE_UPDATE_ORDERS', 'ROLE_MANAGE_CUSTOMERS', 'ROLE_MANAGE_USERS', 'ROLE_MANAGE_WAREHOUSES', 'ROLE_CAN_READ_INVOICES', 'ROLE_CAN_CREATE_INVOICES'];
+    public const ROLES = ['ROLE_ADMIN', 'ROLE_MANAGE_INVENTORY', 'ROLE_MANAGE_ORDERS', 'ROLE_UPDATE_ORDERS', 'ROLE_UPDATE_INVOICES', 'ROLE_CAN_READ_INVOICES', 'ROLE_CAN_CREATE_INVOICES', 'ROLE_MANAGE_USERS', 'ROLE_MANAGE_WAREHOUSES'];
 
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]

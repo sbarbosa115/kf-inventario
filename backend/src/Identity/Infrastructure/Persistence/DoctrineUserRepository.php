@@ -18,6 +18,11 @@ final class DoctrineUserRepository implements UserRepository
         return $this->em->find(User::class, $id) ?? throw new UserNotFound();
     }
 
+    public function all(): array
+    {
+        return array_values($this->em->getRepository(User::class)->findBy([], ['name' => 'ASC', 'id' => 'ASC']));
+    }
+
     public function findByUsername(string $username): ?User
     {
         return $this->em->getRepository(User::class)->findOneBy(['username' => $username]);

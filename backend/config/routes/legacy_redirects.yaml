@@ -1,0 +1,25 @@
+# The old Twig pages' addresses, redirected (301) to the React app's: a bookmark or an old link keeps working. Loaded
+# before routes.yaml, so these win over the legacy controllers and the SPA's catch-all. Each UI item adds the rows of
+# the screens it replaces; item 12 reviews the file when the Twig app is gone.
+#
+# The route names are the legacy ones (the Twig sidebar in base.html.twig still builds its links with path()).
+
+# Item 1 (identity): the Users screens.
+user_index:
+  path: /admin/user/
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/users, permanent: true}
+  methods: [GET]
+
+user_user_new:
+  path: /admin/user/new
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/users/new, permanent: true}
+  methods: [GET]
+
+# The edit address carried the user's id in a form a static redirect cannot rewrite: it lands on the list.
+user_user_edit:
+  path: /admin/user/edit/{user}
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/users, permanent: true}
+  methods: [GET]

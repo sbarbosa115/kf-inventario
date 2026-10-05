@@ -114,7 +114,41 @@ Open `/admin/nothing-here` signed in: "Page not found" inside the app, with a li
 
 ## 7. Users (USR)
 
-<!-- Item 1 (identity) adds USR-01 – 06. -->
+**USR-01 · The list shows every account with its roles, and the old address lands on it**
+Smoke: `e2e/users.spec.ts`.
+Signed in as the admin, open `/admin/user/` (the previous version's address): `/admin/users` opens, "View Users", one
+row per account (`#`, name, email, one badge per role, an Edit button). The search box finds a row by name, username,
+email or role; a search that matches nobody says so and "Show all" brings the rows back.
+
+**USR-02 · A new user is created and appears in the list**
+Smoke (part): `e2e/users.spec.ts` creates the user and checks the list.
+Create User › fill Name, Email, Username, Password, tick `ROLE_MANAGE_INVENTORY`, Save: back on the list with "The
+user was created successfully." and the new row. By hand: sign out and sign in as the new user: the Products menu only.
+The form offers exactly nine roles (`ROLE_ADMIN`, `ROLE_MANAGE_INVENTORY`, `ROLE_MANAGE_ORDERS`, `ROLE_UPDATE_ORDERS`,
+`ROLE_UPDATE_INVOICES`, `ROLE_CAN_READ_INVOICES`, `ROLE_CAN_CREATE_INVOICES`, `ROLE_MANAGE_USERS`,
+`ROLE_MANAGE_WAREHOUSES`) and a Status of Enabled or Disabled.
+
+**USR-03 · Editing without typing a password keeps the password**
+Smoke (part): `e2e/users.spec.ts` edits, then signs in with the old password through the API.
+Edit the user of USR-02: the Password box is empty and says "Leave blank to keep the current password."; change the
+name, tick `ROLE_MANAGE_ORDERS`, Save: "The user was updated successfully." and the row shows both. By hand: sign in as
+that user with the password of USR-02: it still works.
+
+**USR-04 · The form names what is missing and what is wrong**
+Smoke: `e2e/users.spec.ts`.
+Create User, Save with everything empty: Name, Email, Username and Password are marked and say "This value should not
+be blank."; nothing is sent. An email without `@` or a password of fewer than 6 characters says so under its field.
+
+**USR-05 · A user that no longer exists says so**
+Smoke: `e2e/users.spec.ts`.
+Open `/admin/users/999999/edit`: "This user no longer exists." with a link back to the users.
+
+**USR-06 · A person without the Users role is refused**
+Smoke: `e2e/users.spec.ts`.
+Signed in as `inventory`: no Users entry in the sidebar; opening `/admin/users` says "You do not have permission to do
+this."; `/api/v1/users` answers 403. By hand, as the admin: change a user's password on Edit (type a new one, Save),
+then sign in with the old one (refused) and the new one (works).
+
 
 ## 8. Emails (MAIL)
 
