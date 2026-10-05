@@ -333,6 +333,24 @@ final class ProductApiTest extends ApiTestCase
         self::assertSame('warehouse_not_found', $body['error']);
     }
 
+    public function testASheetWithoutTheTemplatesColumnsIsRefusedAndStoresNothing(): void
+    {
+        $colombia = $this->aWarehouse('Colombia');
+
+        $body = $this->upload($colombia->getId(), [
+            ['Name', 'Qty'],
+            ['x', 1],
+        ]);
+
+        $this->assertStatus(422);
+        self::assertSame('invalid_spreadsheet', $body['error'] ?? null);
+        $this->em()->clear();
+        self::assertNull(
+            $this->em()->getRepository(Product::class)->findOneBy(['code' => 'x']),
+            'The legacy upload read columns by position and stored a product "x" from a sheet that was not the template.',
+        );
+    }
+
     public function testAnUnreadableSpreadsheetIsInvalid(): void
     {
         // A real xlsx cut short: a zip whose entries cannot be read.

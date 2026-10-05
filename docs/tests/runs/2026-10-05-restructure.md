@@ -27,6 +27,7 @@ the last row is green.
 | 2 | 2026-10-05 15:07 | `787f0af` | Not green: 45 passed, 3 failed, 19 skipped | INVC-03, ORD-02, INV-11; skipped: INVC-04, INVC-05, INVC-06, ORD-03, ORD-04, ORD-05, ORD-06, ORD-07, ORD-08, ORD-09, ORD-10, INV-12, INV-13, INV-14, INV-15, INV-16, WH-01, WH-02, WH-03 |
 | 3 | 2026-10-05 15:11 | `6ba65cd` | Not green: 49 passed, 3 failed, 15 skipped | INVC-03, ORD-05, INV-12; skipped: INVC-04, INVC-05, INVC-06, ORD-06, ORD-07, ORD-08, ORD-09, ORD-10, INV-13, INV-14, INV-15, INV-16, WH-01, WH-02, WH-03 |
 | 4 | 2026-10-05 15:15 | `06cc894` | Not green: 57 passed, 2 failed, 8 skipped | ORD-06, INV-15; skipped: ORD-07, ORD-08, ORD-09, ORD-10, INV-16, WH-01, WH-02, WH-03 |
+| 5 | 2026-10-05 15:22 | `3af9acc` | Green: 67 passed, 0 failed | — |
 <!-- smoke.py adds a row per run of the whole suite -->
 
 ### Smoke findings
