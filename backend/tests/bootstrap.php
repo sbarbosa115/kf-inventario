@@ -1,43 +1,11 @@
 <?php
 
-require __DIR__.'/../vendor/autoload.php';
+use Symfony\Component\Dotenv\Dotenv;
 
-use App\Kernel;
-use Symfony\Bundle\FrameworkBundle\Console\Application;
-use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Console\Output\ConsoleOutput;
+require dirname(__DIR__).'/vendor/autoload.php';
 
-$kernel = new Kernel('test', true); // create a "test" kernel
-$application = new Application($kernel);
-$application->setAutoExit(false);
-$output = new ConsoleOutput();
+(new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
 
-if (!file_exists($kernel->getProjectDir().'/var/data')) {
-    if (!mkdir($concurrentDirectory = $kernel->getProjectDir().'/var/data', 0777, true) && !is_dir($concurrentDirectory)) {
-        throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
-    }
+if ($_SERVER['APP_DEBUG']) {
+    umask(0000);
 }
-
-touch($kernel->getProjectDir().'/var/data/inventory.sqlite');
-
-$inputs = [
-    new ArrayInput([
-        'command' => 'doctrine:database:drop',
-        '--force' => true,
-    ]),
-    new ArrayInput([
-        'command' => 'doctrine:database:create',
-    ]),
-    new ArrayInput([
-        'command' => 'doctrine:schema:create',
-    ]),
-    new ArrayInput([
-        'command' => 'doctrine:fixtures:load',
-    ]),
-];
-
-foreach ($inputs as $input) {
-    $application->run($input, new ConsoleOutput());
-}
-
-$output->writeln('Data was successfully prepared [OK]');

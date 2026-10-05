@@ -1,0 +1,16 @@
+public/build/
+public/js/
+vendor/
+var/
+node_modules/
+assets/types/api.d.ts
+assets/types/openapi.json
+*.min.js
+composer.lock
+package-lock.json
+config/reference.php
+e2e/.results/
+# The legacy Twig app's scripts and styles: replaced screen by screen, deleted by item 12 (legacy-removal).
+assets/js/
+assets/css/
+templates/

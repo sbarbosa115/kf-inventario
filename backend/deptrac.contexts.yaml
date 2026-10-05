@@ -1,0 +1,97 @@
+# Bounded contexts: a context uses another only through its public face — its Application layer (commands, queries,
+# ports, read DTOs) and its domain events. Its Domain model, Infrastructure and UI are its own business.
+#
+# Each context is two layers here: <Context> (Domain except Domain\Event and Domain\Model, Infrastructure, UI) and
+# <Context>Api (Application and Domain\Event). Shared is the shared kernel: everyone may use it, it uses nobody.
+#
+# DomainModels: every context's Domain\Model. The production schema has foreign keys between contexts (an order's
+# customer, warehouse and products; an invoice's customer and products; a log's or comment's user), and the
+# database must not change (docs/pdr/prd-restructure.md, "Database invariance"), so those Doctrine associations stay
+# mapped and the models name each other. That is the one cross-context reference allowed outside the Api layers.
+#
+# To add a context, add both layers and give every rule list its <Context>Api.
+deptrac:
+  paths:
+    - ./src
+  exclude_files:
+    - '#.*/src/DataFixtures/.*#'
+
+  layers:
+    - name: Shared
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Shared\\#'}
+    - name: DomainModels
+      collectors:
+        - {type: classNameRegex, value: '#^App\\(?!Shared\\)[A-Za-z]+\\Domain\\Model\\#'}
+
+    - name: Identity
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Identity\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\)#'}
+    - name: IdentityApi
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Identity\\(Application|Domain\\Event)\\#'}
+
+    - name: Inventory
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Inventory\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\)#'}
+    - name: InventoryApi
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Inventory\\(Application|Domain\\Event)\\#'}
+
+    - name: Customers
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Customers\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\)#'}
+    - name: CustomersApi
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Customers\\(Application|Domain\\Event)\\#'}
+
+    - name: Ordering
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Ordering\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\)#'}
+    - name: OrderingApi
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Ordering\\(Application|Domain\\Event)\\#'}
+
+    - name: Invoicing
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Invoicing\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\)#'}
+    - name: InvoicingApi
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Invoicing\\(Application|Domain\\Event)\\#'}
+
+    - name: Audit
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Audit\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\)#'}
+    - name: AuditApi
+      collectors:
+        - {type: classNameRegex, value: '#^App\\Audit\\(Application|Domain\\Event)\\#'}
+
+    # The legacy Twig app (see deptrac.yaml), removed by item 12.
+    - name: Legacy
+      collectors:
+        - {
+            type: classNameRegex,
+            value: '#^App\\(Command|Constraints|Controller|DataProviders|EventListener|Form|Model|Repository|Security|Services|Validator)\\#',
+          }
+
+  ruleset:
+    Shared: ~
+    DomainModels: [DomainModels, Shared]
+    Identity: [Shared, IdentityApi, DomainModels]
+    IdentityApi: [Shared, Identity, DomainModels]
+    Inventory: [Shared, InventoryApi, DomainModels]
+    InventoryApi: [Shared, Inventory, DomainModels]
+    Customers: [Shared, CustomersApi, DomainModels]
+    CustomersApi: [Shared, Customers, DomainModels]
+    # An order's customer is found or created through Customers (CustomerRegistry); its stock comes from Inventory.
+    Ordering: [Shared, OrderingApi, DomainModels, CustomersApi, InventoryApi]
+    OrderingApi: [Shared, Ordering, DomainModels, CustomersApi, InventoryApi]
+    # An invoice's customer comes from Customers; its lines may name an Inventory product.
+    Invoicing: [Shared, InvoicingApi, DomainModels, CustomersApi, InventoryApi]
+    InvoicingApi: [Shared, Invoicing, DomainModels, CustomersApi, InventoryApi]
+    # The activity log implements Shared's ActivityLog port and records the signed-in user.
+    Audit: [Shared, AuditApi, DomainModels]
+    AuditApi: [Shared, Audit, DomainModels]
+    Legacy:
+      [Shared, DomainModels, Identity, IdentityApi, Inventory, InventoryApi, Customers, CustomersApi, Ordering, OrderingApi,
+       Invoicing, InvoicingApi, Audit, AuditApi]

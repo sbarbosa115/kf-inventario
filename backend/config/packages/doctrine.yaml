@@ -30,3 +30,9 @@ doctrine:
             softdeleteable:
                 class: Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter
                 enabled: true
+
+when@test:
+    doctrine:
+        dbal:
+            # The suite runs against app_test, built from the migrations (composer test:prepare).
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'

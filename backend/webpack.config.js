@@ -1,22 +1,16 @@
-const Encore = require('@symfony/webpack-encore');
+import path from 'node:path';
+import Encore from '@symfony/webpack-encore';
 
-Encore
-// directory where compiled assets will be stored
-  .setOutputPath('public/build/')
-// public path used by the web server to access the output path
+if (!Encore.isRuntimeEnvironmentConfigured()) {
+  Encore.configureRuntimeEnvironment(process.env.NODE_ENV || 'dev');
+}
+
+Encore.setOutputPath('public/build/')
   .setPublicPath('/build')
-// only needed for CDN's or sub-directory deploy
-// .setManifestKeyPrefix('build/')
-
-/*
-     * ENTRY CONFIG
-     *
-     * Add 1 entry for each "page" of your app
-     * (including one that's included on every page - e.g. "app")
-     *
-     * Each entry will result in one JavaScript file (e.g. app.js)
-     * and one CSS file (e.g. app.css) if you JavaScript imports CSS.
-     */
+  // The whole React app (Feature-Sliced Design under assets/react), mounted by templates/spa.html.twig.
+  .addEntry('spa', './assets/react/app/index.tsx')
+  // The legacy Twig pages, one entry each: an item that replaces a screen deletes its entry; item 12 removes the
+  // rest (docs/pdr/prd-restructure.md).
   .addEntry('app', './assets/js/app.js')
   .addEntry('product', './assets/js/Products/index.js')
   .addEntry('bar-code', './assets/js/Products/BarCode.js')
@@ -27,29 +21,33 @@ Encore
   .addEntry('customer', './assets/js/Customer/Index.js')
   .addEntry('customer/edit', './assets/js/Customer/Edit.js')
   .addEntry('customer/new', './assets/js/Customer/New.js')
-
-/*
-     * FEATURE CONFIG
-     *
-     * Enable & configure other features below. For a full
-     * list of features, see:
-     * https://symfony.com/doc/current/frontend.html#adding-more-features
-     */
-  .cleanupOutputBeforeBuild()
-  .enableBuildNotifications()
-  .enableSourceMaps(!Encore.isProduction())
-// enables hashed filenames (e.g. app.abc123.css)
-  .enableVersioning(Encore.isProduction())
-
-// enables Sass/SCSS support
-// .enableSassLoader()
-
-// uncomment if you use TypeScript
-// .enableTypeScriptLoader()
-
-// uncomment if you're having problems with a jQuery plugin
-// .autoProvidejQuery()
+  // Invoices: the list and the form (Index.js imports New.js); the master branch's config had lost this entry.
+  .addEntry('invoice', './assets/js/Invoice/Index.js')
+  // No split chunks and one runtime per entry while the legacy templates load build/<entry>.js by hand: each entry
+  // must be self-contained. Item 12 switches to splitEntryChunks() + enableSingleRuntimeChunk() as tacoma does.
   .disableSingleRuntimeChunk()
-  .enableReactPreset();
+  // Babel 8's React preset otherwise picks dev mode from BABEL_ENV/NODE_ENV (unset during "encore production") and
+  // emits jsxDEV calls, which React's production build doesn't have.
+  .enableReactPreset((options) => {
+    options.development = !Encore.isProduction();
+    options.runtime = 'automatic';
+  })
+  // .ts/.tsx compile through Babel; types are checked apart, by `npm run typecheck`.
+  .enableBabelTypeScriptPreset()
+  .cleanupOutputBeforeBuild()
+  .enableSourceMaps(!Encore.isProduction())
+  .enableVersioning(Encore.isProduction())
+  .configureBabel((config) => {
+    config.plugins.push([
+      'polyfill-corejs3',
+      {method: 'usage-global', version: '3.49'},
+    ]);
+  })
+  .addAliases({'@': path.resolve(import.meta.dirname, 'assets/react')});
 
-module.exports = Encore.getWebpackConfig();
+const config = await Encore.getWebpackConfig();
+// package.json is "type": "module", which makes webpack require file extensions in .js imports; the legacy scripts
+// import without them. Removed by item 12 with assets/js.
+config.module.rules.push({test: /\.js$/, resolve: {fullySpecified: false}});
+
+export default config;
