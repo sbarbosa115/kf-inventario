@@ -1,0 +1,29 @@
+/* The address widget's selects sit in Bootstrap's grid; react-select takes the form-control's height and focus ring. */
+.address-form .address-select__control {
+  min-height: calc(1.5em + 0.75rem + 2px);
+  border-color: #ced4da;
+}
+
+.address-form .address-select__control--is-focused {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.address-form .address-select__menu {
+  z-index: 5;
+}
+
+.address-form__row {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.address-form__row > hr:first-child {
+  margin-top: 0.5rem;
+}
+
+.address-form__buttons {
+  white-space: nowrap;
+}
