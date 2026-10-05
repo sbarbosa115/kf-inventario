@@ -2,6 +2,7 @@
 
 namespace App\Inventory\Application\Command;
 
+use App\Inventory\Application\Query\Stock;
 use App\Inventory\Domain\Error\SameWarehouse;
 use App\Inventory\Domain\Model\ProductWarehouse;
 use App\Inventory\Domain\Repository\ProductRepository;
@@ -34,7 +35,7 @@ final class MoveStockHandler implements CommandHandler
 
         foreach ($command->lines as $line) {
             $product = $this->products->getByUuidOrCode($line->uuid, $line->code);
-            $this->stock->get($product, $source)->subQuantity($line->quantity);
+            Stock::take($this->stock->get($product, $source), $line->quantity);
 
             $incoming = $this->stock->findWithStatus($product, $destination, ProductWarehouse::STATUS_PENDING_TO_CONFIRM);
             if (null === $incoming) {

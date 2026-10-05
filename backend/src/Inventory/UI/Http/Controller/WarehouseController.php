@@ -56,6 +56,6 @@ final class WarehouseController extends AbstractController
 
     private static function output(Warehouse $warehouse): WarehouseOutput
     {
-        return new WarehouseOutput((int) $warehouse->getId(), (string) $warehouse->getName(), array_values($warehouse->getUrls()));
+        return new WarehouseOutput((int) $warehouse->getId(), (string) $warehouse->getName(), $warehouse->getUrls());
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Inventory\Domain\Model;
 
-use App\Inventory\Domain\Error\InsufficientStock;
 use App\Repository\ProductWarehouseRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -91,13 +90,10 @@ class ProductWarehouse
         $this->quantity += $quantity;
     }
 
-    /**
-     * @throws InsufficientStock when the row holds less than that
-     */
     public function subQuantity(int $quantity): void
     {
         if ($quantity > $this->quantity) {
-            throw new InsufficientStock((string) $this->product?->getCode(), (int) $this->quantity);
+            throw new \InvalidArgumentException('The quantity to subtraction should be less than the product one.');
         }
         $this->quantity -= $quantity;
     }

@@ -71,8 +71,22 @@ final class Stock
             if (null === $product) {
                 continue;
             }
-            $this->stock->get($product, $warehouse)->subQuantity($line->quantity);
+            self::take($this->stock->get($product, $warehouse), $line->quantity);
         }
+    }
+
+    /**
+     * Takes a quantity out of a stock row, refusing (with the product's code and what the row holds) more than it
+     * holds.
+     *
+     * @throws InsufficientStock
+     */
+    public static function take(ProductWarehouse $row, int $quantity): void
+    {
+        if ($quantity > (int) $row->getQuantity()) {
+            throw new InsufficientStock((string) $row->getProduct()?->getCode(), (int) $row->getQuantity());
+        }
+        $row->subQuantity($quantity);
     }
 
     private function find(StockLine $line): ?Product

@@ -2,6 +2,7 @@
 
 namespace App\Tests\Unit\Inventory;
 
+use App\Inventory\Application\Query\Stock;
 use App\Inventory\Domain\Error\InsufficientStock;
 use App\Inventory\Domain\Model\Product;
 use App\Inventory\Domain\Model\ProductWarehouse;
@@ -27,18 +28,33 @@ final class ProductWarehouseTest extends TestCase
         self::assertSame(0, $stock->getQuantity(), 'The whole stock may be taken out.');
     }
 
-    public function testSubtractingMoreThanTheStockIsRefusedAndNamesWhatIsAvailable(): void
+    public function testSubtractingMoreThanTheStockIsRefused(): void
     {
         $stock = $this->stockOf('KF-01', 3);
 
         try {
             $stock->subQuantity(4);
             self::fail('A warehouse cannot give more than it holds.');
+        } catch (\InvalidArgumentException) {
+        }
+        self::assertSame(3, $stock->getQuantity(), 'A refused subtraction changes nothing.');
+    }
+
+    public function testTakingMoreThanTheStockIsRefusedWithTheProductAndWhatIsAvailable(): void
+    {
+        $stock = $this->stockOf('KF-01', 3);
+
+        try {
+            Stock::take($stock, 4);
+            self::fail('A warehouse cannot give more than it holds.');
         } catch (InsufficientStock $e) {
             self::assertSame('insufficient_stock', $e->errorCode());
             self::assertSame(['code' => 'KF-01', 'available' => 3], $e->details(), 'The UI tells which product is short and how many there are.');
         }
-        self::assertSame(3, $stock->getQuantity(), 'A refused subtraction changes nothing.');
+        self::assertSame(3, $stock->getQuantity());
+
+        Stock::take($stock, 3);
+        self::assertSame(0, $stock->getQuantity(), 'Everything there may be taken.');
     }
 
     public function testAddingNothingKeepsTheQuantity(): void
