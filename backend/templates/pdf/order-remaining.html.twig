@@ -24,13 +24,13 @@
         <div style="float: left; display: block; width: 50%">
             <p>
                 <span>{{ 'order.pdf.customer'|trans }}: </span>
-                <span style="font-weight: bold">{{ order.customer.firstName }} {{ order.customer.lastName }}</span>
+                <span style="font-weight: bold">{{ order.customer.firstName|default('') }} {{ order.customer.lastName|default('') }}</span>
                 <br />
                 <span>{{ 'order.pdf.email'|trans }}: </span>
-                <span style="font-weight: bold">{{ order.customer.email }}</span>
+                <span style="font-weight: bold">{{ order.customer.email|default('') }}</span>
                 <br />
                 <span>{{ 'order.pdf.phone'|trans }}: </span>
-                <span style="font-weight: bold">{{ order.customer.phone }}</span>
+                <span style="font-weight: bold">{{ order.customer.phone|default('') }}</span>
                 <br />
 
                 <span>{{ 'order.pdf.order_number'|trans }}: </span>
@@ -40,7 +40,7 @@
                 <span style="font-weight: bold">{{ order.createdAt|date('F jS y \\a\\t g:ia') }}</span>
                 <br />
                 <span>{{ 'order.pdf.warehouse'|trans }}: </span>
-                <span style="font-weight: bold">{{ order.warehouse.name }}</span>
+                <span style="font-weight: bold">{{ order.warehouse.name|default('') }}</span>
                 <br />
                 <span>{{ 'order.pdf.paymentMethod'|trans }}: </span>
                 {% if order.paymentMethod == 1 %}
@@ -55,7 +55,8 @@
         </div>
         <div style="float: left; display: block; width: 50%">
             <p>
-                {% for address in order.customer.addresses %}
+                {# A missing customer, city, state or country prints blank (|default), as production always did. #}
+                {% for address in order.customer.addresses|default([]) %}
                     {% if (address.addressType == 1) %}
                         <span style="font-weight: bold">{{ 'order.pdf.billing_address'|trans }}: </span>
                         <br />
@@ -67,16 +68,16 @@
                     <span style="font-weight: bold">{{ address.address }}</span>
                     <br />
                     <span>{{ 'order.pdf.city'|trans }}: </span>
-                    <span style="font-weight: bold">{{ address.city.name }}</span>
+                    <span style="font-weight: bold">{{ address.city.name|default('') }}</span>
                     <br />
                     <span>{{ 'order.pdf.state'|trans }}: </span>
-                    <span style="font-weight: bold">{{ address.city.state.name }}</span>
+                    <span style="font-weight: bold">{{ address.city.state.name|default('') }}</span>
                     <br />
                     <span>{{ 'order.pdf.zipCode'|trans }}: </span>
                     <span style="font-weight: bold">{{ address.zipCode }}</span>
                     <br />
                     <span>{{ 'order.pdf.country'|trans }}: </span>
-                    <span style="font-weight: bold">{{ address.city.state.country.name }}</span>
+                    <span style="font-weight: bold">{{ address.city.state.country.name|default('') }}</span>
                     <br />
                 {% endfor %}
             </p>
@@ -84,7 +85,7 @@
     </div>
     <div>
         {% set top = 180 %}
-        {% if order.customer.addresses.count > 1 %}
+        {% if order.customer.addresses|default([])|length > 1 %}
             {% set top = 250 %}
         {% endif %}
         <table cellspacing="0" style="width: 100%; margin-top: {{ top }}px">

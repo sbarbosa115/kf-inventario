@@ -2,6 +2,8 @@
 
 namespace App\Tests\Functional\Ordering;
 
+use App\Inventory\Domain\Model\Warehouse;
+use App\Ordering\Domain\Model\Order;
 use App\Tests\Support\ApiTestCase;
 use App\Tests\Support\SignsIn;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
@@ -97,5 +99,57 @@ final class OrderDocumentsTest extends ApiTestCase
 
         $this->assertStatus(200);
         self::assertSame('attachment;filename="file-upload-template-A_B_C__X-Evil: 1.xls"', $this->client->getResponse()->headers->get('Content-Disposition'));
+    }
+
+    /**
+     * A shop order sent with an empty shipping block gives its customer an address without a city (or state, or
+     * country): the webhook still places it and its PDFs print those fields blank, as production always did (the test
+     * environment's Twig has strict variables, as dev does).
+     */
+    public function testAnOrderWhoseAddressHasNoCityHasItsPdfs(): void
+    {
+        $warehouse = $this->aWarehouse('Colombia', ['https://colombia.test']);
+        // Warehouse 1 (ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID): the webhook also renders the printer's PDF.
+        $this->em()->getConnection()->executeStatement('UPDATE warehouse SET id = 1 WHERE id = ?', [$warehouse->getId()]);
+        $this->em()->clear();
+        $warehouse = $this->em()->find(Warehouse::class, 1) ?? throw new \LogicException('No warehouse 1');
+        $this->aProduct('KF-01', $warehouse);
+        $this->client->request('POST', '/admin/order/1H39j0jpQPsWL958v9R4', server: ['CONTENT_TYPE' => 'application/json', 'HTTP_X-WC-Webhook-Source' => 'https://colombia.test'], content: json_encode([
+            'id' => 5901,
+            'billing' => ['first_name' => 'Ana', 'last_name' => 'Gomez', 'email' => 'ana.nocity@example.com', 'phone' => '555-0100', 'address_1' => '1 Billing St', 'postcode' => '33101', 'city' => 'Miami', 'state' => 'FL', 'country' => 'US'],
+            'shipping' => [],
+            'line_items' => [['sku' => 'KF-01', 'quantity' => 1]],
+        ], \JSON_THROW_ON_ERROR));
+        $this->assertStatus(200, 'The webhook answers {status: true}, not a 500.');
+        self::assertEmailCount(1, message: 'The printer gets it, PDF attached.');
+        $this->em()->clear();
+        $order = $this->em()->getRepository(Order::class)->findOneBy(['code' => '5901']);
+        self::assertNotNull($order, 'The order is placed.');
+
+        $this->signInAs(['ROLE_MANAGE_ORDERS']);
+        $this->assertPdfs((int) $order->getId());
+    }
+
+    /**
+     * Orders without a customer exist (the orders list includes them): their PDFs print the customer blank.
+     */
+    public function testAnOrderWithoutACustomerHasItsPdfs(): void
+    {
+        $this->signInAs(['ROLE_MANAGE_ORDERS']);
+        $warehouse = $this->aWarehouse();
+        $id = $this->placeOrder($warehouse, $this->aCustomer(), [[$this->aProduct('KF-A', $warehouse), 1]]);
+        $this->em()->getConnection()->executeStatement('UPDATE `order` SET customer_id = NULL WHERE id = ?', [$id]);
+
+        $this->assertPdfs($id);
+    }
+
+    private function assertPdfs(int $id): void
+    {
+        foreach (["/api/v1/orders/{$id}/pdf", "/api/v1/orders/{$id}/remaining-pdf"] as $url) {
+            $this->client->request('GET', $url);
+
+            $this->assertStatus(200, $url);
+            self::assertSame('application/pdf', $this->client->getResponse()->headers->get('Content-Type'), $url);
+        }
     }
 }
