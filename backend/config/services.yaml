@@ -63,6 +63,11 @@ services:
     arguments:
       $printedWarehouseId: '%ordering.webhook_email_warehouse_id%'
 
+  # The "Sync Orders" pull places shop orders as the webhook does: the same printer rule.
+  App\Ordering\Application\Command\SyncRemoteOrdersHandler:
+    arguments:
+      $printedWarehouseId: '%ordering.webhook_email_warehouse_id%'
+
   App\Ordering\Infrastructure\Mail\OrderCreatedMailer:
     arguments:
       $fromAddress: '%env(MAILER_FROM_ADDRESS)%'

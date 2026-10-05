@@ -823,7 +823,7 @@
         },
         "/api/v1/orders/sync": {
             "post": {
-                "summary": "Pulls new orders from the WooCommerce shops (item 13). 501 order_sync_unavailable until then; 502 order_sync_failed. (item 13).",
+                "summary": "Pulls the orders the WooCommerce shops have waiting (REST API) and places the ones the app does not have yet,\nas the webhook would: `imported` placed, `skipped` already imported (deleted ones included) or not placeable\n(logged). A warehouse whose shop the app holds no keys for is not pulled. 502 order_sync_failed when a shop\ncannot be read (nothing is kept).",
                 "operationId": "post_api_orders_sync",
                 "responses": {
                     "202": {

@@ -112,7 +112,7 @@ first). Writes from another origin are refused (403).
 | `POST` | `/api/v1/orders/{id}/status` | `ROLE_UPDATE_ORDERS` | 4: `{status: 1-6}` → `OrderDetailOutput` (a status history row; stock untouched) |
 | `PUT` | `/api/v1/orders/{id}/comments` | `ROLE_USER` | 4: `{comments: [{id\|null, content}]}` → `{comments}`; a comment left out is detached from the order |
 | `DELETE` | `/api/v1/orders/{id}` | `ROLE_CAN_DELETE_ORDERS` | 4: 204; lines deleted, comments and order soft-deleted |
-| `POST` | `/api/v1/orders/sync` | `ROLE_CAN_SYNC_ORDERS` | 13 (501 until then) |
+| `POST` | `/api/v1/orders/sync` | `ROLE_CAN_SYNC_ORDERS` | 13: pulls the shop's waiting WooCommerce orders (REST API, `processing`, last 30 days) and places the new ones as the webhook does (same mapper, warehouse by `warehouse.urls`, printer rule) → 202 `{imported, skipped}`; an order whose shop id is already an order code in that warehouse (deleted ones too) is skipped, one that cannot be placed is skipped and logged; keys `WOO_COMMERCE_URL/_API_KEY/_API_SECRET` (one shop; none set → nothing pulled); 502 `order_sync_failed` when the shop cannot be read (nothing kept) |
 | `GET` | `/api/v1/orders/{id}/partials` | `ROLE_USER` | 4: `OrderPartialsOutput` (shipped so far, pending, the warehouse's stock of the order's products) |
 | `POST` | `/api/v1/orders/{id}/partials` | `ROLE_USER` | 4: `{items: [{uuid, quantity}]}` → `OrderPartialsOutput`; the whole order in stock → status 5, else a partial (status 4); stock taken out; 409 `partial_exceeds_order`, 422 `insufficient_stock`, 404 `stock_not_found` (Inventory's `Stock::subtract`) |
 | `GET` | `/api/v1/orders/{id}/pdf` | `ROLE_CAN_READ_ORDERS` | 4: `application/pdf` (`templates/pdf/order.html.twig`) |
@@ -148,6 +148,10 @@ version, extensions, time zone (America/Bogota) and the email queue's cron line.
 of moving the existing account to this layout: the document root becomes `backend/public`, the settings move to
 `backend/.env.local` (`deploy/env.local.example`), the cron line drains the email queue, and everyone signs in again
 once.
+
+The "Sync Orders" button reads the shop's WooCommerce REST API with `WOO_COMMERCE_URL`, `WOO_COMMERCE_API_KEY` and
+`WOO_COMMERCE_API_SECRET` (read-only keys, one shop as before): the URL must be one of the receiving warehouse's
+`urls` (the address its webhook comes from). With any of the three empty the button places nothing.
 
 ## Known gaps
 
