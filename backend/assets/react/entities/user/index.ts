@@ -8,4 +8,5 @@ export {
   violationsToErrors,
 } from './model/userForm';
 export type {UserFormErrors, UserFormValues} from './model/userForm';
+export {isNamedRole, ROLE_GROUPS, roleTone, visibleRoles} from './model/roles';
 export {RoleBadges} from './ui/RoleBadges';

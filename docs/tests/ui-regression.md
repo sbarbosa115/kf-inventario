@@ -520,27 +520,28 @@ only `ROLE_CAN_READ_INVOICES` sees the list and the detail but no Create invoice
 
 **USR-01 · The list shows every account with its roles, and the old address lands on it**
 Smoke: `e2e/users.spec.ts`.
-Signed in as the admin, open `/admin/user/` (the previous version's address): `/admin/users` opens, "View Users", one
-row per account (`#`, name, email, one badge per role, an Edit button). The search box finds a row by name, username,
-email or role; a search that matches nobody says so and "Show all" brings the rows back.
+Signed in as the admin, open `/admin/user/` (the previous version's address): `/admin/users` opens, "Users" with the
+count under it ("4 users"), one row per account (name, username, email, one chip per role by its plain name, Active or
+Inactive). No `ROLE_…` text anywhere. The search box finds a row by name, username, email or a role's plain name; a
+search that matches nobody says so and "Show all" brings the rows back.
 
 **USR-02 · A new user is created and appears in the list**
 Smoke (part): `e2e/users.spec.ts` creates the user and checks the list.
-Create User › fill Name, Email, Username, Password, tick `ROLE_MANAGE_INVENTORY`, Save: back on the list with "The
-user was created successfully." and the new row. By hand: sign out and sign in as the new user: the Products menu only.
-The form offers exactly nine roles (`ROLE_ADMIN`, `ROLE_MANAGE_INVENTORY`, `ROLE_MANAGE_ORDERS`, `ROLE_UPDATE_ORDERS`,
-`ROLE_UPDATE_INVOICES`, `ROLE_CAN_READ_INVOICES`, `ROLE_CAN_CREATE_INVOICES`, `ROLE_MANAGE_USERS`,
-`ROLE_MANAGE_WAREHOUSES`) and a Status of Enabled or Disabled.
+Create user › fill Name, Email, Username, Password, tick Inventory, Save: back on the list with the toast "The user
+was created." and the new row with an Inventory chip. By hand: sign out and sign in as the new user: the Products menu
+only. The form offers exactly nine roles (Admin, Inventory, Orders, Orders: update, Invoices: update, Invoices: read,
+Invoices: create, Users, Warehouses: the same nine as before) and a Status of Active or Inactive.
 
 **USR-03 · Editing without typing a password keeps the password**
 Smoke (part): `e2e/users.spec.ts` edits, then signs in with the old password through the API.
-Edit the user of USR-02: the Password box is empty and says "Leave blank to keep the current password."; change the
-name, tick `ROLE_MANAGE_ORDERS`, Save: "The user was updated successfully." and the row shows both. By hand: sign in as
+Edit the user of USR-02 (the row's "⋯" menu › Edit, or a click on the row): the Password box is empty and says "Leave
+blank to keep the current password."; change the name, tick Orders, Save: the toast "The user was updated." and the row
+shows both. By hand: sign in as
 that user with the password of USR-02: it still works.
 
 **USR-04 · The form names what is missing and what is wrong**
 Smoke: `e2e/users.spec.ts`.
-Create User, Save with everything empty: Name, Email, Username and Password are marked and say "This value should not
+Create user, Save with everything empty: Name, Email, Username and Password are marked and say "This value should not
 be blank."; nothing is sent. An email without `@` or a password of fewer than 6 characters says so under its field.
 
 **USR-05 · A user that no longer exists says so**
@@ -557,6 +558,28 @@ then sign in with the old one (refused) and the new one (works).
 ### Users, redesigned (item 7)
 
 <!-- Item 7 (users-ui) adds USR-07 – 09 here, and updates the texts of USR-01 – 06. -->
+
+**USR-07 · The form groups the roles by what they open and describes each one**
+Smoke: `e2e/users.spec.ts`.
+Create user: under Roles, four groups (Warehouse: Inventory, Warehouses · Sales: Orders, Orders: update · Invoices:
+Invoices: update, read, create · Admin: Admin, Users), each role with a one-line description of what it opens. Under
+Admin: "Admin includes everything except invoices." No `ROLE_…` constant anywhere. With the language on ES the names,
+descriptions and the note are Spanish. By hand, read each description against what that role really reaches (sign in as
+a user with only that role): none promises more than it gives.
+
+**USR-08 · The list filters by status and a row opens its form**
+Smoke: `e2e/users.spec.ts`.
+The chips All / Active / Inactive carry the number of users each keeps; Active hides an inactive user and Inactive hides
+an active one; "Clear filters" appears with a filter on and brings everyone back. A click on a row (not on its "⋯")
+opens Edit; the "⋯" menu has Edit only. Sorting by Name, Username, Email and Status works. Create an inactive user and
+check its row says "Inactive" in words.
+
+**USR-09 · Saving toasts, and the form is usable on a phone and in dark**
+Smoke (part): `e2e/users.spec.ts` saves an edit and sees the toast and the Save button in view.
+By hand at 390 px, light and dark: the list is cards (name, username, email, roles, status), no sideways scroll; the
+form is one column, each role row has a 44 px touch target, the Save / Cancel bar stays above the tab bar while the role
+list scrolls, and the password's show/hide button and Caps Lock hint work. A failed save (stop the stack's `php`
+service) shows the red message in the form and keeps what was typed.
 
 ## 8. Emails (MAIL)
 

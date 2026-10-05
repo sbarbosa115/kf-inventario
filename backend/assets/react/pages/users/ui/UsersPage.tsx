@@ -1,33 +1,54 @@
-import {useMemo} from 'react';
-import {Link, useLocation} from 'react-router-dom';
-import {listUsers, RoleBadges, type User} from '@/entities/user';
+import {useMemo, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {listUsers, RoleBadges, visibleRoles, type User} from '@/entities/user';
 import {ApiError} from '@/shared/api';
 import {useLoad} from '@/shared/lib';
 import {useTranslation} from '@/shared/i18n';
-import {DataTable, PageCard, type Column} from '@/shared/ui';
+import {
+  Button,
+  DataTable,
+  ClearFilters,
+  FilterChips,
+  PageHeader,
+  StatusBadge,
+  Toolbar,
+  type Column,
+} from '@/shared/ui';
 
-/** View Users: every account, its roles, and the way into the form that edits it (ROLE_MANAGE_USERS). */
+type StatusFilter = 'active' | 'inactive';
+
+/** Users: every account, its roles in plain words, and the way into the form that edits it (ROLE_MANAGE_USERS). */
 export function UsersPage() {
   const {t} = useTranslation();
-  const saved = (useLocation().state as {saved?: 'created' | 'updated'} | null)
-    ?.saved;
+  const navigate = useNavigate();
   const {data, loading, error, reload} = useLoad(listUsers, []);
+  const [status, setStatus] = useState<StatusFilter | null>(null);
+
+  const forbidden = error instanceof ApiError && error.status === 403;
+  const activeCount = data?.filter((user) => user.enabled).length ?? 0;
+  const rows = useMemo(
+    () =>
+      status === null
+        ? data
+        : data?.filter((user) => user.enabled === (status === 'active')),
+    [data, status],
+  );
 
   const columns = useMemo<Column<User>[]>(
     () => [
       {
-        key: 'id',
-        header: t('users.columns.id'),
-        render: (user) => user.id,
-        sortValue: (user) => user.id,
-        searchValue: (user) => user.id,
-      },
-      {
         key: 'name',
         header: t('users.columns.name'),
-        render: (user) => user.name,
+        render: (user) => <strong>{user.name}</strong>,
         sortValue: (user) => user.name.toLowerCase(),
         searchValue: (user) => `${user.name} ${user.username}`,
+      },
+      {
+        key: 'username',
+        header: t('users.columns.username'),
+        render: (user) => user.username,
+        sortValue: (user) => user.username.toLowerCase(),
+        mono: true,
       },
       {
         key: 'email',
@@ -40,54 +61,93 @@ export function UsersPage() {
         key: 'roles',
         header: t('users.columns.roles'),
         render: (user) => <RoleBadges roles={user.roles} />,
-        searchValue: (user) => user.roles.join(' '),
+        searchValue: (user) =>
+          visibleRoles(user.roles)
+            .map((role) => `${role} ${t(`roles.names.${role}`)}`)
+            .join(' '),
       },
       {
-        key: 'options',
-        header: t('users.columns.options'),
+        key: 'status',
+        header: t('users.columns.status'),
         render: (user) => (
-          <Link
-            to={`/admin/users/${user.id}/edit`}
-            className="btn btn-sm btn-success"
-          >
-            <i className="fas fa-edit" aria-hidden="true" /> {t('users.edit')}
-          </Link>
+          <StatusBadge tone={user.enabled ? 'accent' : 'neutral'}>
+            {user.enabled ? t('users.active') : t('users.inactive')}
+          </StatusBadge>
         ),
+        sortValue: (user) => (user.enabled ? 0 : 1),
       },
     ],
     [t],
   );
 
   return (
-    <PageCard
-      title={t('users.title')}
-      actions={
-        <Link to="/admin/users/new" className="btn btn-sm btn-success">
-          <i className="fas fa-people-carry" aria-hidden="true" />{' '}
-          {t('users.create')}
-        </Link>
-      }
-    >
-      {saved && (
-        <div className="alert alert-success" role="status">
-          {t(`users.${saved}`)}
-        </div>
-      )}
-      {error instanceof ApiError && error.status === 403 ? (
+    <>
+      <PageHeader
+        title={t('users.title')}
+        subtitle={
+          data === undefined
+            ? undefined
+            : t('users.count', {count: data.length})
+        }
+        primary={
+          <Button to="/admin/users/new" variant="primary" icon="fa-plus">
+            {t('users.create')}
+          </Button>
+        }
+      />
+      {forbidden ? (
         <div className="alert alert-warning" role="alert">
           {t('errors.forbidden')}
         </div>
       ) : (
-        <DataTable
-          columns={columns}
-          rows={data}
-          rowKey={(user) => user.id}
-          loading={loading && data === undefined}
-          error={error}
-          onRetry={reload}
-          emptyMessage={t('users.empty')}
-        />
+        <>
+          {data !== undefined && data.length > 0 && (
+            <Toolbar label={t('users.filters.label')}>
+              <FilterChips
+                label={t('users.filters.label')}
+                value={status}
+                onChange={(key) => setStatus(key as StatusFilter | null)}
+                allCount={data.length}
+                options={[
+                  {
+                    key: 'active',
+                    label: t('users.filters.active'),
+                    count: activeCount,
+                  },
+                  {
+                    key: 'inactive',
+                    label: t('users.filters.inactive'),
+                    count: data.length - activeCount,
+                  },
+                ]}
+              />
+              {status !== null && (
+                <ClearFilters onClick={() => setStatus(null)} />
+              )}
+            </Toolbar>
+          )}
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey={(user) => user.id}
+            rowLabel={(user) => user.name}
+            loading={loading && data === undefined}
+            error={error}
+            onRetry={reload}
+            emptyMessage={
+              status === null ? t('users.empty') : t('common.filteredEmpty')
+            }
+            onRowClick={(user) => navigate(`/admin/users/${user.id}/edit`)}
+            rowActions={(user) => [
+              {
+                label: t('users.edit'),
+                icon: 'fa-edit',
+                href: `/admin/users/${user.id}/edit`,
+              },
+            ]}
+          />
+        </>
       )}
-    </PageCard>
+    </>
   );
 }
