@@ -148,7 +148,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         cookie_name?: scalar|Param|null, // The name of the cookie to use when using stateless protection. // Default: "csrf-token"
  *     },
  *     form?: bool|array{ // Form configuration
- *         enabled?: bool|Param, // Default: true
+ *         enabled?: bool|Param, // Default: false
  *         csrf_protection?: bool|array{
  *             enabled?: scalar|Param|null, // Default: null
  *             token_id?: scalar|Param|null, // Default: null
@@ -1399,26 +1399,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     generate_final_classes?: bool|Param, // Default: true
  *     generate_final_entities?: bool|Param, // Default: false
  * }
- * @psalm-type BazingaJsTranslationConfig = array{
- *     locale_fallback?: scalar|Param|null, // Default: "en"
- *     default_domain?: scalar|Param|null, // Default: "messages"
- *     http_cache_time?: scalar|Param|null, // Default: "86400"
- *     active_locales?: list<scalar|Param|null>,
- *     active_domains?: list<scalar|Param|null>,
- * }
- * @psalm-type FosJsRoutingConfig = array{
- *     serializer?: scalar|Param|null,
- *     routes_to_expose?: list<scalar|Param|null>,
- *     router?: scalar|Param|null, // Default: "router"
- *     request_context_base_url?: scalar|Param|null, // Default: null
- *     cache_control?: array{
- *         public?: bool|Param, // Default: false
- *         expires?: scalar|Param|null, // Default: null
- *         maxage?: scalar|Param|null, // Default: null
- *         smaxage?: scalar|Param|null, // Default: null
- *         vary?: list<scalar|Param|null>,
- *     },
- * }
  * @psalm-type WebpackEncoreConfig = array{
  *     output_path?: scalar|Param|null, // The path where Encore is building the assets - i.e. Encore.setOutputPath()
  *     crossorigin?: false|"anonymous"|"use-credentials"|Param, // crossorigin value when Encore.enableIntegrityHashes() is used, can be false (default), anonymous or use-credentials // Default: false
@@ -1497,8 +1477,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     twig?: TwigConfig,
  *     monolog?: MonologConfig,
  *     debug?: DebugConfig,
- *     bazinga_js_translation?: BazingaJsTranslationConfig,
- *     fos_js_routing?: FosJsRoutingConfig,
  *     webpack_encore?: WebpackEncoreConfig,
  *     nelmio_api_doc?: NelmioApiDocConfig,
  *     "when@dev"?: array{
@@ -1514,8 +1492,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         monolog?: MonologConfig,
  *         debug?: DebugConfig,
  *         maker?: MakerConfig,
- *         bazinga_js_translation?: BazingaJsTranslationConfig,
- *         fos_js_routing?: FosJsRoutingConfig,
  *         webpack_encore?: WebpackEncoreConfig,
  *         nelmio_api_doc?: NelmioApiDocConfig,
  *     },
@@ -1531,8 +1507,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig?: TwigConfig,
  *         monolog?: MonologConfig,
  *         debug?: DebugConfig,
- *         bazinga_js_translation?: BazingaJsTranslationConfig,
- *         fos_js_routing?: FosJsRoutingConfig,
  *         webpack_encore?: WebpackEncoreConfig,
  *         dama_doctrine_test?: DamaDoctrineTestConfig,
  *         nelmio_api_doc?: NelmioApiDocConfig,
