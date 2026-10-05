@@ -10,9 +10,9 @@ use App\Shared\Domain\Error\NotFound;
  */
 final class OrderedProductNotFound extends NotFound
 {
-    public function __construct(private readonly string $product)
+    public function __construct(private readonly string $product, ?\Throwable $previous = null)
     {
-        parent::__construct('product_not_found', \sprintf('Product "%s" not found.', $product));
+        parent::__construct('product_not_found', \sprintf('Product "%s" not found.', $product), $previous);
     }
 
     public function details(): array

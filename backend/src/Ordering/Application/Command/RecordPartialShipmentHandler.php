@@ -3,7 +3,6 @@
 namespace App\Ordering\Application\Command;
 
 use App\Ordering\Application\Port\OrderInventory;
-use App\Ordering\Domain\Error\NotEnoughStockToShip;
 use App\Ordering\Domain\Error\OrderedProductNotFound;
 use App\Ordering\Domain\Error\OrderNotFound;
 use App\Ordering\Domain\Error\OrderWarehouseNotFound;
@@ -12,6 +11,7 @@ use App\Ordering\Domain\Model\Order;
 use App\Ordering\Domain\Model\OrderProduct;
 use App\Ordering\Domain\Repository\OrderRepository;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Domain\Error\DomainError;
 
 /**
  * Legacy OrderService::createPartial. Shipping exactly what was ordered, with the warehouse holding enough of each
@@ -31,7 +31,8 @@ final class RecordPartialShipmentHandler implements CommandHandler
     }
 
     /**
-     * @throws OrderNotFound|PartialExceedsOrder|NotEnoughStockToShip|OrderedProductNotFound|OrderWarehouseNotFound
+     * @throws OrderNotFound|PartialExceedsOrder|OrderedProductNotFound|OrderWarehouseNotFound
+     * @throws DomainError                                                                     Inventory's insufficient_stock (422) or stock_not_found (404) when the warehouse cannot ship
      */
     public function __invoke(RecordPartialShipment $command): void
     {

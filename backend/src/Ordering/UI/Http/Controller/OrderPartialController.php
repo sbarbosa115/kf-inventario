@@ -46,7 +46,8 @@ final class OrderPartialController extends AbstractController
     /**
      * PartialInput: ships these products now. Exactly the whole order, in stock: the order is sent (status 5);
      * otherwise a partial shipment (status 4). Either way the products leave the order's warehouse. 409
-     * partial_exceeds_order (more than what is left, or the order is already sent); 422 insufficient_stock.
+     * partial_exceeds_order (more than what is left, or the order is already sent); 422 insufficient_stock (the
+     * warehouse holds fewer); 404 stock_not_found (the warehouse has none of a product at all).
      */
     #[Route('/api/v1/orders/{id}/partials', name: 'api_orders_partials_record', methods: ['POST'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_USER')]

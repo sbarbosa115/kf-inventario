@@ -9,8 +9,8 @@ use App\Shared\Domain\Error\NotFound;
  */
 final class OrderWarehouseNotFound extends NotFound
 {
-    public function __construct()
+    public function __construct(?\Throwable $previous = null)
     {
-        parent::__construct('warehouse_not_found', 'Warehouse not found.');
+        parent::__construct('warehouse_not_found', 'Warehouse not found.', $previous);
     }
 }

@@ -934,7 +934,7 @@
                 }
             },
             "post": {
-                "summary": "PartialInput: ships these products now. Exactly the whole order, in stock: the order is sent (status 5);\notherwise a partial shipment (status 4). Either way the products leave the order's warehouse. 409\npartial_exceeds_order (more than what is left, or the order is already sent); 422 insufficient_stock.",
+                "summary": "PartialInput: ships these products now. Exactly the whole order, in stock: the order is sent (status 5);\notherwise a partial shipment (status 4). Either way the products leave the order's warehouse. 409\npartial_exceeds_order (more than what is left, or the order is already sent); 422 insufficient_stock (the\nwarehouse holds fewer); 404 stock_not_found (the warehouse has none of a product at all).",
                 "operationId": "post_api_orders_partials_record",
                 "parameters": [
                     {
