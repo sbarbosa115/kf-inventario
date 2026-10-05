@@ -1,46 +1,83 @@
-import {useState, type FormEvent} from 'react';
-import {Link} from 'react-router-dom';
+import {useId, useRef, useState, type DragEvent, type FormEvent} from 'react';
 import {ApiError, failureMessage, type Schema} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {Field} from '@/shared/ui';
+import {useFormat, useRememberedWarehouse} from '@/shared/lib';
+import {Button, WarehouseSwitch} from '@/shared/ui';
 import {
   TEMPLATE_ALL_URL,
   TEMPLATE_URL,
   uploadProducts,
 } from '../api/uploadProductsApi';
+import {isSpreadsheet, sheetType} from '../model/sheetFile';
+import './upload-products.css';
 
-/** The upload form: a spreadsheet and the warehouse its quantities go to, with the template links. */
+interface Stored {
+  count: number;
+  warehouse: {id: number; name: string};
+}
+
+/**
+ * Upload a stock sheet in three steps: download the template, fill in the quantities, choose the warehouse and drop
+ * the file (a wrong type is refused in place). The result says how many rows were stored, and where.
+ */
 export function UploadProductsForm({
   warehouses,
 }: {
   warehouses: Schema<'WarehouseOutput'>[];
 }) {
   const {t} = useTranslation();
+  const {num} = useFormat();
+  const ids = useId();
+  const input = useRef<HTMLInputElement>(null);
+  const [warehouse, pickWarehouse] = useRememberedWarehouse(warehouses);
   const [file, setFile] = useState<File | null>(null);
-  const [warehouseId, setWarehouseId] = useState('');
-  const [errors, setErrors] = useState<{file?: string; warehouse?: string}>({});
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
-  const [stored, setStored] = useState<number | null>(null);
+  const [stored, setStored] = useState<Stored | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const choose = (chosen: File | null | undefined) => {
+    setFailure(null);
+    if (!chosen) return;
+    if (!isSpreadsheet(chosen)) {
+      setFile(null);
+      setFileError(t('stock.upload.wrongType', {name: chosen.name}));
+      if (input.current) input.current.value = '';
+      return;
+    }
+    setFileError(null);
+    setStored(null);
+    setFile(chosen);
+  };
+
+  const clear = () => {
+    setFile(null);
+    if (input.current) input.current.value = '';
+  };
+
+  const onDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setDragging(false);
+    choose(event.dataTransfer?.files?.[0]);
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setFailure(null);
-    setStored(null);
-    const found = {
-      file: file ? undefined : t('stock.upload.fileRequired'),
-      warehouse:
-        warehouseId === '' ? t('stock.upload.warehouseRequired') : undefined,
-    };
-    setErrors(found);
-    if (!file || warehouseId === '') return;
-
+    if (!file) {
+      setFileError(t('stock.upload.fileRequired'));
+      return;
+    }
+    if (!warehouse) return;
     setBusy(true);
     try {
-      const result = await uploadProducts(file, Number(warehouseId));
-      setStored(result.stored);
-      setFile(null);
-      (event.target as HTMLFormElement).reset();
+      const result = await uploadProducts(file, warehouse.id);
+      setStored({
+        count: result.stored,
+        warehouse: {id: warehouse.id, name: warehouse.name},
+      });
+      clear();
     } catch (error) {
       if (error instanceof ApiError && error.status === 415) {
         setFailure(t('stock.upload.unsupported_media'));
@@ -62,55 +99,153 @@ export function UploadProductsForm({
     }
   };
 
+  const hintId = `${ids}-hint`;
+  const errorId = `${ids}-error`;
+
   return (
-    <form onSubmit={submit} noValidate>
-      <p>
-        {t('stock.upload.description')}{' '}
-        <a href={TEMPLATE_URL} className="btn btn-sm btn-success">
-          <i className="fas fa-download" aria-hidden="true" />{' '}
-          {t('stock.upload.downloadTemplate')}
-        </a>{' '}
-        <a href={TEMPLATE_ALL_URL} className="btn btn-sm btn-success">
-          <i className="fas fa-download" aria-hidden="true" />{' '}
-          {t('stock.upload.downloadAll')}
-        </a>
-      </p>
-      {stored !== null && (
-        <div className="alert alert-success" role="status">
-          {t('stock.upload.done', {count: stored})}{' '}
-          <Link to="/admin/products">{t('nav.productList')}</Link>
-        </div>
+    <form className="upload" onSubmit={submit} noValidate>
+      {stored && (
+        <section className="upload-result" role="status">
+          <i
+            className="fas fa-check-circle upload-result__icon"
+            aria-hidden="true"
+          />
+          <div className="upload-result__text">
+            <p className="upload-result__title">
+              {t('stock.upload.stored', {
+                count: stored.count,
+                warehouse: stored.warehouse.name,
+              })}
+            </p>
+            <p className="upload-result__next">{t('stock.upload.storedNext')}</p>
+          </div>
+          <Button
+            variant="secondary"
+            icon="fa-boxes"
+            to={`/admin/products?warehouse=${stored.warehouse.id}`}
+          >
+            {t('stock.upload.openProducts', {warehouse: stored.warehouse.name})}
+          </Button>
+        </section>
       )}
-      {failure && (
-        <div className="alert alert-danger" role="alert">
-          {failure}
-        </div>
-      )}
-      <Field label={t('stock.upload.file')} error={errors.file}>
-        <input
-          type="file"
-          className="form-control-file"
-          accept=".xls,.xlsx"
-          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-        />
-      </Field>
-      <Field label={t('stock.upload.warehouse')} error={errors.warehouse}>
-        <select
-          className="form-control"
-          value={warehouseId}
-          onChange={(event) => setWarehouseId(event.target.value)}
-        >
-          <option value="">{t('stock.warehouse.choose')}</option>
-          {warehouses.map((warehouse) => (
-            <option key={warehouse.id} value={warehouse.id}>
-              {warehouse.name}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <button type="submit" className="btn btn-primary" disabled={busy}>
-        {busy ? t('stock.upload.submitting') : t('stock.upload.submit')}
-      </button>
+
+      <ol className="upload-steps" aria-label={t('stock.upload.steps')}>
+        <li className="upload-step">
+          <span className="upload-step__number" aria-hidden="true">
+            1
+          </span>
+          <div className="upload-step__body">
+            <h2 className="upload-step__title">{t('stock.upload.step1')}</h2>
+            <p className="upload-step__text">{t('stock.upload.step1Text')}</p>
+            <div className="upload-step__actions">
+              <Button variant="secondary" icon="fa-download" href={TEMPLATE_URL}>
+                {t('stock.upload.downloadTemplate')}
+              </Button>
+              <Button
+                variant="secondary"
+                icon="fa-download"
+                href={TEMPLATE_ALL_URL}
+              >
+                {t('stock.upload.downloadAll')}
+              </Button>
+            </div>
+          </div>
+        </li>
+        <li className="upload-step">
+          <span className="upload-step__number" aria-hidden="true">
+            2
+          </span>
+          <div className="upload-step__body">
+            <h2 className="upload-step__title">{t('stock.upload.step2')}</h2>
+            <p className="upload-step__text">{t('stock.upload.step2Text')}</p>
+          </div>
+        </li>
+        <li className="upload-step">
+          <span className="upload-step__number" aria-hidden="true">
+            3
+          </span>
+          <div className="upload-step__body">
+            <h2 className="upload-step__title">{t('stock.upload.step3')}</h2>
+            <WarehouseSwitch
+              warehouses={warehouses}
+              value={warehouse?.id ?? null}
+              onChange={pickWarehouse}
+            />
+            <label
+              className={`upload-drop${dragging ? ' is-dragging' : ''}${fileError ? ' is-invalid' : ''}`}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={onDrop}
+            >
+              <input
+                ref={input}
+                type="file"
+                className="upload-drop__input"
+                accept=".xls,.xlsx"
+                aria-label={t('stock.upload.file')}
+                aria-describedby={fileError ? `${hintId} ${errorId}` : hintId}
+                aria-invalid={fileError ? true : undefined}
+                onChange={(event) => choose(event.target.files?.[0])}
+              />
+              <i
+                className="fas fa-file-excel upload-drop__icon"
+                aria-hidden="true"
+              />
+              <span className="upload-drop__text">{t('stock.upload.drop')}</span>
+              <span className="upload-drop__hint" id={hintId}>
+                {t('stock.upload.dropHint')}
+              </span>
+            </label>
+            {fileError && (
+              <p className="upload-drop__error" id={errorId} role="alert">
+                {fileError}
+              </p>
+            )}
+            {file && (
+              <div className="upload-file">
+                <i
+                  className="fas fa-file-excel upload-file__icon"
+                  aria-hidden="true"
+                />
+                <div className="upload-file__what">
+                  <span className="upload-file__name">{file.name}</span>
+                  <span className="upload-file__facts">
+                    {t('stock.upload.kilobytes', {
+                      size: num(Math.max(1, Math.round(file.size / 1024))),
+                    })}{' '}
+                    · {sheetType(file)}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  icon="fa-times"
+                  aria-label={t('stock.upload.removeFile', {name: file.name})}
+                  onClick={clear}
+                />
+              </div>
+            )}
+            {failure && (
+              <div className="alert alert-danger" role="alert">
+                {failure}
+              </div>
+            )}
+            <div className="upload-step__actions">
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                icon="fa-upload"
+                loading={busy}
+              >
+                {t('stock.upload.submit')}
+              </Button>
+            </div>
+          </div>
+        </li>
+      </ol>
     </form>
   );
 }

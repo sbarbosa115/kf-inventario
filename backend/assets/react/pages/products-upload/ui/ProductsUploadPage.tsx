@@ -1,26 +1,26 @@
+import {listWarehouses} from '@/entities/warehouse';
 import {UploadProductsForm} from '@/features/upload-products';
-import {apiGet, type Schema} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
-import {ErrorState, Loader, PageCard} from '@/shared/ui';
+import {EmptyState, ErrorState, PageHeader, Skeleton} from '@/shared/ui';
 
-/** Upload products: a spreadsheet of products and quantities for one warehouse (ROLE_MANAGE_INVENTORY). */
+/** Upload a stock sheet: products and quantities for one warehouse, from the template (ROLE_MANAGE_INVENTORY). */
 export function ProductsUploadPage() {
   const {t} = useTranslation();
-  const {data, error, reload} = useLoad(
-    () => apiGet<Schema<'WarehouseOutput'>[]>('/warehouses'),
-    [],
-  );
+  const {data, error, reload} = useLoad(listWarehouses, []);
 
   return (
-    <PageCard title={t('stock.upload.title')}>
+    <>
+      <PageHeader title={t('stock.upload.title')} />
       {error ? (
         <ErrorState error={error} onRetry={reload} />
       ) : data === undefined ? (
-        <Loader />
+        <Skeleton variant="form" />
+      ) : data.length === 0 ? (
+        <EmptyState icon="fa-warehouse" message={t('stock.warehouse.none')} />
       ) : (
         <UploadProductsForm warehouses={data} />
       )}
-    </PageCard>
+    </>
   );
 }
