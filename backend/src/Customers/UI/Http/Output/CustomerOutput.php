@@ -2,6 +2,8 @@
 
 namespace App\Customers\UI\Http\Output;
 
+use App\Customers\Domain\Model\Customer;
+
 /**
  * A customer and their addresses.
  */
@@ -18,5 +20,17 @@ final readonly class CustomerOutput
         public ?string $phone,
         public array $addresses,
     ) {
+    }
+
+    public static function of(Customer $customer): self
+    {
+        return new self(
+            $customer->getId() ?? 0,
+            $customer->getFirstName(),
+            $customer->getLastName(),
+            $customer->getEmail(),
+            $customer->getPhone(),
+            array_values(array_map(AddressOutput::of(...), $customer->getAddresses()->toArray())),
+        );
     }
 }

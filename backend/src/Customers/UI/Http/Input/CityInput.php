@@ -2,6 +2,7 @@
 
 namespace App\Customers\UI\Http\Input;
 
+use App\Customers\Application\Command\CityData;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -16,4 +17,9 @@ final class CityInput
 
     #[Assert\Valid]
     public ?StateInput $state = null;
+
+    public function toData(): CityData
+    {
+        return new CityData($this->id, $this->name, $this->state?->toData());
+    }
 }

@@ -98,13 +98,13 @@ first). Writes from another origin are refused (403).
 | `PUT` | `/api/v1/products/{uuid}` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
 | `POST` | `/api/v1/products/upload` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
 | `GET` | `/api/v1/products/template.xls` | `ROLE_MANAGE_INVENTORY` | 2 (501 until then) |
-| `GET` | `/api/v1/customers` | `ROLE_MANAGE_CUSTOMERS` | 3 (501 until then) |
-| `GET` | `/api/v1/customers/all` | `ROLE_MANAGE_CUSTOMERS` | 3 (501 until then) |
-| `GET` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 (501 until then) |
-| `POST` | `/api/v1/customers` | `ROLE_MANAGE_CUSTOMERS` | 3 (501 until then) |
-| `PUT` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 (501 until then) |
-| `DELETE` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 (501 until then) |
-| `GET` | `/api/v1/locations` | `ROLE_USER` | 3 (501 until then) |
+| `GET` | `/api/v1/customers` | `ROLE_MANAGE_CUSTOMERS` | 3 |
+| `GET` | `/api/v1/customers/all` | `ROLE_MANAGE_CUSTOMERS` | 3 |
+| `GET` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 |
+| `POST` | `/api/v1/customers` | `ROLE_MANAGE_CUSTOMERS` | 3 |
+| `PUT` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 |
+| `DELETE` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 |
+| `GET` | `/api/v1/locations` | `ROLE_USER` | 3 |
 | `GET` | `/api/v1/orders` | `ROLE_CAN_READ_ORDERS` | 4 (501 until then) |
 | `GET` | `/api/v1/orders/{id}` | `ROLE_CAN_READ_ORDERS` | 4 (501 until then) |
 | `POST` | `/api/v1/orders` | `ROLE_CAN_CREATE_ORDERS` | 4 (501 until then) |

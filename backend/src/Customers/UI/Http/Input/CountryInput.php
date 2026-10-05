@@ -2,6 +2,7 @@
 
 namespace App\Customers\UI\Http\Input;
 
+use App\Customers\Application\Command\CountryData;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -14,6 +15,11 @@ final class CountryInput
     #[Assert\Length(max: 255)]
     public ?string $name = null;
 
-    #[Assert\Length(max: 255)]
+    #[Assert\Length(max: 10)]
     public ?string $code = null;
+
+    public function toData(): CountryData
+    {
+        return new CountryData($this->id, $this->name, $this->code);
+    }
 }
