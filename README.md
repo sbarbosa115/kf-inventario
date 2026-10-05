@@ -156,10 +156,18 @@ recommended, once the secret is copied from the shop (a wrong one refuses every 
 
 ## Known gaps
 
+The security audit of the restructure (`docs/security/audits/2026-10-05-restructure.md`) left these for a decision:
+
+- **`sync-comments`, partial shipments, the order XLS and the warehouses need only `ROLE_USER`** (as before, PRD
+  decision 11): any account, an invoices-only one included, can record a partial shipment (stock out, order
+  completed), replace an order's comments and rename a warehouse. Audit finding 1 (High): tighten or accept.
+- **The WooCommerce webhook is admitted by its secret path and the `X-WC-Webhook-Source` header alone** unless
+  `WOO_COMMERCE_WEBHOOK_SECRET` is set (then the shop's signature is required). Set it in production (audit finding 2).
+  A delivery posted twice places two orders, as before (finding 15).
+- No login throttling, and a disabled user can still sign in (as before; the user chose to keep both). Sign-in time
+  tells whether a username exists (finding 14).
+- No script/style Content-Security-Policy (the screens load Bootstrap, jQuery and Font Awesome from CDNs) and no HSTS
+  header (set it in cPanel once HTTPS is confirmed); the other security headers are sent.
+- `master` committed an `APP_SECRET` in `.env.dist`: give production a fresh one in `backend/.env.local` at cutover.
 - The invoice roles are reached by no other role (as in production): an admin sees Invoices only when given them.
-- `sync-comments`, partial shipments, the order XLS and the warehouses need only `ROLE_USER` (as before); raised for
-  the security audit, not changed by the restructure.
-- No login throttling, and a disabled user can still sign in (as before; the user chose to keep both).
 - English only: the i18n layer supports a second locale, none is written.
-- `composer audit` reports advisories in the dependencies the app had before the restructure; the security audit of
-  the restructure (step 6) deals with them.
