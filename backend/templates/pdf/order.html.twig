@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{{ order.code }}</title>
+</head>
+<style>
+    td {
+        border-bottom: 1px solid #ddd;
+        margin: 5px;
+    }
+    body {
+        font-family: Helvetica;
+    }
+</style>
+<body>
+    <div>
+        <div style="text-align: center;">
+            <h3>Order #{{ order.code }}</h3>
+        </div>
+    </div>
+    <div>
+        <div style="float: left; display: block; width: 50%">
+            <p>
+                <span>{{ 'order.pdf.customer'|trans }}: </span>
+                <span style="font-weight: bold">{{ order.customer.firstName }} {{ order.customer.lastName }}</span>
+                <br />
+                <span>{{ 'order.pdf.email'|trans }}: </span>
+                <span style="font-weight: bold">{{ order.customer.email }}</span>
+                <br />
+                <span>{{ 'order.pdf.phone'|trans }}: </span>
+                <span style="font-weight: bold">{{ order.customer.phone }}</span>
+                <br />
+
+                <span>{{ 'order.pdf.order_number'|trans }}: </span>
+                <span style="font-weight: bold">{{ order.code }}</span>
+                <br />
+                <span>{{ 'order.pdf.created_at'|trans }}: </span>
+                <span style="font-weight: bold">{{ order.createdAt|date('F jS y \\a\\t g:ia') }}</span>
+                <br />
+                <span>{{ 'order.pdf.warehouse'|trans }}: </span>
+                <span style="font-weight: bold">{{ order.warehouse.name }}</span>
+                <br />
+                <span>{{ 'order.pdf.paymentMethod'|trans }}: </span>
+                {% if order.paymentMethod == 1 %}
+                    <span style="font-weight: bold">{{ 'paytment_methods.1'|trans }}</span>
+                {% endif %}
+                {% if order.paymentMethod == 2 %}
+                    <span style="font-weight: bold">{{ 'paytment_methods.2'|trans }}</span>
+                {% endif %}
+
+
+            </p>
+        </div>
+        <div style="float: left; display: block; width: 50%">
+            <p>
+                {% for address in order.customer.addresses %}
+                    {% if (address.addressType == 1) %}
+                        <span style="font-weight: bold">{{ 'order.pdf.billing_address'|trans }}: </span>
+                        <br />
+                    {% elseif (address.addressType == 2) %}
+                        <span style="font-weight: bold">{{ 'order.pdf.shipping_address'|trans }}: </span>
+                        <br />
+                    {% endif %}
+                    <span>{{ 'order.pdf.address'|trans }}: </span>
+                    <span style="font-weight: bold">{{ address.address }}</span>
+                    <br />
+                    <span>{{ 'order.pdf.city'|trans }}: </span>
+                    <span style="font-weight: bold">{{ address.city.name }}</span>
+                    <br />
+                    <span>{{ 'order.pdf.state'|trans }}: </span>
+                    <span style="font-weight: bold">{{ address.city.state.name }}</span>
+                    <br />
+                    <span>{{ 'order.pdf.zipCode'|trans }}: </span>
+                    <span style="font-weight: bold">{{ address.zipCode }}</span>
+                    <br />
+                    <span>{{ 'order.pdf.country'|trans }}: </span>
+                    <span style="font-weight: bold">{{ address.city.state.country.name }}</span>
+                    <br />
+                {% endfor %}
+            </p>
+        </div>
+    </div>
+    <div>
+        {% set top = 180 %}
+        {% if order.customer.addresses.count > 1 %}
+            {% set top = 250 %}
+        {% endif %}
+        <table cellspacing="0" style="width: 100%; margin-top: {{ top }}px">
+            <thead style="background-color: #eeeeee; border: none;">
+                <tr>
+                    <th height="25px" style="width: 15%">Code</th>
+                    <th style="width: 70%">Description</th>
+                    <th style="width: 15%">Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in order.orderProducts %}
+                <tr>
+                    <td height="25px">{{ product.product.code }}</td>
+                    <td>{{ product.product.detail }}</td>
+                    <td>{{ product.quantity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if order.comment %}
+        <div style="padding-top: 15px">
+            <span style="font-style: italic">{{ 'comments'|trans }}:</span>
+            <p>
+                {{ order.comment }}
+            </p>
+        </div>
+    {% endif %}
+</body>
+</html>
