@@ -46,8 +46,14 @@ Encore.setOutputPath('public/build/')
   .addAliases({'@': path.resolve(import.meta.dirname, 'assets/react')});
 
 const config = await Encore.getWebpackConfig();
-// package.json is "type": "module", which makes webpack require file extensions in .js imports; the legacy scripts
-// import without them. Removed by item 12 with assets/js.
-config.module.rules.push({test: /\.js$/, resolve: {fullySpecified: false}});
+// package.json is "type": "module", which makes webpack parse every .js file as a strict ES module: no require(), no
+// extensionless imports, no CommonJS default-import interop. The legacy scripts rely on all three, so they are parsed
+// as before. Removed by item 12 with assets/js.
+config.module.rules.push({
+  test: /\.js$/,
+  include: path.resolve(import.meta.dirname, 'assets/js'),
+  type: 'javascript/auto',
+  resolve: {fullySpecified: false},
+});
 
 export default config;

@@ -1,0 +1,22 @@
+/* App-wide styles on top of Bootstrap 4 (the legacy pages' look). Screens keep their own CSS in their slice. */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: #f8f9fa;
+}
+
+/* The legacy row tints (the getting-ready screen and the order statuses use them). */
+.row-selected-success {
+  background-color: #d4edda;
+}
+
+.row-selected-warning {
+  background-color: #fff3cd;
+}
+
+.row-selected-danger {
+  background-color: #f8d7da;
+}

@@ -1,7 +1,16 @@
-// The React app's entry, mounted by templates/spa.html.twig. Item 0 step 0.8 builds the shell here.
+// The React app's entry, mounted by templates/spa.html.twig.
+import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import {App} from './App';
+import './styles/global.css';
 
-const container = document.getElementById('root');
-if (container) {
-  createRoot(container).render(null);
+const root = document.getElementById('root');
+if (root) {
+  createRoot(root).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
 }

@@ -1,0 +1,1 @@
+export {useLoad} from './useLoad';
