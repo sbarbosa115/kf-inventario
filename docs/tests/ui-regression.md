@@ -123,30 +123,30 @@ As `inventory`, the top bar has "Open the reader" (a barcode icon) leading to `/
 
 **INV-01 · The product list opens on the first warehouse, and the old address lands on it**
 Smoke: `e2e/products.spec.ts`.
-Signed in as the admin, open `/admin/product/` (the previous version's address): `/admin/products` opens, "View
-products", the warehouse picker on Colombia, one row per product in stock there (checkbox, Code, Description, Title,
-Quantity, Price as `100.00`, Warehouse, a green Edit button). The buttons Move to Warehouse and Update Selected Using
-Excel are disabled until a row is ticked; Create Product is always there.
+Signed in as the admin, open `/admin/product/` (the previous version's address): `/admin/products` opens, "Products",
+the warehouse switch on Colombia, one row per product in stock there (checkbox, Code in monospace, Title, Detail
+truncated, Quantity, Price as `$100.00`, a "⋯" menu; no Warehouse column). Move to warehouse and Download stock sheet
+appear only in the selection bar once a row is ticked; "Create product" is always the one primary button.
 
 **INV-02 · Another warehouse reloads the list; the search narrows it**
 Smoke: `e2e/products.spec.ts`.
-Pick España: "This warehouse has no products in stock…"; back to Colombia: its rows again. Type `KF-02` in the search
-box: only that row; type something no product has: "Nothing matches these filters." and "Show all" brings every row
+Pick España in the warehouse switch: "This warehouse has no products in stock…"; back to Colombia: its rows again.
+Type `KF-02` in the search box: only that row; type something no product has: "Nothing matches these filters." and "Show all" brings every row
 back. Sorting by a column header and the pages (10 rows each) work as on the other lists.
 
 **INV-03 · The selected products download as the stock spreadsheet**
 Smoke (part): `e2e/products.spec.ts` ticks two rows and checks the download is `Products.xls`.
-Tick KF-01 and KF-02 ("2 products selected"), Update Selected Using Excel: `Products.xls` downloads. By hand: open it:
+Tick KF-01 and KF-02 (the selection bar says "2 selected"), Download stock sheet: `Products.xls` downloads. By hand: open it:
 the header row (Code, Title, Detail, Quantity, Price) and exactly the two products ticked, quantity and price 0 (the
 previous version's download was empty whenever more than one row was ticked). "Select all" in the header ticks every
 row of the page shown.
 
 **INV-04 · Move to Warehouse moves the chosen quantities; they arrive as incoming**
 Smoke (part): `e2e/products.spec.ts` moves 2 of KF-03 to Usa and checks both warehouses through the list and the API.
-Tick KF-03, Move to Warehouse: a dialog lists the ticked products, each with a quantity from 1 to what Colombia holds
-(starting at 1); a product with nothing left says "Product quantity is 0". Destination Warehouse offers every warehouse
-but Colombia. Pick Usa and 2, Move: the dialog closes, "The products were moved to Usa. They arrive there as incoming
-products.", the ticks are cleared and KF-03 shows 2 fewer. By hand: Incoming products, warehouse Usa: KF-03 with 2.
+Tick KF-03, Move to warehouse: a slide-over (the list stays in view) lists the ticked products, each with a quantity
+from 1 to what Colombia holds (starting at 1); a product with nothing left says "Product quantity is 0". Destination
+warehouse offers every warehouse but Colombia. Pick Usa and 2, Move: the panel closes, a toast says "Moved to Usa. The
+products arrive there as incoming.", the ticks are cleared and KF-03 shows 2 fewer. By hand: Incoming products, warehouse Usa: KF-03 with 2.
 Ticking several products and leaving their quantities at 1 moves 1 of each (the previous version moved only the rows
 whose quantity had been changed).
 
@@ -154,21 +154,21 @@ whose quantity had been changed).
 Open the product list in two tabs on Colombia. In the first, move all of KF-01's quantity to Usa. In the second (still
 showing the old quantity), tick KF-01, Move to Warehouse, pick the old full quantity, Move: the dialog stays open with
 "Only 0 of KF-01 are available." (or the quantity left), Move can be pressed again, and closing the dialog and
-reloading shows the stock unchanged by that attempt. Close (top-right × or the Close button) never moves anything.
+reloading shows the stock unchanged by that attempt. Cancel and the × never move anything, and neither is red.
 
 **INV-06 · A new product is created, and the form names what is missing**
 Smoke: `e2e/products.spec.ts`.
-Create Product: "Create product", the warning "This product won't be shown on the product list until you add quantities
-using Excel.", Status Active. Save empty: Code and Title say "This value should not be blank."; Code `CODE` (or `·`)
+Create product: "Create product", one "Product" section (Code, Title, Detail, Price with a "$", the Active switch last,
+on), no yellow warning, an action bar with Save and Cancel. Save empty: Code and Title say "This value should not be blank."; Code `CODE` (or `·`)
 and Title `PRODUCT` are refused ("This value should not be equal to …"), a negative price too; nothing is sent. Fill
-Code `SMOKE-INV-06`, Title, Price `25.5`, Save: back on the list with "The product was created successfully." (the new
-product is not in the list: it has no stock yet).
+Code `SMOKE-INV-06`, Title, Price `25.5`, Save: back on the list with a toast "Product saved" (the new
+product is not in the list: it has no stock yet; INV-21 covers the toast's links).
 
 **INV-07 · A product is edited, from the list and from its old address**
 Smoke: `e2e/products.spec.ts`.
 Open `/admin/product/edit/<uuid>` of the product of INV-06: its form at `/admin/products/<uuid>/edit`, "Edit product",
-filled in, no warning. Change the Title, Status Inactive, Save: "The product was updated successfully.". The Edit
-button of a row opens that product's form; Cancel goes back without saving. `/admin/products/<unknown uuid>/edit` says
+filled in. Change the Title, switch Active off, Save: the toast "Product saved" (no next-step links on an edit). A
+row's "⋯" menu → Edit opens that product's form; Cancel goes back without saving. `/admin/products/<unknown uuid>/edit` says
 "This product no longer exists." with a link back to the products.
 
 **INV-08 · A person without the inventory role is refused**
@@ -179,7 +179,45 @@ the form all work (INV-02 – 07 run as that account).
 
 ### Product list and form, redesigned (item 1)
 
-<!-- Item 1 (products-ui) adds INV-17 – 22 here, and updates the texts of INV-01 – 08. -->
+**INV-17 · The figures come from the list; the chips count it and narrow it**
+Smoke: `e2e/products.spec.ts`.
+Open `/admin/products?warehouse=1`: the strip shows Products (the rows in the list), Units (their quantities added) and
+Stock value (quantity × price added, as dollars). The chips read "All N", "In stock N", "Out of stock N" with the
+counts of the list. Out of stock: only rows at 0 (or "Nothing matches these filters." with Show all when none);
+the figures do not change; "Clear filters" is there while a chip or a search is on and brings every row back.
+
+**INV-18 · Each row has one "⋯" menu, and a click on the row opens its form**
+Smoke: `e2e/products.spec.ts`.
+"Actions for KF-02" opens a menu with Edit and Download stock sheet only (arrow keys move, Escape closes). Download
+stock sheet downloads `Products.xls` with that one product. Clicking the row (not the checkbox or the menu) opens
+`/admin/products/<uuid>/edit`.
+
+**INV-19 · The selection bar moves or downloads what is ticked, and Move opens beside the list**
+Smoke (part): `e2e/products.spec.ts` ticks two rows, opens the panel, closes it with Escape and clears the selection.
+Tick two rows: a sticky bar "2 selected · Move to warehouse · Download stock sheet · Clear". Move to warehouse opens a
+slide-over "Move to warehouse" ("From Colombia", the destination, a quantity per product, Cancel and Move); the list
+and the warehouse switch stay visible behind it; Escape or Cancel closes it with the ticks kept. By hand: Move with two
+products at quantity 1 each posts one move (INV-04 checks the result); on a failure the panel stays open with the
+reason (INV-05).
+
+**INV-20 · The warehouse is remembered, and the address can name it**
+Smoke: `e2e/products.spec.ts`.
+Pick Usa, open `/admin/products` again: Usa is chosen. Open `/admin/products?warehouse=1`: Colombia, and `/admin/products`
+now opens on Colombia. By hand: the link in the upload result (item 2) to a warehouse's products opens the list on that warehouse.
+
+**INV-21 · A saved new product offers what to do next**
+Smoke: `e2e/products.spec.ts`.
+Create product `SMOKE-INV-21`, Save: the list shows the toast "Product saved" with "Scan stock" and a second toast with
+"Upload a stock sheet"; the form had no yellow warning. "Upload a stock sheet" opens the upload screen; "Scan stock"
+opens the scan screen. By hand: the toasts go away after 5 seconds, and saving an edit shows only "Product saved".
+
+**INV-22 · On a phone the list is cards and the form is one column**
+Smoke (part): `e2e/products.spec.ts` at 390 × 844 checks that neither screen scrolls sideways.
+By hand, at 390 px and 360 px, light and dark: each product is a card (title, then Code, Quantity and Price) with its
+"⋯" and a checkbox; the toolbar wraps (warehouse switch, search, chips); the figures stack; ticking a card shows the
+selection bar and Move to warehouse opens the panel over the full width; the product form is one column with its action
+bar above the tab bar; every target is at least 44 px; no raw translation key anywhere; Spanish reads naturally
+("Trasladar a bodega", "Descargar hoja de existencias").
 
 **INV-09 · The upload screen links to the template and to every product**
 Smoke: `e2e/stock.spec.ts`.
