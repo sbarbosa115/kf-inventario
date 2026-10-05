@@ -296,7 +296,98 @@
     "noOptions": "No options",
     "required": "This value should not be blank."
   },
-  "orders": {},
+  "orders": {
+    "title": "View Orders",
+    "warehouse": "Warehouse",
+    "statusFilter": "Status",
+    "allStatuses": "Select Order Status (All)",
+    "create": "Create an Order",
+    "empty": "This warehouse has no orders yet. Create one, or sync the orders of the shops.",
+    "filteredEmpty": "No order of this warehouse has that status.",
+    "noWarehouses": "There are no warehouses yet. Add one before managing orders.",
+    "noCustomer": "No customer",
+    "columns": {
+      "comments": "Comments",
+      "customer": "Customer",
+      "code": "Order #",
+      "source": "Source",
+      "status": "Status",
+      "date": "Created Date",
+      "options": "Options"
+    },
+    "statuses": {
+      "1": "Created",
+      "2": "Processed",
+      "3": "Completed",
+      "4": "Partial",
+      "5": "Sent",
+      "6": "Delivered"
+    },
+    "sources": {
+      "web": "Web",
+      "phone": "Phone",
+      "unknown": "Unknown"
+    },
+    "commentsOf": "Comments of order {{code}}: {{count}}",
+    "statusOf": "Status of order {{code}}",
+    "statusChanged": "Order {{code}} is now {{status}}.",
+    "detail": "Order Detail",
+    "detailOf": "Order Detail of {{code}}",
+    "edit": "Edit this order",
+    "gettingReady": "Getting ready this Order",
+    "pdf": "View as PDF",
+    "xls": "Download as Excel",
+    "delete": "Delete Order",
+    "deleteOf": "Delete Order {{code}}",
+    "confirmDelete": "Are you sure that you want to delete this order?",
+    "confirmDeleteDetail": "Order {{code}}, its products and its comments will be removed.",
+    "deleted": "The order was deleted.",
+    "sync": {
+      "button": "Sync Orders",
+      "running": "Syncing orders…",
+      "done": "{{imported}} orders imported, {{skipped}} skipped."
+    },
+    "info": {
+      "source": "Source",
+      "status": "Status",
+      "customer": "Customer",
+      "email": "Email",
+      "code": "Order #",
+      "createdAt": "Creation Date",
+      "address": "Address",
+      "zipCode": "Zip Code",
+      "city": "City",
+      "state": "State",
+      "country": "Country"
+    },
+    "tabs": {
+      "products": "Products Detail",
+      "comments": "Comments"
+    },
+    "products": {
+      "code": "Code",
+      "description": "Description",
+      "quantity": "Quantity",
+      "empty": "This order has no products."
+    },
+    "remainingPdf": "Remaining Products",
+    "downloadPdf": "Download",
+    "comments": {
+      "empty": "This order has no comments yet.",
+      "label": "Comment {{number}}",
+      "add": "Add a comment",
+      "save": "Save comment {{number}}",
+      "remove": "Remove comment {{number}}",
+      "blank": "Write the comment, or remove it.",
+      "saved": "The comments were saved."
+    },
+    "errors": {
+      "order_not_found": "This order no longer exists. Reload the list.",
+      "order_sync_unavailable": "Pulling orders from the shops is not available yet.",
+      "order_sync_failed": "The shops could not be reached, so no order was imported. Try again in a moment.",
+      "validation_failed": "The change was refused. Reload the order and try again."
+    }
+  },
   "orderForm": {
     "newTitle": "Create a new order",
     "editTitle": "Editing Order",

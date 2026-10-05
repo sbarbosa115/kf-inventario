@@ -145,3 +145,12 @@ spa_order_edit:
 spa_order_getting_ready:
   path: /admin/orders/{order}/getting-ready
   controller: App\Shared\UI\Http\Spa\SpaController
+
+# Item 9 (orders-ui): the order list. Named as the legacy route: base.html.twig, the legacy order form and the
+# getting-ready page (item 10's until it lands) build their links to the list with order_index.
+order_index:
+  path: /admin/order/
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults: {path: /admin/orders, permanent: true}
+  methods: [GET]
+  options: {expose: true}

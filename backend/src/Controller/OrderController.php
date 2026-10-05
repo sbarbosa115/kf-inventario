@@ -38,13 +38,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[Route('/order', name: 'order_')]
 class OrderController extends AbstractController
 {
-    #[Route('/', name: 'index', options: ['expose' => true])]
-    #[IsGranted('ROLE_CAN_READ_ORDERS')]
-    public function index(): Response
-    {
-        return $this->render('order/index.html.twig');
-    }
-
     /**
      * @throws ExceptionInterface
      */
