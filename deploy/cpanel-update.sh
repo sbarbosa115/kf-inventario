@@ -244,8 +244,10 @@ else
 
     BACKUP="${BACKUP_DIR:-$HOME}/$DB_NAME-$(date +%Y%m%d-%H%M%S).sql"
     note "Backing up $DB_NAME before migrating…"
-    dump() { mysqldump --defaults-extra-file="$DB_CONF" --single-transaction --no-tablespaces \
-        --default-character-set=utf8mb4 --add-drop-table "$@" "$DB_NAME" > "$BACKUP"; }
+    # The dump holds every customer and every password hash: readable by this account only (umask in a subshell, so
+    # the build and var/ keep their usual permissions).
+    dump() { ( umask 077; mysqldump --defaults-extra-file="$DB_CONF" --single-transaction --no-tablespaces \
+        --default-character-set=utf8mb4 --add-drop-table "$@" "$DB_NAME" > "$BACKUP" ); }
 
     if ! dump 2>"$DB_CONF.err"; then
         # A MariaDB client against a MySQL server (or the reverse) refuses the server's self-signed certificate.
