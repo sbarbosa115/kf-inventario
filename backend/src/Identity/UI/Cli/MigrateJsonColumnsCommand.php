@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Command;
+namespace App\Identity\UI\Cli;
 
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -10,7 +10,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(name: 'app:migrate-user-roles', description: 'Convert PHP-serialized JSON columns to valid JSON')]
-class MigrateUserRolesCommand extends Command
+final class MigrateJsonColumnsCommand extends Command
 {
     private const COLUMNS = [
         ['table' => '`user`',      'column' => 'roles'],

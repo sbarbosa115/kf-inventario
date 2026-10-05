@@ -55,7 +55,7 @@
         },
         "/api/v1/users": {
             "get": {
-                "summary": "Every user, by name. (item 1)",
+                "summary": "Every user, by name.",
                 "operationId": "get_api_users_list",
                 "responses": {
                     "200": {
@@ -74,7 +74,7 @@
                 }
             },
             "post": {
-                "summary": "UserInput: creates a user. 422 when invalid. (item 1)",
+                "summary": "UserInput: creates a user. The password is required. 422 when invalid.",
                 "operationId": "post_api_users_create",
                 "responses": {
                     "201": {
@@ -92,7 +92,7 @@
         },
         "/api/v1/users/{id}": {
             "get": {
-                "summary": "One user. 404 user_not_found. (item 1)",
+                "summary": "One user. 404 user_not_found.",
                 "operationId": "get_api_users_show",
                 "parameters": [
                     {
@@ -119,7 +119,7 @@
                 }
             },
             "put": {
-                "summary": "UserInput: edits a user; a blank password keeps the current one. (item 1)",
+                "summary": "UserInput: edits a user; a blank password keeps the current one. 404 user_not_found, 422 when invalid.",
                 "operationId": "put_api_users_update",
                 "parameters": [
                     {
@@ -148,7 +148,7 @@
         },
         "/api/v1/products/by-code/{code}": {
             "get": {
-                "summary": "A product by its code (the barcode reader). 404 product_not_found. (item 2)",
+                "summary": "A product by its code (the barcode reader). 404 product_not_found. (item 2).",
                 "operationId": "get_api_products_by_code",
                 "parameters": [
                     {
@@ -177,7 +177,7 @@
         },
         "/api/v1/products/{uuid}": {
             "get": {
-                "summary": "A product by uuid. 404 product_not_found. (item 2)",
+                "summary": "A product by uuid. 404 product_not_found. (item 2).",
                 "operationId": "get_api_products_show",
                 "parameters": [
                     {
@@ -204,7 +204,7 @@
                 }
             },
             "put": {
-                "summary": "ProductInput: edits a product. (item 2)",
+                "summary": "ProductInput: edits a product. (item 2).",
                 "operationId": "put_api_products_update",
                 "parameters": [
                     {
@@ -233,7 +233,7 @@
         },
         "/api/v1/products": {
             "post": {
-                "summary": "ProductInput: creates a product. (item 2)",
+                "summary": "ProductInput: creates a product. (item 2).",
                 "operationId": "post_api_products_create",
                 "responses": {
                     "201": {
@@ -251,7 +251,7 @@
         },
         "/api/v1/products/upload": {
             "post": {
-                "summary": "multipart: `file` (xls/xlsx, the template's columns) and `warehouse_id`. 415 unsupported_media; 422 invalid_spreadsheet. (item 2)",
+                "summary": "multipart: `file` (xls/xlsx, the template's columns) and `warehouse_id`. 415 unsupported_media; 422 invalid_spreadsheet. (item 2).",
                 "operationId": "post_api_products_upload",
                 "responses": {
                     "200": {
@@ -269,7 +269,7 @@
         },
         "/api/v1/products/template.xls": {
             "get": {
-                "summary": "The stock spreadsheet: `all=1` for every product, or `uuid[]=\u2026` for the selected ones (an xls attachment). (item 2)",
+                "summary": "The stock spreadsheet: `all=1` for every product, or `uuid[]=\u2026` for the selected ones (an xls attachment). (item 2).",
                 "operationId": "get_api_products_template",
                 "responses": {
                     "default": {
@@ -280,7 +280,7 @@
         },
         "/api/v1/warehouses/{id}/stock": {
             "get": {
-                "summary": "The warehouse's stock rows with `status` (1 in stock, default; 0 incoming). (item 2)",
+                "summary": "The warehouse's stock rows with `status` (1 in stock, default; 0 incoming). (item 2).",
                 "operationId": "get_api_stock_list",
                 "parameters": [
                     {
@@ -312,7 +312,7 @@
         },
         "/api/v1/warehouses/{from}/moves/{to}": {
             "post": {
-                "summary": "StockLinesInput: moves quantities to another warehouse (they arrive as incoming). 204; 409 same_warehouse; 404 stock_not_found; 422 insufficient_stock. (item 2)",
+                "summary": "StockLinesInput: moves quantities to another warehouse (they arrive as incoming). 204; 409 same_warehouse; 404 stock_not_found; 422 insufficient_stock. (item 2).",
                 "operationId": "post_api_stock_move",
                 "parameters": [
                     {
@@ -343,7 +343,7 @@
         },
         "/api/v1/warehouses/{id}/stock/add": {
             "post": {
-                "summary": "StockLinesInput (by code): the barcode reader adds stock. 204. (item 2)",
+                "summary": "StockLinesInput (by code): the barcode reader adds stock. 204. (item 2).",
                 "operationId": "post_api_stock_add",
                 "parameters": [
                     {
@@ -365,7 +365,7 @@
         },
         "/api/v1/warehouses/{id}/stock/remove": {
             "post": {
-                "summary": "StockLinesInput (by code): the barcode reader removes stock. 204; 422 insufficient_stock. (item 2)",
+                "summary": "StockLinesInput (by code): the barcode reader removes stock. 204; 422 insufficient_stock. (item 2).",
                 "operationId": "post_api_stock_remove",
                 "parameters": [
                     {
@@ -387,7 +387,7 @@
         },
         "/api/v1/warehouses/{id}/incoming/approve": {
             "post": {
-                "summary": "Approves every incoming row of the warehouse. (item 2)",
+                "summary": "Approves every incoming row of the warehouse. (item 2).",
                 "operationId": "post_api_stock_approve_incoming",
                 "parameters": [
                     {
@@ -416,7 +416,7 @@
         },
         "/api/v1/warehouses": {
             "get": {
-                "summary": "Every warehouse (as /admin/warehouse/all: any signed-in user). (item 2)",
+                "summary": "Every warehouse (as /admin/warehouse/all: any signed-in user). (item 2).",
                 "operationId": "get_api_warehouses_list",
                 "responses": {
                     "200": {
@@ -437,7 +437,7 @@
         },
         "/api/v1/warehouses/{id}": {
             "put": {
-                "summary": "WarehouseInput: renames a warehouse (as the legacy edit: any signed-in user). (item 2)",
+                "summary": "WarehouseInput: renames a warehouse (as the legacy edit: any signed-in user). (item 2).",
                 "operationId": "put_api_warehouses_rename",
                 "parameters": [
                     {
@@ -466,7 +466,7 @@
         },
         "/api/v1/customers": {
             "get": {
-                "summary": "`page` (1\u2026), `per_page` (100 by default, as before). (item 3)",
+                "summary": "`page` (1\u2026), `per_page` (100 by default, as before). (item 3).",
                 "operationId": "get_api_customers_page",
                 "responses": {
                     "200": {
@@ -505,7 +505,7 @@
                 }
             },
             "post": {
-                "summary": "CustomerInput: creates a customer. (item 3)",
+                "summary": "CustomerInput: creates a customer. (item 3).",
                 "operationId": "post_api_customers_create",
                 "responses": {
                     "201": {
@@ -523,7 +523,7 @@
         },
         "/api/v1/customers/all": {
             "get": {
-                "summary": "Every customer, for the order and invoice pickers. (item 3)",
+                "summary": "Every customer, for the order and invoice pickers. (item 3).",
                 "operationId": "get_api_customers_all",
                 "responses": {
                     "200": {
@@ -544,7 +544,7 @@
         },
         "/api/v1/customers/{id}": {
             "get": {
-                "summary": "One customer. 404 customer_not_found. (item 3)",
+                "summary": "One customer. 404 customer_not_found. (item 3).",
                 "operationId": "get_api_customers_show",
                 "parameters": [
                     {
@@ -571,7 +571,7 @@
                 }
             },
             "put": {
-                "summary": "CustomerInput: edits a customer and replaces their addresses. (item 3)",
+                "summary": "CustomerInput: edits a customer and replaces their addresses. (item 3).",
                 "operationId": "put_api_customers_update",
                 "parameters": [
                     {
@@ -598,7 +598,7 @@
                 }
             },
             "delete": {
-                "summary": "Deletes a customer (soft delete, as before). 204. (item 3)",
+                "summary": "Deletes a customer (soft delete, as before). 204. (item 3).",
                 "operationId": "delete_api_customers_delete",
                 "parameters": [
                     {
@@ -620,7 +620,7 @@
         },
         "/api/v1/locations": {
             "get": {
-                "summary": "Every country with its states and their cities. (item 3)",
+                "summary": "Every country with its states and their cities. (item 3).",
                 "operationId": "get_api_locations_tree",
                 "responses": {
                     "200": {
@@ -641,7 +641,7 @@
         },
         "/api/v1/orders": {
             "get": {
-                "summary": "`warehouse_id`: that warehouse's orders, newest first. (item 4)",
+                "summary": "`warehouse_id`: that warehouse's orders, newest first. (item 4).",
                 "operationId": "get_api_orders_list",
                 "responses": {
                     "200": {
@@ -660,7 +660,7 @@
                 }
             },
             "post": {
-                "summary": "OrderInput: places an order; the printer gets its email. 422 order_without_products. (item 4)",
+                "summary": "OrderInput: places an order; the printer gets its email. 422 order_without_products. (item 4).",
                 "operationId": "post_api_orders_create",
                 "responses": {
                     "201": {
@@ -678,7 +678,7 @@
         },
         "/api/v1/orders/{id}": {
             "get": {
-                "summary": "One order. 404 order_not_found. (item 4)",
+                "summary": "One order. 404 order_not_found. (item 4).",
                 "operationId": "get_api_orders_show",
                 "parameters": [
                     {
@@ -705,7 +705,7 @@
                 }
             },
             "put": {
-                "summary": "OrderInput: edits an order. (item 4)",
+                "summary": "OrderInput: edits an order. (item 4).",
                 "operationId": "put_api_orders_update",
                 "parameters": [
                     {
@@ -732,7 +732,7 @@
                 }
             },
             "delete": {
-                "summary": "Deletes an order (its products and comments, then the order: soft delete). 204. (item 4)",
+                "summary": "Deletes an order (its products and comments, then the order: soft delete). 204. (item 4).",
                 "operationId": "delete_api_orders_delete",
                 "parameters": [
                     {
@@ -754,7 +754,7 @@
         },
         "/api/v1/orders/{id}/status": {
             "post": {
-                "summary": "OrderStatusInput: moves the order to another status. (item 4)",
+                "summary": "OrderStatusInput: moves the order to another status. (item 4).",
                 "operationId": "post_api_orders_status",
                 "parameters": [
                     {
@@ -783,7 +783,7 @@
         },
         "/api/v1/orders/{id}/comments": {
             "put": {
-                "summary": "OrderCommentsInput: the order's comments as they should be (as before: any signed-in user). (item 4)",
+                "summary": "OrderCommentsInput: the order's comments as they should be (as before: any signed-in user). (item 4).",
                 "operationId": "put_api_orders_comments",
                 "parameters": [
                     {
@@ -823,7 +823,7 @@
         },
         "/api/v1/orders/sync": {
             "post": {
-                "summary": "Pulls new orders from the WooCommerce shops (item 13). 501 order_sync_unavailable until then; 502 order_sync_failed. (item 13)",
+                "summary": "Pulls new orders from the WooCommerce shops (item 13). 501 order_sync_unavailable until then; 502 order_sync_failed. (item 13).",
                 "operationId": "post_api_orders_sync",
                 "responses": {
                     "202": {
@@ -841,7 +841,7 @@
         },
         "/api/v1/orders/{id}/pdf": {
             "get": {
-                "summary": "The order as a PDF (the printer's). (item 4)",
+                "summary": "The order as a PDF (the printer's). (item 4).",
                 "operationId": "get_api_orders_pdf",
                 "parameters": [
                     {
@@ -863,7 +863,7 @@
         },
         "/api/v1/orders/{id}/remaining-pdf": {
             "get": {
-                "summary": "What is left to ship, as a PDF. (item 4)",
+                "summary": "What is left to ship, as a PDF. (item 4).",
                 "operationId": "get_api_orders_remaining_pdf",
                 "parameters": [
                     {
@@ -885,7 +885,7 @@
         },
         "/api/v1/orders/{id}/xls": {
             "get": {
-                "summary": "The order as a spreadsheet (as before: any signed-in user). (item 4)",
+                "summary": "The order as a spreadsheet (as before: any signed-in user). (item 4).",
                 "operationId": "get_api_orders_xls",
                 "parameters": [
                     {
@@ -907,7 +907,7 @@
         },
         "/api/v1/orders/{id}/partials": {
             "get": {
-                "summary": "What was shipped, what is left, and the stock (as before: any signed-in user). (item 4)",
+                "summary": "What was shipped, what is left, and the stock (as before: any signed-in user). (item 4).",
                 "operationId": "get_api_orders_partials",
                 "parameters": [
                     {
@@ -934,7 +934,7 @@
                 }
             },
             "post": {
-                "summary": "PartialInput: records a partial shipment. 409 partial_exceeds_order. (item 4)",
+                "summary": "PartialInput: records a partial shipment. 409 partial_exceeds_order. (item 4).",
                 "operationId": "post_api_orders_partials_record",
                 "parameters": [
                     {
@@ -963,7 +963,7 @@
         },
         "/api/v1/invoices": {
             "get": {
-                "summary": "Every invoice, newest first. (item 5)",
+                "summary": "Every invoice, newest first. (item 5).",
                 "operationId": "get_api_invoices_list",
                 "responses": {
                     "200": {
@@ -982,7 +982,7 @@
                 }
             },
             "post": {
-                "summary": "InvoiceInput: creates an invoice. 409 invoice_code_taken. (item 5)",
+                "summary": "InvoiceInput: creates an invoice. 409 invoice_code_taken. (item 5).",
                 "operationId": "post_api_invoices_create",
                 "responses": {
                     "201": {
@@ -1000,7 +1000,7 @@
         },
         "/api/v1/invoices/next-code": {
             "get": {
-                "summary": "The code the next invoice is offered. (item 5)",
+                "summary": "The code the next invoice is offered. (item 5).",
                 "operationId": "get_api_invoices_next_code",
                 "responses": {
                     "200": {
@@ -1018,7 +1018,7 @@
         },
         "/api/v1/invoices/{id}": {
             "get": {
-                "summary": "One invoice. 404 invoice_not_found. (item 5)",
+                "summary": "One invoice. 404 invoice_not_found. (item 5).",
                 "operationId": "get_api_invoices_show",
                 "parameters": [
                     {
@@ -1047,7 +1047,7 @@
         },
         "/api/v1/invoices/{id}/pdf": {
             "get": {
-                "summary": "The invoice as a PDF. (item 5)",
+                "summary": "The invoice as a PDF. (item 5).",
                 "operationId": "get_api_invoices_pdf",
                 "parameters": [
                     {

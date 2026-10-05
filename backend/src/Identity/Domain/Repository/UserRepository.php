@@ -12,6 +12,11 @@ interface UserRepository
      */
     public function get(int $id): User;
 
+    /**
+     * @return list<User> by name
+     */
+    public function all(): array;
+
     public function findByUsername(string $username): ?User;
 
     public function add(User $user): void;
