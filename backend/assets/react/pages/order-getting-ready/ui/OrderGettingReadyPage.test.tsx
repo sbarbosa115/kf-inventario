@@ -4,17 +4,10 @@ import {MemoryRouter, Route, Routes, useLocation} from 'react-router-dom';
 import {fakeApi} from '@/shared/test/fakeApi';
 import {OrderGettingReadyPage} from './OrderGettingReadyPage';
 
-const ORDER = {
-  id: 7,
+const PARTIALS = {
+  order_id: 7,
   code: 'W00001',
   status: 1,
-  source: 2,
-  payment_method: 1,
-  comment: null,
-  created_at: '2026-10-05T10:00:00-05:00',
-  warehouse: {id: 1, name: 'Colombia'},
-  customer: null,
-  comments: [],
   products: [
     {
       uuid: 'u1',
@@ -22,11 +15,6 @@ const ORDER = {
       product: {code: 'KF-01', title: 'KF-01', detail: null},
     },
   ],
-};
-
-const PARTIALS = {
-  order_id: 7,
-  status: 1,
   products_aggregate: [],
   pending: [{uuid: 'u1', quantity: 2}],
   inventory: [
@@ -65,7 +53,6 @@ function renderAt(path: string) {
 describe('OrderGettingReadyPage', () => {
   it('titles the screen with the order code, then returns to the list after a save', async () => {
     const api = fakeApi({
-      'GET /orders/7': [200, ORDER],
       'GET /orders/7/partials': [200, PARTIALS],
       'POST /orders/7/partials': [200, {...PARTIALS, status: 4}],
     });
@@ -84,11 +71,14 @@ describe('OrderGettingReadyPage', () => {
     expect(api.calls.at(-1)?.body).toEqual({
       items: [{uuid: 'u1', quantity: 1}],
     });
+    expect(
+      api.calls.map((call) => `${call.method} ${call.path}`),
+      'the legacy page needed only ROLE_USER: the screen reads nothing behind an order role (GET /orders/7)',
+    ).toEqual(['GET /orders/7/partials', 'POST /orders/7/partials']);
   });
 
   it('says so when the order no longer exists', async () => {
     fakeApi({
-      'GET /orders/9': [404, {error: 'order_not_found', message: 'Gone'}],
       'GET /orders/9/partials': [
         404,
         {error: 'order_not_found', message: 'Gone'},
@@ -106,8 +96,7 @@ describe('OrderGettingReadyPage', () => {
 
   it('offers to try again when the load failed', async () => {
     fakeApi({
-      'GET /orders/7': [500, {error: 'server', message: 'Boom'}],
-      'GET /orders/7/partials': [200, PARTIALS],
+      'GET /orders/7/partials': [500, {error: 'server', message: 'Boom'}],
     });
     renderAt('/admin/orders/7/getting-ready');
 

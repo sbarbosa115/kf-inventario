@@ -7,7 +7,6 @@ import {
   recordPartial,
   type OrderPartials,
   type PartialItem,
-  type PartialOrder,
 } from '../api/recordPartialApi';
 import {
   CLOSED_STATUSES,
@@ -54,11 +53,9 @@ function refusalMessage(error: unknown, t: Translate): string {
  * PartialHandler.
  */
 export function RecordPartial({
-  order,
   partials,
   onSaved,
 }: {
-  order: PartialOrder;
   partials: OrderPartials;
   onSaved: (partials: OrderPartials) => void;
 }) {
@@ -76,7 +73,7 @@ export function RecordPartial({
 
   const add = (productCode: string) => {
     if (productCode.trim() === '') return;
-    const next = scan(productCode, order, partials, current);
+    const next = scan(productCode, partials, current);
     setCurrent(next.current);
     if (next.result === 'added') {
       setCode('');
@@ -100,7 +97,7 @@ export function RecordPartial({
     setFailure(null);
     setSending(true);
     try {
-      onSaved(await recordPartial(order.id, current));
+      onSaved(await recordPartial(partials.order_id, current));
     } catch (error) {
       setFailure(refusalMessage(error, t));
       setSending(false);
@@ -157,7 +154,7 @@ export function RecordPartial({
           </tr>
         </thead>
         <tbody>
-          {order.products.map((line, index) => {
+          {partials.products.map((line, index) => {
             const inThisOrder = currentOf(current, line.uuid);
             const left = leftLabel(line, partials, current);
             return (
@@ -213,7 +210,7 @@ export function RecordPartial({
               </tr>
             );
           })}
-          {order.products.length === 0 && (
+          {partials.products.length === 0 && (
             <tr>
               <td colSpan={8} className="text-center">
                 {t('gettingReady.noProducts')}

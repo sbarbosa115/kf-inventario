@@ -3,28 +3,11 @@ import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import {vi} from 'vitest';
 import {fakeApi} from '@/shared/test/fakeApi';
-import type {OrderPartials, PartialOrder} from '../api/recordPartialApi';
+import type {OrderPartials} from '../api/recordPartialApi';
 import {RecordPartial} from './RecordPartial';
 
 const UUID_1 = 'aaaa-0001';
 const UUID_2 = 'aaaa-0002';
-
-const ORDER: PartialOrder = {
-  id: 7,
-  status: 1,
-  products: [
-    {
-      uuid: UUID_1,
-      quantity: 3,
-      product: {code: 'KF-01', title: 'KF-01', detail: 'Chair'},
-    },
-    {
-      uuid: UUID_2,
-      quantity: 2,
-      product: {code: 'KF-02', title: 'KF-02', detail: 'Table'},
-    },
-  ],
-};
 
 const stock = (uuid: string, code: string, quantity: number) => ({
   id: 1,
@@ -41,7 +24,20 @@ const stock = (uuid: string, code: string, quantity: number) => ({
 
 const PARTIALS: OrderPartials = {
   order_id: 7,
+  code: 'W00007',
   status: 1,
+  products: [
+    {
+      uuid: UUID_1,
+      quantity: 3,
+      product: {code: 'KF-01', title: 'KF-01', detail: 'Chair'},
+    },
+    {
+      uuid: UUID_2,
+      quantity: 2,
+      product: {code: 'KF-02', title: 'KF-02', detail: 'Table'},
+    },
+  ],
   // One KF-01 left in an earlier partial shipment.
   products_aggregate: [{uuid: UUID_1, quantity: 1, product: {code: 'KF-01'}}],
   pending: [
@@ -51,14 +47,10 @@ const PARTIALS: OrderPartials = {
   inventory: [stock(UUID_1, 'KF-01', 10), stock(UUID_2, 'KF-02', 1)],
 };
 
-function renderIt(
-  order: PartialOrder = ORDER,
-  partials: OrderPartials = PARTIALS,
-  onSaved = vi.fn(),
-) {
+function renderIt(partials: OrderPartials = PARTIALS, onSaved = vi.fn()) {
   render(
     <MemoryRouter>
-      <RecordPartial order={order} partials={partials} onSaved={onSaved} />
+      <RecordPartial partials={partials} onSaved={onSaved} />
     </MemoryRouter>,
   );
   return onSaved;
@@ -232,14 +224,14 @@ describe('RecordPartial', () => {
   it.each([5, 6])(
     'cannot save an order that is already sent or delivered (status %i)',
     async (status) => {
-      renderIt({...ORDER, status}, {...PARTIALS, status});
+      renderIt({...PARTIALS, status});
 
       expect(screen.getByRole('button', {name: 'Save Current'})).toBeDisabled();
     },
   );
 
   it('says so when the order has no products', () => {
-    renderIt({...ORDER, products: []}, {...PARTIALS, inventory: []});
+    renderIt({...PARTIALS, products: [], inventory: []});
 
     expect(screen.getByText('No products were found')).toBeInTheDocument();
   });

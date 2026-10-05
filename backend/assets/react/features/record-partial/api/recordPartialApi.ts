@@ -1,20 +1,15 @@
 import {apiGet, apiPost, type Schema} from '@/shared/api';
 
-/** An order as the getting-ready screen needs it: its products and status. */
-export type OrderDetail = Schema<'OrderDetailOutput'>;
-export type PartialOrder = Pick<OrderDetail, 'id' | 'status' | 'products'>;
-
-/** What was shipped so far, what is left, and the warehouse's stock of the order's products. */
+/**
+ * Everything the getting-ready screen shows: the order's code, status and lines, what was shipped so far, what is
+ * left, and the warehouse's stock of its products. One ROLE_USER endpoint, as the legacy page needed.
+ */
 export type OrderPartials = Schema<'OrderPartialsOutput'>;
 
 /** One product of this shipment (the request bodies are not in the OpenAPI schema). */
 export interface PartialItem {
   uuid: string;
   quantity: number;
-}
-
-export function getOrder(id: number | string): Promise<OrderDetail> {
-  return apiGet<OrderDetail>(`/orders/${id}`);
 }
 
 export function getPartials(id: number | string): Promise<OrderPartials> {

@@ -1,12 +1,8 @@
-import type {
-  OrderPartials,
-  PartialItem,
-  PartialOrder,
-} from '../api/recordPartialApi';
+import type {OrderPartials, PartialItem} from '../api/recordPartialApi';
 
 /** The rules of the legacy getting-ready screen (PartialHandler.js), as pure functions. */
 
-export type OrderLine = PartialOrder['products'][number];
+export type OrderLine = OrderPartials['products'][number];
 
 /** What scanning a code did: added one, or why it was refused (each refusal has its modal). */
 export type ScanResult = 'added' | 'not_in_order' | 'no_inventory' | 'limit';
@@ -78,11 +74,10 @@ export function rowClass(
  */
 export function scan(
   code: string,
-  order: PartialOrder,
   partials: OrderPartials,
   current: PartialItem[],
 ): {result: ScanResult; current: PartialItem[]} {
-  const line = order.products.find((p) => same(p.product.code, code.trim()));
+  const line = partials.products.find((p) => same(p.product.code, code.trim()));
   if (!line) return {result: 'not_in_order', current};
   if (currentOf(current, line.uuid) >= stockOf(partials, line.product.code)) {
     return {result: 'no_inventory', current};
