@@ -50,7 +50,10 @@ final class OrderDocumentController extends AbstractController
     public function xls(int $id, TranslatorInterface $translator): Response
     {
         $order = $this->orders->get($id);
-        $filename = "{$translator->trans('product.xls.filename')}-{$order->getCode()}";
+        // The code is typed (or the shop's): a quote, backslash or control character in it would end the filename or
+        // the header early, so each becomes "_"; any other code gives the legacy name unchanged.
+        $code = preg_replace('/["\\\\\x00-\x1F\x7F]/', '_', (string) $order->getCode());
+        $filename = "{$translator->trans('product.xls.filename')}-{$code}";
 
         return new Response($this->documents->spreadsheet($order), 200, [
             'Content-Type' => 'application/vnd.ms-excel',

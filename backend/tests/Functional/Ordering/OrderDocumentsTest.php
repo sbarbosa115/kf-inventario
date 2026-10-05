@@ -82,4 +82,20 @@ final class OrderDocumentsTest extends ApiTestCase
         self::assertSame(DataType::TYPE_STRING, $cell->getDataType());
         self::assertSame('=HYPERLINK("https://evil.example/","x")', $cell->getValue());
     }
+
+    /**
+     * The order code (typed, or the shop's) names the XLS: a quote or a line break in it cannot end the filename or
+     * the header early; safe codes keep the legacy name byte for byte (testTheOrderSpreadsheetListsItsProducts).
+     */
+    public function testTheXlsFilenameCannotBeBrokenByTheOrderCode(): void
+    {
+        $this->signInAs(['ROLE_MANAGE_ORDERS']);
+        $warehouse = $this->aWarehouse();
+        $id = $this->placeOrder($warehouse, $this->aCustomer(), [[$this->aProduct('KF-A', $warehouse), 1]], ['code' => "A\"B\\C\r\nX-Evil: 1"]);
+
+        $this->client->request('GET', "/api/v1/orders/{$id}/xls");
+
+        $this->assertStatus(200);
+        self::assertSame('attachment;filename="file-upload-template-A_B_C__X-Evil: 1.xls"', $this->client->getResponse()->headers->get('Content-Disposition'));
+    }
 }
