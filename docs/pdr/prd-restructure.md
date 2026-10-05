@@ -215,9 +215,9 @@ the Twig app answers at `:8080/admin/login` (sign in with the fixtures' `sbarbos
 `doctrine:fixtures:load`; fix `WarehouseFixtures` which passes a string to `Warehouse::__construct(string, array)`).
 
 **0.3 Tooling, then one style commit.** Composer: add `symfony/messenger`, `symfony/doctrine-messenger`, `symfony/clock`,
-`symfony/rate-limiter`, `symfony/runtime`; dev `phpstan/phpstan` + `extension-installer` + `phpstan-symfony/doctrine/phpunit`,
+`symfony/runtime`; dev `phpstan/phpstan` + `extension-installer` + `phpstan-symfony/doctrine/phpunit`,
 `deptrac/deptrac`, `dama/doctrine-test-bundle`, `nelmio/api-doc-bundle`; remove `friendsofsymfony/jsrouting-bundle`,
-`willdurand/js-translation-bundle` (and their bundles/routes/`public/bundles`), `automattic/woocommerce`, `phpmd/phpmd`,
+`willdurand/js-translation-bundle` (and their bundles/routes/`public/bundles`) (keep `automattic/woocommerce`: item 13 uses it), `phpmd/phpmd`,
 `symfony/web-link`; keep `symfony/form` until item 12 (legacy pages). Configs copied from tacoma and adapted:
 `.php-cs-fixer.dist.php`, `phpstan.dist.neon` (level **6**, `excludePaths` the legacy dirs with the reason),
 `deptrac.yaml` (+ `Legacy` layer), `deptrac.contexts.yaml` (Identity, Inventory, Customers, Ordering, Invoicing, Audit,
@@ -273,8 +273,7 @@ Identity security classes (the handlers answering `SessionOutput` /
 `Shared/UI/Http/Security/SameOriginWrites` for `/api/` writes, `SpaController` (`/{path}` with requirement
 `(?!api/|api$|_|admin/order/1H39j0jpQPsWL958v9R4$).*`, priority −100), `templates/spa.html.twig`. The `messenger_messages`
 migration (§B.3). *Verify:* C1 dev+test, C2 still identical, `AuthApiTest` (login ok → shape; wrong password 401
-`invalid_credentials`; disabled user 401 `account_disabled`; `me` 401 signed out; logout 204; cross-origin POST → 403;
-6th wrong attempt 429), `nelmio:apidoc:dump` works.
+`invalid_credentials`; `me` 401 signed out; logout 204; cross-origin POST → 403), `nelmio:apidoc:dump` works.
 
 **0.5 Entities move (the critical step).** `git mv src/Entity/*.php` to the `Domain/Model` folders of §Plan; namespace
 and `use` lines updated; §B.2 applied; `InvoiceLine.php` deleted; `doctrine.yaml` mappings; `sed` of `App\Entity\` in
@@ -327,7 +326,7 @@ browser, wrong password shows one generic message, the sidebar shows exactly tod
 `flock -n ~/.kf-worker.lock <php> ~/kf-inventory/backend/bin/console messenger:consume mail --time-limit=55 --memory-limit=128M --env=prod --no-debug`,
 `messenger:stop-workers` after a deploy, backup before a pending migration, the `serverVersion` check), `deploy/env.local.example`
 (`APP_ENV=prod`, `APP_SECRET`, `DATABASE_URL` with `serverVersion=`, `DEFAULT_URI`, `MAILER_DSN`, `MAILER_FROM_ADDRESS`,
-`MAILER_FROM_NAME`, `MAILER_PRINTER_ADDRESS`, `WOO_COMMERCE_URL/API_KEY/API_SECRET`, `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID=1`,
+`MAILER_FROM_NAME`, `MAILER_PRINTER_ADDRESS`, `WOOCOMMERCE_<N>_URL/KEY/SECRET` (item 13), `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID=1`,
 `MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0`), `deploy/htaccess-symfony.conf`, README sections
 (Running it, Architecture table, API reference, Data model decisions — the drift and why it stays, Deploying to cPanel
 with the cutover list: document root → `backend/public`, `.env.local`, run the script, add the cron line, everyone signs
