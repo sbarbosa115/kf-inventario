@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\Customer;
+use App\Customers\Domain\Model\Customer;
 use App\Repository\CountryRepository;
 use App\Repository\CustomerRepository;
 use App\Services\CustomerService;

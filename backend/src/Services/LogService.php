@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Entity\Log;
+use App\Audit\Domain\Model\Log;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 

@@ -69,6 +69,9 @@ deptrac:
   ruleset:
     Domain:
       - DomainVendor
+      # The moved entities keep #[ORM\Entity(repositoryClass: App\Repository\…)] while the legacy services call
+      # those repositories; item 12 drops the argument with them (no schema effect).
+      - Legacy
     Application:
       - Domain
       - DomainVendor

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Entity\Order;
+use App\Ordering\Domain\Model\Order;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;

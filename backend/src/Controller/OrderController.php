@@ -3,10 +3,10 @@
 namespace App\Controller;
 
 use App\DataProviders\WooCommerceProvider;
-use App\Entity\Order;
-use App\Entity\OrderProduct;
-use App\Entity\Product;
-use App\Entity\Warehouse;
+use App\Ordering\Domain\Model\Order;
+use App\Ordering\Domain\Model\OrderProduct;
+use App\Inventory\Domain\Model\Product;
+use App\Inventory\Domain\Model\Warehouse;
 use App\Model\RemoveOrderInput;
 use App\Repository\CountryRepository;
 use App\Repository\CustomerRepository;

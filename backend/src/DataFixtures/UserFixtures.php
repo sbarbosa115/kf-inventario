@@ -2,7 +2,7 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\User;
+use App\Identity\Domain\Model\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -45,7 +45,7 @@ class UserFixtures extends Fixture
             $user->setUsername($item['username']);
             $user->setPassword($this->passwordEncoder->hashPassword($user, $item['password']));
             $user->setRoles($item['roles']);
-            $user->setEnabled(1);
+            $user->setEnabled(true);
             $manager->persist($user);
 
             $this->addReference(self::DEFAULT_USER, $user);

@@ -2,7 +2,7 @@
 
 namespace App\Model;
 
-use App\Entity\Order;
+use App\Ordering\Domain\Model\Order;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class OrderInput

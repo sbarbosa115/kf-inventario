@@ -14,9 +14,8 @@ $finder = (new PhpCsFixer\Finder())
     ->exclude([
         'src/Command', 'src/Constraints', 'src/Controller', 'src/DataProviders', 'src/EventListener', 'src/Form',
         'src/Model', 'src/Repository', 'src/Security', 'src/Services', 'src/Validator',
-        'tests/Unit/Controller', 'tests/Unit/Form', 'tests/Unit/Service', 'tests/Unit/Utils',
+        'tests/Legacy',
     ])
-    ->notPath('tests/WebTestCase.php')
 ;
 
 return (new PhpCsFixer\Config())

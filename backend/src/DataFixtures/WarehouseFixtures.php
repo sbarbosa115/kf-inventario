@@ -2,7 +2,7 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\Warehouse;
+use App\Inventory\Domain\Model\Warehouse;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 

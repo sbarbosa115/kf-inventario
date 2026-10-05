@@ -2,9 +2,9 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\Product;
-use App\Entity\ProductWarehouse;
-use App\Entity\Warehouse;
+use App\Inventory\Domain\Model\Product;
+use App\Inventory\Domain\Model\ProductWarehouse;
+use App\Inventory\Domain\Model\Warehouse;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -33,7 +33,7 @@ class ProductFixtures extends Fixture implements DependentFixtureInterface
             $product->setStatus(Product::STATUS_ACTIVE);
             $product->setCode($item['code']);
             $product->setTitle($item['title']);
-            $product->setPrice($item['price']);
+            $product->setPrice((float) $item['price']);
             $manager->persist($product);
 
             $productWarehouse = new ProductWarehouse();

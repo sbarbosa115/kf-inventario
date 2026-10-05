@@ -2,8 +2,8 @@
 
 namespace App\Repository;
 
-use App\Entity\Product;
-use App\Entity\Warehouse;
+use App\Inventory\Domain\Model\Product;
+use App\Inventory\Domain\Model\Warehouse;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;

@@ -2,8 +2,8 @@
 
 namespace App\Repository;
 
-use App\Entity\Order;
-use App\Entity\OrderProduct;
+use App\Ordering\Domain\Model\Order;
+use App\Ordering\Domain\Model\OrderProduct;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

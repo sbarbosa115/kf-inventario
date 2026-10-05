@@ -2,9 +2,9 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\City;
-use App\Entity\Customer;
-use App\Entity\CustomerAddress;
+use App\Customers\Domain\Model\City;
+use App\Customers\Domain\Model\Customer;
+use App\Customers\Domain\Model\CustomerAddress;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -41,7 +41,7 @@ class CustomerFixtures extends Fixture implements DependentFixtureInterface
             $customerAddress->setCustomer($customer);
             $customerAddress->setAddress('Palm Beach 5800 Roger Regan Drive');
             $customerAddress->setCity($this->getReference(LocationFixtures::DEFAULT_CITY, City::class));
-            $customerAddress->setZipCode(33415);
+            $customerAddress->setZipCode('33415');
             $manager->persist($customerAddress);
 
             $this->addReference(self::CUSTOMER, $customer);

@@ -2,9 +2,9 @@
 
 namespace App\Form;
 
-use App\Entity\Customer;
-use App\Entity\Invoice;
-use App\Entity\Warehouse;
+use App\Customers\Domain\Model\Customer;
+use App\Invoicing\Domain\Model\Invoice;
+use App\Inventory\Domain\Model\Warehouse;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;

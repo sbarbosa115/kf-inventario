@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\OrderStatus;
+use App\Ordering\Domain\Model\OrderStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

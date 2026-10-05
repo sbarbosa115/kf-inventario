@@ -2,13 +2,13 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\Comment;
-use App\Entity\Customer;
-use App\Entity\Order;
-use App\Entity\OrderProduct;
-use App\Entity\Product;
-use App\Entity\User;
-use App\Entity\Warehouse;
+use App\Customers\Domain\Model\Customer;
+use App\Identity\Domain\Model\User;
+use App\Inventory\Domain\Model\Product;
+use App\Inventory\Domain\Model\Warehouse;
+use App\Ordering\Domain\Model\Comment;
+use App\Ordering\Domain\Model\Order;
+use App\Ordering\Domain\Model\OrderProduct;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;

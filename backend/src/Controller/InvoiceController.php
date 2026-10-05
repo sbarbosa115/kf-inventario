@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\Invoice;
+use App\Invoicing\Domain\Model\Invoice;
 use App\Form\InvoiceType;
 use App\Repository\CountryRepository;
 use App\Repository\CustomerRepository;

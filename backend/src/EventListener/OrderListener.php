@@ -2,8 +2,8 @@
 
 namespace App\EventListener;
 
-use App\Entity\Order;
-use App\Entity\OrderStatus;
+use App\Ordering\Domain\Model\Order;
+use App\Ordering\Domain\Model\OrderStatus;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\EntityManagerInterface;

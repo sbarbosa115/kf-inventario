@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\Entity\Comment;
-use App\Entity\Order;
-use App\Entity\OrderProduct;
-use App\Entity\Product;
-use App\Entity\ProductWarehouse;
-use App\Entity\User;
-use App\Entity\Warehouse;
+use App\Ordering\Domain\Model\Comment;
+use App\Ordering\Domain\Model\Order;
+use App\Ordering\Domain\Model\OrderProduct;
+use App\Inventory\Domain\Model\Product;
+use App\Inventory\Domain\Model\ProductWarehouse;
+use App\Identity\Domain\Model\User;
+use App\Inventory\Domain\Model\Warehouse;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Repository\Utils\ProductUtils;

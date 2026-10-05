@@ -2,8 +2,8 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\Invoice;
-use App\Entity\InvoiceItem;
+use App\Invoicing\Domain\Model\Invoice;
+use App\Invoicing\Domain\Model\InvoiceItem;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 

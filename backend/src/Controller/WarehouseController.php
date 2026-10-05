@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\Warehouse;
+use App\Inventory\Domain\Model\Warehouse;
 use App\Form\WarehouseType;
 use App\Repository\WarehouseRepository;
 use Doctrine\ORM\EntityManagerInterface;

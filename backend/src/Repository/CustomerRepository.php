@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\Customer;
+use App\Customers\Domain\Model\Customer;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;

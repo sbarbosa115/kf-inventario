@@ -2,7 +2,7 @@
 
 namespace App\Validator\Constraint;
 
-use App\Entity\Order;
+use App\Ordering\Domain\Model\Order;
 use App\Repository\OrderRepository;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;

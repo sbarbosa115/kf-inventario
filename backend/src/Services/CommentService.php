@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Entity\Comment;
-use App\Entity\Order;
-use App\Entity\User;
+use App\Ordering\Domain\Model\Comment;
+use App\Ordering\Domain\Model\Order;
+use App\Identity\Domain\Model\User;
 use App\Repository\CommentRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;

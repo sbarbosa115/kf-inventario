@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\Invoice;
+use App\Invoicing\Domain\Model\Invoice;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

@@ -2,8 +2,8 @@
 
 namespace App\DataProviders;
 
-use App\Entity\CustomerAddress;
-use App\Entity\Order;
+use App\Customers\Domain\Model\CustomerAddress;
+use App\Ordering\Domain\Model\Order;
 
 class WooCommerceProvider
 {

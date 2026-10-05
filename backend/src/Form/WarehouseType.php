@@ -2,7 +2,7 @@
 
 namespace App\Form;
 
-use App\Entity\Warehouse;
+use App\Inventory\Domain\Model\Warehouse;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;

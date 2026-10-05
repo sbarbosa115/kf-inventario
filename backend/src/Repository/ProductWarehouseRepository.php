@@ -2,9 +2,9 @@
 
 namespace App\Repository;
 
-use App\Entity\Order;
-use App\Entity\ProductWarehouse;
-use App\Entity\Warehouse;
+use App\Ordering\Domain\Model\Order;
+use App\Inventory\Domain\Model\ProductWarehouse;
+use App\Inventory\Domain\Model\Warehouse;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;

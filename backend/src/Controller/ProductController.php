@@ -2,8 +2,8 @@
 
 namespace App\Controller;
 
-use App\Entity\Product;
-use App\Entity\Warehouse;
+use App\Inventory\Domain\Model\Product;
+use App\Inventory\Domain\Model\Warehouse;
 use App\Form\ProductType;
 use App\Form\UploadProductsType;
 use App\Repository\ProductRepository;

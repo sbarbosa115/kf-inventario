@@ -2,9 +2,9 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\City;
-use App\Entity\Country;
-use App\Entity\State;
+use App\Customers\Domain\Model\City;
+use App\Customers\Domain\Model\Country;
+use App\Customers\Domain\Model\State;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 

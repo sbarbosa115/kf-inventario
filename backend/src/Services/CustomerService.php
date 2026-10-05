@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Entity\City;
-use App\Entity\Country;
-use App\Entity\Customer;
-use App\Entity\CustomerAddress;
-use App\Entity\State;
+use App\Customers\Domain\Model\City;
+use App\Customers\Domain\Model\Country;
+use App\Customers\Domain\Model\Customer;
+use App\Customers\Domain\Model\CustomerAddress;
+use App\Customers\Domain\Model\State;
 use App\Repository\CityRepository;
 use App\Repository\CountryRepository;
 use App\Repository\CustomerRepository;

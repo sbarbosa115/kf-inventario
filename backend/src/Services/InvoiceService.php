@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Entity\Invoice;
-use App\Entity\InvoiceItem;
-use App\Entity\Product;
+use App\Invoicing\Domain\Model\Invoice;
+use App\Invoicing\Domain\Model\InvoiceItem;
+use App\Inventory\Domain\Model\Product;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Services\CustomerService;
 
@@ -37,7 +37,7 @@ class InvoiceService
                 $customerData = (array) $data['customer'];
                 $customer = $this->customerService->addOrUpdate($customerData);
             } else {
-                $customer = $this->em->getRepository('App\\Entity\\Customer')->find($data['customer']);
+                $customer = $this->em->getRepository('App\\Customers\\Domain\\Model\\Customer')->find($data['customer']);
             }
 
             if ($customer) {
