@@ -122,4 +122,28 @@ Open `/admin/nothing-here` signed in: "Page not found" inside the app, with a li
 
 ## 9. WooCommerce webhook (HOOK)
 
-<!-- Item 4 (ordering-api) adds HOOK-01 – 02 (manual: curl a sample payload with X-WC-Webhook-Source). -->
+The shops post each new order to `/admin/order/1H39j0jpQPsWL958v9R4` (public, never moved). To run a case by hand,
+post a sample order with curl (the fixtures' warehouse 1, Colombia, receives `https://colombia.test`):
+
+```bash
+curl -s -X POST http://localhost:8080/admin/order/1H39j0jpQPsWL958v9R4 \
+  -H 'Content-Type: application/json' -H 'X-WC-Webhook-Source: https://colombia.test' \
+  -d '{"id": 5501, "billing": {"first_name": "Hook", "last_name": "Buyer", "email": "hook.buyer@example.com",
+       "phone": "555-0199", "address_1": "1 Billing St", "postcode": "33101", "city": "Miami", "state": "FL",
+       "country": "US"}, "shipping": {"address_1": "2 Shipping Ave", "postcode": "10001", "city": "New York",
+       "state": "NY", "country": "US"}, "line_items": [{"sku": "KF-01", "quantity": 2}, {"sku": "KF-02", "quantity": 1}]}'
+```
+
+**HOOK-01 · A shop order lands in its warehouse and the printer gets it**
+Smoke: `e2e/webhook.spec.ts`.
+Post the sample order above. The answer is `{"status":true}`. Orders › warehouse Colombia: order `5501` is there,
+source Web, status Created, customer Hook Buyer with two addresses (billing Miami, shipping New York) and the lines
+KF-01 × 2, KF-02 × 1. Within a minute Mailpit has "Order #5501 was created" to the printer address, cc
+`sales@klassicfab.com`, with `order-<id>.pdf` attached. The same order posted with `X-WC-Webhook-Source:
+https://usa.test` (warehouse 2) is placed in Usa and sends no email.
+
+**HOOK-02 · An unknown shop is answered ok and nothing happens**
+Smoke: `e2e/webhook.spec.ts`.
+Post the sample order with `X-WC-Webhook-Source: https://unknown-shop.test` (and a new `id`). The answer is still
+`{"status":true}`; no warehouse lists the order, no email arrives, and `docker compose logs php` shows
+"Warehouse [https://unknown-shop.test] was not found".
