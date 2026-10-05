@@ -154,6 +154,21 @@ The webhook (`/admin/order/1H39j0jpQPsWL958v9R4`) is public, as before: its secr
 in the shop (WooCommerce › Settings › Advanced › Webhooks) makes it check WooCommerce's `X-WC-Webhook-Signature` too:
 recommended, once the secret is copied from the shop (a wrong one refuses every order, logged as a warning).
 
+## What behaves differently from the Twig app
+
+Everything else does what the legacy pages did (roles included). On purpose, each with a test:
+
+- Fixed: "Update Selected Using Excel" downloads every ticked product; customers without an address are in the
+  pickers; orders without a customer are in the list; a partial shipment on a sent order is refused (409) instead of
+  a 500; a taken invoice code is a 409; Move to Warehouse moves every ticked row with the quantity shown; approving
+  incoming stock adds it to the row in stock; a stock sheet that is not the template is refused; naming a customer by
+  id leaves them unchanged; a WooCommerce order delivered twice is placed once; WooCommerce orders reuse the
+  countries, states and cities that exist.
+- New: Sync Orders pulls the shop's waiting orders (it was a dead button); the order email goes through a queue
+  (delivered within a minute by the cron line, retried); the webhook can check WooCommerce's signature
+  (`WOO_COMMERCE_WEBHOOK_SECRET`); security headers; spreadsheet cells that start with `=` are written as text.
+- Everyone signs in again once after the cutover; old page addresses redirect to the new ones.
+
 ## Known gaps
 
 - Production may already hold two in-stock rows of one product in one warehouse: the legacy "Approve all" kept the

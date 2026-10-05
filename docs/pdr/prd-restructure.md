@@ -465,6 +465,12 @@ Waves: 1 → {1, 2, 3, 4}; 2 → {5, 6, 7, 8}; 3 → {9, 10, 11, 13}; 4 → {12}
    every customer (today's `findAllAsArray` inner-joins addresses, hiding customers without one from the order and invoice
    pickers); orders list left-joins the customer (today's inner join hides orders without one); `locations` no longer
    truncates to 100 countries when there are more than 1000. Everything else behaves as today.
+   Added while building and running it (each with a test): "Move to Warehouse" moves every ticked row with the
+   quantity shown (the legacy modal skipped rows left at 1); approving incoming stock adds it to the row already in
+   stock (the legacy approval left a second in-stock row); a stock sheet without the template's five columns is
+   refused (the legacy upload read any sheet by position); an order or invoice naming its customer by id alone leaves
+   that customer as they are (the registry blanked them); a duplicated WooCommerce webhook delivery is placed once
+   (user decision, security audit finding 15); state codes made on the fly fit their column.
 10. **Lists.** Stock and orders return a warehouse's rows and the `DataTable` filters/pages in the browser (today's UX);
     customers paginate on the server (100/page) as today. A documented exception to §4.1's "lists paginate and accept `?q=`".
 11. **Authorization stays per endpoint as today**, including the two loose groups: `sync-comments`, `partials`, order `xls`

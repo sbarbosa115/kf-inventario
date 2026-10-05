@@ -28,6 +28,7 @@ the last row is green.
 | 3 | 2026-10-05 15:11 | `6ba65cd` | Not green: 49 passed, 3 failed, 15 skipped | INVC-03, ORD-05, INV-12; skipped: INVC-04, INVC-05, INVC-06, ORD-06, ORD-07, ORD-08, ORD-09, ORD-10, INV-13, INV-14, INV-15, INV-16, WH-01, WH-02, WH-03 |
 | 4 | 2026-10-05 15:15 | `06cc894` | Not green: 57 passed, 2 failed, 8 skipped | ORD-06, INV-15; skipped: ORD-07, ORD-08, ORD-09, ORD-10, INV-16, WH-01, WH-02, WH-03 |
 | 5 | 2026-10-05 15:22 | `3af9acc` | Green: 67 passed, 0 failed | — |
+| 6 | 2026-10-05 15:44 | `e0cbe2b` | Green: 67 passed, 0 failed | — |
 <!-- smoke.py adds a row per run of the whole suite -->
 
 ### Smoke findings
@@ -63,6 +64,16 @@ the last row is green.
     `StockApiTest::testApprovingAddsTheIncomingToTheRowAlreadyInStock` (red first). README "Known gaps" says how to find
     duplicates production may already hold.
 
+## Browser pass
+
+Every screen opened signed in (admin; `sales` for invoices): product list, product form, upload, barcode reader,
+incoming, warehouses, orders (and the detail dialog, Sync Orders), order form new and edit, getting-ready, customers
+and the customer form, users and the user form, invoices and the invoice form. No blank page and no console error,
+except once an "Uncaught TypeError: Cannot read properties of undefined (reading 'global')" on /admin/customers
+right after closing a dialog with Escape and navigating away; it did not come back in three more loads (recorded,
+not reproduced). Pages are complete in about 2 s on the dev stack (session check, then the page's chunk, then its
+data; StrictMode doubles the requests in dev only).
+
 ## Manual run
 
 Replace "Not run" with Pass, Fail, "Pass after fix" (with the commit) or Blocked (with why). Group consecutive
@@ -70,19 +81,19 @@ passes into ranges (`AREA-01 – 05`) once done.
 
 | ID | Result | Case / notes |
 |---|---|---|
-| AUTH-06 | Not run | Remember me keeps you signed in after closing the browser |
-| INV-03 | Not run | The selected products download as the stock spreadsheet — by hand: see the case |
-| INV-04 | Not run | Move to Warehouse moves the chosen quantities; they arrive as incoming — by hand: see the case |
-| INV-05 | Not run | A move the warehouse can no longer cover is refused, and nothing moves |
-| INV-11 | Not run | A spreadsheet from the template is stored in the chosen warehouse — by hand: see the case |
-| ORD-07 | Not run | The order's documents download — by hand: see the case |
-| ORD-09 | Not run | Sync Orders says what it did — by hand: see the case |
-| ORD-19 | Not run | Sync Orders without shop keys places nothing, and needs the sync role — by hand: see the case |
-| ORD-20 | Not run | Sync Orders pulls a shop's waiting orders once, into the warehouse of that shop |
-| INVC-03 | Not run | An invoice is created with a customer, a product and tax, its PDF opens and the list shows it — by hand: see the case |
-| USR-02 | Not run | A new user is created and appears in the list — by hand: see the case |
-| USR-03 | Not run | Editing without typing a password keeps the password — by hand: see the case |
-| MAIL-01 | Not run | An order placed by hand is emailed to the printer — by hand: see the case |
+| AUTH-06 | Pass | Remember me keeps you signed in after closing the browser — Checked on the cookies: with the box, REMEMBERME lasts 7 days and alone (no session, as after closing the browser) signs in; without it no remember-me cookie, and the session cookie ends with the browser. |
+| INV-03 | Pass | The selected products download as the stock spreadsheet — by hand: see the case — The download held the header and exactly KF-01 and KF-02 (quantity and price 0). |
+| INV-04 | Pass | Move to Warehouse moves the chosen quantities; they arrive as incoming — by hand: see the case — 2 of KF-03 moved to Usa arrived there as incoming (Usa incoming: KF-03 2); the dialog itself is covered by the smoke test and MoveStock.test.tsx. |
+| INV-05 | Pass | A move the warehouse can no longer cover is refused, and nothing moves — Checked through the API the dialog uses: after moving all of KF-01, the stale move answers 422 "Only 0 of KF-01 are available." and the stock is unchanged; the dialog keeping open on a refusal is covered by MoveStock.test.tsx. |
+| INV-11 | Pass after fix | A spreadsheet from the template is stored in the chosen warehouse — by hand: see the case — Quantities added to the two rows and the new product created with its stock; a sheet with the wrong columns was stored (a product "x") instead of refused: fixed in "a stock sheet without the template's five columns is refused" (test ProductApiTest::testASheetWithoutTheTemplatesColumnsIsRefusedAndStoresNothing). |
+| ORD-07 | Pass | The order's documents download — by hand: see the case — PDF, remaining PDF and `file-upload-template-W00001.xls` read: customer, address and the three products; the XLS lists date, code and quantity per product; the detail's Download/Remaining Products buttons seen in the browser. |
+| ORD-09 | Blocked (part) | Sync Orders says what it did — by hand: see the case — Needs a WooCommerce test shop and its keys, none here. Without keys: "0 orders imported, 0 skipped." (browser); the 502 message is covered by SyncOrders.test.tsx and SyncOrdersApiTest. |
+| ORD-19 | Pass | Sync Orders without shop keys places nothing, and needs the sync role — by hand: see the case — In the browser as the admin: "0 orders imported, 0 skipped." and the list unchanged. |
+| ORD-20 | Blocked | Sync Orders pulls a shop's waiting orders once, into the warehouse of that shop — Needs a WooCommerce test shop with waiting orders; covered by SyncOrdersApiTest with a fake shop. |
+| INVC-03 | Pass | An invoice is created with a customer, a product and tax, its PDF opens and the list shows it — by hand: see the case — As `sales`: INV-0002 300.00 + 6 % 18.00 = 318.00, its PDF shows the code, customer, line and tax; an invoice with no customer is a POS Client; a new customer with a new country, state and city is created once. |
+| USR-02 | Pass | A new user is created and appears in the list — by hand: see the case — The new user signs in and holds the inventory roles only (sidebar: Products); the form offers the nine roles and the status (browser). |
+| USR-03 | Pass | Editing without typing a password keeps the password — by hand: see the case — Edited with a blank password (name, roles): the old password still signs in. |
+| MAIL-01 | Pass after fix | An order placed by hand is emailed to the printer — by hand: see the case — Subject, printer, cc sales@klassicfab.com, from KF Inventory <orders@kf.local>, body and order-<id>.pdf all right; but an order naming its customer by id alone blanked that customer, so the PDF had no customer: fixed in "naming a customer by id alone leaves them as they are" (test CustomerRegistryTest::testAnIdAloneNamesTheCustomerAndChangesNothing), then re-run on fresh data: the PDF shows Jose Perez. |
 
 ## Findings
 
