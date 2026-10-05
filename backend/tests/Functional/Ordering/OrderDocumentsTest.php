@@ -4,6 +4,7 @@ namespace App\Tests\Functional\Ordering;
 
 use App\Tests\Support\ApiTestCase;
 use App\Tests\Support\SignsIn;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Reader\Xls;
 
 /**
@@ -59,5 +60,26 @@ final class OrderDocumentsTest extends ApiTestCase
         self::assertSame(['KF-A', 4], [$rows[1][1], $rows[1][2]]);
         self::assertSame(['KF-B', 2], [$rows[2][1], $rows[2][2]]);
         self::assertMatchesRegularExpression('/^\d{4}-\d\d-\d\d$/', (string) $rows[1][0]);
+    }
+
+    /**
+     * A product code starting with "=" is written as text in the order's sheet, not as a formula (spreadsheet formula
+     * injection).
+     */
+    public function testAProductCodeStartingWithAnEqualsSignIsWrittenAsText(): void
+    {
+        $this->signInAs(['ROLE_MANAGE_ORDERS']);
+        $warehouse = $this->aWarehouse();
+        $id = $this->placeOrder($warehouse, $this->aCustomer(), [[$this->aProduct('=HYPERLINK("https://evil.example/","x")', $warehouse), 1]]);
+
+        $this->client->request('GET', "/api/v1/orders/{$id}/xls");
+
+        $this->assertStatus(200);
+        $file = tempnam(sys_get_temp_dir(), 'order-xls');
+        file_put_contents($file, (string) $this->client->getResponse()->getContent());
+        $cell = (new Xls())->load($file)->getActiveSheet()->getCell('B2');
+        unlink($file);
+        self::assertSame(DataType::TYPE_STRING, $cell->getDataType());
+        self::assertSame('=HYPERLINK("https://evil.example/","x")', $cell->getValue());
     }
 }

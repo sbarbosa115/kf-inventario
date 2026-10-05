@@ -5,6 +5,7 @@ namespace App\Ordering\Infrastructure\Document;
 use App\Ordering\Application\Port\OrderDocuments;
 use App\Ordering\Domain\Model\Order;
 use App\Shared\Application\Port\PdfRenderer;
+use App\Shared\Infrastructure\Spreadsheet\SafeCell;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -44,7 +45,7 @@ final class OrderDocumentRenderer implements OrderDocuments
         $row = 2;
         foreach ($order->getOrderProducts() as $line) {
             $active->setCellValue("A{$row}", $order->getCreatedAt()?->format('Y-m-d'));
-            $active->setCellValue("B{$row}", $line->getProduct()?->getCode());
+            SafeCell::set($active, "B{$row}", $line->getProduct()?->getCode());
             $active->setCellValue("C{$row}", $line->getQuantity());
             ++$row;
         }

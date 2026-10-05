@@ -8,6 +8,7 @@ use App\Inventory\Domain\Model\ProductWarehouse;
 use App\Inventory\Infrastructure\Spreadsheet\PhpSpreadsheetProductSheetReader;
 use App\Tests\Support\ApiTestCase;
 use App\Tests\Support\SignsIn;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
@@ -187,6 +188,40 @@ final class ProductApiTest extends ApiTestCase
         self::assertContains('KF-02', $codes);
         $chair = array_values(array_filter($rows, static fn (array $row): bool => 'KF-01' === $row[0]))[0];
         self::assertSame(['KF-01', 'Chair', 'Oak', 0, 0], [$chair[0], $chair[1], $chair[2], (int) $chair[3], (int) $chair[4]], 'Quantity and price start at 0, to be filled in.');
+    }
+
+    /**
+     * Text typed into a product is written as text: a code, title or detail starting with "=" is not a formula in the
+     * downloaded sheet (spreadsheet formula injection), and it reads back exactly as typed when the sheet is uploaded.
+     */
+    public function testTextStartingWithAnEqualsSignIsWrittenAsText(): void
+    {
+        $this->aProduct('=1+1', '=HYPERLINK("https://evil.example/","Click")', 10.0, '=cmd|\' /C calc\'!A0');
+        $this->aProduct('123', 'Chair');
+
+        $this->client->request('GET', '/api/v1/products/template.xls?all=1');
+        $this->assertStatus(200);
+        $path = $this->tempFile((string) $this->client->getResponse()->getContent());
+        $sheet = IOFactory::load($path)->getActiveSheet();
+
+        $row = null;
+        foreach ($sheet->getRowIterator(2) as $candidate) {
+            if ('=1+1' === $sheet->getCell('A'.$candidate->getRowIndex())->getValue()) {
+                $row = $candidate->getRowIndex();
+            }
+        }
+        self::assertNotNull($row, 'The code reads back as typed, not as its result (2).');
+        foreach (['A' => '=1+1', 'B' => '=HYPERLINK("https://evil.example/","Click")', 'C' => '=cmd|\' /C calc\'!A0'] as $column => $text) {
+            $cell = $sheet->getCell($column.$row);
+            self::assertSame(DataType::TYPE_STRING, $cell->getDataType(), "{$column}{$row} is text, not a formula.");
+            self::assertSame($text, $cell->getValue());
+        }
+        $numeric = false;
+        foreach ($sheet->getRowIterator(2) as $candidate) {
+            $cell = $sheet->getCell('A'.$candidate->getRowIndex());
+            $numeric = $numeric || (123 == $cell->getValue() && DataType::TYPE_NUMERIC === $cell->getDataType());
+        }
+        self::assertTrue($numeric, 'Other values are written as before (a numeric code is still a number).');
     }
 
     public function testTheTemplateHasTheSelectedProducts(): void

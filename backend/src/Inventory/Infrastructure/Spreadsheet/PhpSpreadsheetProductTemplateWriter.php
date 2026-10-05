@@ -3,13 +3,14 @@
 namespace App\Inventory\Infrastructure\Spreadsheet;
 
 use App\Inventory\Application\Port\ProductTemplateWriter;
+use App\Shared\Infrastructure\Spreadsheet\SafeCell;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The legacy ProductController::uploadProductsTemplate's sheet: the translated header in A1:E1 (product.template.*),
- * then code, title, detail, 0, 0 per product, written as xls.
+ * then code, title, detail, 0, 0 per product, written as xls (typed text through SafeCell: never a formula).
  */
 final class PhpSpreadsheetProductTemplateWriter implements ProductTemplateWriter
 {
@@ -26,9 +27,9 @@ final class PhpSpreadsheetProductTemplateWriter implements ProductTemplateWriter
         }
         foreach ($products as $index => $product) {
             $row = $index + 2;
-            $sheet->setCellValue("A{$row}", $product->getCode());
-            $sheet->setCellValue("B{$row}", $product->getTitle());
-            $sheet->setCellValue("C{$row}", $product->getDetail());
+            SafeCell::set($sheet, "A{$row}", $product->getCode());
+            SafeCell::set($sheet, "B{$row}", $product->getTitle());
+            SafeCell::set($sheet, "C{$row}", $product->getDetail());
             $sheet->setCellValue("D{$row}", 0);
             $sheet->setCellValue("E{$row}", 0);
         }
