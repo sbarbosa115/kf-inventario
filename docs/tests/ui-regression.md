@@ -264,6 +264,66 @@ this."; `/api/v1/customers` answers 403.
 <!-- Item 9 (orders-ui) adds ORD-01 – 10; item 10 (order-forms-ui) adds ORD-11 – 18; item 13 (woocommerce-sync) adds
      ORD-19 – 20. -->
 
+**ORD-11 · The old order form and getting-ready addresses land on the new screens**
+Smoke: `e2e/order-forms.spec.ts`.
+Signed in as the admin, open `/admin/order/new` (the previous version's address): `/admin/orders/new` opens, "Create a
+new order". `/admin/order/edit/<id of W00002>` opens `/admin/orders/<id>/edit`, "Editing Order", Consecutive
+`W00002`; `/admin/order/partial/getting-ready/<id>` opens `/admin/orders/<id>/getting-ready`, "Getting ready order
+#W00002". By hand: the Edit and Getting ready buttons of the orders list open the same screens.
+
+**ORD-12 · The form saves only when complete, and the warehouse locks once a product is filled**
+Smoke: `e2e/order-forms.spec.ts`.
+Create an order: the Create button is disabled and the hint under it names what is required (customer's first name,
+last name and email, warehouse, a product with its quantity, source, payment method, status). Pick Warehouse
+Colombia, Product 1 `KF-01 (KF-01)`: the warehouse can still change; type a quantity: the Warehouse select is locked
+(empty the quantity: it unlocks). By hand: before a warehouse is picked the product select is disabled; changing the
+warehouse offers only that warehouse's products (Usa has none in the fixtures: "This warehouse has no products in
+stock").
+
+**ORD-13 · An order is placed for a new customer with two products**
+Smoke: `e2e/order-forms.spec.ts` (and MAIL-01 reads its email).
+Type First Name, Last Name, Email, Phone, Address, Zip Code; Warehouse Colombia; Product 1 KF-01, quantity 3; the green
++ adds a second row: KF-02, quantity 1; Consecutive, Source Phone, Payment Method Credit Card, Status Created; Create:
+back on the orders list. The order holds KF-01 × 3 and KF-02 × 1, status Created. By hand: the red × of a row takes it
+out; the + appears only on the last row once it is filled; the new customer is in the Customers list with the address.
+
+**ORD-14 · Picking an existing customer fills the customer block**
+Smoke: `e2e/order-forms.spec.ts`.
+Search Customer › type `Jose` › `Jose Perez [jose.perez@example.com] [+57 3002825566]`: First Name, Last Name, Email,
+Phone and the address (with its country, state and city) are filled. By hand: change the phone, place the order: the
+Customers list shows Jose Perez once, with the new phone (the order updates the customer it names, it does not copy
+it). The × of the picker empties the customer block.
+
+**ORD-15 · Editing an order shows what was saved and updates it**
+Smoke: `e2e/order-forms.spec.ts`.
+Edit the order of ORD-13: the customer, Consecutive, the two products with their quantities, source, payment method
+and status are filled, and the warehouse is locked. Change KF-01 to 2, Update: back on the list; the order holds
+KF-01 × 2. By hand: an order in status Partial, Sent or Delivered keeps its status in the Status select (the form
+offers Created, Processed and Completed otherwise); a comment typed here shows in the order's detail.
+
+**ORD-16 · Getting ready: a scan adds one, and what is not on the order or over its quantity is refused**
+Smoke: `e2e/order-forms.spec.ts`.
+Open Getting ready for the order of ORD-15: the Bar Code box has the focus. Type `KF-01` and Enter: its This Order
+shows 1 and Product Order Quantity `2 / 1`. `NOPE-404` + Enter: "You are trying to add a product that is not on the
+current order…", Continue adding. KF-01 again: `2 / ~`; once more: "You reached the limit of product allowed to add to
+this order." The red − takes one away. By hand: with a barcode scanner the same happens; the rows are tinted red
+(nothing added), yellow (some) and green (complete); a product whose warehouse stock is all in this shipment says
+"There is no enough quantity of this product on inventory." (set a product's stock to 1 with the barcode reader's
+remove first).
+
+**ORD-17 · Partial shipments take the stock out, and a sent order takes no more**
+Smoke: `e2e/order-forms.spec.ts`.
+Scan KF-01 twice, Save Current: back on the orders list, the order is Partial. Getting ready again: KF-01's Inventory
+button shows 2 less, Aggregate Partials 2 and `2 / ~`. Scan KF-02, Save Current; open it again: every row shows `~`
+and its + is disabled. The fixtures' `W00005` (Sent): Save Current is disabled. By hand: an order whose whole content
+is scanned in one go (and in stock) becomes Sent; Cancel goes back to the orders list without saving.
+
+**ORD-18 · An order that no longer exists says so, and a person without the order roles is refused**
+Smoke: `e2e/order-forms.spec.ts`.
+`/admin/orders/999999/edit` and `/admin/orders/999999/getting-ready`: "This order no longer exists." with a link back
+to the orders. Signed in as `inventory`, `/admin/orders/<id>/edit`: "You do not have permission to do this.";
+`/api/v1/orders/<id>` answers 403.
+
 ## 6. Invoices (INVC)
 
 <!-- Item 11 (invoices-ui) adds INVC-01 – 06. -->
@@ -309,6 +369,17 @@ then sign in with the old one (refused) and the new one (works).
 ## 8. Emails (MAIL)
 
 <!-- Item 10 (order-forms-ui) adds MAIL-01 – 02: the printer's email of a new order, read in Mailpit. -->
+
+**MAIL-01 · An order placed by hand is emailed to the printer**
+Smoke (part): `e2e/order-forms.spec.ts` finds the email of ORD-13 in Mailpit (to the printer, subject, body).
+After ORD-13, Mailpit has, within a minute, "Order #<Consecutive> was created" to `printer@kf.local` (the dev stack's
+`MAILER_PRINTER_ADDRESS`), body "A new order was created and attached to this email.". By hand: it is cc'd to
+`sales@klassicfab.com`, from `KF Inventory <orders@kf.local>`, and its attachment `order-<id>.pdf` opens and lists the
+order's customer and products.
+
+**MAIL-02 · Editing an order sends no email**
+Smoke: `e2e/order-forms.spec.ts`.
+Edit `W00001`, change the comment and the payment method, Update: no new email reaches the printer.
 
 ## 9. WooCommerce webhook (HOOK)
 
