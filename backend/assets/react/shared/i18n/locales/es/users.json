@@ -1,22 +1,35 @@
 {
   "title": "Usuarios",
+  "count_one": "{{count}} usuario",
+  "count_other": "{{count}} usuarios",
   "create": "Crear usuario",
   "columns": {
-    "id": "#",
     "name": "Nombre",
+    "username": "Usuario",
     "email": "Correo electrónico",
     "roles": "Roles",
-    "options": "Opciones"
+    "status": "Estado"
   },
+  "filters": {
+    "label": "Filtrar por estado",
+    "active": "Activos",
+    "inactive": "Inactivos"
+  },
+  "active": "Activo",
+  "inactive": "Inactivo",
   "edit": "Editar",
+  "noRoles": "Sin roles",
   "empty": "Aún no hay usuarios. Cree el primero.",
-  "created": "El usuario se creó correctamente.",
-  "updated": "El usuario se actualizó correctamente.",
+  "created": "El usuario se creó.",
+  "updated": "El usuario se actualizó.",
   "notFound": "Este usuario ya no existe.",
   "backToList": "Volver a los usuarios",
   "form": {
     "newTitle": "Nuevo usuario",
     "editTitle": "Editar usuario",
+    "account": "Cuenta",
+    "accountHint": "Quién es esta persona y cómo inicia sesión.",
+    "rolesHint": "Elija lo que esta persona puede abrir. Marque todos los que necesite.",
     "name": "Nombre",
     "email": "Correo electrónico",
     "username": "Usuario",

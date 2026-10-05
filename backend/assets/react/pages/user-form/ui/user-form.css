@@ -1,0 +1,61 @@
+/* The role groups of the user form: a legend, then one row per role (a checkbox, its plain name, what it opens). */
+.kf-role-group {
+  margin: 0 0 var(--kf-space-5);
+  padding: 0;
+  border: 0;
+}
+
+.kf-role-group__legend {
+  width: auto;
+  margin: 0 0 var(--kf-space-2);
+  padding: 0;
+  font-size: var(--kf-text-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kf-text-muted);
+}
+
+.kf-role-group__note {
+  margin: 0 0 var(--kf-space-2);
+  font-size: var(--kf-text-sm);
+  color: var(--kf-text-muted);
+}
+
+.kf-role {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kf-space-3);
+  min-height: var(--kf-target);
+  padding: var(--kf-space-2) 0;
+  border-bottom: 1px solid var(--kf-border);
+}
+
+.kf-role:last-child {
+  border-bottom: 0;
+}
+
+.kf-role__input {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.2rem;
+  accent-color: var(--kf-accent);
+}
+
+.kf-role__text {
+  min-width: 0;
+}
+
+.kf-role__name {
+  display: block;
+  margin: 0;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.kf-role__description {
+  display: block;
+  font-size: var(--kf-text-sm);
+  color: var(--kf-text-muted);
+}
