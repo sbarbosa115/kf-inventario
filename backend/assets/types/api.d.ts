@@ -472,7 +472,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Pulls new orders from the WooCommerce shops (item 13). 501 order_sync_unavailable until then; 502 order_sync_failed. (item 13). */
+        /**
+         * Pulls the orders the WooCommerce shops have waiting (REST API) and places the ones the app does not have yet,
+         *     as the webhook would: `imported` placed, `skipped` already imported (deleted ones included) or not placeable
+         *     (logged). A warehouse whose shop the app holds no keys for is not pulled. 502 order_sync_failed when a shop
+         *     cannot be read (nothing is kept).
+         */
         post: operations["post_api_orders_sync"];
         delete?: never;
         options?: never;
