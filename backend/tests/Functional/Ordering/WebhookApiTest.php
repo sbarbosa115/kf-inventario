@@ -113,6 +113,58 @@ final class WebhookApiTest extends ApiTestCase
         $this->assertStatus(200, 'Public: the shops do not sign in (GET too, as before).');
     }
 
+    public function testWithASecretASignedOrderIsPlaced(): void
+    {
+        $this->withWebhookSecret('s3cret');
+        $warehouse = $this->aWarehouse('Usa', ['https://usa.test']);
+        $this->aProduct('KF-01', $warehouse);
+        $this->aProduct('KF-02', $warehouse);
+        $body = json_encode(self::payload(5701), \JSON_THROW_ON_ERROR);
+
+        $this->client->request('POST', self::URL, server: ['CONTENT_TYPE' => 'application/json', 'HTTP_X-WC-Webhook-Source' => 'https://usa.test', 'HTTP_X-WC-Webhook-Signature' => base64_encode(hash_hmac('sha256', $body, 's3cret', true))], content: $body);
+
+        $this->assertStatus(200);
+        $this->em()->clear();
+        self::assertNotNull($this->em()->getRepository(Order::class)->findOneBy(['code' => '5701']), 'WooCommerce signs each delivery with the webhook secret: base64(HMAC-SHA256(body)).');
+    }
+
+    public function testWithASecretAnUnsignedOrForgedOrderIsLoggedAndNotPlaced(): void
+    {
+        $this->withWebhookSecret('s3cret');
+        $warehouse = $this->aWarehouse('Usa', ['https://usa.test']);
+        $this->aProduct('KF-01', $warehouse);
+        $this->aProduct('KF-02', $warehouse);
+        $logs = $this->logHandler();
+        $body = json_encode(self::payload(5702), \JSON_THROW_ON_ERROR);
+
+        $this->client->request('POST', self::URL, server: ['CONTENT_TYPE' => 'application/json', 'HTTP_X-WC-Webhook-Source' => 'https://usa.test'], content: $body);
+        $this->assertStatus(200, 'The answer does not change: the shop (or whoever posted) still gets {status: true}.');
+        self::assertSame(['status' => true], $this->body());
+        $this->client->request('POST', self::URL, server: ['CONTENT_TYPE' => 'application/json', 'HTTP_X-WC-Webhook-Source' => 'https://usa.test', 'HTTP_X-WC-Webhook-Signature' => base64_encode(hash_hmac('sha256', $body, 'wrong', true))], content: $body);
+        $this->assertStatus(200);
+
+        $this->em()->clear();
+        self::assertSame(0, $this->em()->getRepository(Order::class)->count([]));
+        self::assertTrue($logs->hasWarningThatContains('X-WC-Webhook-Signature'), 'A refused delivery is logged.');
+    }
+
+    /**
+     * WOO_COMMERCE_WEBHOOK_SECRET is empty by default (no check, as before); these tests set it for their kernel.
+     */
+    private function withWebhookSecret(string $secret): void
+    {
+        $_SERVER['WOO_COMMERCE_WEBHOOK_SECRET'] = $_ENV['WOO_COMMERCE_WEBHOOK_SECRET'] = $secret;
+        self::ensureKernelShutdown();
+        $this->client = static::createClient();
+        $this->client->disableReboot();
+    }
+
+    protected function tearDown(): void
+    {
+        $_SERVER['WOO_COMMERCE_WEBHOOK_SECRET'] = $_ENV['WOO_COMMERCE_WEBHOOK_SECRET'] = '';
+        parent::tearDown();
+    }
+
     /**
      * @param array<string, mixed> $payload
      *

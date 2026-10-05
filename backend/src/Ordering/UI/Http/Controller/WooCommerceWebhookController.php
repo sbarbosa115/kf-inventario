@@ -3,6 +3,7 @@
 namespace App\Ordering\UI\Http\Controller;
 
 use App\Ordering\Application\Command\ImportShopOrder;
+use App\Ordering\UI\Http\Security\WooCommerceWebhookSignature;
 use App\Shared\Application\Command\CommandBus;
 use App\Shared\Domain\Error\DomainError;
 use Psr\Log\LoggerInterface;
@@ -14,13 +15,15 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * The WooCommerce webhook: the shops post each new order here. The URL and the route name are the legacy ones (the
  * shops are configured with it): public (security.yaml), outside /api/ and the SPA. The shop always gets
- * {status: true}; what could not be placed is logged.
+ * {status: true}; what could not be placed is logged. With WOO_COMMERCE_WEBHOOK_SECRET set, a delivery without the
+ * shop's signature is logged and not placed (WooCommerceWebhookSignature).
  */
 final class WooCommerceWebhookController extends AbstractController
 {
     public function __construct(
         private readonly CommandBus $commands,
         private readonly LoggerInterface $logger,
+        private readonly WooCommerceWebhookSignature $signature,
     ) {
     }
 
@@ -28,6 +31,11 @@ final class WooCommerceWebhookController extends AbstractController
     public function __invoke(Request $request): JsonResponse
     {
         $source = $request->headers->get('X-WC-Webhook-Source');
+        if (!$this->signature->accepts($request->getContent(), $request->headers->get('X-WC-Webhook-Signature'))) {
+            $this->logger->warning(\sprintf('WooCommerce delivery from [%s] refused: missing or wrong X-WC-Webhook-Signature.', $source));
+
+            return new JsonResponse(['status' => true]);
+        }
         $shopOrder = json_decode($request->getContent(), true);
 
         try {

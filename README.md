@@ -119,7 +119,7 @@ first). Writes from another origin are refused (403).
 | `GET` | `/api/v1/invoices/{id}` | `ROLE_CAN_READ_INVOICES` | 5: `InvoiceOutput`; 404 `invoice_not_found` |
 | `POST` | `/api/v1/invoices` | `ROLE_CAN_CREATE_INVOICES` | 5: `InvoiceInput` → 201 `InvoiceOutput`; customer by `customer_id` or found/created from `customer` (as orders do); with no address typed, the customer's first is copied; line totals and `tax_rate` % tax worked out as before; 409 `invoice_code_taken` |
 | `GET` | `/api/v1/invoices/{id}/pdf` | `ROLE_CAN_READ_INVOICES` | 5: `application/pdf` (`templates/pdf/invoice.html.twig`, the logo from `public/images/`) |
-| `POST`/`GET` | `/admin/order/1H39j0jpQPsWL958v9R4` | public | 4: the WooCommerce webhook (URL and route name unchanged): warehouse by `X-WC-Webhook-Source` in `warehouse.urls`, printer email only for `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`; always `{status: true}`, failures logged |
+| `POST`/`GET` | `/admin/order/1H39j0jpQPsWL958v9R4` | public | 4: the WooCommerce webhook (URL and route name unchanged): warehouse by `X-WC-Webhook-Source` in `warehouse.urls`, printer email only for `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`; always `{status: true}`, failures logged; with `WOO_COMMERCE_WEBHOOK_SECRET` set, a delivery without the shop's `X-WC-Webhook-Signature` is logged and not placed (empty by default: no check, as before) |
 
 ## Data model decisions
 
@@ -148,6 +148,11 @@ once.
 The "Sync Orders" button reads the shop's WooCommerce REST API with `WOO_COMMERCE_URL`, `WOO_COMMERCE_API_KEY` and
 `WOO_COMMERCE_API_SECRET` (read-only keys, one shop as before): the URL must be one of the receiving warehouse's
 `urls` (the address its webhook comes from). With any of the three empty the button places nothing.
+
+The webhook (`/admin/order/1H39j0jpQPsWL958v9R4`) is public, as before: its secret path and the
+`X-WC-Webhook-Source` header are all that admit an order. Setting `WOO_COMMERCE_WEBHOOK_SECRET` to the webhook's secret
+in the shop (WooCommerce › Settings › Advanced › Webhooks) makes it check WooCommerce's `X-WC-Webhook-Signature` too:
+recommended, once the secret is copied from the shop (a wrong one refuses every order, logged as a warning).
 
 ## Known gaps
 
