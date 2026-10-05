@@ -39,8 +39,9 @@ final class MigrateJsonColumnsCommand extends Command
                     continue;
                 }
 
-                $unserialized = @unserialize($raw);
-                if (false === $unserialized) {
+                // Values only: an object serialized into the column is never built (allowed_classes).
+                $unserialized = @unserialize($raw, ['allowed_classes' => false]);
+                if (!\is_array($unserialized)) {
                     $io->warning("id={$row['id']}: cannot unserialize '{$raw}' — skipping");
                     continue;
                 }
