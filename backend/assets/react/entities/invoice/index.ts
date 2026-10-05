@@ -2,12 +2,10 @@ export {
   createInvoice,
   getInvoice,
   invoicePdfUrl,
-  listCustomerChoices,
   listInvoices,
   nextInvoiceCode,
 } from './api/invoiceApi';
 export type {
-  CustomerChoice,
   Invoice,
   InvoiceCustomerPayload,
   InvoiceItem,

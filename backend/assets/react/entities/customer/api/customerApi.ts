@@ -41,6 +41,14 @@ export function listCustomers(page: number): Promise<CustomerPage> {
   return apiGet<CustomerPage>(`/customers?page=${page}&per_page=${PAGE_SIZE}`);
 }
 
+/**
+ * Every customer (those without an address too), for the order and invoice pickers: readable by the customers
+ * screen's role and by the order (create, update) and new-invoice roles, whose legacy forms embedded the list.
+ */
+export function listAllCustomers(): Promise<Customer[]> {
+  return apiGet<Customer[]>('/customers/all');
+}
+
 export function getCustomer(id: number | string): Promise<Customer> {
   return apiGet<Customer>(`/customers/${id}`);
 }

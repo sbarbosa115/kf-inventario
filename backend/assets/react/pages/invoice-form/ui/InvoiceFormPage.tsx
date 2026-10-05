@@ -1,5 +1,6 @@
+import {listAllCustomers} from '@/entities/customer';
+import {nextInvoiceCode} from '@/entities/invoice';
 import {listLocations} from '@/entities/location';
-import {listCustomerChoices, nextInvoiceCode} from '@/entities/invoice';
 import {listWarehouses} from '@/entities/warehouse';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
@@ -18,7 +19,7 @@ export function InvoiceFormPage() {
 
 function Loaded() {
   const code = useLoad(nextInvoiceCode, []);
-  const customers = useLoad(listCustomerChoices, []);
+  const customers = useLoad(listAllCustomers, []);
   const locations = useLoad(listLocations, []);
   const warehouses = useLoad(listWarehouses, []);
   const error =

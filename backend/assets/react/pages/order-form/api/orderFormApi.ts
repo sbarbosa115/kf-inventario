@@ -1,4 +1,4 @@
-import type {AddressPayload, Customer} from '@/entities/customer';
+import type {AddressPayload} from '@/entities/customer';
 import {apiGet, apiPost, apiPut, type Schema} from '@/shared/api';
 
 /** An order with its customer, comments and products, as the form edits it. */
@@ -40,9 +40,4 @@ export function updateOrder(
   payload: OrderPayload,
 ): Promise<OrderDetail> {
   return apiPut<OrderDetail>(`/orders/${id}`, payload);
-}
-
-/** Every customer, for the "Search Customer" picker (needs ROLE_MANAGE_CUSTOMERS). */
-export function listAllCustomers(): Promise<Customer[]> {
-  return apiGet<Customer[]>('/customers/all');
 }

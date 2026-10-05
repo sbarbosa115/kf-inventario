@@ -2,6 +2,7 @@ export {
   createCustomer,
   deleteCustomer,
   getCustomer,
+  listAllCustomers,
   listCustomers,
   PAGE_SIZE,
   updateCustomer,

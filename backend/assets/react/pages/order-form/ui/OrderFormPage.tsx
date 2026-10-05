@@ -1,11 +1,12 @@
 import {Link, useParams} from 'react-router-dom';
+import {listAllCustomers} from '@/entities/customer';
 import {listLocations} from '@/entities/location';
 import {listWarehouses} from '@/entities/warehouse';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
 import {ErrorState, Loader, PageCard} from '@/shared/ui';
-import {getOrder, listAllCustomers} from '../api/orderFormApi';
+import {getOrder} from '../api/orderFormApi';
 import {OrderForm} from './OrderForm';
 
 /** Create a new order (/admin/orders/new) and Editing Order (/admin/orders/:id/edit): one form for both. */
@@ -25,7 +26,8 @@ export function OrderFormPage() {
 
 /**
  * The warehouses, the locations tree, the customers for the picker and, on an edit, the order. The customers are
- * optional: without them (a person without the Customers role) the customer is typed.
+ * optional: if they cannot be loaded the customer is typed (the order roles read them, as the legacy form embedded
+ * them).
  */
 function Loaded({id}: {id: string | undefined}) {
   const {t} = useTranslation();

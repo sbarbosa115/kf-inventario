@@ -3,9 +3,6 @@ import {apiGet, apiPost, type Schema} from '@/shared/api';
 export type Invoice = Schema<'InvoiceOutput'>;
 export type InvoiceItem = Schema<'InvoiceItemOutput'>;
 
-/** A customer as the invoice form's picker lists them (the pickers' `GET /customers/all`). */
-export type CustomerChoice = Schema<'CustomerOutput'>;
-
 /** One line of what the form sends (the request bodies are not in the OpenAPI schema). Amounts are decimal strings. */
 export interface InvoiceLinePayload {
   product_id: number | null;
@@ -65,10 +62,6 @@ export function nextInvoiceCode(): Promise<Schema<'NextInvoiceCodeOutput'>> {
 
 export function createInvoice(payload: InvoicePayload): Promise<Invoice> {
   return apiPost<Invoice>('/invoices', payload);
-}
-
-export function listCustomerChoices(): Promise<CustomerChoice[]> {
-  return apiGet<CustomerChoice[]>('/customers/all');
 }
 
 /** The invoice's PDF: a page of its own, opened in a new tab (the session cookie signs the request). */
