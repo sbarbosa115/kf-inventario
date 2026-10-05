@@ -34,5 +34,10 @@ interface ProductRepository
      */
     public function findByUuids(array $uuids): array;
 
+    /**
+     * @return list<Product> by id (the "all products" stock spreadsheet)
+     */
+    public function all(): array;
+
     public function add(Product $product): void;
 }

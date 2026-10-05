@@ -48,6 +48,14 @@ class Warehouse
         return $this->id;
     }
 
+    /**
+     * The legacy WarehouseType edited the name through a setter the entity never had; this is that edit.
+     */
+    public function rename(string $name): void
+    {
+        $this->name = $name;
+    }
+
     public function getName(): ?string
     {
         return $this->name;

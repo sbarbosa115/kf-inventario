@@ -101,7 +101,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A product by its code (the barcode reader). 404 product_not_found. (item 2). */
+        /** A product by its code (the barcode reader). 404 product_not_found. */
         get: operations["get_api_products_by_code"];
         put?: never;
         post?: never;
@@ -118,9 +118,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A product by uuid. 404 product_not_found. (item 2). */
+        /** A product by uuid. 404 product_not_found. */
         get: operations["get_api_products_show"];
-        /** ProductInput: edits a product. (item 2). */
+        /** ProductInput: edits a product. 404 product_not_found. */
         put: operations["put_api_products_update"];
         post?: never;
         delete?: never;
@@ -138,7 +138,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** ProductInput: creates a product. (item 2). */
+        /** ProductInput: creates a product (no stock until some is uploaded, scanned or moved). */
         post: operations["post_api_products_create"];
         delete?: never;
         options?: never;
@@ -155,7 +155,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** multipart: `file` (xls/xlsx, the template's columns) and `warehouse_id`. 415 unsupported_media; 422 invalid_spreadsheet. (item 2). */
+        /**
+         * multipart: `file` (xls/xlsx, the template's columns) and `warehouse_id`: the products are created or updated and
+         *     their quantities added to the warehouse's stock. 404 warehouse_not_found; 415 unsupported_media; 422
+         *     invalid_spreadsheet.
+         */
         post: operations["post_api_products_upload"];
         delete?: never;
         options?: never;
@@ -170,7 +174,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The stock spreadsheet: `all=1` for every product, or `uuid[]=…` for the selected ones (an xls attachment). (item 2). */
+        /**
+         * The stock spreadsheet (an xls attachment): `all=1` for every product, or `uuid[]=…` for the selected ones; with
+         *     neither, the header alone.
+         */
         get: operations["get_api_products_template"];
         put?: never;
         post?: never;
@@ -187,7 +194,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The warehouse's stock rows with `status` (1 in stock, default; 0 incoming). (item 2). */
+        /** The warehouse's stock rows with `status` (1 in stock, default; 0 incoming), by product. 404 warehouse_not_found. */
         get: operations["get_api_stock_list"];
         put?: never;
         post?: never;
@@ -206,7 +213,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** StockLinesInput: moves quantities to another warehouse (they arrive as incoming). 204; 409 same_warehouse; 404 stock_not_found; 422 insufficient_stock. (item 2). */
+        /**
+         * StockLinesInput: moves quantities to another warehouse (they arrive as incoming). 204; 409 same_warehouse;
+         *     404 product_not_found, stock_not_found, warehouse_not_found; 422 insufficient_stock (detail: code, available).
+         */
         post: operations["post_api_stock_move"];
         delete?: never;
         options?: never;
@@ -223,7 +233,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** StockLinesInput (by code): the barcode reader adds stock. 204. (item 2). */
+        /** StockLinesInput (by code): the barcode reader adds stock; an unknown code is skipped. 204. */
         post: operations["post_api_stock_add"];
         delete?: never;
         options?: never;
@@ -240,7 +250,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** StockLinesInput (by code): the barcode reader removes stock. 204; 422 insufficient_stock. (item 2). */
+        /**
+         * StockLinesInput (by code): the barcode reader removes stock; an unknown code is skipped. 204; 404 stock_not_found;
+         *     422 insufficient_stock (detail: code, available).
+         */
         post: operations["post_api_stock_remove"];
         delete?: never;
         options?: never;
@@ -257,7 +270,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Approves every incoming row of the warehouse. (item 2). */
+        /** Approves every incoming row of the warehouse. 404 warehouse_not_found. */
         post: operations["post_api_stock_approve_incoming"];
         delete?: never;
         options?: never;
@@ -272,7 +285,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every warehouse (as /admin/warehouse/all: any signed-in user). (item 2). */
+        /** Every warehouse, by id (as /admin/warehouse/all: any signed-in user). */
         get: operations["get_api_warehouses_list"];
         put?: never;
         post?: never;
@@ -290,7 +303,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** WarehouseInput: renames a warehouse (as the legacy edit: any signed-in user). (item 2). */
+        /** WarehouseInput: renames a warehouse (as the legacy edit: any signed-in user). 404 warehouse_not_found. */
         put: operations["put_api_warehouses_rename"];
         post?: never;
         delete?: never;

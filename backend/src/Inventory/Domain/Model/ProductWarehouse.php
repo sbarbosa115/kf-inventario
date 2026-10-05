@@ -97,4 +97,12 @@ class ProductWarehouse
         }
         $this->quantity -= $quantity;
     }
+
+    /**
+     * Incoming stock (moved here from another warehouse) is counted as in stock once someone approves it.
+     */
+    public function approve(): void
+    {
+        $this->status = self::STATUS_CONFIRMED;
+    }
 }

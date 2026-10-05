@@ -25,6 +25,7 @@ final class ProductInput
     #[Assert\Choice(choices: [0, 1])]
     public int $status = 1;
 
+    /** A whole number is a price too (the legacy form's NumberType took both). */
     #[Assert\PositiveOrZero]
-    public ?float $price = null;
+    public int|float|null $price = null;
 }

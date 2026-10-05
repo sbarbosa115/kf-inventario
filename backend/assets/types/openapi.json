@@ -148,7 +148,7 @@
         },
         "/api/v1/products/by-code/{code}": {
             "get": {
-                "summary": "A product by its code (the barcode reader). 404 product_not_found. (item 2).",
+                "summary": "A product by its code (the barcode reader). 404 product_not_found.",
                 "operationId": "get_api_products_by_code",
                 "parameters": [
                     {
@@ -177,7 +177,7 @@
         },
         "/api/v1/products/{uuid}": {
             "get": {
-                "summary": "A product by uuid. 404 product_not_found. (item 2).",
+                "summary": "A product by uuid. 404 product_not_found.",
                 "operationId": "get_api_products_show",
                 "parameters": [
                     {
@@ -204,7 +204,7 @@
                 }
             },
             "put": {
-                "summary": "ProductInput: edits a product. (item 2).",
+                "summary": "ProductInput: edits a product. 404 product_not_found.",
                 "operationId": "put_api_products_update",
                 "parameters": [
                     {
@@ -233,7 +233,7 @@
         },
         "/api/v1/products": {
             "post": {
-                "summary": "ProductInput: creates a product. (item 2).",
+                "summary": "ProductInput: creates a product (no stock until some is uploaded, scanned or moved).",
                 "operationId": "post_api_products_create",
                 "responses": {
                     "201": {
@@ -251,7 +251,7 @@
         },
         "/api/v1/products/upload": {
             "post": {
-                "summary": "multipart: `file` (xls/xlsx, the template's columns) and `warehouse_id`. 415 unsupported_media; 422 invalid_spreadsheet. (item 2).",
+                "summary": "multipart: `file` (xls/xlsx, the template's columns) and `warehouse_id`: the products are created or updated and\ntheir quantities added to the warehouse's stock. 404 warehouse_not_found; 415 unsupported_media; 422\ninvalid_spreadsheet.",
                 "operationId": "post_api_products_upload",
                 "responses": {
                     "200": {
@@ -269,7 +269,7 @@
         },
         "/api/v1/products/template.xls": {
             "get": {
-                "summary": "The stock spreadsheet: `all=1` for every product, or `uuid[]=\u2026` for the selected ones (an xls attachment). (item 2).",
+                "summary": "The stock spreadsheet (an xls attachment): `all=1` for every product, or `uuid[]=\u2026` for the selected ones; with\nneither, the header alone.",
                 "operationId": "get_api_products_template",
                 "responses": {
                     "default": {
@@ -280,7 +280,7 @@
         },
         "/api/v1/warehouses/{id}/stock": {
             "get": {
-                "summary": "The warehouse's stock rows with `status` (1 in stock, default; 0 incoming). (item 2).",
+                "summary": "The warehouse's stock rows with `status` (1 in stock, default; 0 incoming), by product. 404 warehouse_not_found.",
                 "operationId": "get_api_stock_list",
                 "parameters": [
                     {
@@ -312,7 +312,7 @@
         },
         "/api/v1/warehouses/{from}/moves/{to}": {
             "post": {
-                "summary": "StockLinesInput: moves quantities to another warehouse (they arrive as incoming). 204; 409 same_warehouse; 404 stock_not_found; 422 insufficient_stock. (item 2).",
+                "summary": "StockLinesInput: moves quantities to another warehouse (they arrive as incoming). 204; 409 same_warehouse;\n404 product_not_found, stock_not_found, warehouse_not_found; 422 insufficient_stock (detail: code, available).",
                 "operationId": "post_api_stock_move",
                 "parameters": [
                     {
@@ -343,7 +343,7 @@
         },
         "/api/v1/warehouses/{id}/stock/add": {
             "post": {
-                "summary": "StockLinesInput (by code): the barcode reader adds stock. 204. (item 2).",
+                "summary": "StockLinesInput (by code): the barcode reader adds stock; an unknown code is skipped. 204.",
                 "operationId": "post_api_stock_add",
                 "parameters": [
                     {
@@ -365,7 +365,7 @@
         },
         "/api/v1/warehouses/{id}/stock/remove": {
             "post": {
-                "summary": "StockLinesInput (by code): the barcode reader removes stock. 204; 422 insufficient_stock. (item 2).",
+                "summary": "StockLinesInput (by code): the barcode reader removes stock; an unknown code is skipped. 204; 404 stock_not_found;\n422 insufficient_stock (detail: code, available).",
                 "operationId": "post_api_stock_remove",
                 "parameters": [
                     {
@@ -387,7 +387,7 @@
         },
         "/api/v1/warehouses/{id}/incoming/approve": {
             "post": {
-                "summary": "Approves every incoming row of the warehouse. (item 2).",
+                "summary": "Approves every incoming row of the warehouse. 404 warehouse_not_found.",
                 "operationId": "post_api_stock_approve_incoming",
                 "parameters": [
                     {
@@ -416,7 +416,7 @@
         },
         "/api/v1/warehouses": {
             "get": {
-                "summary": "Every warehouse (as /admin/warehouse/all: any signed-in user). (item 2).",
+                "summary": "Every warehouse, by id (as /admin/warehouse/all: any signed-in user).",
                 "operationId": "get_api_warehouses_list",
                 "responses": {
                     "200": {
@@ -437,7 +437,7 @@
         },
         "/api/v1/warehouses/{id}": {
             "put": {
-                "summary": "WarehouseInput: renames a warehouse (as the legacy edit: any signed-in user). (item 2).",
+                "summary": "WarehouseInput: renames a warehouse (as the legacy edit: any signed-in user). 404 warehouse_not_found.",
                 "operationId": "put_api_warehouses_rename",
                 "parameters": [
                     {
