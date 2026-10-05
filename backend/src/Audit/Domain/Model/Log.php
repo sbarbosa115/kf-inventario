@@ -6,7 +6,7 @@ use App\Identity\Domain\Model\User;
 use App\Repository\LogRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: LogRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'log')]
 class Log
 {

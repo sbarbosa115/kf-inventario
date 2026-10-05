@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: ProductRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'product')]
 #[ORM\HasLifecycleCallbacks]
 class Product

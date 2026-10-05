@@ -5,7 +5,7 @@ namespace App\Customers\Domain\Model;
 use App\Repository\CustomerAddressRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: CustomerAddressRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'customer_address')]
 class CustomerAddress
 {

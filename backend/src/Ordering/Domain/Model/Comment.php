@@ -7,7 +7,7 @@ use App\Repository\CommentRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 
-#[ORM\Entity(repositoryClass: CommentRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'comment')]
 #[Gedmo\SoftDeleteable(fieldName: 'deletedAt', timeAware: false, hardDelete: true)]
 class Comment

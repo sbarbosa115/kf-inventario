@@ -6,7 +6,7 @@ use App\Inventory\Domain\Model\Product;
 use App\Repository\OrderProductRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: OrderProductRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'order_product')]
 class OrderProduct
 {
