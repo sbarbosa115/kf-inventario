@@ -8,9 +8,10 @@ import {
   test,
 } from './support/test';
 
-// 13 Table filters (FLT-01 – 10; FLT-11 – 12 by hand), shops-settings item 2 (tables-ui). Every list filters, sorts and
+// 13 Table filters (FLT-01 – 11), shops-settings item 2 (tables-ui). Every list filters, sorts and
 // pages on the server; the filters sit in a row under the headers (a sheet on a phone) and live in the address.
-// FLT-05 seeds 1,240 customers of its own (`flt-NNNN@flt.test`) through the API, once per stack.
+// FLT-05's 1,240 customers (`flt-NNNN@flt.test`) are seeded by e2e/prepare.sh; the spec adds through the API only
+// what is missing (a stack prepared another way).
 test.describe.configure({mode: 'serial'});
 
 /** The row under the headers that holds the column filters. */
@@ -120,48 +121,53 @@ test.describe('13 Table filters', () => {
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
-    await page.goto('/admin/orders');
+    // The fixtures' orders (W000…), whose Partial and Delivered ones no case changes: other lanes place orders and
+    // change statuses while this runs.
+    await page.goto('/admin/orders?filter[code]=W000');
     await expect(bodyRows(page).first()).toBeVisible();
 
     await filterButton(page, 'Status').click();
     const panel = page.getByRole('dialog', {name: 'Status'});
-    const created = Number(
-      await panel
-        .locator('label', {hasText: 'Created'})
-        .locator('.kf-filter-checklist__count')
-        .textContent(),
-    );
-    const processed = Number(
-      await panel
-        .locator('label', {hasText: 'Processed'})
-        .locator('.kf-filter-checklist__count')
-        .textContent(),
-    );
+    const count = async (status: string) =>
+      Number(
+        await panel
+          .locator('label', {hasText: status})
+          .locator('.kf-filter-checklist__count')
+          .textContent(),
+      );
+    const partial = await count('Partial');
+    const delivered = await count('Delivered');
     expect(
-      created + processed,
-      'the fixtures hold created and processed orders',
-    ).toBeGreaterThan(0);
-    await tick(panel, /Created/);
-    await tick(panel, /Processed/);
+      [partial, delivered],
+      'W00004 and W00010 are partial, W00006 and W00012 delivered',
+    ).toEqual([2, 2]);
+    await tick(panel, /Partial/);
+    await tick(panel, /Delivered/);
     await expect(filterButton(page, 'Status · 2')).toBeVisible();
     await page.keyboard.press('Escape');
 
-    await expect(chip(page, 'Status: Created, Processed')).toBeVisible();
-    await expect(bodyRows(page)).toHaveCount(created + processed);
+    await expect(chip(page, 'Status: Partial, Delivered')).toBeVisible();
+    await expect(bodyRows(page)).toHaveCount(partial + delivered);
     for (const status of await bodyRows(page)
       .getByRole('button', {name: /^Status of order/})
       .allTextContents()) {
-      expect(status).toMatch(/Created|Processed/);
+      expect(status).toMatch(/Partial|Delivered/);
     }
+    // Two statuses are not one chip of the toolbar: none is pressed, not even All.
+    await expect(
+      page
+        .getByRole('group', {name: 'Status', exact: true})
+        .getByRole('button', {pressed: true}),
+    ).toHaveCount(0);
   });
 
   test('FLT-03 · Orders: Last 30 days fills the Created range, and the chip says it', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
-    await page.goto('/admin/orders');
-    await expect(bodyRows(page).first()).toBeVisible();
-    const all = await bodyRows(page).count();
+    // The fixtures' delivered orders, which no case changes.
+    await page.goto('/admin/orders?filter[code]=W000&filter[status][]=6');
+    await expect(bodyRows(page)).toHaveCount(2);
 
     await filterButton(page, 'Created').click();
     await page.getByRole('button', {name: 'Last 30 days'}).click();
@@ -171,7 +177,7 @@ test.describe('13 Table filters', () => {
     await expect(chip(page, /^Created: /)).toBeVisible();
     await expect(page).toHaveURL(/created_at/);
     // The fixtures' orders were all created when the stack was prepared.
-    await expect(bodyRows(page)).toHaveCount(all);
+    await expect(bodyRows(page)).toHaveCount(2);
   });
 
   test('FLT-04 · Products: a price and a quantity range narrow the stock on the server', async ({
@@ -185,7 +191,7 @@ test.describe('13 Table filters', () => {
       )
     ).items;
     await page.goto('/admin/products?warehouse=1');
-    await expect(bodyRows(page)).toHaveCount(stock.length);
+    await expect(bodyRows(page).first()).toBeVisible();
 
     await filterButton(page, 'Price').click();
     await page.getByRole('button', {name: 'Over $500'}).click();
@@ -336,7 +342,8 @@ test.describe('13 Table filters', () => {
     await expect(bodyRows(page).first()).toBeVisible();
 
     await filterButton(page, 'Status').click();
-    await tick(page.getByRole('dialog', {name: 'Status'}), /Created/);
+    // Delivered: no case changes the fixtures' delivered orders while this runs.
+    await tick(page.getByRole('dialog', {name: 'Status'}), /Delivered/);
     await page.keyboard.press('Escape');
     const code = filterRow(page).getByRole('searchbox', {
       name: 'Filter by Order',
@@ -346,13 +353,18 @@ test.describe('13 Table filters', () => {
     await expect(page).toHaveURL(/filter%5Bcode%5D=W0000|filter\[code\]=W0000/);
     await expect(page).toHaveURL(/filter%5Bstatus%5D|filter\[status\]/);
     const link = page.url();
-    // The address changes before the filtered page arrives: count once both chips show and the list is quiet.
+    // As many rows as the server holds for both filters (the address changes before the filtered page arrives).
+    const rows = (
+      await apiJson<ListPage<unknown>>(
+        page.request,
+        '/api/v1/orders?warehouse_id=1&per_page=1&filter[status][]=6&filter[code]=W0000',
+      )
+    ).total;
     await expect(chip(page, 'Order: W0000')).toBeVisible();
-    await page.waitForLoadState('networkidle');
-    const rows = await bodyRows(page).count();
+    await expect(bodyRows(page)).toHaveCount(rows);
 
     await page.reload();
-    await expect(chip(page, 'Status: Created')).toBeVisible();
+    await expect(chip(page, 'Status: Delivered')).toBeVisible();
     await expect(chip(page, 'Order: W0000')).toBeVisible();
     await expect(
       filterRow(page).getByRole('searchbox', {name: 'Filter by Order'}),
@@ -361,7 +373,7 @@ test.describe('13 Table filters', () => {
 
     const pasted = await signedInAs(ADMIN);
     await pasted.goto(link);
-    await expect(chip(pasted, 'Status: Created')).toBeVisible();
+    await expect(chip(pasted, 'Status: Delivered')).toBeVisible();
     await expect(bodyRows(pasted)).toHaveCount(rows);
 
     await page.getByRole('button', {name: 'Clear filters'}).click();
@@ -412,23 +424,24 @@ test.describe('13 Table filters, on a phone (390 px)', () => {
   }) => {
     const page = await signedInAs(ADMIN);
     const errors = consoleErrors(page);
-    await page.goto('/admin/orders');
+    // The fixtures' orders (W000…), whose delivered ones no case changes.
+    await page.goto('/admin/orders?filter[code]=W000');
     await expect(bodyRows(page).first()).toBeVisible();
     await expect(filterRow(page)).toHaveCount(0);
-    const created = (
+    const delivered = (
       await apiJson<ListPage<unknown>>(
         page.request,
-        '/api/v1/orders?warehouse_id=1&per_page=1&filter[status][]=1',
+        '/api/v1/orders?warehouse_id=1&per_page=1&filter[status][]=6&filter[code]=W000',
       )
     ).total;
 
-    await page.getByRole('button', {name: 'Filters · 0'}).click();
+    await page.getByRole('button', {name: 'Filters · 1'}).click();
     const sheet = page.getByRole('dialog', {name: 'Filters'});
     await expect(sheet).toBeVisible();
     await sheet.getByRole('button', {name: /^Status/}).click();
-    await tick(sheet, /Created/);
+    await tick(sheet, /Delivered/);
     const show = sheet.getByRole('button', {
-      name: created === 1 ? 'Show 1 result' : `Show ${created} results`,
+      name: delivered === 1 ? 'Show 1 result' : `Show ${delivered} results`,
     });
     await expect(show).toBeVisible();
     const box = await show.boundingBox();
@@ -436,9 +449,89 @@ test.describe('13 Table filters, on a phone (390 px)', () => {
     await show.click();
 
     await expect(sheet).toHaveCount(0);
-    await expect(chip(page, 'Status: Created')).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Filters · 1'})).toBeVisible();
-    await expect(bodyRows(page)).toHaveCount(created);
+    await expect(chip(page, 'Status: Delivered')).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Filters · 2'})).toBeVisible();
+    await expect(bodyRows(page)).toHaveCount(delivered);
     expect(errors).toEqual([]);
+  });
+});
+
+test.describe('13 Table filters, the sheet (390 px)', () => {
+  test.use({
+    viewport: {width: 390, height: 844},
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  test("FLT-11 · The sheet's date quick picks and money ranges", async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(SALES);
+    const invoices = (
+      await apiJson<ListPage<{total: string}>>(
+        page.request,
+        '/api/v1/invoices?per_page=100',
+      )
+    ).items;
+    const show = (n: number) =>
+      n === 1 ? 'Show 1 result' : `Show ${n} results`;
+    await page.goto('/admin/invoices');
+    await expect(bodyRows(page)).toHaveCount(invoices.length);
+
+    await page.getByRole('button', {name: 'Filters · 0'}).click();
+    const sheet = page.getByRole('dialog', {name: 'Filters'});
+    await sheet.getByRole('button', {name: /^Date/}).click();
+    for (const name of ['Today', 'Last 7 days', 'Last 30 days', 'This month']) {
+      const pick = sheet.getByRole('button', {name, exact: true});
+      expect(
+        (await pick.boundingBox())?.height ?? 0,
+        `${name} is a 44 px target`,
+      ).toBeGreaterThanOrEqual(44);
+    }
+    await expect(sheet.getByLabel('From', {exact: true})).toHaveAttribute(
+      'type',
+      'date',
+    );
+    const last30 = sheet.getByRole('button', {name: 'Last 30 days'});
+    await last30.click();
+    await expect(last30).toHaveAttribute('aria-pressed', 'true');
+    await expect(sheet.getByLabel('From', {exact: true})).not.toHaveValue('');
+    await expect(sheet.getByLabel('To', {exact: true})).not.toHaveValue('');
+    await expect(
+      sheet.getByRole('button', {name: /^Show \d+ results?$/}),
+    ).toBeVisible();
+    await last30.click();
+
+    await sheet.getByRole('button', {name: /^Total/}).click();
+    await expect(sheet.getByLabel('Min')).toHaveAttribute(
+      'inputmode',
+      'decimal',
+    );
+    for (const name of ['Under $100', '$100 – $500', 'Over $500']) {
+      await expect(
+        sheet.getByRole('button', {name, exact: true}),
+      ).toBeVisible();
+    }
+    await sheet.getByRole('button', {name: '$100 – $500'}).click();
+    const between = invoices.filter(
+      (i) => Number(i.total) >= 100 && Number(i.total) <= 500,
+    ).length;
+    await expect(
+      sheet.getByRole('button', {name: show(between)}),
+      'the count follows the draft',
+    ).toBeVisible();
+
+    await sheet.getByRole('button', {name: 'Clear filters'}).click();
+    await expect(
+      sheet.getByRole('button', {name: show(invoices.length)}),
+    ).toBeVisible();
+    await sheet.getByRole('button', {name: '$100 – $500'}).click();
+    await page.keyboard.press('Escape');
+    await expect(sheet).toHaveCount(0);
+    await expect(
+      page.getByRole('button', {name: 'Filters · 0'}),
+      'closed without applying',
+    ).toBeVisible();
+    await expect(bodyRows(page)).toHaveCount(invoices.length);
   });
 });

@@ -176,30 +176,23 @@ test.describe('5 Orders: shops sync and write-back', () => {
     expect(off.status(), `deactivating ${name}`).toBe(200);
   }
 
-  test('ORD-19 · with nothing waiting at the shops, Check now places nothing, and it needs the sync role', async ({
+  test('ORD-19 · With nothing waiting at the shops, Check now places nothing, and it needs the sync role', async ({
     request,
     signedInAs,
   }) => {
     await request.put(STATE, {data: {orders: [], notes: {}}});
     const admin = await signedInAs(ADMIN);
-    const total = async () =>
-      (
-        (await (
-          await admin.request.get('/api/v1/orders?warehouse_id=1')
-        ).json()) as {total: number}
-      ).total;
-    const before = await total();
 
     const answer = await admin.request.post(SYNC, {headers: {Origin: origin}});
 
     expect(answer.status()).toBe(202);
     const body = (await answer.json()) as SyncAnswer;
-    expect([body.imported, body.failed]).toEqual([0, 0]);
+    // Another lane's connections may point at no shop (they fail, and import nothing): the Fake shop is read.
+    expect(body.imported).toBe(0);
     expect(body.connections.map((c) => [c.name, c.error])).toContainEqual([
       'Fake shop',
       null,
     ]);
-    expect(await total()).toBe(before);
 
     const clerk = await signedInAs(INVENTORY);
     const refused = await clerk.request.post(SYNC, {headers: {Origin: origin}});
@@ -212,13 +205,14 @@ test.describe('5 Orders: shops sync and write-back', () => {
   }) => {
     const admin = (await signedInAs(ADMIN)).request;
     const suffix = Math.floor(Math.random() * 99999);
+    // España: no other case reads its orders (ORD-02 finds Usa empty).
     const again = await aConnection(
       admin,
       `Sync check ${suffix}`,
       FAKE_SHOP_AGAIN,
-      2,
+      3,
     );
-    const gone = await aConnection(admin, `Gone shop ${suffix}`, NO_SHOP, 2);
+    const gone = await aConnection(admin, `Gone shop ${suffix}`, NO_SHOP, 3);
     const [first, second, older, newer] = [
       uniqueId(),
       uniqueId(),
@@ -231,10 +225,10 @@ test.describe('5 Orders: shops sync and write-back', () => {
     );
     const row = (id: number, of: SyncAnswer) =>
       of.connections.find((c) => c.id === id);
-    const inUsa = async (code: number) =>
+    const inSpain = async (code: number) =>
       (
         (await (
-          await admin.get(`/api/v1/orders?warehouse_id=2&filter[code]=${code}`)
+          await admin.get(`/api/v1/orders?warehouse_id=3&filter[code]=${code}`)
         ).json()) as {items: {code: string; shop: {name: string} | null}[]}
       ).items.find((order) => order.code === String(code));
     try {
@@ -254,7 +248,7 @@ test.describe('5 Orders: shops sync and write-back', () => {
       expect(row(again.id, body)).toMatchObject({imported: 2, error: null});
       expect(row(gone.id, body)?.error).toBeTruthy();
       expect(body.failed).toBeGreaterThanOrEqual(1);
-      expect((await inUsa(first))?.shop?.name).toBe(`Sync check ${suffix}`);
+      expect((await inSpain(first))?.shop?.name).toBe(`Sync check ${suffix}`);
       const shops = (await (await admin.get('/api/v1/shops')).json()) as {
         id: number;
         health: {last_failure_code: string | null};
@@ -284,29 +278,29 @@ test.describe('5 Orders: shops sync and write-back', () => {
         row(again.id, next),
         'only the order modified since the last pull is read: the two placed ones are not read again',
       ).toMatchObject({imported: 1, skipped: 0, error: null});
-      expect(await inUsa(newer)).toBeDefined();
-      expect(await inUsa(older)).toBeUndefined();
+      expect(await inSpain(newer)).toBeDefined();
+      expect(await inSpain(older)).toBeUndefined();
     } finally {
       await request.put(STATE, {data: {orders: [], notes: {}}});
-      // The fixtures have no order in Usa: what this case placed there goes, so ORD-02 still finds Usa empty.
+      // The fixtures have no order in España: what this case placed there goes.
       const placed = (await (
-        await admin.get('/api/v1/orders?warehouse_id=2&per_page=100')
+        await admin.get('/api/v1/orders?warehouse_id=3&per_page=100')
       ).json()) as {items: {id: number}[]};
       for (const order of placed.items) {
         await admin.delete(`/api/v1/orders/${order.id}`);
       }
-      await putAway(admin, gone.id, `Gone shop ${suffix}`, NO_SHOP, 2);
+      await putAway(admin, gone.id, `Gone shop ${suffix}`, NO_SHOP, 3);
       await putAway(
         admin,
         again.id,
         `Sync check ${suffix}`,
         FAKE_SHOP_AGAIN,
-        2,
+        3,
       );
     }
   });
 
-  test('ORD-36 · Processed is written back as processing, Sent as completed, the other statuses touch nothing', async ({
+  test("ORD-36 · A linked order's status is written back: Processed → processing, Sent → completed, the others nothing", async ({
     request,
     signedInAs,
   }) => {
@@ -376,7 +370,7 @@ test.describe('5 Orders: shops sync and write-back', () => {
     ).toEqual(['completed', 'processing']);
   });
 
-  test('ORD-37 · a push that fails three times is failed in the outbox and the health, and Retry queues it again', async ({
+  test('ORD-37 · A push that fails three times is failed in the outbox and the health, and Retry queues it again', async ({
     request,
     signedInAs,
   }) => {

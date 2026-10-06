@@ -3,21 +3,40 @@ import {
   INVENTORY,
   PASSWORD,
   consoleErrors,
+  ensureUser,
   expect,
   test,
 } from './support/test';
 import {emailTo} from './support/mail';
+import {placeFakeShopOrder, uniqueShopOrder} from './support/shop';
 
-// Section 11 of docs/tests/ui-regression.md: Settings. SET-01 is item 0's; SET-02 – 08 are item 4's (settings-ui).
+// Section 11 of docs/tests/ui-regression.md: Settings (SET-01 – 08), and MAIL-03 (the order email's sender, printer
+// and cc from Settings › Email).
 // The cases change the app's settings, so they run in order and the last hook puts every setting back.
 
 const ADMIN_EMAIL = 'sbarbosa115@gmail.com';
+const PRINTER = 'printer@kf.local';
+
+/** A second admin: the test email is limited per person. */
+const OTHER_ADMIN = {
+  name: 'Smoke Settings Admin',
+  username: 'smoke-settings',
+  email: 'smoke.settings@kf.test',
+  roles: ['ROLE_ADMIN'],
+};
+
+/** MAIL-03's sender, printer and cc, saved in Settings › Email (afterAll empties them). */
+const SETTINGS_MAIL = {
+  from: 'orders.smoke@kf.test',
+  printer: 'printer.smoke@kf.test',
+  cc: 'cc.smoke@kf.test',
+};
 
 /** The stack's Mailpit as the custom SMTP server (the e2e and php containers reach it as `mailpit`). */
 const MAILPIT_SMTP = {host: 'mailpit', port: '1025'};
 
 test.describe('11 Settings', () => {
-  test('SET-01 · Settings is the admin’s only', async ({signedInAs}) => {
+  test("SET-01 · Settings is the admin's only", async ({signedInAs}) => {
     const admin = await signedInAs(ADMIN);
     const errors = consoleErrors(admin);
     await admin.goto('/admin/products');
@@ -155,15 +174,22 @@ test.describe('11 Settings', () => {
         since,
       });
       expect(mail.subject).toBe('KF Inventory test email');
+
+      // One test email every 10 seconds per person.
+      await panel.getByRole('button', {name: 'Send'}).click();
+      await expect(panel.getByRole('alert')).toHaveText(
+        'Wait a few seconds before sending another test email.',
+      );
     });
 
-    test('SET-05 · a wrong host answers the server’s own error inline', async ({
+    test("SET-05 · A wrong host answers the server's own error inline", async ({
       signedInAs,
+      baseURL,
     }) => {
-      const admin = await signedInAs(ADMIN);
+      // One test email every 10 seconds per person: another admin than SET-04's sends this one.
+      await ensureUser(await signedInAs(ADMIN), baseURL as string, OTHER_ADMIN);
+      const admin = await signedInAs(OTHER_ADMIN.username);
       await admin.goto('/admin/settings/email');
-      // One test email every 10 seconds: wait out SET-04's.
-      await admin.waitForTimeout(10_500);
 
       await admin.getByLabel('Host').fill('nowhere.invalid');
       await admin.getByLabel('Port').fill('25');
@@ -240,7 +266,7 @@ test.describe('11 Settings', () => {
       login.on('request', (request) => requests.push(request.url()));
       await login.goto('/admin/login');
       await expect(login.getByRole('button', {name: /sign in/i})).toBeVisible();
-      await login.waitForTimeout(500);
+      await login.waitForLoadState('networkidle');
       expect(
         requests.filter((url) =>
           /settings\/public|googletagmanager|clarity\.ms/.test(url),
@@ -249,7 +275,7 @@ test.describe('11 Settings', () => {
       await context.close();
     });
 
-    test('SET-07 · Quick phrases: add, rename, reorder, deactivate; the comment box offers the active ones in order', async ({
+    test('SET-07 · Quick phrases: add, rename, reorder, deactivate', async ({
       signedInAs,
     }) => {
       const admin = await signedInAs(ADMIN);
@@ -298,7 +324,43 @@ test.describe('11 Settings', () => {
       await expect(list.getByText('Smoke first')).toBeVisible();
     });
 
-    test('SET-08 · a bad GA ID is refused in place', async ({signedInAs}) => {
+    test("MAIL-03 · The order email takes its sender, printer and cc from Settings, the server's when empty", async ({
+      signedInAs,
+      request,
+    }) => {
+      const admin = await signedInAs(ADMIN);
+      await admin.goto('/admin/settings/email');
+      await admin.getByLabel('Sender address').fill(SETTINGS_MAIL.from);
+      await admin.getByLabel('Printer address').fill(SETTINGS_MAIL.printer);
+      await admin.getByLabel('Add address').fill(SETTINGS_MAIL.cc);
+      await admin.getByLabel('Add address').press('Enter');
+      await admin.getByRole('button', {name: 'Save'}).click();
+      await expect(admin.getByRole('status')).toContainText(
+        'Email settings saved.',
+      );
+
+      const first = uniqueShopOrder();
+      await placeFakeShopOrder(request, first);
+      const mail = await emailTo(request, SETTINGS_MAIL.printer, {
+        subject: new RegExp(`Order #${first} was created`),
+      });
+      expect(mail.from).toContain(`<${SETTINGS_MAIL.from}>`);
+      expect(mail.cc).toEqual([SETTINGS_MAIL.cc]);
+
+      // Emptied, the printer is the server's again (MAILER_PRINTER_ADDRESS).
+      await admin.getByLabel('Printer address').fill('');
+      await admin.getByRole('button', {name: 'Save'}).click();
+      await expect(admin.getByRole('status')).toContainText(
+        'Email settings saved.',
+      );
+      const second = uniqueShopOrder();
+      await placeFakeShopOrder(request, second);
+      await emailTo(request, PRINTER, {
+        subject: new RegExp(`Order #${second} was created`),
+      });
+    });
+
+    test('SET-08 · A bad GA ID is refused in place', async ({signedInAs}) => {
       const admin = await signedInAs(ADMIN);
       await admin.goto('/admin/settings/analytics');
       const before = await (

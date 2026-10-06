@@ -15,9 +15,7 @@ import {
 test.describe('10 Design system, at 1440 px', () => {
   test.use({viewport: {width: 1440, height: 860}});
 
-  test('DS-01 · the shell shows the mark, the product name, the person, and the skip link first', async ({
-    signedInAs,
-  }) => {
+  test('DS-01 · The shell at 1440 px', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
     const errors = consoleErrors(page);
     await page.goto('/admin/products');
@@ -45,16 +43,27 @@ test.describe('10 Design system, at 1440 px', () => {
     expect(errors).toEqual([]);
   });
 
-  test('DS-02 · the sidebar collapses to a rail and stays collapsed after a reload', async ({
+  test('DS-02 · The sidebar collapses to a rail with tooltips and stays so', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/products');
 
     await page.getByRole('button', {name: 'Collapse the menu'}).click();
+    // The rail: icons named by their tooltip, the current page's marked.
+    const rail = page.getByRole('navigation', {name: 'Main menu'});
+    for (const name of ['Products', 'Upload a stock sheet', 'Scan', 'Orders']) {
+      await expect(rail.getByRole('link', {name, exact: true})).toHaveAttribute(
+        'title',
+        name,
+      );
+    }
     await expect(
-      page.getByRole('link', {name: 'Products', exact: true}),
-    ).toHaveAttribute('title', 'Products');
+      rail.getByRole('link', {name: 'Products', exact: true}),
+    ).toHaveAttribute('aria-current', 'page');
+    await expect(
+      rail.getByRole('link', {name: 'Orders', exact: true}),
+    ).not.toHaveAttribute('aria-current');
     await page.reload();
     await expect(
       page.getByRole('button', {name: 'Expand the menu'}),
@@ -65,7 +74,7 @@ test.describe('10 Design system, at 1440 px', () => {
     ).toBeVisible();
   });
 
-  test('DS-04 · the menus work with the keyboard: Enter opens with the first item focused, arrows, Home/End, Escape back', async ({
+  test('DS-04 · Menus work with the keyboard, and the focus ring shows', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -86,6 +95,21 @@ test.describe('10 Design system, at 1440 px', () => {
     await page.keyboard.press('Escape');
     await expect(menu).toHaveCount(0);
     await expect(rowMenu).toBeFocused();
+    // The ring: 2 px of the accent around what has the keyboard's focus.
+    const ring = (el: Element) => {
+      const style = getComputedStyle(el);
+      return `${style.outlineStyle} ${style.outlineWidth}`;
+    };
+    expect(await rowMenu.evaluate(ring)).toBe('solid 2px');
+    await page.keyboard.press('Tab');
+    expect(
+      await page.evaluate(() => {
+        const el = document.activeElement as Element;
+        const style = getComputedStyle(el);
+        return `${style.outlineStyle} ${style.outlineWidth}`;
+      }),
+      'the next control shows the ring too',
+    ).toBe('solid 2px');
 
     const theme = page.getByRole('button', {name: /^Theme: /});
     await theme.focus();
@@ -97,7 +121,7 @@ test.describe('10 Design system, at 1440 px', () => {
     await expect(theme).toBeFocused();
   });
 
-  test('DS-05 · the tab title follows the page', async ({signedInAs, page}) => {
+  test('DS-05 · The tab title follows the page', async ({signedInAs, page}) => {
     const admin = await signedInAs(ADMIN);
     await admin.goto('/admin/orders');
     const title = await admin.getByRole('heading', {level: 1}).textContent();
@@ -109,21 +133,23 @@ test.describe('10 Design system, at 1440 px', () => {
     await expect(page).toHaveTitle('Sign in · KF Inventory');
   });
 
-  test('DS-06 · the language switch changes the shell and the page, keeps the address and the rows, and survives a reload', async ({
-    signedInAs,
-  }) => {
+  test('DS-06 · The language switch keeps the page', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
-    await page.goto('/admin/orders');
-    const rows = page.getByRole('row');
-    await expect(rows.nth(1)).toBeVisible();
+    // The customers: a full page of them (FLT-05's), which no other case changes in number.
+    await page.goto('/admin/customers');
+    const rows = page.locator('tbody tr[role="row"]');
+    await expect(rows.first()).toBeVisible();
     const count = await rows.count();
 
     await page.getByRole('radio', {name: 'Español'}).click();
     await expect(
       page.getByRole('link', {name: 'Pedidos', exact: true}),
     ).toBeVisible();
+    await expect(
+      page.getByRole('heading', {level: 1, name: 'Clientes'}),
+    ).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
-    await expect(page).toHaveURL(/\/admin\/orders$/);
+    await expect(page).toHaveURL(/\/admin\/customers$/);
     await expect(rows).toHaveCount(count);
 
     await page.reload();
@@ -137,7 +163,7 @@ test.describe('10 Design system, at 1440 px', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   });
 
-  test('DS-07 · Dark is kept after a reload, and System follows the system', async ({
+  test("DS-07 · Light, dark, or the system's, without a white flash", async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -149,8 +175,19 @@ test.describe('10 Design system, at 1440 px', () => {
     await page.getByRole('button', {name: /^Theme: /}).click();
     await page.getByRole('menuitemradio', {name: 'Dark'}).click();
     await expect(html).toHaveAttribute('data-theme', 'dark');
+    // No white flash: the theme is on <html> when the body is first parsed, before the app's script runs.
+    await page.addInitScript(() => {
+      new MutationObserver((_, observer) => {
+        if (document.body) {
+          document.documentElement.dataset.firstPaintTheme =
+            document.documentElement.dataset.theme ?? 'none';
+          observer.disconnect();
+        }
+      }).observe(document, {childList: true, subtree: true});
+    });
     await page.reload();
     await expect(html).toHaveAttribute('data-theme', 'dark');
+    await expect(html).toHaveAttribute('data-first-paint-theme', 'dark');
 
     await page.getByRole('button', {name: 'Theme: Dark'}).click();
     await page.getByRole('menuitemradio', {name: 'System'}).click();
@@ -161,9 +198,7 @@ test.describe('10 Design system, at 1440 px', () => {
     await expect(html).toHaveAttribute('data-theme', 'dark');
   });
 
-  test('DS-08 · a success notification goes after 5 s, an error one stays until dismissed', async ({
-    signedInAs,
-  }) => {
+  test('DS-08 · Notifications', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
     await page.clock.install();
     await page.goto('/admin/_kit');
@@ -186,7 +221,7 @@ test.describe('10 Design system, at 1440 px', () => {
     await expect(failure).toBeHidden();
   });
 
-  test('DS-13 · sign in: the password can be shown, and what is missing is said in place', async ({
+  test('DS-13 · Signing in: show the password, Caps Lock, the error in place', async ({
     page,
   }) => {
     await page.goto('/admin/login');
@@ -197,6 +232,12 @@ test.describe('10 Design system, at 1440 px', () => {
     await page.getByRole('button', {name: 'Show password'}).click();
     await expect(password).toHaveAttribute('type', 'text');
 
+    // A key pressed with Caps Lock on (the browser reports the lock on the key's event).
+    await password.dispatchEvent('keyup', {key: 'A', modifierCapsLock: true});
+    await expect(page.getByText('Caps Lock is on')).toBeVisible();
+    await password.dispatchEvent('keyup', {key: 'a', modifierCapsLock: false});
+    await expect(page.getByText('Caps Lock is on')).toHaveCount(0);
+
     await page.getByRole('button', {name: 'Sign in'}).click();
     await expect(page.getByRole('alert')).toHaveText(
       'Type your username and password.',
@@ -204,7 +245,7 @@ test.describe('10 Design system, at 1440 px', () => {
     await expect(page.getByLabel('Username')).toBeFocused();
   });
 
-  test('DS-14 · the page not found is branded and leads back', async ({
+  test('DS-14 · The page not found is branded, with the way back', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -217,7 +258,7 @@ test.describe('10 Design system, at 1440 px', () => {
     await expect(page).toHaveURL(/\/admin\/products$/);
   });
 
-  test('AUTH-07 · the sign-in page in Spanish, chosen or from the browser', async ({
+  test('AUTH-07 · The sign-in page in Spanish', async ({
     page,
     browser,
     baseURL,
@@ -242,7 +283,7 @@ test.describe('10 Design system, at 1440 px', () => {
     await spanish.close();
   });
 
-  test('AUTH-08 · the top bar shows the name, and its menu the account and Sign out', async ({
+  test('AUTH-08 · The name in the top bar, Sign out in its menu', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -258,7 +299,7 @@ test.describe('10 Design system, at 1440 px', () => {
     ).toHaveAttribute('href', '/admin/logout');
   });
 
-  test('NAV-06 · the scan shortcut is there for the inventory roles only', async ({
+  test('NAV-06 · The scan shortcut only for the inventory roles', async ({
     signedInAs,
   }) => {
     const clerk = await signedInAs(INVENTORY);
@@ -275,7 +316,7 @@ test.describe('10 Design system, at 1440 px', () => {
     ).toHaveCount(0);
   });
 
-  test('DS-15 · every filter control of the kit is there and works', async ({
+  test('DS-15 · Every filter control in the kit works', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -351,9 +392,7 @@ test.describe('10 Design system, on a phone (390 px)', () => {
     hasTouch: true,
   });
 
-  test('DS-03 · Menu opens the drawer, the tab bar shows the role’s entries, nothing scrolls sideways', async ({
-    signedInAs,
-  }) => {
+  test('DS-03 · The phone layout', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
     const errors = consoleErrors(page);
 
@@ -389,7 +428,7 @@ test.describe('10 Design system, on a phone (390 px)', () => {
     expect(errors).toEqual([]);
   });
 
-  test('NAV-05 · the tab bar of the inventory clerk: Products, Scan, Incoming, More', async ({
+  test('NAV-05 · The tab bar of the inventory clerk on a phone', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVENTORY);
@@ -409,9 +448,7 @@ test.describe('10 Design system, on a phone (390 px)', () => {
     ).toBeVisible();
   });
 
-  test('DS-16 · the filter sheet traps the focus, Escape closes it, and "Show N results" applies', async ({
-    signedInAs,
-  }) => {
+  test('DS-16 · The filter sheet on a phone', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
     const errors = consoleErrors(page);
     await page.goto('/admin/_kit');

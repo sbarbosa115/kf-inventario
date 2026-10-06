@@ -1,4 +1,5 @@
 import {createHmac} from 'node:crypto';
+import type {Page} from '@playwright/test';
 import {ADMIN, expect, test} from './support/test';
 import {emailCount, emailTo} from './support/mail';
 
@@ -40,12 +41,11 @@ function shopOrder(id: number): Record<string, unknown> {
 }
 
 test.describe('9 WooCommerce webhook', () => {
-  test('HOOK-01 · the old webhook URL answers 410 to everything and places nothing', async ({
+  test('HOOK-01 · The old webhook URL answers 410 to everything and places nothing', async ({
     request,
     signedInAs,
   }) => {
     const code = 900000 + Math.floor(Math.random() * 99999);
-    const emailsBefore = await emailCount(request, PRINTER);
 
     // A source the removed import matched (warehouse 1's `urls`) and the Fake shop's own site: neither is imported.
     for (const source of ['https://colombia.test', 'http://nginx/_fake-shop']) {
@@ -73,10 +73,12 @@ test.describe('9 WooCommerce webhook', () => {
       ).items;
       expect(orders.map((order) => order.code)).not.toContain(String(code));
     }
-    expect(await emailCount(request, PRINTER)).toBe(emailsBefore);
+    expect(
+      await emailCount(request, PRINTER, new RegExp(`^Order #${code} `)),
+    ).toBe(0);
   });
 
-  test('HOOK-02 · a hit on the old URL is counted and shown in Settings', async ({
+  test('HOOK-02 · A hit on the old URL is counted and shown in Settings', async ({
     request,
     signedInAs,
   }) => {
@@ -104,7 +106,11 @@ test.describe('9 WooCommerce webhook', () => {
       ),
     ).toBeVisible();
     await admin.goto('/admin/settings/shops');
-    await expect(admin.getByRole('alert')).toContainText(
+    await expect(
+      admin
+        .getByRole('alert')
+        .filter({hasText: 'The old webhook URL received'}),
+    ).toContainText(
       `The old webhook URL received ${after.legacy_hits} deliver`,
     );
   });
@@ -153,8 +159,76 @@ interface Delivery {
   order: {id: number; code: string} | null;
 }
 
+/** A connection of the case's own (Colombia, no keys, prints nothing), so the Fake shop's health is the shops lane's. */
+interface OwnConnection {
+  id: number;
+  name: string;
+  siteUrl: string;
+  path: string;
+  secret: string;
+}
+
+async function ownConnection(
+  admin: Page,
+  baseURL: string,
+): Promise<OwnConnection> {
+  const n = Math.floor(100000 + Math.random() * 899999);
+  const [name, siteUrl] = [`Hook ${n}`, `http://hook-${n}.test`];
+  const created = await admin.request.post('/api/v1/shops', {
+    headers: {Origin: new URL(baseURL).origin},
+    data: {
+      name,
+      site_url: siteUrl,
+      warehouse_id: 1,
+      email_printer: false,
+      active: true,
+      capabilities: {order_status: false, order_note: false},
+    },
+  });
+  expect(created.status(), `creating ${name}`).toBe(201);
+  const body = (await created.json()) as {
+    id: number;
+    webhook_url: string;
+    webhook_secret: string;
+  };
+  return {
+    id: body.id,
+    name,
+    siteUrl,
+    path: new URL(body.webhook_url).pathname,
+    secret: body.webhook_secret,
+  };
+}
+
+/** Deletes the case's connection, or deactivates it when orders came through it (such a connection stays). */
+async function putAway(
+  admin: Page,
+  baseURL: string,
+  own: OwnConnection,
+): Promise<void> {
+  const headers = {Origin: new URL(baseURL).origin};
+  const removed = await admin.request.delete(`/api/v1/shops/${own.id}`, {
+    headers,
+  });
+  if (removed.status() === 204) return;
+  const off = await admin.request.put(`/api/v1/shops/${own.id}`, {
+    headers,
+    data: {
+      name: own.name,
+      site_url: own.siteUrl,
+      consumer_key: '',
+      consumer_secret: '',
+      warehouse_id: 1,
+      email_printer: false,
+      active: false,
+      capabilities: {order_status: false, order_note: false},
+    },
+  });
+  expect(off.status(), `deactivating ${own.name}`).toBe(200);
+}
+
 test.describe('9 WooCommerce webhook · connections', () => {
-  test('HOOK-03 · a signed delivery to a connection lands in its warehouse, linked, named and printed', async ({
+  test('HOOK-03 · A signed delivery to a connection is placed in its warehouse, linked, named and printed', async ({
     request,
     signedInAs,
   }) => {
@@ -205,91 +279,107 @@ test.describe('9 WooCommerce webhook · connections', () => {
       since,
     });
     expect(email.to, 'the connection prints its orders').toEqual([PRINTER]);
-  });
 
-  test('HOOK-04 · a wrong signature is refused, kept without its body and shown in health', async ({
-    request,
-    signedInAs,
-  }) => {
-    const code = 600000 + Math.floor(Math.random() * 99999);
-
-    const answer = await request.post(
-      FAKE_SHOP_HOOK,
-      signed(shopOrder(code), 'not-the-secret'),
-    );
-
-    expect(answer.status()).toBe(401);
-    expect(await answer.json()).toEqual({status: false});
-    const unknown = await request.post(
-      `/webhooks/shops/${'ab'.repeat(32)}`,
-      signed(shopOrder(code)),
-    );
-    expect(unknown.status(), 'an unknown token stores nothing').toBe(404);
-    const admin = await signedInAs(ADMIN);
-    const shop = (
-      (await (await admin.request.get('/api/v1/shops')).json()) as Shop[]
-    ).find((s) => s.name === 'Fake shop') as Shop;
-    expect(shop.health.last_failure_code).toBe('bad_signature');
-    const inbox = (
+    // WooCommerce delivers again when unsure: the same order is placed once.
+    const again = await request.post(FAKE_SHOP_HOOK, signed(shopOrder(code)));
+    expect(await again.json()).toEqual({status: true});
+    const twice = (
       (await (
         await admin.request.get(
-          `/api/v1/shops/${shop.id}/deliveries?status=failed&filter[reason_code][]=bad_signature`,
+          `/api/v1/orders?warehouse_id=1&filter[code]=${code}`,
         )
-      ).json()) as {items: Delivery[]}
-    ).items;
-    const refused = inbox[0] as Delivery;
-    expect(refused, 'kept in the inbox').toBeDefined();
-    const detail = (await (
-      await admin.request.get(
-        `/api/v1/shops/${shop.id}/deliveries/${refused.id}`,
-      )
-    ).json()) as {payload: string | null};
-    expect(detail.payload, 'a refused signature keeps no body').toBeNull();
+      ).json()) as {items: {code: string}[]}
+    ).items.filter((order) => order.code === String(code));
+    expect(twice, 'placed once').toHaveLength(1);
   });
 
-  test('HOOK-05 · an unknown SKU is kept in the inbox; once the product exists, Retry places it', async ({
+  test('HOOK-04 · A wrong signature is refused and kept without its body; an unknown token stores nothing', async ({
     request,
     signedInAs,
+    baseURL,
   }) => {
-    const code = 500000 + Math.floor(Math.random() * 99999);
-    const sku = `HOOK-${code}`;
-    const order = shopOrder(code);
-    order.line_items = [
-      {sku: 'KF-01', quantity: 1},
-      {sku, quantity: 2},
-    ];
-
-    const answer = await request.post(FAKE_SHOP_HOOK, signed(order));
-
-    expect(answer.status(), 'accepted: the shop must not retry it').toBe(200);
     const admin = await signedInAs(ADMIN);
-    const shop = (
-      (await (await admin.request.get('/api/v1/shops')).json()) as Shop[]
-    ).find((s) => s.name === 'Fake shop') as Shop;
-    const kept = (
-      (await (
+    const own = await ownConnection(admin, baseURL as string);
+    try {
+      const code = 600000 + Math.floor(Math.random() * 99999);
+
+      const answer = await request.post(
+        own.path,
+        signed(shopOrder(code), 'not-the-secret'),
+      );
+
+      expect(answer.status()).toBe(401);
+      expect(await answer.json()).toEqual({status: false});
+      const unknown = await request.post(
+        `/webhooks/shops/${'ab'.repeat(32)}`,
+        signed(shopOrder(code)),
+      );
+      expect(unknown.status(), 'an unknown token stores nothing').toBe(404);
+      const inbox = (
+        (await (
+          await admin.request.get(
+            `/api/v1/shops/${own.id}/deliveries?status=failed&filter[reason_code][]=bad_signature`,
+          )
+        ).json()) as {items: Delivery[]}
+      ).items;
+      expect(inbox, 'kept in the inbox').toHaveLength(1);
+      const detail = (await (
         await admin.request.get(
-          `/api/v1/shops/${shop.id}/deliveries?status=failed&q=${code}`,
+          `/api/v1/shops/${own.id}/deliveries/${inbox[0]!.id}`,
         )
-      ).json()) as {items: Delivery[]}
-    ).items;
-    expect(kept.map((d) => [d.remote_order_id, d.reason_code])).toEqual([
-      [String(code), 'unknown_product'],
-    ]);
-    const row = kept[0] as Delivery;
-    expect(row.reason).toContain(sku);
+      ).json()) as {payload: string | null};
+      expect(detail.payload, 'a refused signature keeps no body').toBeNull();
+    } finally {
+      await putAway(admin, baseURL as string, own);
+    }
+  });
 
-    const product = await admin.request.post('/api/v1/products', {
-      data: {code: sku, title: `Hook product ${code}`, status: 1, price: 10},
-    });
-    expect(product.status()).toBe(201);
-    const retried = await admin.request.post(
-      `/api/v1/shops/${shop.id}/deliveries/${row.id}/retry`,
-    );
+  test('HOOK-05 · An unknown SKU is kept in the inbox and placed by Retry once the product exists', async ({
+    request,
+    signedInAs,
+    baseURL,
+  }) => {
+    const admin = await signedInAs(ADMIN);
+    const own = await ownConnection(admin, baseURL as string);
+    try {
+      const code = 500000 + Math.floor(Math.random() * 99999);
+      const sku = `HOOK-${code}`;
+      const order = shopOrder(code);
+      order.line_items = [
+        {sku: 'KF-01', quantity: 1},
+        {sku, quantity: 2},
+      ];
 
-    expect(retried.status()).toBe(200);
-    const placed = (await retried.json()) as Delivery;
-    expect(placed.status).toBe('placed');
-    expect(placed.order?.code).toBe(String(code));
+      const answer = await request.post(own.path, signed(order, own.secret));
+
+      expect(answer.status(), 'accepted: the shop must not retry it').toBe(200);
+      const kept = (
+        (await (
+          await admin.request.get(
+            `/api/v1/shops/${own.id}/deliveries?status=failed&q=${code}`,
+          )
+        ).json()) as {items: Delivery[]}
+      ).items;
+      expect(kept.map((d) => [d.remote_order_id, d.reason_code])).toEqual([
+        [String(code), 'unknown_product'],
+      ]);
+      const row = kept[0] as Delivery;
+      expect(row.reason).toContain(sku);
+
+      const product = await admin.request.post('/api/v1/products', {
+        data: {code: sku, title: `Hook product ${code}`, status: 1, price: 10},
+      });
+      expect(product.status()).toBe(201);
+      const retried = await admin.request.post(
+        `/api/v1/shops/${own.id}/deliveries/${row.id}/retry`,
+      );
+
+      expect(retried.status()).toBe(200);
+      const placed = (await retried.json()) as Delivery;
+      expect(placed.status).toBe('placed');
+      expect(placed.order?.code).toBe(String(code));
+    } finally {
+      await putAway(admin, baseURL as string, own);
+    }
   });
 });

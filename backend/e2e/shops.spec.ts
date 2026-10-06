@@ -3,7 +3,7 @@ import type {APIRequestContext, Page} from '@playwright/test';
 import {ADMIN, consoleErrors, expect, test} from './support/test';
 
 /**
- * 12 Shop connections (docs/tests/ui-regression.md, SHOP-01 – 09; SHOP-10 is by hand): the Settings tab's cards, the
+ * 12 Shop connections (docs/tests/ui-regression.md, SHOP-01 – 09): the Settings tab's cards, the
  * connection form, the failed deliveries and the Orders page's warning line, Check now and Source column. Against the
  * seeded "Fake shop" connection (src/DataFixtures/ShopFixtures.php: Colombia, prints orders, http://nginx/_fake-shop,
  * keys ck_fake_shop / cs_fake_shop) and connections each test creates with a unique name. Other specs leave connections
@@ -93,7 +93,7 @@ const toast = (page: Page, text: string | RegExp) =>
   page.getByRole('status').filter({hasText: text});
 
 test.describe('12 Shop connections', () => {
-  test('SHOP-01 · a new connection shows its webhook URL and secret, each with Copy', async ({
+  test('SHOP-01 · A new connection shows its webhook URL and secret, each with Copy', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -112,7 +112,8 @@ test.describe('12 Shop connections', () => {
     await page.getByLabel('Site URL').fill(`http://smoke-${unique()}.test`);
     await page.getByLabel('Consumer key').fill('ck_smoke');
     await page.getByLabel('Consumer secret').fill('cs_smoke');
-    await page.getByLabel('Warehouse').selectOption({label: 'Usa'});
+    // España: the orders lane renames Usa for a moment (WH-02).
+    await page.getByLabel('Warehouse').selectOption({label: 'España'});
     await page.getByRole('button', {name: 'Save connection'}).click();
 
     await expect(toast(page, `Connection ${name} created.`)).toBeVisible();
@@ -158,7 +159,7 @@ test.describe('12 Shop connections', () => {
     await expect(result).toContainText(/WooCommerce \d/);
   });
 
-  test('SHOP-03 · editing with blank keys keeps the saved ones', async ({
+  test('SHOP-03 · Editing with blank keys keeps the saved ones', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -201,7 +202,7 @@ test.describe('12 Shop connections', () => {
     expect(saved.has_keys, 'blank keys keep the saved ones').toBe(true);
   });
 
-  test('SHOP-04 · a deactivated connection keeps what its shop sends in the inbox', async ({
+  test('SHOP-04 · A deactivated connection keeps what its shop sends', async ({
     request,
     signedInAs,
   }) => {
@@ -246,10 +247,7 @@ test.describe('12 Shop connections', () => {
     expect(inbox.items.map((d) => d.reason_code)).toEqual(['inactive']);
   });
 
-  test('SHOP-05 · a refused signature shows in the card’s health and counters', async ({
-    request,
-    signedInAs,
-  }) => {
+  test('SHOP-05 · Health lines and counters', async ({request, signedInAs}) => {
     const page = await signedInAs(ADMIN);
     const answer = await deliver(
       request,
@@ -269,7 +267,7 @@ test.describe('12 Shop connections', () => {
     ).toHaveAttribute('href', /\/admin\/settings\/shops\/\d+\/deliveries$/);
   });
 
-  test('SHOP-06 · the failed deliveries: filter, body, Retry and Discard', async ({
+  test('SHOP-06 · The failed deliveries: filters, body, Retry, Discard', async ({
     request,
     signedInAs,
   }) => {
@@ -317,7 +315,7 @@ test.describe('12 Shop connections', () => {
     expect(errors).toEqual([]);
   });
 
-  test('SHOP-07 · the Orders warning line links to the connection’s failed deliveries', async ({
+  test('SHOP-07 · The Orders warning line links to the right connection', async ({
     request,
     signedInAs,
   }) => {
@@ -336,9 +334,10 @@ test.describe('12 Shop connections', () => {
 
     await page.goto('/admin/orders');
     const warning = page.getByRole('region', {name: 'Shop connections'});
-    await expect(warning).toBeVisible();
+    // One line per problem, or several folded behind Show (other cases leave problems of their own).
+    await expect(warning).toContainText(/Fake shop:|need attention/);
     const show = warning.getByRole('button', {name: 'Show'});
-    if (await show.count()) await show.click();
+    if (await show.isVisible()) await show.click();
     const line = warning.locator('p, li').filter({
       hasText: /^Fake shop: \d+ orders? could not be placed/,
     });
@@ -349,9 +348,7 @@ test.describe('12 Shop connections', () => {
     );
   });
 
-  test('SHOP-08 · Check now says what each shop brought in', async ({
-    signedInAs,
-  }) => {
+  test('SHOP-08 · Check now answers per connection', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/orders');
 
@@ -366,7 +363,7 @@ test.describe('12 Shop connections', () => {
     ).toBeVisible();
   });
 
-  test('SHOP-09 · the Source column names the shop and its filter lists the shops', async ({
+  test('SHOP-09 · The Source column names the shop; its filter lists the shops', async ({
     request,
     signedInAs,
   }) => {

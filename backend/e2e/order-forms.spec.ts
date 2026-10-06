@@ -1,10 +1,12 @@
 import type {Page} from '@playwright/test';
 import {emailCount, emailTo} from './support/mail';
+import {placeFakeShopOrder, uniqueShopOrder} from './support/shop';
 import {ADMIN, INVENTORY, consoleErrors, expect, test} from './support/test';
 
 /**
  * 5 Orders, the order form and the getting-ready screen (ORD-11 – 18, ORD-29 – 32), and 8 Emails (MAIL-01 – 02). The
  * cases run in order: the order ORD-13 places is the one ORD-15 edits, ORD-16/17 ship and MAIL-01 reads the email of.
+ * Its stock is KF-03's: another lane ships KF-01 and KF-02 from Colombia while this runs.
  */
 test.describe.configure({mode: 'serial'});
 
@@ -55,7 +57,7 @@ const line = (page: Page, code: string) =>
 const shipButton = (page: Page) => page.getByRole('button', {name: /^Ship \d/});
 
 test.describe('5 Orders: the order form and getting ready', () => {
-  test('ORD-11 · the old new, edit and getting-ready addresses land on the new screens', async ({
+  test('ORD-11 · The old order form and getting-ready addresses land on the new screens', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -81,7 +83,7 @@ test.describe('5 Orders: the order form and getting ready', () => {
     expect(errors).toEqual([]);
   });
 
-  test('ORD-12 · the form saves only when complete, and the warehouse locks once a product is filled', async ({
+  test('ORD-12 · The form saves only when complete, and the warehouse locks once a product is filled', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -102,7 +104,7 @@ test.describe('5 Orders: the order form and getting ready', () => {
     await expect(create).toBeDisabled();
   });
 
-  test('ORD-13 · an order is placed for a new customer with two products', async ({
+  test('ORD-13 · An order is placed for a new customer with two products', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -115,7 +117,7 @@ test.describe('5 Orders: the order form and getting ready', () => {
     await page.getByLabel('Address', {exact: true}).fill('9 Smoke Lane');
     await page.getByLabel('Zip Code').fill('05001');
     await page.getByLabel('Warehouse').selectOption({label: 'Colombia'});
-    await pickOption(page, 'Product 1', 'KF-01 (KF-01)');
+    await pickOption(page, 'Product 1', 'KF-03 (KF-03)');
     await page.getByLabel('Quantity of product 1').fill('3');
     await page.getByRole('button', {name: 'Add product'}).click();
     await pickOption(page, 'Product 2', 'KF-02 (KF-02)');
@@ -140,12 +142,12 @@ test.describe('5 Orders: the order form and getting ready', () => {
         product.quantity,
       ]),
     ).toEqual([
-      ['KF-01', 3],
+      ['KF-03', 3],
       ['KF-02', 1],
     ]);
   });
 
-  test('ORD-14 · picking an existing customer fills the customer block', async ({
+  test('ORD-14 · Picking an existing customer fills the customer block', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -163,7 +165,7 @@ test.describe('5 Orders: the order form and getting ready', () => {
     );
   });
 
-  test('ORD-15 · editing an order shows what was saved and updates it', async ({
+  test('ORD-15 · Editing an order shows what was saved and updates it', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -181,11 +183,11 @@ test.describe('5 Orders: the order form and getting ready', () => {
     const updated = await orderByCode(page, CODE);
     expect(updated.products[0]).toMatchObject({
       quantity: 2,
-      product: {code: 'KF-01'},
+      product: {code: 'KF-03'},
     });
   });
 
-  test('ORD-16 · getting ready: a scan adds one, and what is not on the order or over its quantity is refused inline', async ({
+  test('ORD-16 · Getting ready: a scan adds one, and what is not on the order or over its quantity is refused inline', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -194,11 +196,11 @@ test.describe('5 Orders: the order form and getting ready', () => {
     const box = page.getByLabel('Barcode', {exact: true});
     await expect(box).toBeFocused();
 
-    await scan(page, 'KF-01');
+    await scan(page, 'KF-03');
     await expect(
-      line(page, 'KF-01').getByLabel('This shipment of KF-01'),
+      line(page, 'KF-03').getByLabel('This shipment of KF-03'),
     ).toHaveText('1');
-    await expect(line(page, 'KF-01')).toContainText(
+    await expect(line(page, 'KF-03')).toContainText(
       'Shipped 0 of 2 · this shipment 1',
     );
 
@@ -209,34 +211,34 @@ test.describe('5 Orders: the order form and getting ready', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(box, 'the refusal does not take the focus').toBeFocused();
 
-    await scan(page, 'KF-01');
+    await scan(page, 'KF-03');
     await expect(page.getByRole('alert')).toHaveCount(0);
-    await expect(line(page, 'KF-01')).toContainText('Complete');
-    await scan(page, 'KF-01');
+    await expect(line(page, 'KF-03')).toContainText('Complete');
+    await scan(page, 'KF-03');
     await expect(page.getByRole('alert')).toHaveText(
-      'Nothing more of KF-01 is left to ship.',
+      'Nothing more of KF-03 is left to ship.',
     );
     await expect(box).toBeFocused();
 
-    await line(page, 'KF-01')
-      .getByRole('button', {name: 'One less KF-01'})
+    await line(page, 'KF-03')
+      .getByRole('button', {name: 'One less KF-03'})
       .click();
     await expect(
-      line(page, 'KF-01').getByLabel('This shipment of KF-01'),
+      line(page, 'KF-03').getByLabel('This shipment of KF-03'),
     ).toHaveText('1');
     expect(errors).toEqual([]);
   });
 
-  test('ORD-17 · partial shipments take the stock out, and a sent order takes no more', async ({
+  test('ORD-17 · Partial shipments take the stock out, and a sent order takes no more', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto(`/admin/orders/${placedId}/getting-ready`);
-    const stock = line(page, 'KF-01').getByText(/^In stock \d+$/);
+    const stock = line(page, 'KF-03').getByText(/^In stock \d+$/);
     const before = Number((await stock.textContent())?.replace(/\D/g, ''));
 
-    await scan(page, 'KF-01');
-    await scan(page, 'KF-01');
+    await scan(page, 'KF-03');
+    await scan(page, 'KF-03');
     await expect(shipButton(page)).toHaveText('Ship 2 products');
     await shipButton(page).click();
     await expect(page).toHaveURL(/\/admin\/orders$/);
@@ -249,10 +251,10 @@ test.describe('5 Orders: the order form and getting ready', () => {
 
     await page.goto(`/admin/orders/${placedId}/getting-ready`);
     await expect(stock).toHaveText(`In stock ${before - 2}`);
-    await expect(line(page, 'KF-01')).toContainText(
+    await expect(line(page, 'KF-03')).toContainText(
       'Shipped 2 of 2 · this shipment 0',
     );
-    await expect(line(page, 'KF-01')).toContainText('Shipped');
+    await expect(line(page, 'KF-03')).toContainText('Shipped');
     await scan(page, 'KF-02');
     await expect(shipButton(page)).toHaveText('Ship 1 product');
     await shipButton(page).click();
@@ -279,7 +281,7 @@ test.describe('5 Orders: the order form and getting ready', () => {
     ).toBeVisible();
   });
 
-  test('ORD-18 · an order that no longer exists says so, and a person without the order roles is refused', async ({
+  test('ORD-18 · An order that no longer exists says so, and a person without the order roles is refused', async ({
     signedInAs,
   }) => {
     const admin = await signedInAs(ADMIN);
@@ -301,7 +303,7 @@ test.describe('5 Orders: the order form and getting ready', () => {
     expect(answer.status()).toBe(403);
   });
 
-  test('ORD-29 · the action bar names what is missing, and a name goes to its field, highlighted', async ({
+  test('ORD-29 · The action bar names what is missing; a name goes to its field, highlighted', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -329,7 +331,7 @@ test.describe('5 Orders: the order form and getting ready', () => {
     await expect(missing).toContainText('6 things missing:');
   });
 
-  test('ORD-30 · the product lines are a table: headers, Add product under it, any row removed', async ({
+  test('ORD-30 · The product lines are a table with headers, "Add product" under it, any row removed', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -362,7 +364,7 @@ test.describe('5 Orders: the order form and getting ready', () => {
     await expect(table).toContainText('KF-02 (KF-02)');
   });
 
-  test('ORD-31 · getting ready starts neutral: progress in words, stock as text, nothing to ship yet', async ({
+  test('ORD-31 · Getting ready starts neutral: progress in words, stock as text, nothing to ship yet', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -387,6 +389,57 @@ test.describe('5 Orders: the order form and getting ready', () => {
       '/admin/orders',
     );
   });
+
+  test("ORD-33 · The order form's two columns, and the required marks", async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    await page.setViewportSize({width: 1440, height: 900});
+    await page.goto('/admin/orders/new');
+    const customer = page.getByRole('region', {name: 'Customer', exact: true});
+    const order = page.getByRole('region', {name: 'Order', exact: true});
+    const sideBySide = async () => {
+      const [left, right] = [
+        await customer.boundingBox(),
+        await order.boundingBox(),
+      ];
+      return (
+        !!left &&
+        !!right &&
+        Math.abs(left.y - right.y) < 1 &&
+        right.x >= left.x + left.width
+      );
+    };
+    await expect(customer).toBeVisible();
+    expect(await sideBySide(), 'two columns at 1440 px').toBe(true);
+    await page.setViewportSize({width: 1100, height: 900});
+    await expect
+      .poll(sideBySide, {message: 'one column at 1100 px'})
+      .toBe(false);
+
+    const mark = (label: string) =>
+      page
+        .locator('label', {hasText: new RegExp(`^${label}$`)})
+        .first()
+        .evaluate((el) => getComputedStyle(el, '::after').content);
+    for (const label of [
+      'First name',
+      'Last name',
+      'Email',
+      'Warehouse',
+      'Source',
+      'Payment method',
+      'Status',
+    ]) {
+      expect(await mark(label), `${label} is required`).toBe('" *"');
+    }
+    for (const label of ['Order number', 'Comment']) {
+      expect(await mark(label), `${label} is optional`).not.toBe('" *"');
+    }
+    await expect(page.getByText(/Fields marked \* are required\./)).toHaveCount(
+      2,
+    );
+  });
 });
 
 test.describe('5 Orders: the order form and getting ready, on a phone (390 px)', () => {
@@ -396,7 +449,7 @@ test.describe('5 Orders: the order form and getting ready, on a phone (390 px)',
     hasTouch: true,
   });
 
-  test('ORD-32 · the form and getting ready fit a phone: one column, nothing scrolls sideways', async ({
+  test('ORD-32 · The form and getting ready on a phone', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -427,7 +480,7 @@ test.describe('5 Orders: the order form and getting ready, on a phone (390 px)',
 });
 
 test.describe('8 Emails: the printer email of an order placed by hand', () => {
-  test('MAIL-01 · the order placed in ORD-13 reached the printer', async ({
+  test('MAIL-01 · An order placed by hand is emailed to the printer', async ({
     request,
   }) => {
     const email = await emailTo(request, PRINTER, {
@@ -436,16 +489,20 @@ test.describe('8 Emails: the printer email of an order placed by hand', () => {
     });
 
     expect(email.to).toContain(PRINTER);
+    expect(email.cc).toEqual(['sales@klassicfab.com']);
+    expect(email.from).toBe('KF Inventory <orders@kf.local>');
     expect(email.text).toContain(
       'A new order was created and attached to this email.',
     );
+    expect(email.attachments).toEqual([`order-${placedId}.pdf`]);
   });
 
-  test('MAIL-02 · editing an order sends no email', async ({
+  test('MAIL-02 · Editing an order sends no email', async ({
     request,
     signedInAs,
   }) => {
-    const before = await emailCount(request, PRINTER);
+    const edited = /^Order #W00001 was created/;
+    const before = await emailCount(request, PRINTER, edited);
     const page = await signedInAs(ADMIN);
     const w1 = await orderByCode(page, 'W00001');
     await page.goto(`/admin/orders/${w1.id}/edit`);
@@ -454,8 +511,13 @@ test.describe('8 Emails: the printer email of an order placed by hand', () => {
     await page.getByRole('button', {name: 'Update order'}).click();
     await expect(page).toHaveURL(/\/admin\/orders$/);
 
-    // The queue sends within seconds; give it the time it would take, then count again.
-    await page.waitForTimeout(5000);
-    expect(await emailCount(request, PRINTER)).toBe(before);
+    // The emails leave through one queue, in order: once a new order's email (queued after the edit) has arrived,
+    // an email of the edit would have arrived before it.
+    const after = uniqueShopOrder();
+    await placeFakeShopOrder(request, after);
+    await emailTo(request, PRINTER, {
+      subject: new RegExp(`Order #${after} was created`),
+    });
+    expect(await emailCount(request, PRINTER, edited)).toBe(before);
   });
 });

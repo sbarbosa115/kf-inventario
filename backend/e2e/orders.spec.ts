@@ -1,14 +1,14 @@
 import {
   ADMIN,
   INVENTORY,
-  PASSWORD,
   consoleErrors,
+  ensureUser,
   expect,
   test,
 } from './support/test';
 import type {Locator, Page} from '@playwright/test';
 
-// 5 Orders (ORD-01 – 10, and the redesign's ORD-21 – 26). The fixtures put twelve orders (W00001 – W00012) on the first
+// 5 Orders (ORD-01 – 10 but 09, ORD-21 – 28 but 27). The fixtures put twelve orders (W00001 – W00012) on the first
 // warehouse, Colombia: W00001 – W00006 by phone with the statuses 1 – 6, W00007 – W00012 from the web likewise. The
 // cases run in order.
 test.describe.configure({mode: 'serial'});
@@ -28,24 +28,6 @@ const ORDERS_UPDATER = {
   email: 'smoke.orders.update@kf.test',
   roles: ['ROLE_UPDATE_ORDERS'],
 };
-
-async function ensureUser(
-  admin: Page,
-  baseURL: string,
-  user: typeof ORDERS_CLERK,
-) {
-  const users = (
-    (await (await admin.request.get('/api/v1/users?per_page=100')).json()) as {
-      items: {username: string}[];
-    }
-  ).items;
-  if (users.some((known) => known.username === user.username)) return;
-  const created = await admin.request.post('/api/v1/users', {
-    data: {...user, password: PASSWORD, enabled: true},
-    headers: {Origin: new URL(baseURL).origin},
-  });
-  expect(created.status(), `creating ${user.username}`).toBe(201);
-}
 
 /** The list narrowed to one order by its number (the search box of the toolbar). */
 async function findOrder(page: Page, code: string) {
@@ -70,7 +52,7 @@ async function rowMenu(page: Page, row: Locator, code: string) {
 }
 
 test.describe('5 Orders', () => {
-  test('ORD-01 · the list shows the first warehouse’s orders, and the old address lands on it', async ({
+  test("ORD-01 · The list shows the first warehouse's orders, and the old address lands on it", async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -106,7 +88,7 @@ test.describe('5 Orders', () => {
     expect(errors).toEqual([]);
   });
 
-  test('ORD-02 · another warehouse and a status narrow the list', async ({
+  test('ORD-02 · Another warehouse and a status narrow the list', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -132,7 +114,7 @@ test.describe('5 Orders', () => {
     await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
   });
 
-  test('ORD-03 · a status changes from its badge, after a question, and stays changed', async ({
+  test('ORD-03 · A status changes from its badge, after a question, and stays changed', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -154,7 +136,7 @@ test.describe('5 Orders', () => {
     ).toHaveText(/Processed/);
   });
 
-  test('ORD-04 · choosing Sent opens the order’s getting-ready screen', async ({
+  test('ORD-04 · Choosing Sent opens the getting-ready screen instead', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -167,7 +149,7 @@ test.describe('5 Orders', () => {
     await expect(page).toHaveURL(/\/admin\/orders\/\d+\/getting-ready$/);
   });
 
-  test('ORD-05 · the detail shows the customer, the status and the products', async ({
+  test('ORD-05 · The detail shows the order, its customer and its products', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -189,7 +171,7 @@ test.describe('5 Orders', () => {
     expect(errors).toEqual([]);
   });
 
-  test('ORD-06 · a comment is added and removed from the detail, and the count follows', async ({
+  test('ORD-06 · Comments are added and removed from the detail', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -235,9 +217,7 @@ test.describe('5 Orders', () => {
     ).toBeVisible();
   });
 
-  test('ORD-07 · the order PDF, its Excel and the remaining products PDF download', async ({
-    signedInAs,
-  }) => {
+  test("ORD-07 · The order's documents download", async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/orders');
     const row = await findOrder(page, 'W00001');
@@ -256,10 +236,24 @@ test.describe('5 Orders', () => {
       );
       expect(answer.status(), name).toBe(200);
       expect(answer.headers()['content-type']).toContain(type);
+      const body = await answer.body();
+      if (type === 'application/pdf') {
+        expect(body.subarray(0, 5).toString(), `${name} is a PDF`).toBe(
+          '%PDF-',
+        );
+      } else {
+        expect(answer.headers()['content-disposition']).toContain(
+          'filename="file-upload-template-W00001.xls"',
+        );
+        expect(
+          body.includes(Buffer.from('KF-01', 'utf16le')),
+          "the order's products are in the sheet",
+        ).toBe(true);
+      }
     }
   });
 
-  test('ORD-08 · deleting an order asks first', async ({
+  test('ORD-08 · Deleting an order asks first', async ({
     signedInAs,
     baseURL,
   }) => {
@@ -291,26 +285,7 @@ test.describe('5 Orders', () => {
     await expect(page.getByRole('row', {name: /W00005/})).toHaveCount(0);
   });
 
-  test('ORD-09 · Check now answers in words', async ({signedInAs}) => {
-    const page = await signedInAs(ORDERS_CLERK.username);
-    await page.goto('/admin/orders');
-    await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
-
-    await page.getByRole('button', {name: 'Check now'}).click();
-
-    // Without shop credentials on the smoke stack, either answer is right: what matters is a message, not a blank.
-    await expect(
-      page
-        .getByText(/orders? imported from \d+ shops?, \d+ skipped/)
-        .or(
-          page.getByText(
-            /no shop connection is active|shops could not be reached/i,
-          ),
-        ),
-    ).toBeVisible();
-  });
-
-  test('ORD-10 · a person without the orders roles is refused', async ({
+  test('ORD-10 · A person without the orders roles is refused', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVENTORY);
@@ -328,7 +303,7 @@ test.describe('5 Orders', () => {
     expect(answer.status()).toBe(403);
   });
 
-  test('ORD-21 · each status chip counts its orders and keeps only them', async ({
+  test('ORD-21 · Each status chip counts its orders and keeps only them', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -347,9 +322,19 @@ test.describe('5 Orders', () => {
     await expect(page.locator('tbody tr[role="row"]')).toHaveCount(count);
     await expect(page.getByRole('row', {name: /W00004/})).toBeVisible();
     await expect(page.getByRole('row', {name: /W00001/})).toHaveCount(0);
+
+    // The chips count what the search keeps: W00010, W00011 and W00012.
+    await statusChips(page).getByRole('button', {name: /^All/}).click();
+    await page
+      .getByRole('searchbox', {name: 'Order number or customer'})
+      .fill('W0001');
+    await expect(
+      statusChips(page).getByRole('button', {name: /^All/}),
+    ).toHaveText(/^All\s*3$/);
+    await expect(page.locator('tbody tr[role="row"]')).toHaveCount(3);
   });
 
-  test('ORD-22 · a date range that keeps nothing says so, and Show all clears every filter', async ({
+  test('ORD-22 · A date range that keeps nothing says so, and Show all clears every filter', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -382,7 +367,7 @@ test.describe('5 Orders', () => {
     ).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('ORD-23 · a status change cancelled changes nothing', async ({
+  test('ORD-23 · A status change cancelled changes nothing', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -406,7 +391,7 @@ test.describe('5 Orders', () => {
     ).toHaveText(/Created/);
   });
 
-  test('ORD-24 · the detail is a slide-over with sections and the order’s actions', async ({
+  test("ORD-24 · The detail is a slide-over with sections and the order's actions", async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -434,12 +419,69 @@ test.describe('5 Orders', () => {
       page.getByRole('menu', {name: 'Documents'}).getByRole('menuitem'),
     ).toHaveText(['Order PDF', 'Remaining products PDF', 'Excel sheet']);
     await page.keyboard.press('Escape');
+
+    // The status changes from the panel too, and the list behind follows at once.
+    await detail.getByRole('button', {name: 'Status of order W00008'}).click();
+    await page.getByRole('menuitemradio', {name: 'Completed'}).click();
+    const question = page.getByRole('dialog', {
+      name: 'Mark W00008 as Completed?',
+    });
+    await page.keyboard.press('Escape');
+    await expect(question, 'Escape closes the question only').toBeHidden();
+    await expect(detail).toBeVisible();
+    await detail.getByRole('button', {name: 'Status of order W00008'}).click();
+    await page.getByRole('menuitemradio', {name: 'Completed'}).click();
+    await question.getByRole('button', {name: 'Mark as Completed'}).click();
+    await expect(toast(page, 'Order W00008 is now Completed.')).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(detail).toBeHidden();
+    await expect(
+      row.getByRole('button', {name: 'Status of order W00008'}),
+    ).toHaveText(/Completed/);
     expect(errors).toEqual([]);
   });
 
-  test('ORD-25 · the row menu follows the roles: no Delete or Sync without the managing role', async ({
+  test('ORD-28 · With the keyboard only, an order opens from its number and the focus comes back to it', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    await page.goto('/admin/orders');
+    const row = await findOrder(page, 'W00011');
+    const number = row.getByRole('button', {name: 'W00011', exact: true});
+
+    await number.focus();
+    await page.keyboard.press('Enter');
+    const detail = page.getByRole('dialog', {name: 'Order W00011'});
+    await expect(detail).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => !!document.activeElement?.closest('[role="dialog"]'),
+      ),
+      'the focus moved into the detail',
+    ).toBe(true);
+    for (let i = 0; i < 15; i++) await page.keyboard.press('Tab');
+    expect(
+      await page.evaluate(
+        () => !!document.activeElement?.closest('[role="dialog"]'),
+      ),
+      'and stays there',
+    ).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(detail).toBeHidden();
+    await expect(number).toBeFocused();
+
+    // A status menu: Enter opens it, the arrows move, Escape gives the focus back to the badge.
+    const badge = row.getByRole('button', {name: 'Status of order W00011'});
+    await badge.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('menuitemradio').first()).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(page.getByRole('menuitemradio').nth(1)).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(badge).toBeFocused();
+  });
+
+  test('ORD-25 · The row menu follows the roles', async ({
     signedInAs,
     baseURL,
   }) => {
@@ -472,9 +514,7 @@ test.describe('5 Orders, on a phone (390 px)', () => {
     hasTouch: true,
   });
 
-  test('ORD-26 · the orders are cards, nothing scrolls sideways, and a card opens the detail full width', async ({
-    signedInAs,
-  }) => {
+  test('ORD-26 · On a phone the orders are cards', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
     const errors = consoleErrors(page);
     await page.goto('/admin/orders');

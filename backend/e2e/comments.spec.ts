@@ -3,7 +3,7 @@ import type {APIRequestContext, Locator, Page} from '@playwright/test';
 import {ADMIN, consoleErrors, expect, test} from './support/test';
 
 /**
- * 5 Orders, the comment timeline (docs/tests/ui-regression.md, ORD-38 – 43; ORD-44 is by hand). W00003's fixture
+ * 5 Orders, the comment timeline (docs/tests/ui-regression.md, ORD-38 – 43). W00003's fixture
  * comment has no date (src/DataFixtures/ShopFixtures.php); the shop cases post a signed order to the seeded "Fake
  * shop" connection (both capabilities on) and read or set the dev stack's fake shop through /_fake-shop/_state. Notes
  * sent to the shop leave through the `shops` queue: the stack's worker sends them within seconds.
@@ -22,6 +22,14 @@ interface Write {
 
 /** A unique WooCommerce order id for this run. */
 const uniqueId = () => 700000 + Math.floor(Math.random() * 99999);
+
+/** Waits until the clock has passed the second of `at` (a Date.now()): what is written next is dated later. */
+async function pastTheSecondOf(at: number): Promise<void> {
+  const second = Math.floor(at / 1000);
+  await expect
+    .poll(() => Math.floor(Date.now() / 1000), {intervals: [100]})
+    .toBeGreaterThan(second);
+}
 
 /** `YYYY-MM-DDTHH:MM:SS` in UTC, as WooCommerce writes its dates. */
 const gmtNow = () => new Date().toISOString().slice(0, 19);
@@ -106,7 +114,7 @@ test.describe('5 Orders: comment timeline', () => {
     origin = new URL(baseURL as string).origin;
   });
 
-  test('ORD-38 · the timeline shows who wrote each comment and when; a dateless one shows the order’s date, marked approximate', async ({
+  test("ORD-38 · The timeline shows who wrote each comment and when; a dateless one shows the order's date, marked approximate", async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -138,31 +146,38 @@ test.describe('5 Orders: comment timeline', () => {
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/orders');
-    const detail = await openNotes(page, 'W00005');
+    // W00009: the orders lane deletes W00005 and changes other orders' statuses; nothing else writes to W00009.
+    const detail = await openNotes(page, 'W00009');
     const text = `Smoke note ${Date.now()}`;
 
+    const send = detail.getByRole('button', {name: 'Send', exact: true});
+    await expect(send, 'nothing to send yet').toBeDisabled();
+    await box(detail).fill('   ');
+    await expect(send, 'blank is nothing').toBeDisabled();
+    await box(detail).fill('');
     await box(detail).click();
     await page.keyboard.type(`${text} first line`);
+    await expect(send).toBeEnabled();
     await page.keyboard.press('Shift+Enter');
     await page.keyboard.type('second line');
     await expect(box(detail)).toHaveValue(`${text} first line\nsecond line`);
     await page.keyboard.press('Enter');
 
-    const added = entry(detail, 'W00005', text);
+    const added = entry(detail, 'W00009', text);
     await expect(added).toBeVisible();
     await expect(added.getByText('Sergio Barbosa')).toBeVisible();
     await expect(added.locator('time')).not.toHaveText(/≈/);
     await expect(box(detail)).toHaveValue('');
     await expect(box(detail), 'ready for the next note').toBeFocused();
     await expect(
-      page.getByRole('row', {name: /W00005/}).getByRole('button', {
-        name: 'Comments of order W00005: 2',
+      page.getByRole('row', {name: /W00009/}).getByRole('button', {
+        name: 'Comments of order W00009: 2',
       }),
       'the list counts it at once',
     ).toBeAttached();
   });
 
-  test('ORD-40 · a pinned comment is shown on top of the order and on its row; pinning another unpins it', async ({
+  test('ORD-40 · A pinned comment is shown on top of the order and on its row; pinning another unpins it', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -205,11 +220,12 @@ test.describe('5 Orders: comment timeline', () => {
     ).toBeVisible();
   });
 
-  test('ORD-41 · a quick phrase adds a dated comment in one tap', async ({
+  test('ORD-41 · A quick phrase adds a dated comment in one tap', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
-    const phrase = `Smoke phrase ${Date.now()}`;
+    // Not "Smoke …": the Settings cases remove those phrases when they end.
+    const phrase = `Phrase ${Date.now()}`;
     const created = await page.request.post('/api/v1/settings/quick-phrases', {
       headers: {Origin: origin},
       data: {text: phrase, active: true},
@@ -237,7 +253,7 @@ test.describe('5 Orders: comment timeline', () => {
     }
   });
 
-  test('ORD-42 · on a shop’s order, “Also send to the shop” sends the note to the shop', async ({
+  test('ORD-42 · On a shop\'s order, "Also send to the shop" sends the note to the shop', async ({
     request,
     signedInAs,
   }) => {
@@ -270,7 +286,7 @@ test.describe('5 Orders: comment timeline', () => {
       .toBe(true);
   });
 
-  test('ORD-43 · the shop’s notes come in with Check now, marked with the shop, among the others, once', async ({
+  test("ORD-43 · The shop's notes come in with Check now, marked with the shop, among the others, once", async ({
     request,
     signedInAs,
   }) => {
@@ -290,8 +306,11 @@ test.describe('5 Orders: comment timeline', () => {
       headers: {Origin: origin},
       data: {content: before},
     });
-    await page.waitForTimeout(1500);
+    const beforeAt = Date.now();
+    // Dates are to the second: the shop's note is dated in a later second than the office's comment.
+    await pastTheSecondOf(beforeAt);
     const note = `From the shop ${Date.now()}`;
+    const noteAt = Date.now();
     try {
       await request.put(STATE, {
         data: {
@@ -308,7 +327,8 @@ test.describe('5 Orders: comment timeline', () => {
           },
         },
       });
-      await page.waitForTimeout(1500);
+      // And the comment written after it, in a later second still.
+      await pastTheSecondOf(noteAt);
       for (let i = 0; i < 2; i++) {
         const sync = await page.request.post(SYNC, {
           headers: {Origin: origin},

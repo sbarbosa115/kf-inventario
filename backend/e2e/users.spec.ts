@@ -1,7 +1,9 @@
 import {ADMIN, INVENTORY, consoleErrors, expect, test} from './support/test';
 
-// 7 Users (USR-01 – 09). The cases run in order: the user USR-02 creates is the one USR-03 edits.
+// 7 Users (USR-01 – 10). The cases run in order: the user USR-02 creates is the one USR-03 edits.
 test.describe.configure({mode: 'serial'});
+
+const NEW_PASSWORD = 'smoke-pass-2';
 
 const NEW_USER = {
   name: 'Smoke Clerk',
@@ -11,7 +13,7 @@ const NEW_USER = {
 };
 
 test.describe('7 Users', () => {
-  test('USR-01 · the list shows every account with its roles, and the old address lands on it', async ({
+  test('USR-01 · The list shows every account with its roles, and the old address lands on it', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -32,7 +34,7 @@ test.describe('7 Users', () => {
     expect(errors).toEqual([]);
   });
 
-  test('USR-02 · a new user is created and appears in the list', async ({
+  test('USR-02 · A new user is created, appears in the list and signs in to what the role opens', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -53,9 +55,26 @@ test.describe('7 Users', () => {
     ).toBeVisible();
     const row = page.getByRole('row', {name: new RegExp(NEW_USER.email)});
     await expect(row.getByText('Inventory', {exact: true})).toBeVisible();
+
+    // The new account signs in and sees what Inventory opens, nothing more.
+    const clerk = await signedInAs(NEW_USER.username, NEW_USER.password);
+    await clerk.goto('/admin/products');
+    const menu = clerk.getByRole('navigation', {name: 'Main menu'});
+    await expect(
+      menu.getByRole('link', {name: 'Products', exact: true}),
+    ).toBeVisible();
+    for (const name of [
+      'Orders',
+      'Customers',
+      'Users',
+      'Warehouses',
+      'Invoices',
+    ]) {
+      await expect(menu.getByRole('link', {name, exact: true})).toHaveCount(0);
+    }
   });
 
-  test('USR-03 · editing a user without typing a password keeps the password they had', async ({
+  test('USR-03 · Editing without typing a password keeps the password', async ({
     signedInAs,
     browser,
     baseURL,
@@ -89,7 +108,7 @@ test.describe('7 Users', () => {
     await context.close();
   });
 
-  test('USR-04 · the form names what is missing and what is wrong, and sends nothing', async ({
+  test('USR-04 · The form names what is missing and what is wrong', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -120,7 +139,7 @@ test.describe('7 Users', () => {
     await expect(page).toHaveURL(/\/admin\/users\/new$/);
   });
 
-  test('USR-05 · a user that no longer exists says so', async ({
+  test('USR-05 · A user that no longer exists says so', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -134,7 +153,7 @@ test.describe('7 Users', () => {
     await expect(page).toHaveURL(/\/admin\/users$/);
   });
 
-  test('USR-06 · a person without the Users role is refused', async ({
+  test('USR-06 · A person without the Users role is refused', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVENTORY);
@@ -151,7 +170,7 @@ test.describe('7 Users', () => {
     expect(answer.status()).toBe(403);
   });
 
-  test('USR-07 · the form groups the roles by what they open and describes each one', async ({
+  test('USR-07 · The form groups the roles by what they open and describes each one', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -177,7 +196,7 @@ test.describe('7 Users', () => {
     expect(errors).toEqual([]);
   });
 
-  test('USR-08 · the list filters by status and a row opens its form', async ({
+  test('USR-08 · The list filters by status and a row opens its form', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -196,7 +215,7 @@ test.describe('7 Users', () => {
     await expect(page.getByRole('heading', {name: 'Edit user'})).toBeVisible();
   });
 
-  test('USR-09 · saving a user toasts, and the form keeps its action bar in view', async ({
+  test('USR-09 · Saving toasts, and the action bar is in view', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -215,5 +234,34 @@ test.describe('7 Users', () => {
       page.getByRole('status').filter({hasText: 'The user was updated.'}),
     ).toBeVisible();
     await expect(page).toHaveURL(/\/admin\/users$/);
+  });
+
+  test('USR-10 · A new password typed on Edit replaces the old one', async ({
+    signedInAs,
+    browser,
+    baseURL,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    await page.goto('/admin/users');
+    await page
+      .getByRole('row', {name: new RegExp(NEW_USER.email)})
+      .getByRole('button', {name: /^Actions for /})
+      .click();
+    await page.getByRole('menuitem', {name: 'Edit'}).click();
+    await page.getByLabel('Password', {exact: true}).fill(NEW_PASSWORD);
+    await page.getByRole('button', {name: 'Save'}).click();
+    await expect(
+      page.getByRole('status').filter({hasText: 'The user was updated.'}),
+    ).toBeVisible();
+
+    const context = await browser.newContext({baseURL});
+    const signIn = (password: string) =>
+      context.request.post('/api/v1/auth/login', {
+        data: {username: NEW_USER.username, password},
+        headers: {Origin: new URL(baseURL as string).origin},
+      });
+    expect((await signIn(NEW_USER.password)).status(), 'the old one').toBe(401);
+    expect((await signIn(NEW_PASSWORD)).status(), 'the new one').toBe(200);
+    await context.close();
   });
 });

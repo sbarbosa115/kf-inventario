@@ -1,12 +1,12 @@
 import {ADMIN, SALES, consoleErrors, expect, test} from './support/test';
 
-// 6 Invoices (INVC-01 – 06, and the redesign's INVC-07 – 09), signed in as the sales clerk (invoice roles + inventory: the form lists products) (the admin is refused on invoices by design). The cases run
-// in order on the fixtures (invoice INV-0001; customer Jose Perez; KF-01 – 03 in Colombia): the invoice INVC-03
-// creates is INV-0002, which INVC-05 then finds taken.
+// 6 Invoices (INVC-01 – 10), signed in as the sales clerk (the invoice roles + inventory: the form lists products; the
+// admin is refused on invoices by design). The cases run in order on the fixtures (invoice INV-0001; customer Jose
+// Perez; KF-01 – 03 in Colombia): the invoice INVC-03 creates is INV-0002, which INVC-05 then finds taken.
 test.describe.configure({mode: 'serial'});
 
 test.describe('6 Invoices', () => {
-  test('INVC-01 · the list shows the invoices, and the old addresses land on the new screens', async ({
+  test('INVC-01 · The list shows the invoices, and the old addresses land on the new screens', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(SALES);
@@ -41,7 +41,7 @@ test.describe('6 Invoices', () => {
     expect(errors).toEqual([]);
   });
 
-  test('INVC-02 · the detail opens in a slide-over with the lines and the PDF link', async ({
+  test('INVC-02 · The detail opens in a slide-over with the lines and the PDF', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(SALES);
@@ -53,12 +53,18 @@ test.describe('6 Invoices', () => {
     const dialog = page.getByRole('dialog', {name: 'Invoice INV-0001'});
     await expect(dialog).toContainText('Example product');
     await expect(dialog).toContainText('$100.00');
-    await expect(dialog.getByRole('link', {name: 'Open PDF'})).toBeVisible();
+    const pdf = dialog.getByRole('link', {name: 'Open PDF'});
+    await expect(pdf).toHaveAttribute('target', '_blank');
+    const answer = await page.request.get(
+      (await pdf.getAttribute('href')) as string,
+    );
+    expect(answer.headers()['content-type']).toContain('application/pdf');
+    expect((await answer.body()).subarray(0, 5).toString()).toBe('%PDF-');
     await dialog.getByRole('button', {name: 'Close'}).first().click();
     await expect(dialog).toHaveCount(0);
   });
 
-  test('INVC-03 · an invoice is created with a customer, a product and tax, its PDF opens and the list shows it', async ({
+  test('INVC-03 · An invoice is created with a customer, a product and tax, and the list shows it', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(SALES);
@@ -110,7 +116,7 @@ test.describe('6 Invoices', () => {
     expect(errors).toEqual([]);
   });
 
-  test('INVC-04 · Add all products puts every product of the warehouse on the invoice, and an item can be removed', async ({
+  test('INVC-04 · Add all products puts every product of the warehouse on the invoice, and a line can be removed', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(SALES);
@@ -130,7 +136,7 @@ test.describe('6 Invoices', () => {
     await expect(page.getByLabel('Description 3')).toHaveValue('');
   });
 
-  test('INVC-05 · an invoice needs an item, and a code already used is refused', async ({
+  test('INVC-05 · An invoice needs a line, and a code already used is refused', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(SALES);
@@ -151,7 +157,7 @@ test.describe('6 Invoices', () => {
     await expect(page).toHaveURL(/\/admin\/invoices\/new$/);
   });
 
-  test('INVC-07 · the list is filtered by customer or number and by a date range, and Clear filters undoes it', async ({
+  test('INVC-07 · The list is filtered by customer or number and by a date range', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(SALES);
@@ -189,7 +195,7 @@ test.describe('6 Invoices', () => {
     await expect(page.getByRole('row', {name: /INV-0002/})).toBeVisible();
   });
 
-  test('INVC-08 · a row opens the invoice in a slide-over beside the list, and Escape closes it', async ({
+  test('INVC-08 · A row opens the invoice in a slide-over beside the list', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(SALES);
@@ -216,7 +222,7 @@ test.describe('6 Invoices', () => {
       hasTouch: true,
     });
 
-    test('INVC-09 · at 390 px the lines stack as cards, the totals are in view and nothing scrolls sideways', async ({
+    test('INVC-09 · On a phone the invoice form and the list fit without scrolling sideways', async ({
       signedInAs,
     }) => {
       const page = await signedInAs(SALES);
@@ -242,9 +248,7 @@ test.describe('6 Invoices', () => {
     });
   });
 
-  test('INVC-06 · the admin is refused on invoices: no sidebar entry, no list, 403 from the API', async ({
-    signedInAs,
-  }) => {
+  test('INVC-06 · The admin is refused on invoices', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
 
     await page.goto('/admin/invoices');
@@ -254,5 +258,63 @@ test.describe('6 Invoices', () => {
       'You do not have permission to do this.',
     );
     expect((await page.request.get('/api/v1/invoices')).status()).toBe(403);
+  });
+
+  test('INVC-10 · The invoice form reads like the document', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(SALES);
+    await page.setViewportSize({width: 1440, height: 900});
+    await page.goto('/admin/invoices/new');
+
+    const customer = page.getByRole('region', {name: 'Customer', exact: true});
+    const invoice = page.getByRole('region', {name: 'Invoice', exact: true});
+    await expect(customer).toBeVisible();
+    const [left, right] = [
+      await customer.boundingBox(),
+      await invoice.boundingBox(),
+    ];
+    expect(Math.abs(left!.y - right!.y), 'tops aligned').toBeLessThan(1);
+    expect(right!.x, 'Invoice on the right').toBeGreaterThanOrEqual(
+      left!.x + left!.width,
+    );
+    const lines = page.getByRole('region', {name: 'Lines', exact: true});
+    expect(
+      (await lines.boundingBox())!.y,
+      'the lines under both',
+    ).toBeGreaterThan(left!.y + left!.height - 1);
+    await expect(lines.getByRole('columnheader')).toHaveText([
+      'Product',
+      'Description',
+      'Qty',
+      'Unit price',
+      'Line total',
+      'Actions',
+    ]);
+    await expect(lines.getByRole('button', {name: 'Add line'})).toBeVisible();
+    await expect(
+      lines.getByRole('button', {name: 'Add all products from Colombia'}),
+    ).toBeVisible();
+    await lines
+      .getByRole('button', {name: 'Add all products from Colombia'})
+      .click();
+    await expect(page.getByTestId('subtotal')).toHaveText('$450.00');
+    await expect(page.getByTestId('total')).toHaveText('$450.00');
+
+    // Line by line with the keyboard: description, quantity, unit price.
+    await page.getByLabel('Description 1').focus();
+    await page.keyboard.press('Tab');
+    await expect(page.getByLabel('Quantity 1')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.getByLabel('Unit price 1')).toBeFocused();
+
+    // Create invoice is the one primary action; Cancel leaves without saving.
+    await expect(page.locator('main .kf-btn--primary')).toHaveText([
+      'Create invoice',
+    ]);
+    await expect(page.getByRole('link', {name: 'Cancel'})).toHaveAttribute(
+      'href',
+      '/admin/invoices',
+    );
   });
 });
