@@ -154,6 +154,23 @@ final class OrderApiTest extends ApiTestCase
         self::assertSame([$plain], array_column($this->getJson('/api/v1/orders?warehouse_id='.$warehouse->getId().'&filter[source][]=phone')['items'], 'id'));
     }
 
+    public function testTheCommentPinnedFromTheTimelineIsTheListsNotesLine(): void
+    {
+        $this->signInAs(['ROLE_MANAGE_ORDERS']);
+        $warehouse = $this->aWarehouse();
+        $id = $this->placeOrder($warehouse, $this->aCustomer(), [[$this->aProduct('KF-A', $warehouse), 1]], ['code' => 'PINNED-1']);
+        $this->placeOrder($warehouse, $this->aCustomer('other@kf.test'), [[$this->aProduct('KF-B', $warehouse), 1]], ['code' => 'PLAIN-1']);
+        $second = $this->getJson('/api/v1/orders/'.$id)['comments'][1];
+
+        $this->sendJson('POST', "/api/v1/orders/{$id}/comments/{$second['id']}/pin");
+        $this->assertStatus(200);
+
+        $byCode = array_column($this->getJson('/api/v1/orders?warehouse_id='.$warehouse->getId())['items'], null, 'code');
+        self::assertSame(['id' => $second['id'], 'content' => 'Second comment', 'created_at' => $second['created_at']], $byCode['PINNED-1']['pinned_comment'], "The list carries the pinned comment's id, text and date.");
+        self::assertNull($byCode['PLAIN-1']['pinned_comment']);
+        self::assertSame(['PINNED-1'], array_column($this->getJson('/api/v1/orders?warehouse_id='.$warehouse->getId().'&filter[pinned][]=1')['items'], 'code'), 'The "Pinned only" filter finds it.');
+    }
+
     public function testAnOrderIsReadAndListedByWarehouseNewestFirst(): void
     {
         $this->signInAs(['ROLE_MANAGE_ORDERS']);

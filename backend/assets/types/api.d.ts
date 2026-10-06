@@ -425,7 +425,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The order's comments, oldest first; a legacy comment without a date carries the order's (`approximate`). */
+        /**
+         * The order's comments, oldest first (on the same date, in the order they were written); a legacy comment
+         *     without a date carries the order's (`approximate`); shop notes (`origin` shop) name their shop and no author.
+         * @description 404 order_not_found.
+         */
         get: operations["get_api_order_comments"];
         /**
          * OrderCommentsInput: the order's comments as they should be: no id adds one (signed by you), an id edits it, a
@@ -433,8 +437,10 @@ export interface paths {
          */
         put: operations["put_api_orders_comments"];
         /**
-         * AddOrderCommentInput → 201 the comment (signed by you, dated now). 422 shop_note_unavailable when it cannot be
-         *     sent to the shop (the order is not linked, or the connection's order_note capability is off).
+         * AddOrderCommentInput → 201 the comment (signed by you, dated now; `origin` phrase with an active `phrase_id`).
+         * @description 422 shop_note_unavailable when `send_to_shop` cannot be done (the order is not from a connection, or the
+         *     connection is inactive or its order_note capability is off): nothing is written. 404 order_not_found,
+         *     quick_phrase_not_found.
          */
         post: operations["post_api_order_comments_add"];
         delete?: never;
@@ -452,9 +458,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Pins the comment (the order's only pinned one: the previous one is unpinned). 404 comment_not_found. */
+        /**
+         * Pins the comment (the order's only pinned one: the previous one is unpinned). 404 order_not_found,
+         *     comment_not_found (also for another order's comment).
+         */
         post: operations["post_api_order_comments_pin"];
-        /** Unpins it. 404 comment_not_found. */
+        /** Unpins it (a comment that is not pinned is left as it is). 404 order_not_found, comment_not_found. */
         delete: operations["delete_api_order_comments_unpin"];
         options?: never;
         head?: never;
