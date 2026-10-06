@@ -5,6 +5,8 @@ namespace App\Invoicing\Application\Query;
 use App\Invoicing\Domain\Error\InvoiceNotFound;
 use App\Invoicing\Domain\Model\Invoice;
 use App\Invoicing\Domain\Repository\InvoiceRepository;
+use App\Shared\Application\Query\ListPage;
+use App\Shared\Application\Query\ListQuery;
 use App\Shared\Domain\Clock;
 
 /**
@@ -15,17 +17,18 @@ final class Invoices
     public function __construct(
         private readonly InvoiceRepository $invoices,
         private readonly Clock $clock,
+        private readonly InvoiceList $list,
     ) {
     }
 
     /**
-     * Every invoice, newest first.
+     * A page of invoices: filtered, sorted and counted in the database.
      *
-     * @return list<Invoice>
+     * @return ListPage<Invoice>
      */
-    public function all(): array
+    public function page(ListQuery $query): ListPage
     {
-        return $this->invoices->all();
+        return $this->list->page($query);
     }
 
     /**

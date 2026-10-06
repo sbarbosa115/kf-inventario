@@ -15,7 +15,6 @@ use App\Shared\Application\Command\CommandBus;
 use App\Shared\Application\Query\ListField;
 use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
-use App\Shared\UI\Http\InMemoryList;
 use App\Shared\UI\Http\InputMapper;
 use App\Shared\UI\Http\ListQueryParser;
 use App\Shared\UI\Http\Output\PageOutput;
@@ -67,25 +66,9 @@ final class InvoiceController extends AbstractController
     {
         $query = $this->lists->parse($request, self::listSchema());
 
-        // Item 0's walking skeleton: filtered in memory; item 1 (list-api) moves it into SQL.
-        $customer = static fn (InvoiceOutput $i): string => null === $i->customer ? '' : trim(($i->customer->firstName ?? '').' '.($i->customer->lastName ?? ''));
-        $created = static fn (InvoiceOutput $i): ?\DateTimeImmutable => null === $i->createdAt ? null : new \DateTimeImmutable($i->createdAt);
-        $page = InMemoryList::page(
-            array_map($this->presenter->invoice(...), $this->invoices->all()),
-            $query,
-            [
-                'code' => static fn (InvoiceOutput $i) => $i->code,
-                'customer' => static fn (InvoiceOutput $i) => trim($customer($i).' '.($i->customer->email ?? '')),
-                'payment_method' => static fn (InvoiceOutput $i) => $i->paymentMethod,
-                'created_at' => $created,
-                'total' => static fn (InvoiceOutput $i) => $i->total,
-                'walk_in' => static fn (InvoiceOutput $i) => null === $i->customer ? 'yes' : 'no',
-            ],
-            [static fn (InvoiceOutput $i) => $i->code, $customer, static fn (InvoiceOutput $i) => $i->customer?->email],
-            static fn (InvoiceOutput $i) => $i->id,
-        );
+        $page = $this->invoices->page($query);
 
-        return $this->json(PageOutput::of($page, $query, static fn (InvoiceOutput $i) => $i));
+        return $this->json(PageOutput::of($page, $query, $this->presenter->invoice(...)));
     }
 
     /**
