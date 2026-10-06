@@ -260,6 +260,19 @@
   font-size: 0.7em;
 }
 
+/* Touch screens: the top bar's buttons are 44 px targets. */
+@media (pointer: coarse) {
+  .kf-topbar__icon {
+    width: var(--kf-target);
+    height: var(--kf-target);
+  }
+
+  .kf-topbar__account {
+    min-width: var(--kf-target);
+    height: var(--kf-target);
+  }
+}
+
 .kf-topbar__avatar {
   display: inline-flex;
   align-items: center;

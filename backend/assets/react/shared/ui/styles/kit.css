@@ -91,6 +91,11 @@
   .kf-btn--icon.kf-btn--sm {
     width: var(--kf-target);
   }
+
+  /* Large stays larger than the touch minimum (the getting-ready steppers: 48 × 48). */
+  .kf-btn--lg {
+    min-height: 48px;
+  }
 }
 
 .kf-btn--primary {
@@ -382,6 +387,13 @@
   font-size: var(--kf-text-sm);
 }
 
+@media (pointer: coarse) {
+  .kf-page-header__back {
+    min-height: var(--kf-target);
+    margin-bottom: 0;
+  }
+}
+
 .kf-page-header__title {
   margin: 0;
   font-size: var(--kf-text-title);
@@ -591,8 +603,10 @@
 }
 
 @media (pointer: coarse) {
-  .kf-segmented__option {
-    min-height: 40px;
+  .kf-segmented__option,
+  .kf-segmented--sm .kf-segmented__option {
+    min-width: var(--kf-target);
+    min-height: var(--kf-target);
   }
 }
 

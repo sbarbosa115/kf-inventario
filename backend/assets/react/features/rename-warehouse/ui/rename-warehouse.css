@@ -22,6 +22,13 @@
   cursor: text;
 }
 
+@media (pointer: coarse) {
+  .warehouse-name__button {
+    min-width: var(--kf-target);
+    min-height: var(--kf-target);
+  }
+}
+
 .warehouse-name__button:hover {
   background-color: var(--kf-surface-sunken);
 }
