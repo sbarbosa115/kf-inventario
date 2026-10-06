@@ -3,10 +3,17 @@
 namespace App\Settings\UI\Http\Controller;
 
 use App\Identity\Domain\Model\User;
+use App\Settings\Application\Command\SaveAnalyticsSettings;
+use App\Settings\Application\Command\SaveEmailSettings;
 use App\Settings\Application\Command\SaveWebhookSettings;
+use App\Settings\Application\Command\SendTestEmail;
+use App\Settings\Application\Command\SentTestEmail;
 use App\Settings\Application\Query\AnalyticsSettings;
 use App\Settings\Application\Query\EmailSettings;
 use App\Settings\Application\Query\WebhookSettings;
+use App\Settings\UI\Http\Input\AnalyticsSettingsInput;
+use App\Settings\UI\Http\Input\EmailSettingsInput;
+use App\Settings\UI\Http\Input\TestEmailInput;
 use App\Settings\UI\Http\Input\WebhookSettingsInput;
 use App\Settings\UI\Http\Output\AnalyticsSettingsOutput;
 use App\Settings\UI\Http\Output\EmailSettingsOutput;
@@ -15,7 +22,6 @@ use App\Settings\UI\Http\Output\PublicSettingsOutput;
 use App\Settings\UI\Http\Output\TestEmailResultOutput;
 use App\Settings\UI\Http\Output\WebhookSettingsOutput;
 use App\Shared\Application\Command\CommandBus;
-use App\Shared\UI\Http\ApiException;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -26,8 +32,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * Settings (docs/pdr/prd-shops-settings.md, "API changes" › Settings): the admin's email, analytics and webhook
- * settings, and the analytics IDs every signed-in page reads. Item 0 builds what the Settings shell needs (public,
- * GET email, webhooks); item 3 (settings-api) builds the rest — those answer 501 until then.
+ * settings, and the analytics IDs every signed-in page reads. Every change is in the activity log by key, never by
+ * value.
  */
 final class SettingsController extends AbstractController
 {
@@ -67,48 +73,74 @@ final class SettingsController extends AbstractController
 
     /**
      * EmailSettingsInput: saves Settings › Email (a blank password keeps the saved one; everything empty clears it, the
-     * env applies) → EmailSettingsOutput; 422 on a bad address. Item 3.
+     * env applies) → EmailSettingsOutput; 422 on a bad address or a host that is not a host name alone. A blank
+     * password is kept only while the host stays the same.
      */
     #[Route('/api/v1/settings/email', name: 'api_settings_email_save', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN')]
     #[ApiResponse(EmailSettingsOutput::class)]
-    public function saveEmail(): JsonResponse
+    public function saveEmail(Request $request): JsonResponse
     {
-        throw ApiException::notImplemented();
+        $input = $this->inputs->map($this->inputs->json($request), EmailSettingsInput::class);
+
+        $this->commands->dispatch(new SaveEmailSettings(
+            host: $input->host,
+            port: $input->port,
+            user: $input->user,
+            password: $input->password,
+            encryption: $input->encryption,
+            fromAddress: $input->fromAddress,
+            fromName: $input->fromName,
+            printerAddress: $input->printerAddress,
+            cc: array_values(array_map(strval(...), $input->cc)),
+            actorId: $this->actorId(),
+        ));
+
+        return $this->json($this->emailOutput());
     }
 
     /**
      * TestEmailInput: sends "KF Inventory test email" to `to` through the effective server, at once (not queued) →
-     * 202; 502 smtp_failed with the server's message in detail.reason; 429 more than once in 10 s. Item 3.
+     * 202 with the host it went through; 502 smtp_failed with the server's message in detail.reason; 429
+     * test_email_too_soon more than once in 10 s; 422 on from_address when no sender is set anywhere.
      */
     #[Route('/api/v1/settings/email/test', name: 'api_settings_email_test', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     #[ApiResponse(TestEmailResultOutput::class, status: 202)]
-    public function testEmail(): JsonResponse
+    public function testEmail(Request $request): JsonResponse
     {
-        throw ApiException::notImplemented();
+        $input = $this->inputs->map($this->inputs->json($request), TestEmailInput::class);
+
+        /** @var SentTestEmail $sent */
+        $sent = $this->commands->dispatch(new SendTestEmail($input->to, $this->actorId()));
+
+        return $this->json(new TestEmailResultOutput(true, $sent->host), 202);
     }
 
     /**
-     * Settings › Analytics. Item 3.
+     * Settings › Analytics: the GA4 Measurement ID and the Clarity Project ID (null: that tool is off).
      */
     #[Route('/api/v1/settings/analytics', name: 'api_settings_analytics', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     #[ApiResponse(AnalyticsSettingsOutput::class)]
     public function analytics(): JsonResponse
     {
-        throw ApiException::notImplemented();
+        return $this->json($this->analyticsOutput());
     }
 
     /**
-     * AnalyticsSettingsInput: G-XXXXXXX and the Clarity Project ID (empty turns one off); 422 on a wrong shape. Item 3.
+     * AnalyticsSettingsInput: G-XXXXXXX and the Clarity Project ID (empty turns one off); 422 on a wrong shape.
      */
     #[Route('/api/v1/settings/analytics', name: 'api_settings_analytics_save', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN')]
     #[ApiResponse(AnalyticsSettingsOutput::class)]
-    public function saveAnalytics(): JsonResponse
+    public function saveAnalytics(Request $request): JsonResponse
     {
-        throw ApiException::notImplemented();
+        $input = $this->inputs->map($this->inputs->json($request), AnalyticsSettingsInput::class);
+
+        $this->commands->dispatch(new SaveAnalyticsSettings($input->ga4MeasurementId, $input->clarityProjectId, $this->actorId()));
+
+        return $this->json($this->analyticsOutput());
     }
 
     /**
@@ -154,6 +186,13 @@ final class SettingsController extends AbstractController
             source: new EmailSourcesOutput($stored->sources['dsn'], $stored->sources['from'], $stored->sources['printer'], $stored->sources['cc']),
             envHost: $stored->envHost,
         );
+    }
+
+    private function analyticsOutput(): AnalyticsSettingsOutput
+    {
+        $analytics = $this->analytics->current();
+
+        return new AnalyticsSettingsOutput($analytics->ga4MeasurementId, $analytics->clarityProjectId);
     }
 
     private function webhooksOutput(): WebhookSettingsOutput

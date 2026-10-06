@@ -3,6 +3,7 @@
 namespace App\Settings\Application\Command;
 
 use App\Settings\Application\Query\AnalyticsSettings;
+use App\Settings\Application\Query\SettingValues;
 use App\Settings\Domain\Error\InvalidSetting;
 use App\Settings\Domain\Model\SettingKey;
 use App\Settings\Domain\Repository\SettingRepository;
@@ -12,12 +13,13 @@ use App\Shared\Domain\Clock;
 
 /**
  * The ids are checked by shape here too (the loader puts them in a script URL: docs/pdr/prd-shops-settings.md,
- * Security), not only on the Input DTO.
+ * Security), not only on the Input DTO. Logged by key, not value, and only the keys that changed.
  */
 final class SaveAnalyticsSettingsHandler implements CommandHandler
 {
     public function __construct(
         private readonly SettingRepository $settings,
+        private readonly SettingValues $values,
         private readonly Clock $clock,
         private readonly ActivityLog $activity,
     ) {
@@ -34,9 +36,16 @@ final class SaveAnalyticsSettingsHandler implements CommandHandler
             throw new InvalidSetting('clarity_project_id', 'This is not a Clarity Project ID.');
         }
         $now = $this->clock->now();
-        $this->settings->put(SettingKey::ANALYTICS_GA4_ID, $ga4, false, $now, $command->actorId);
-        $this->settings->put(SettingKey::ANALYTICS_CLARITY_ID, $clarity, false, $now, $command->actorId);
+        $changed = [];
+        foreach ([SettingKey::ANALYTICS_GA4_ID => $ga4, SettingKey::ANALYTICS_CLARITY_ID => $clarity] as $key => $value) {
+            if ($this->values->get($key) !== $value) {
+                $this->settings->put($key, $value, false, $now, $command->actorId);
+                $changed[] = $key;
+            }
+        }
 
-        $this->activity->record('Settings', 'Analytics settings were changed.', ['keys' => [SettingKey::ANALYTICS_GA4_ID, SettingKey::ANALYTICS_CLARITY_ID]]);
+        if ([] !== $changed) {
+            $this->activity->record('Settings', 'Analytics settings were changed.', ['keys' => $changed]);
+        }
     }
 }
