@@ -96,19 +96,35 @@ export function isWarehouseLocked(values: OrderFormValues): boolean {
   return values.products.some(isLineFilled);
 }
 
-/** What the legacy form required before it showed its save button. */
-export function isOrderFormValid(values: OrderFormValues): boolean {
+/** What the form needs before it can be saved, in the order the action bar names them. */
+export type MissingField =
+  | 'first_name'
+  | 'last_name'
+  | 'email'
+  | 'warehouse'
+  | 'products'
+  | 'source'
+  | 'payment_method'
+  | 'status';
+
+/** What is still missing (the legacy form's requirements): empty when the order can be saved. */
+export function missingFields(values: OrderFormValues): MissingField[] {
   const {customer} = values;
-  return (
-    customer.first_name.trim() !== '' &&
-    customer.last_name.trim() !== '' &&
-    customer.email.trim() !== '' &&
-    values.warehouse_id !== null &&
-    values.products.some(isLineFilled) &&
-    values.source !== null &&
-    values.payment_method !== null &&
-    values.status !== null
-  );
+  const checks: [MissingField, boolean][] = [
+    ['first_name', customer.first_name.trim() !== ''],
+    ['last_name', customer.last_name.trim() !== ''],
+    ['email', customer.email.trim() !== ''],
+    ['warehouse', values.warehouse_id !== null],
+    ['products', values.products.some(isLineFilled)],
+    ['source', values.source !== null],
+    ['payment_method', values.payment_method !== null],
+    ['status', values.status !== null],
+  ];
+  return checks.filter(([, filled]) => !filled).map(([field]) => field);
+}
+
+export function isOrderFormValid(values: OrderFormValues): boolean {
+  return missingFields(values).length === 0;
 }
 
 /** The body of POST/PUT /orders; only filled product rows are sent. Call it on a valid form. */

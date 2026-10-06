@@ -573,57 +573,62 @@ each.
 
 **ORD-11 · The old order form and getting-ready addresses land on the new screens**
 Smoke: `e2e/order-forms.spec.ts`.
-Signed in as the admin, open `/admin/order/new` (the previous version's address): `/admin/orders/new` opens, "Create a
-new order". `/admin/order/edit/<id of W00002>` opens `/admin/orders/<id>/edit`, "Editing Order", Consecutive
-`W00002`; `/admin/order/partial/getting-ready/<id>` opens `/admin/orders/<id>/getting-ready`, "Getting ready order
-#W00002". By hand: the Edit and Getting ready buttons of the orders list open the same screens.
+Signed in as the admin, open `/admin/order/new` (the previous version's address): `/admin/orders/new` opens, "New
+order". `/admin/order/edit/<id of W00002>` opens `/admin/orders/<id>/edit`, "Edit order", Order number `W00002`;
+`/admin/order/partial/getting-ready/<id>` opens `/admin/orders/<id>/getting-ready`, "Getting ready · W00002". By hand:
+Edit and Getting ready in the orders list's row menu and in the order detail open the same screens; "Back" in the
+header returns to the orders.
 
 **ORD-12 · The form saves only when complete, and the warehouse locks once a product is filled**
 Smoke: `e2e/order-forms.spec.ts`.
-Create an order: the Create button is disabled and the hint under it names what is required (customer's first name,
-last name and email, warehouse, a product with its quantity, source, payment method, status). Pick Warehouse
-Colombia, Product 1 `KF-01 (KF-01)`: the warehouse can still change; type a quantity: the Warehouse select is locked
-(empty the quantity: it unlocks). By hand: before a warehouse is picked the product select is disabled; changing the
-warehouse offers only that warehouse's products (Usa has none in the fixtures: "This warehouse has no products in
-stock").
+New order: Create order is disabled and the action bar says "8 things missing: first name, last name, email,
+warehouse, a product with its quantity, source, payment method, status". Pick Warehouse Colombia, Product 1 `KF-01
+(KF-01)`: the warehouse can still change; type a quantity: the Warehouse select is locked and "Remove the products to
+change the warehouse." shows under it (empty the quantity: it unlocks, the note goes). By hand: before a warehouse is
+picked the product select is disabled and "Choose the warehouse first: its products are offered here." shows under
+the table; changing the warehouse offers only that warehouse's products (Usa has none in the fixtures: "This
+warehouse has no products in stock").
 
 **ORD-13 · An order is placed for a new customer with two products**
 Smoke: `e2e/order-forms.spec.ts` (and MAIL-01 reads its email).
-Type First Name, Last Name, Email, Phone, Address, Zip Code; Warehouse Colombia; Product 1 KF-01, quantity 3; the green
-+ adds a second row: KF-02, quantity 1; Consecutive, Source Phone, Payment Method Credit Card, Status Created; Create:
-back on the orders list. The order holds KF-01 × 3 and KF-02 × 1, status Created. By hand: the red × of a row takes it
-out; the + appears only on the last row once it is filled; the new customer is in the Customers list with the address.
+Type First name, Last name, Email, Phone, Address, Zip Code; Warehouse Colombia; Product 1 KF-01, quantity 3; "Add
+product" under the table adds a second row: KF-02, quantity 1; Order number, Source Phone, Payment method Credit card,
+Status Created; Create order: back on the orders list with the toast "The order was created.". The order holds KF-01 ×
+3 and KF-02 × 1, status Created. By hand: the × of a row takes it out (the last row has none); "Add product" stays
+disabled while the last row is empty; the new customer is in the Customers list with the address.
 
 **ORD-14 · Picking an existing customer fills the customer block**
 Smoke: `e2e/order-forms.spec.ts`.
-Search Customer › type `Jose` › `Jose Perez [jose.perez@example.com] [+57 3002825566]`: First Name, Last Name, Email,
+Search customer › type `Jose` › `Jose Perez [jose.perez@example.com] [+57 3002825566]`: First name, Last name, Email,
 Phone and the address (with its country, state and city) are filled. By hand: change the phone, place the order: the
 Customers list shows Jose Perez once, with the new phone (the order updates the customer it names, it does not copy
 it). The × of the picker empties the customer block.
 
 **ORD-15 · Editing an order shows what was saved and updates it**
 Smoke: `e2e/order-forms.spec.ts`.
-Edit the order of ORD-13: the customer, Consecutive, the two products with their quantities, source, payment method
-and status are filled, and the warehouse is locked. Change KF-01 to 2, Update: back on the list; the order holds
-KF-01 × 2. By hand: an order in status Partial, Sent or Delivered keeps its status in the Status select (the form
-offers Created, Processed and Completed otherwise); a comment typed here shows in the order's detail.
+Edit the order of ORD-13: the customer, Order number, the two products with their quantities, source, payment method
+and status are filled, and the warehouse is locked with its note. Change KF-01 to 2, Update order: back on the list,
+toast "The order was updated."; the order holds KF-01 × 2. By hand: an order in status Partial, Sent or Delivered
+keeps its status in the Status select (the form offers Created, Processed and Completed otherwise); a comment typed
+here shows in the order's detail.
 
-**ORD-16 · Getting ready: a scan adds one, and what is not on the order or over its quantity is refused**
+**ORD-16 · Getting ready: a scan adds one, and what is not on the order or over its quantity is refused inline**
 Smoke: `e2e/order-forms.spec.ts`.
-Open Getting ready for the order of ORD-15: the Bar Code box has the focus. Type `KF-01` and Enter: its This Order
-shows 1 and Product Order Quantity `2 / 1`. `NOPE-404` + Enter: "You are trying to add a product that is not on the
-current order…", Continue adding. KF-01 again: `2 / ~`; once more: "You reached the limit of product allowed to add to
-this order." The red − takes one away. By hand: with a barcode scanner the same happens; the rows are tinted red
-(nothing added), yellow (some) and green (complete); a product whose warehouse stock is all in this shipment says
-"There is no enough quantity of this product on inventory." (set a product's stock to 1 with the barcode reader's
-remove first).
+Open Getting ready for the order of ORD-15: the Barcode box has the focus. Type `KF-01` and Enter: KF-01's row says
+"Shipped 0 of 2 · this shipment 1" and its stepper shows 1. `NOPE-404` + Enter: "NOPE-404 is not on this order." under
+the box, no dialog, the focus stays in the box. KF-01 again: the refusal goes, the row turns accent with "Complete";
+once more: "Nothing more of KF-01 is left to ship.", the focus still in the box. "One less KF-01" (−) takes one away.
+By hand: with a keyboard-wedge scanner the same happens without touching the screen; each accepted read flashes its
+row; a product whose warehouse stock is all in this shipment says "The warehouse holds no more KF-01." (set a
+product's stock to 1 with the Scan screen's Remove first).
 
 **ORD-17 · Partial shipments take the stock out, and a sent order takes no more**
 Smoke: `e2e/order-forms.spec.ts`.
-Scan KF-01 twice, Save Current: back on the orders list, the order is Partial. Getting ready again: KF-01's Inventory
-button shows 2 less, Aggregate Partials 2 and `2 / ~`. Scan KF-02, Save Current; open it again: every row shows `~`
-and its + is disabled. The fixtures' `W00005` (Sent): Save Current is disabled. By hand: an order whose whole content
-is scanned in one go (and in stock) becomes Sent; Cancel goes back to the orders list without saving.
+Scan KF-01 twice: the button reads "Ship 2 products"; press it: back on the orders list, toast "Shipment saved: order
+<number> is partial.", the order is Partial. Getting ready again: KF-01's "In stock" is 2 less, "Shipped 2 of 2 · this
+shipment 0" with the "Shipped" badge. Scan KF-02, "Ship 1 product": toast "… is sent."; open it again: KF-02 says
+"Shipped 1 of 1" and its + is disabled. The fixtures' `W00005` (Sent): Ship is disabled and the bar says "This order
+was already sent: it takes no more shipments." By hand: Cancel goes back to the orders list without saving.
 
 **ORD-18 · An order that no longer exists says so, and a person without the order roles is refused**
 Smoke: `e2e/order-forms.spec.ts`.
@@ -653,6 +658,53 @@ back and empty `backend/.env.local` when done.
 ### Order form and getting ready, redesigned (item 4)
 
 <!-- Item 4 (order-forms-ui) adds ORD-29 – 34 here, and updates the texts of ORD-11 – 18 and MAIL-01 – 02. -->
+
+**ORD-29 · The action bar names what is missing; a name goes to its field, highlighted**
+Smoke: `e2e/order-forms.spec.ts`.
+New order, type First name only: the bar says "7 things missing: last name, email, warehouse, a product with its
+quantity, source, payment method, status" (each name a link-style button). Click "source": the Source select has the
+focus, and every missing field (Last name, Email, Warehouse, Source, Payment method, Status) is outlined in danger with
+"Required." under it, while First name is not; "Add at least one product with its quantity." shows under the table.
+Choose a source: its outline goes and the bar says "6 things missing". By hand: "a product with its quantity" focuses
+the Warehouse while none is chosen, then Product 1 (or its quantity when the product is picked); filling the last one
+empties the bar and enables Create order.
+
+**ORD-30 · The product lines are a table with headers, "Add product" under it, any row removed**
+Smoke: `e2e/order-forms.spec.ts`.
+New order: the Products table has the headers Product, Quantity and (for screen readers) Remove; "Add product" is
+disabled until the last row has a product and a quantity. Colombia, KF-01 × 2, Add product, KF-02: three rows (header
++ two); "Remove product 1": KF-02 stays alone, and the single row has no ×. By hand: at 1440 px the quantity column is
+narrow and right-aligned, the × a 44 px target; the product menu opens over the rows below, not cut by the table.
+
+**ORD-31 · Getting ready starts neutral: progress in words, stock as text, nothing to ship yet**
+Smoke: `e2e/order-forms.spec.ts`.
+Getting ready for W00001: the header "Getting ready · W00001" with the Created badge and Back; three product cards,
+each "Shipped 0 of N · this shipment 0" over a progress bar and "In stock N" in muted text (not a button); no row is
+red. Ship is disabled with "Scan the products to ship." in the bar; Cancel (ghost, never red) goes to the orders. By
+hand: a product whose stock is below what is left shows a warning edge and "Short of stock"; the bar fills dark olive
+for what was shipped and light olive for this shipment; a completed row is olive with "Complete".
+
+**ORD-32 · The form and getting ready on a phone (390 px)**
+Smoke (part): `e2e/order-forms.spec.ts` checks that neither screen scrolls sideways and that the Barcode box has the
+focus with "Start camera" shown.
+By hand at 390 × 844: the form is one column (Customer, then Order), the product table fits (product, a narrow
+quantity, the ×), the action bar sits above the tab bar with the missing list over full-width Cancel / Create order.
+Getting ready: "Start camera" and the camera's explanation on top, the Barcode box under it, each product card wraps
+(code and title, then progress, then the − n + stepper with 48 px buttons), the Ship bar above the tab bar and not
+covering the last card.
+
+**ORD-33 · The order form's two columns, and the required marks**
+By hand, no smoke. At 1440 px (≥ 1280) the form shows Customer and Order side by side, their tops aligned and the
+action bar across both; at 1100 px it is one column. Each required field's label ends with a red "*" and the sections
+say "Fields marked * are required."; Order number and Comment are optional. A server refusal (e.g. stop the database
+and save) shows above both columns, not inside one.
+
+**ORD-34 · Spanish, dark, and keyboard only**
+By hand, no smoke. Choose ES: "Nuevo pedido", "Cliente", "Pedido", "Número de pedido", "Agregar producto", "Faltan 8
+datos: nombre, …", "Crear pedido"; Getting ready: "Alistamiento · W00001", "Enviado 0 de N · este envío 0",
+"Existencias N", "Enviar 2 productos", the refusals in Spanish. No raw key; in dark the progress bar, the badges, the
+refusal and the outlined fields are readable. Keyboard only: Tab reaches each missing-field name in the bar and Enter
+moves to the field; on Getting ready the − / + of each card and Ship are reachable, the focus ring visible on each.
 
 ## 6. Invoices (INVC)
 
@@ -811,14 +863,14 @@ service) shows the red message in the form and keeps what was typed.
 
 **MAIL-01 · An order placed by hand is emailed to the printer**
 Smoke (part): `e2e/order-forms.spec.ts` finds the email of ORD-13 in Mailpit (to the printer, subject, body).
-After ORD-13, Mailpit has, within a minute, "Order #<Consecutive> was created" to `printer@kf.local` (the dev stack's
+After ORD-13, Mailpit has, within a minute, "Order #<Order number> was created" to `printer@kf.local` (the dev stack's
 `MAILER_PRINTER_ADDRESS`), body "A new order was created and attached to this email.". By hand: it is cc'd to
 `sales@klassicfab.com`, from `KF Inventory <orders@kf.local>`, and its attachment `order-<id>.pdf` opens and lists the
 order's customer and products.
 
 **MAIL-02 · Editing an order sends no email**
 Smoke: `e2e/order-forms.spec.ts`.
-Edit `W00001`, change the comment and the payment method, Update: no new email reaches the printer.
+Edit `W00001`, change the comment and the payment method (PayPal), Update order: no new email reaches the printer.
 
 ## 9. WooCommerce webhook (HOOK)
 

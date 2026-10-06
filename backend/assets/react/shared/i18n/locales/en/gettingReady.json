@@ -1,41 +1,34 @@
 {
-  "title": "Getting ready order #{{code}}",
-  "titleLoading": "Getting ready order",
-  "description": "Using the bar-code-machine you can start adding item for this order.",
-  "barCode": "Bar Code",
-  "addAction": "Add Product",
-  "code": "Code",
-  "productDescription": "Product Description",
-  "inventory": "Inventory",
-  "inventoryAvailable": "Amount of products available on inventory",
-  "orderQuantity": "Product Order Quantity",
-  "orderLeft": "Aggregate Partials",
-  "thisOrder": "This Order",
-  "options": "Options",
-  "addOne": "Add one",
-  "removeOne": "Remove one",
-  "noProducts": "No products were found",
-  "addPartial": "Save Current",
-  "saved": "The shipment of order #{{code}} was saved.",
+  "title": "Getting ready · {{code}}",
+  "titleLoading": "Getting ready",
+  "description": "Scan each product as it goes into the box, with the camera or the barcode box.",
+  "scanner": "Scanner",
+  "list": "Products of the order",
+  "progress": "Shipped {{shipped}} of {{ordered}} · this shipment {{current}}",
+  "progressOf": "Progress of {{code}}",
+  "inStock": "In stock {{stock}}",
+  "states": {
+    "complete": "Complete",
+    "shipped": "Shipped",
+    "short": "Short of stock"
+  },
+  "less": "One less {{code}}",
+  "more": "One more {{code}}",
+  "thisShipmentOf": "This shipment of {{code}}",
+  "refusals": {
+    "not_in_order": "{{code}} is not on this order.",
+    "limit": "Nothing more of {{code}} is left to ship.",
+    "no_inventory": "The warehouse holds no more {{code}}."
+  },
+  "nothingYet": "Scan the products to ship.",
+  "closed": "This order was already sent: it takes no more shipments.",
+  "ship_one": "Ship {{count}} product",
+  "ship_other": "Ship {{count}} products",
+  "noProducts": "This order has no products.",
+  "savedPartial": "Shipment saved: order {{code}} is partial.",
+  "savedSent": "Shipment saved: order {{code}} is sent.",
   "notFound": "This order no longer exists.",
   "backToList": "Back to the orders",
-  "refusals": {
-    "not_in_order": {
-      "error": "Error",
-      "title": "You are trying to add a product that is not on the current order, please click to continue.",
-      "ok": "Continue adding"
-    },
-    "limit": {
-      "error": "Error",
-      "title": "You reached the limit of product allowed to add to this order.",
-      "ok": "Continue adding"
-    },
-    "no_inventory": {
-      "error": "Inventory limit reached",
-      "title": "There is no enough quantity of this product on inventory.",
-      "ok": "Continue"
-    }
-  },
   "errors": {
     "insufficient_stock": "The warehouse does not hold enough of {{code}} ({{available}} available).",
     "partial_exceeds_order": "This shipment holds more than what is left of the order, or the order was already sent. Reload the page.",
