@@ -4,6 +4,8 @@ namespace App\Customers\Application\Query;
 
 use App\Customers\Domain\Error\CustomerNotFound;
 use App\Customers\Domain\Model\Customer;
+use App\Shared\Application\Query\ListPage;
+use App\Shared\Application\Query\ListQuery;
 
 /**
  * Reads of customers, each with their addresses, cities, states and countries loaded.
@@ -16,13 +18,12 @@ interface Customers
     public function byId(int $id): Customer;
 
     /**
-     * A page of customers by id, 1-based.
+     * The customers list (docs/pdr/prd-shops-settings.md, "List query contract"): filtered, sorted and paged in the
+     * database, with the country counts when asked for.
      *
-     * @return list<Customer>
+     * @return ListPage<Customer>
      */
-    public function page(int $page, int $perPage): array;
-
-    public function count(): int;
+    public function list(ListQuery $query): ListPage;
 
     /**
      * Every customer, those without an address too.
