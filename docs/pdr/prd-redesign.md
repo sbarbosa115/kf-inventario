@@ -629,3 +629,33 @@ decision); Lighthouse accessibility ≥ 95 on every screen (DS-12); the before/a
 - /home/sbarbosa/Development/kf-inventory-redesign/backend/assets/react/shared/i18n/i18n.ts (second locale, per-prefix catalogues, locale detection and persistence; the key-parity test next to it)
 - /home/sbarbosa/Development/kf-inventory-redesign/backend/templates/spa.html.twig (theme-before-paint script, color-scheme meta, favicon and apple-touch-icon links)
 - /home/sbarbosa/Development/kf-inventory-redesign/backend/e2e/support/test.ts (the fixtures every spec uses; `signedInAs` contexts carry the English locale and fresh localStorage, which is what keeps the toggle out of the suite)
+
+## Timeline
+
+Recorded with `timeline.py`, from 2026-10-05 17:41 to now (still open). Active time leaves out the pauses.
+
+| Step | Started | Active | Wall clock |
+|---|---|---|---|
+| Plan | 2026-10-05 17:41 | 13m | 13m |
+| Item 0 (contract) | 2026-10-05 17:54 | 1h 40m | 1h 40m |
+| Build test-first | 2026-10-05 19:34 | 17m | 17m |
+| Merging the items | 2026-10-05 19:51 | 46m | 46m |
+| Barrier (waiting for the items) | 2026-10-05 20:54 | 3m | 3m |
+| Definition of done | 2026-10-05 22:53 | 1m | 1m |
+| Pull request | 2026-10-05 22:54 | 0m | 0m |
+| wave-2 | 2026-10-05 20:36 | 18m | 18m |
+| smoke | 2026-10-05 20:58 | 26m | 26m |
+| manual-run | 2026-10-05 21:24 | 1h 29m | 1h 29m |
+| **Total** | | **5h 13m** | **5h 13m** |
+
+The items of the split (from git: branch created → merged into the base branch):
+
+| Item | Started | Merged | Took |
+|---|---|---|---|
+| customers-ui | 2026-10-05 19:34 | 2026-10-05 20:30 | 56m |
+| invoices-ui | 2026-10-05 20:36 | 2026-10-05 20:45 | 9m |
+| order-forms-ui | 2026-10-05 20:36 | 2026-10-05 20:53 | 17m |
+| orders-ui | 2026-10-05 19:34 | 2026-10-05 20:30 | 56m |
+| products-ui | 2026-10-05 19:34 | 2026-10-05 20:30 | 56m |
+| users-ui | 2026-10-05 19:34 | 2026-10-05 19:51 | 17m |
+| warehouse-ops-ui | 2026-10-05 19:34 | 2026-10-05 20:30 | 56m |
