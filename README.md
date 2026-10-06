@@ -39,6 +39,32 @@ python3 ~/.claude/skills/symfony-react-app/scripts/gate.sh --fix   # style, PHPS
 The gate includes `.claude/gate.d/schema-drift`: the mappings may propose only the recorded drift
 (`docs/db/README.md`).
 
+**The regression run is the smoke suite.** `docs/tests/ui-regression.md` describes how the app works today, case by
+case, and every case is a Playwright test in `backend/e2e/` (its title starts with the case's ID); since the
+2026-10-06 baseline there are no manual cases. `python3 ~/.claude/skills/symfony-react-app/scripts/smoke.py` resets
+the dev database (`backend/e2e/prepare.sh`), runs the whole suite in lanes (orders and stock, the lists and every
+screen at 1440 and 390 px, light and dark, English and Spanish, side by side; then the shops, the comments, Settings
+and the webhook) and records the attempt in the feature's run file under `docs/tests/runs/`. What it cannot reach is
+listed just below.
+
+### Not covered by the smoke suite
+
+The suite runs against the dev stack and its stand-ins (the fake WooCommerce shop at `/_fake-shop`, Mailpit, a typed
+barcode); these need the outside world and are checked when it is there:
+
+- **A real WooCommerce shop:** "Check now" and the cron pull reading a real shop's orders, the status and note
+  write-backs reaching it, its webhook deliveries signed with a real secret (the fake shop stands in for all three).
+- **A phone's camera:** reading a printed label with the camera (`CameraScanner.test.tsx` and `ScanStock.test.tsx`
+  cover the code with a fake detector; the dev stack is plain http, so the suite sees only "needs a secure address").
+- **A real SMTP server:** an order email delivered by the production server and its attachment opened in a mail
+  client (Mailpit stands in; `SettingsMailTransportTest` covers the server saved in Settings).
+- **The production cutover:** the cPanel cron line (`app:shops:pull --if-due`, the Messenger queue), re-pointing each
+  shop's webhook to its connection, `deploy/cpanel-update.sh`.
+- **Analytics reaching Google and Microsoft:** the suite answers the two script hosts itself (SET-06); a real GA4
+  property's Realtime view is not looked at.
+- **An accessibility audit score** (Lighthouse): the suite checks the focus ring, the keyboard paths and the 44 px
+  targets, not a score.
+
 ## Architecture
 
 | Context (`backend/src/…`) | Owns (tables) | |
@@ -256,6 +282,11 @@ Everything else does what the legacy pages did (roles included). On purpose, eac
   header (set it in cPanel once HTTPS is confirmed): deferred by the user; the other security headers are sent.
 - `master` committed an `APP_SECRET` in `.env.dist`: give production a fresh one in `backend/.env.local` at cutover.
 - The invoice roles are reached by no other role (as in production): an admin sees Invoices only when given them.
+- **An account given only invoice roles cannot use the app:** no role it holds reaches `ROLE_USER`, which every
+  screen's first question (`GET /api/v1/auth/me`) asks for, so it signs in to "Something went wrong" (the smoke suite,
+  2026-10-06). The fixtures' invoice accounts hold `ROLE_USER` explicitly; an account made in Users with only
+  "Invoices: …" ticked does not, and Users cannot give it (`ROLE_USER` is not one of the nine roles it offers). Left
+  for the user to decide (the roles are production's).
 - The redesign (`docs/pdr/prd-redesign.md`): PDFs, spreadsheets and emails stay English and keep their look; the
   Spanish texts are ours (one proofreading pass, no native review); the KF mark is a trace of a 180 px PNG until a vector file arrives;
   the camera works only over HTTPS (or `localhost`), so it is not available on the dev stack opened from a phone by IP,

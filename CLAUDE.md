@@ -6,8 +6,11 @@ its route map, its items and the decisions every item follows) and `docs/pdr/prd
 connections, server-side table filters, the comment timeline).
 
 Features are built with the `symfony-react-app` skill: plan, a worktree per feature, test-first, the gate
-(`gate.sh`), a security audit, the smoke suite (Playwright, green before anything is checked by hand), the manual
-browser run of the cases left for a person, a PR.
+(`gate.sh`), a security audit, the smoke suite, a PR. The smoke suite (Playwright, `smoke.py`) **is** the regression
+run: `docs/tests/ui-regression.md` is smoke-only since the 2026-10-06 baseline
+(`docs/tests/runs/2026-10-06-baseline.md`), so there is no manual browser run while that baseline holds. A feature
+adds its cases there as smoke tests (one test per case, its title starting with the case's ID); what only the outside
+world can show goes in the README's "Not covered by the smoke suite".
 
 ## Running things
 
@@ -15,8 +18,9 @@ Everything runs in Docker; there is no PHP or Node on the host. Prefix commands:
 `docker compose exec php php bin/console …`, `docker compose exec php composer test` (`composer test:prepare` first
 on a new stack and after a migration), `docker compose exec node npm test`. The `node` service rebuilds the UI on
 every save: check `docker compose logs node` instead of running a build. The smoke suite is `backend/e2e/smoke.sh`
-(it **resets the stack's dev database** to the fixtures). Every service has a CPU ceiling: keep one on any service
-you add (`.claude/gate.d/compose-cpus` checks it).
+(it **resets the stack's dev database** to the fixtures; its Playwright lanes, some side by side, are in
+`backend/playwright.config.ts`). Every service has a CPU ceiling: keep one on any service you add
+(`.claude/gate.d/compose-cpus` checks it).
 
 ## Rules that are easy to break
 
