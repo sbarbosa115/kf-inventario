@@ -40,17 +40,21 @@ export function useDescribeFilter(): (
 }
 
 /**
- * The active filters above a table, one removable chip each ("Status: Created, Processed ×"), and Clear filters.
- * Nothing when no column filters.
+ * The active filters above a table, one removable chip each ("Status: Created, Processed ×"), and Clear filters
+ * (which empties the search too). Only Clear filters while the search alone narrows the list; nothing when nothing
+ * does.
  */
 export function ActiveFilters({
   columns,
   filters,
+  searching = false,
   onRemove,
   onClear,
 }: {
   columns: FilterColumn[];
   filters: Filters;
+  /** The list's search box (`q`) holds something. */
+  searching?: boolean;
   onRemove: (field: string) => void;
   onClear: () => void;
 }) {
@@ -61,7 +65,7 @@ export function ActiveFilters({
     const text = value === undefined ? null : describe(column, value);
     return text === null ? [] : [{column, text}];
   });
-  if (chips.length === 0) return null;
+  if (chips.length === 0 && !searching) return null;
   return (
     <div
       className="kf-active-filters"

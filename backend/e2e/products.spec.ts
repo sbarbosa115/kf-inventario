@@ -63,10 +63,12 @@ test.describe('2 Products', () => {
     await page.getByRole('radio', {name: 'Colombia'}).click();
     await expect(stockRow(page, 'KF-03')).toBeVisible();
 
-    await page.getByRole('searchbox').fill('KF-02');
+    await page.getByRole('searchbox', {name: 'Search products'}).fill('KF-02');
     await expect(stockRow(page, 'KF-02')).toBeVisible();
     await expect(stockRow(page, 'KF-01')).toHaveCount(0);
-    await page.getByRole('searchbox').fill('no-such-product');
+    await page
+      .getByRole('searchbox', {name: 'Search products'})
+      .fill('no-such-product');
     await expect(
       page.getByText('Nothing matches these filters.'),
     ).toBeVisible();

@@ -1202,8 +1202,90 @@ warehouse, what the app may write back, its health and its failed-deliveries inb
 Every list (products, orders, customers, invoices, users) is filtered, sorted and paged on the server; the filters
 live in the column headers (a bottom sheet on a phone) and in the address.
 
-<!-- shops-settings item 2 (tables-ui) adds FLT-01 – 12 here, smoke in e2e/filters.spec.ts (FLT-11 – 12 by hand): the
-     order text filter across pages, the status multi-select with counts and its chip, a created date range, products
-     by price and quantity, the 1,240 customers paged, invoices by total and payment method, users by role, the URL
-     holding the filters, a header sort, the phone's sheet. -->
+Every list keeps its query in the address (`?q=&sort=&filter[…]&page=`): the cases below read it there too. The text
+filters apply 300 ms after the last key (at once on Enter); every tick, quick pick and range applies at once.
+
+**FLT-01 · Orders: the Order filter finds an order by its number on the server**
+Smoke: `e2e/filters.spec.ts`.
+Signed in as the admin, Orders (Colombia): type `W00007` in "Filter by Order" (the row under the headers). Only W00007
+is left, the chip "Order: W00007" is above the table and the address holds `filter[code]=W00007`. The list asked the
+server (not the page it had): the filter finds an order whatever page it was on.
+
+**FLT-02 · Orders: the Status list counts each status, ticks several, and the chip names them**
+Smoke: `e2e/filters.spec.ts`.
+Open "Status" in the filter row: a checkbox per status with how many orders hold it (over the other filters). Tick
+Created and Processed: the button reads "Status · 2", the chip "Status: Created, Processed", and the rows are only those
+two statuses, as many as the two counts. No status chip of the toolbar is pressed (not even All): two statuses are not
+one chip.
+
+**FLT-03 · Orders: Last 30 days fills the Created range, and the chip says it**
+Smoke: `e2e/filters.spec.ts`.
+Open "Created" in the filter row: Today, Last 7 days, Last 30 days, This month, From and To. Last 30 days: the button
+and a chip read "Created: <30 days ago> – <today>" (Bogotá days, both included), the address holds `filter[created_at]`,
+and every fixture order (created when the stack was prepared) is still there.
+
+**FLT-04 · Products: a price and a quantity range narrow the stock on the server**
+Smoke: `e2e/filters.spec.ts`.
+Signed in as `inventory`, Products (Colombia): Price › "Over $500" keeps only the products over $500 (on the fixtures:
+none, "Nothing matches these filters." under the headers, which stay); type a Min price and press Enter, then
+Quantity › "Over 10": the rows are the products at or over that price with more than 10 units, the chips "Price: From
+…" and "Quantity: Over 10" are above the table. The figures above (Products, Units, Stock value) do not change: they
+are the warehouse's.
+
+**FLT-05 · Customers: 1,240 of them are paged on the server, and an email filter finds one on a late page**
+Smoke: `e2e/filters.spec.ts` (it creates 1,240 customers `flt-0001@flt.test` … `flt-1240@flt.test` through the API
+once per stack, about a minute).
+Customers filtered by `@flt.test`: the pager says "1 – 25 of 1,240" with Rows per page (25, 50, 100); Next shows
+"26 – 50 of 1,240" and `page=2` in the address. Type `flt-0007@flt.test` in "Filter by Email" and press Enter: the one
+customer (near the end of the list, newest first) is the only row, back on page 1.
+
+**FLT-06 · Invoices: a total range and the payment method narrow the list**
+Smoke: `e2e/filters.spec.ts`.
+Signed in as `sales`, Invoices: Total › "$100 – $500" keeps the invoices in that range (INV-0001, $100.00, on the
+fixtures) with the chip "Total: $100 – $500"; Payment lists "Credit - counted" and "Credit card - Paypal" with their
+counts; ticking Credit card - Paypal adds the chip "Payment: Credit card - Paypal" and keeps only such invoices (on the
+fixtures none: INV-0001 has no payment method). The toolbar's "Walk-in" list keeps the walk-in invoices
+(`filter[walk_in][]=yes`).
+
+**FLT-07 · Users: the Roles list counts each role, and a tick keeps who has it**
+Smoke: `e2e/filters.spec.ts`.
+Signed in as the admin, Users: Roles lists the nine assignable roles by their plain names (never `ROLE_…`), each with
+how many users hold it; tick Inventory: the chip "Roles: Inventory", and every row left has the Inventory badge, as
+many as its count.
+
+**FLT-08 · The address holds the filters: a reload and a pasted link restore them, Clear filters empties it**
+Smoke: `e2e/filters.spec.ts`.
+Orders: tick Status › Created and type `W0000` in "Filter by Order" (Enter). The address holds both; reload: the chips
+"Status: Created" and "Order: W0000" and the text in the filter are back with the same rows. Paste the address in
+another tab: the same. Clear filters: no chip is left and the address has no `filter[…]`.
+
+**FLT-09 · A header sorts on the server and its arrow follows**
+Smoke: `e2e/filters.spec.ts`.
+Users: click the Email header: the list is asked `sort=email`, the address holds it, the arrow points up
+(`aria-sort="ascending"`); click again: `sort=-email`, the arrow points down.
+
+**FLT-10 · On a phone, the filters are a sheet: "Show N results" counts the draft and applies it**
+Smoke: `e2e/filters.spec.ts` (390 × 844).
+Orders at 390 px: no filter row is rendered; the toolbar has "Filters · 0". It opens a sheet from the bottom
+("Filters", a drag handle, Sort, a section per filterable column). Open Status, tick Created: the footer button says
+"Show N results", N the created orders counted on the server for that draft (one row asked), at least 44 px tall.
+Press it: the sheet closes, the chip "Status: Created" is above the cards, the button reads "Filters · 1", and the
+cards are the N created orders.
+
+**FLT-11 · The sheet's date quick picks and money ranges**
+By hand, 390 × 844, light and dark.
+Invoices at 390 px › Filters: the Date section has Today, Last 7 days, Last 30 days and This month as 44 px chips and
+two date inputs (the phone's own picker); a quick pick fills both and its chip is pressed; Total has Under $100,
+$100 – $500, Over $500 and Min / Max (a decimal keyboard). "Show N results" follows each change after a short pause;
+Clear empties the draft (the button then counts every invoice); the close button and Escape leave without applying.
+Products: Quantity's quick ranges are 0, 1 – 10 and Over 10; Stock (In stock / Out of stock) is a section of the sheet
+too. Nothing scrolls sideways; the sheet's body scrolls under its sticky footer.
+
+**FLT-12 · Every filter and chip in Spanish**
+By hand, 1440 and 390, `kf.locale` = es.
+On each of the five lists: "Filtrar por <columna>" in the text filters, the lists' buttons ("Estado · 2"), Hoy /
+Últimos 7 días / Últimos 30 días / Este mes, Desde / Hasta, Mín. / Máx., Menos de $100 / Más de $500, the chips
+("Estado: Creado, Procesado ×"), Quitar filtros, the pager ("1 – 25 de 1.240", Filas por página), the phone's
+"Filtros · N", Ordenar and "Mostrar N resultados"; the new labels País (Customers), Pago and Mostrador (Invoices),
+"Solo fijados" (Orders › Comments) and "Buscar clientes". No English string and no raw key is left.
 

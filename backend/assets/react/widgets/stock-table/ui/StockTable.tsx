@@ -17,7 +17,6 @@ import {
 } from '@/shared/lib';
 import {
   Button,
-  ClearFilters,
   DataTable,
   EmptyState,
   ErrorState,
@@ -31,13 +30,17 @@ import {
   useToast,
   WarehouseSwitch,
   type Column,
+  type FilterColumn,
+  type TableQuery,
 } from '@/shared/ui';
 import './stock-table.css';
 
 /**
  * One warehouse's stock (the one in the address, else the last one chosen in this browser, else the first): its
- * figures, a toolbar to narrow it, and a selectable table whose bar moves or downloads the selection. Filtered,
- * sorted and paged on the server; the query lives in the address (?q=&filter[in_stock][]=no&page=2).
+ * figures, a toolbar to narrow it, a filter under each header (code, title and detail text, quantity and price ranges;
+ * a sheet on a phone, with the in-stock choice too), and a selectable table whose bar moves or downloads the
+ * selection. Filtered, sorted and paged on the server; the query lives in the address
+ * (?q=&filter[in_stock][]=no&filter[price][min]=500.01&page=2).
  */
 export function StockTable() {
   const {t} = useTranslation();
@@ -81,7 +84,7 @@ function WarehouseStock({
   const [refresh, setRefresh] = useState(0);
   const key = JSON.stringify(list.query);
   const {data, loading, error, reload} = useLoad(
-    () => listStock(warehouse.id, list.query),
+    () => listStock(warehouse.id, {...list.query, facets: ['in_stock']}),
     [warehouse.id, key, refresh],
   );
   // The figures and the chips' counts are the whole warehouse's, whatever the filters: one row, the totals and the
@@ -90,6 +93,11 @@ function WarehouseStock({
     () => listStock(warehouse.id, {perPage: 1, facets: ['in_stock']}),
     [warehouse.id, refresh],
   );
+  // The phone's sheet: how many products a draft keeps, one row asked.
+  const countFor = (query: TableQuery) =>
+    listStock(warehouse.id, {...query, page: 1, perPage: 1}).then(
+      (page) => page.total,
+    );
   const [selected, setSelected] = useState<Set<string | number>>(new Set());
   const [moving, setMoving] = useState<StockItem[] | null>(null);
   const [search, setSearch, flushSearch] = useDebouncedText(
@@ -98,14 +106,16 @@ function WarehouseStock({
   );
 
   const inStockFilter = list.query.filters?.in_stock;
-  const chip: StockFilter | null = Array.isArray(inStockFilter)
-    ? inStockFilter[0] === 'yes'
-      ? 'in'
-      : inStockFilter[0] === 'no'
-        ? 'out'
-        : null
-    : null;
-  const filtered = list.activeCount > 0;
+  // A chip is pressed when its choice is the one ticked; with both ticked (the sheet), none is (not even All).
+  const chip: StockFilter | 'both' | null = !Array.isArray(inStockFilter)
+    ? null
+    : inStockFilter.length > 1
+      ? 'both'
+      : inStockFilter[0] === 'yes'
+        ? 'in'
+        : inStockFilter[0] === 'no'
+          ? 'out'
+          : null;
   const facet = summary.data?.facets?.in_stock ?? [];
   const countOf = (value: string) =>
     facet.find((f) => f.value === value)?.count ?? 0;
@@ -127,12 +137,14 @@ function WarehouseStock({
         render: (row) => row.code,
         sortField: 'code',
         mono: true,
+        filter: {type: 'text', field: 'code'},
       },
       {
         key: 'title',
         header: t('products.columns.title'),
         render: (row) => row.title,
         sortField: 'title',
+        filter: {type: 'text', field: 'title'},
       },
       {
         key: 'detail',
@@ -143,6 +155,7 @@ function WarehouseStock({
               {row.detail}
             </span>
           ) : null,
+        filter: {type: 'text', field: 'detail'},
       },
       {
         key: 'quantity',
@@ -150,6 +163,7 @@ function WarehouseStock({
         render: (row) => <Num value={row.quantity} />,
         sortField: 'quantity',
         numeric: true,
+        filter: {type: 'number', field: 'quantity'},
       },
       {
         key: 'price',
@@ -157,6 +171,24 @@ function WarehouseStock({
         render: (row) => <Money amount={row.price} />,
         sortField: 'price',
         numeric: true,
+        filter: {type: 'money', field: 'price'},
+      },
+    ],
+    [t],
+  );
+  // In stock has no column: the toolbar's chips on a desktop, a section of the sheet on a phone, a chip when set.
+  const extraFilters = useMemo<FilterColumn[]>(
+    () => [
+      {
+        label: t('products.filters.label'),
+        filter: {
+          type: 'enum',
+          field: 'in_stock',
+          options: [
+            {value: 'yes', label: t('products.filters.inStock')},
+            {value: 'no', label: t('products.filters.outOfStock')},
+          ],
+        },
       },
     ],
     [t],
@@ -207,7 +239,6 @@ function WarehouseStock({
             },
           ]}
         />
-        {filtered && <ClearFilters onClick={list.clearFilters} />}
       </Toolbar>
       {figures ? (
         <KpiStrip
@@ -242,6 +273,9 @@ function WarehouseStock({
         query={list.query}
         onQueryChange={list.update}
         total={data?.total}
+        facets={data?.facets}
+        extraFilters={extraFilters}
+        countFor={countFor}
         selected={selected}
         onSelectedChange={setSelected}
         onRowClick={(row) => navigate(`/admin/products/${row.uuid}/edit`)}

@@ -71,4 +71,30 @@ describe('useListQuery', () => {
 
     expect(location()).toBe('');
   });
+
+  it('restores date and money ranges from a pasted link, and writes them back the same way', () => {
+    const link =
+      '/admin/invoices?filter[created_at][from]=2026-10-01&filter[created_at][to]=2026-10-06&filter[total][min]=100&filter[payment_method][]=credit_card';
+    const {hook, location} = setup(link);
+
+    expect(hook.result.current.query.filters).toEqual({
+      created_at: {from: '2026-10-01', to: '2026-10-06'},
+      total: {min: '100'},
+      payment_method: ['credit_card'],
+    });
+    act(() => hook.result.current.setFilter('total', {min: '100', max: '500'}));
+    expect(location()).toBe(
+      '?filter[created_at][from]=2026-10-01&filter[created_at][to]=2026-10-06&filter[total][min]=100&filter[total][max]=500&filter[payment_method][]=credit_card',
+    );
+  });
+
+  it('goes back to page 1 when the rows per page change, and keeps a page asked for', () => {
+    const {hook, location} = setup('/x?page=3');
+
+    act(() => hook.result.current.update({perPage: 50}));
+    expect(location()).toBe('?per_page=50');
+
+    act(() => hook.result.current.update({page: 4}));
+    expect(location()).toBe('?page=4&per_page=50');
+  });
 });

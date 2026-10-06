@@ -91,6 +91,11 @@ interface Props<Row> {
   countFor?: (query: TableQuery) => Promise<number>;
   /** Server mode: the rows-per-page choices (25, 50, 100). */
   perPageOptions?: number[];
+  /**
+   * Server mode: filters with no column of their own (in stock, walk-in, country): on the chips and in the phone's
+   * sheet, after the columns' filters; never in the filter row (the page offers them as toolbar chips, if at all).
+   */
+  extraFilters?: FilterColumn[];
 }
 
 const INTERACTIVE = 'a, button, input, select, textarea, label, [role="menu"]';
@@ -133,6 +138,7 @@ export function DataTable<Row>({
   facets,
   countFor,
   perPageOptions = PER_PAGE_OPTIONS,
+  extraFilters = [],
 }: Props<Row>) {
   const {t} = useTranslation();
   const phone = usePhone();
@@ -189,12 +195,17 @@ export function DataTable<Row>({
   if (error) return <ErrorState error={error} onRetry={onRetry} />;
 
   // Server mode: the filterable columns, how many filter something, and the ways to change the query.
-  const filterColumns: FilterColumn[] = columns.flatMap((column) =>
-    column.filter ? [{label: column.header, filter: column.filter}] : [],
-  );
+  const filterColumns: FilterColumn[] = [
+    ...columns.flatMap((column) =>
+      column.filter ? [{label: column.header, filter: column.filter}] : [],
+    ),
+    ...extraFilters,
+  ];
+  const rowFilters = columns.some((column) => column.filter !== undefined);
   const serverFilters = server ? activeFilters(server.query.filters) : {};
   const activeCount = Object.keys(serverFilters).length;
-  const filtering = activeCount > 0 || (server?.query.q ?? '').trim() !== '';
+  const searching = (server?.query.q ?? '').trim() !== '';
+  const filtering = activeCount > 0 || searching;
   const change = (patch: Partial<TableQuery>) =>
     server?.change({...server.query, page: 1, ...patch});
   const setFilter = (field: string, value: FilterValue | undefined) =>
@@ -257,6 +268,7 @@ export function DataTable<Row>({
         <ActiveFilters
           columns={filterColumns}
           filters={serverFilters}
+          searching={searching}
           onRemove={(field) => setFilter(field, undefined)}
           onClear={clearServerFilters}
         />
@@ -339,6 +351,31 @@ export function DataTable<Row>({
     );
   }
 
+  // Server mode, filtered to nothing: the header and its filter row stay (a filter can be changed where it was set),
+  // and the empty state takes the body. On a phone (no filter row) it replaces the table.
+  const filteredEmpty = server !== null && rows.length === 0 && filtering;
+  const emptyInTable = filteredEmpty && rowFilters && !phone;
+  const filteredEmptyState = (
+    <EmptyState
+      icon="fa-filter"
+      message={t('common.filteredEmpty')}
+      action={
+        <button
+          type="button"
+          className="kf-btn kf-btn--secondary kf-btn--sm"
+          onClick={clearServerFilters}
+        >
+          <span className="kf-btn__label">{t('common.showAll')}</span>
+        </button>
+      }
+    />
+  );
+  const span =
+    columns.length +
+    (selectable ? 1 : 0) +
+    (cardTitle ? 1 : 0) +
+    (hasActions ? 1 : 0);
+
   const clickRow = (row: Row) => (event: MouseEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest(INTERACTIVE)) return;
     onRowClick?.(row);
@@ -383,23 +420,11 @@ export function DataTable<Row>({
           </button>
         </div>
       )}
-      {server && rows.length === 0 && filtering ? (
-        <EmptyState
-          icon="fa-filter"
-          message={t('common.filteredEmpty')}
-          action={
-            <button
-              type="button"
-              className="kf-btn kf-btn--secondary kf-btn--sm"
-              onClick={clearServerFilters}
-            >
-              <span className="kf-btn__label">{t('common.showAll')}</span>
-            </button>
-          }
-        />
-      ) : rows.length === 0 ? (
+      {filteredEmpty && !emptyInTable ? (
+        filteredEmptyState
+      ) : rows.length === 0 && !emptyInTable ? (
         <EmptyState message={emptyMessage ?? t('common.empty')} />
-      ) : visible.length === 0 ? (
+      ) : visible.length === 0 && !emptyInTable ? (
         <EmptyState
           message={t('common.filteredEmpty')}
           action={
@@ -475,7 +500,7 @@ export function DataTable<Row>({
                   </th>
                 )}
               </tr>
-              {server && filterColumns.length > 0 && !phone && (
+              {server && rowFilters && !phone && (
                 <FilterRow
                   columns={columns.map((column) =>
                     column.filter
@@ -494,79 +519,87 @@ export function DataTable<Row>({
               )}
             </thead>
             <tbody role="rowgroup">
-              {shown.map((row) => {
-                const key = rowKey(row);
-                const isSelected = selected?.has(key) ?? false;
-                const actions = rowActions?.(row) ?? [];
-                return (
-                  <tr
-                    key={key}
-                    role="row"
-                    className={
-                      [rowClassName?.(row), isSelected ? 'is-selected' : null]
-                        .filter(Boolean)
-                        .join(' ') || undefined
-                    }
-                    onClick={onRowClick ? clickRow(row) : undefined}
-                  >
-                    {selectable && (
-                      <td role="cell" className="kf-table__select">
-                        <label className="kf-table__select-hit">
-                          <input
-                            type="checkbox"
-                            aria-label={t('common.selectRow')}
-                            checked={isSelected}
-                            onChange={(event) =>
-                              toggle([key], event.target.checked)
-                            }
-                          />
-                        </label>
-                      </td>
-                    )}
-                    {cardTitle && (
-                      <td role="cell" className="kf-table__card-title">
-                        {cardTitle(row)}
-                      </td>
-                    )}
-                    {columns.map((column) => (
-                      <td
-                        key={column.key}
-                        role="cell"
-                        data-label={column.header}
-                        className={
-                          [
-                            column.numeric ? 'kf-table__num' : null,
-                            column.mono ? 'kf-table__mono' : null,
-                            hiddenOnCard(column.key)
-                              ? 'kf-table__card-hidden'
-                              : null,
-                            column.key === cardLead
-                              ? 'kf-table__card-lead'
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(' ') || undefined
-                        }
-                      >
-                        {column.render(row)}
-                      </td>
-                    ))}
-                    {hasActions && (
-                      <td role="cell" className="kf-table__actions">
-                        {primaryAction?.(row)}
-                        {actions.length > 0 && (
-                          <RowMenu
-                            actions={actions}
-                            label={t('common.actionsFor', {
-                              name: rowLabel?.(row) ?? String(key),
-                            })}
-                          />
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
+              {emptyInTable ? (
+                <tr role="row" className="kf-table__empty-row">
+                  <td role="cell" colSpan={span} className="kf-table__empty">
+                    {filteredEmptyState}
+                  </td>
+                </tr>
+              ) : (
+                shown.map((row) => {
+                  const key = rowKey(row);
+                  const isSelected = selected?.has(key) ?? false;
+                  const actions = rowActions?.(row) ?? [];
+                  return (
+                    <tr
+                      key={key}
+                      role="row"
+                      className={
+                        [rowClassName?.(row), isSelected ? 'is-selected' : null]
+                          .filter(Boolean)
+                          .join(' ') || undefined
+                      }
+                      onClick={onRowClick ? clickRow(row) : undefined}
+                    >
+                      {selectable && (
+                        <td role="cell" className="kf-table__select">
+                          <label className="kf-table__select-hit">
+                            <input
+                              type="checkbox"
+                              aria-label={t('common.selectRow')}
+                              checked={isSelected}
+                              onChange={(event) =>
+                                toggle([key], event.target.checked)
+                              }
+                            />
+                          </label>
+                        </td>
+                      )}
+                      {cardTitle && (
+                        <td role="cell" className="kf-table__card-title">
+                          {cardTitle(row)}
+                        </td>
+                      )}
+                      {columns.map((column) => (
+                        <td
+                          key={column.key}
+                          role="cell"
+                          data-label={column.header}
+                          className={
+                            [
+                              column.numeric ? 'kf-table__num' : null,
+                              column.mono ? 'kf-table__mono' : null,
+                              hiddenOnCard(column.key)
+                                ? 'kf-table__card-hidden'
+                                : null,
+                              column.key === cardLead
+                                ? 'kf-table__card-lead'
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(' ') || undefined
+                          }
+                        >
+                          {column.render(row)}
+                        </td>
+                      ))}
+                      {hasActions && (
+                        <td role="cell" className="kf-table__actions">
+                          {primaryAction?.(row)}
+                          {actions.length > 0 && (
+                            <RowMenu
+                              actions={actions}
+                              label={t('common.actionsFor', {
+                                name: rowLabel?.(row) ?? String(key),
+                              })}
+                            />
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

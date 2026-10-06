@@ -41,6 +41,7 @@ const order = (
     phone: '3001',
   },
   comments_count: 2,
+  pinned_comment: null as {id: number; content: string} | null,
   ...extra,
 });
 
@@ -65,6 +66,8 @@ const ORDER_LIST = {
     status: (o: Row) => String(o.status),
     created_at: (o: Row) => o.created_at,
     customer: (o: Row) => `${o.customer.first_name} ${o.customer.last_name}`,
+    source: (o: Row) => (o.source === 1 ? 'web' : 'phone'),
+    pinned: (o: Row) => (o.pinned_comment ? '1' : null),
   },
   search: [
     (o: Row) => o.code,
@@ -138,12 +141,19 @@ const rowOf = async (code: string) =>
 const codes = () =>
   screen
     .queryAllByRole('row')
-    .slice(1)
+    .filter((row) => row.closest('tbody'))
     .map((row) => within(row).getAllByRole('cell')[1]?.textContent);
 const chip = (name: RegExp) =>
   within(screen.getByRole('group', {name: 'Status'})).getByRole('button', {
     name,
   });
+const search = () =>
+  screen.getByRole('searchbox', {name: 'Order number or customer'});
+/** A column's filter button in the row under the header. */
+const filterButton = (name: string | RegExp) =>
+  within(filterRow()).getByRole('button', {name});
+const filterRow = () =>
+  within(screen.getAllByRole('rowgroup')[0]!).getAllByRole('row')[1]!;
 const listCalls = (api: ReturnType<typeof fakeApi>) =>
   api.calls.filter((c) => c.method === 'GET' && c.path === '/orders');
 const openRowMenu = async (code: string) =>
@@ -245,25 +255,32 @@ describe('OrderTable', () => {
     renderTable();
     await rowOf('W00001');
 
-    fireEvent.change(screen.getByLabelText('Created from'), {
+    await userEvent.click(filterButton('Created'));
+    fireEvent.change(screen.getByLabelText('From'), {
       target: {value: '2026-10-01'},
     });
     await waitFor(() => expect(codes()).toEqual(['W00001', 'W00004']));
-    fireEvent.change(screen.getByLabelText('Created to'), {
+    fireEvent.change(screen.getByLabelText('To'), {
       target: {value: '2026-10-01'},
     });
     await waitFor(() => expect(codes()).toEqual(['W00004']));
+    expect(
+      screen.queryByLabelText('Created from'),
+      'the toolbar has no date fields of its own: the column filters by date',
+    ).not.toBeInTheDocument();
   });
 
   it('says when the filters leave nothing, and Show all clears every filter', async () => {
     renderTable();
     await rowOf('W00001');
-    await userEvent.type(screen.getByRole('searchbox'), 'ruiz');
-    await waitFor(() => expect(codes()).toEqual(['W00006']));
-    await userEvent.click(chip(/^Partial/));
-    fireEvent.change(screen.getByLabelText('Created from'), {
+    await userEvent.click(filterButton('Created'));
+    fireEvent.change(screen.getByLabelText('From'), {
       target: {value: '2026-10-02'},
     });
+    await waitFor(() => expect(codes()).toEqual(['W00001']));
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(chip(/^Partial/));
+    await userEvent.type(search(), 'ruiz');
 
     expect(
       await screen.findByText('Nothing matches these filters.'),
@@ -273,8 +290,8 @@ describe('OrderTable', () => {
     await waitFor(() =>
       expect(codes()).toEqual(['W00001', 'W00004', 'W00006']),
     );
-    expect(screen.getByRole('searchbox')).toHaveValue('');
-    expect(screen.getByLabelText('Created from')).toHaveValue('');
+    expect(search()).toHaveValue('');
+    expect(filterButton('Created')).toHaveTextContent(/^Created$/);
     expect(chip(/^All/)).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -473,5 +490,139 @@ describe('OrderTable', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'You do not have permission to do this.',
     );
+  });
+
+  it('puts a filter under each header: number and customer as text, source, status and comments as lists, the date as a range', async () => {
+    const {api} = renderTable();
+    await rowOf('W00001');
+
+    expect(
+      within(filterRow()).getByRole('searchbox', {name: 'Filter by Order'}),
+    ).toBeInTheDocument();
+    expect(
+      within(filterRow()).getByRole('searchbox', {name: 'Filter by Customer'}),
+    ).toBeInTheDocument();
+    for (const name of ['Source', 'Status', 'Created', 'Comments']) {
+      expect(filterButton(name)).toHaveAttribute('aria-haspopup', 'dialog');
+    }
+    expect(
+      listCalls(api)[0]?.url.searchParams.get('facets'),
+      'the lists count their values over the other filters',
+    ).toBe('status,source,pinned');
+  });
+
+  it('ticks statuses in the Status list, with their counts, and says so on a chip', async () => {
+    const {api} = renderTable();
+    await rowOf('W00001');
+
+    await userEvent.click(filterButton('Status'));
+    const panel = screen.getByRole('dialog', {name: 'Status'});
+    expect(
+      within(panel)
+        .getAllByRole('checkbox')
+        .map((box) => box.closest('label')?.textContent),
+    ).toEqual([
+      'Created1',
+      'Processed0',
+      'Completed0',
+      'Partial1',
+      'Sent0',
+      'Delivered1',
+    ]);
+    await userEvent.click(
+      within(panel).getByRole('checkbox', {name: /Created/}),
+    );
+    await userEvent.click(
+      within(panel).getByRole('checkbox', {name: /Partial/}),
+    );
+
+    await waitFor(() => expect(codes()).toEqual(['W00001', 'W00004']));
+    expect(
+      listCalls(api).at(-1)?.url.searchParams.getAll('filter[status][]'),
+    ).toEqual(['1', '4']);
+    expect(screen.getByText('Status: Created, Partial')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(
+      chip(/^All/),
+      'two statuses are not one chip of the toolbar',
+    ).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('finds orders by the source and by the customer column, and keeps only pinned ones from Comments', async () => {
+    const {api} = renderTable({
+      orders: {
+        1: [
+          CREATED,
+          PARTIAL,
+          {...DELIVERED, pinned_comment: {id: 3, content: 'Call first'}},
+        ],
+      },
+    });
+    await rowOf('W00001');
+
+    await userEvent.click(filterButton('Source'));
+    await userEvent.click(screen.getByRole('checkbox', {name: /Web/}));
+    await waitFor(() => expect(codes()).toEqual(['W00004']));
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Remove the filter Source: Web'}),
+    );
+    await waitFor(() => expect(codes()).toHaveLength(3));
+
+    await userEvent.type(
+      within(filterRow()).getByRole('searchbox', {name: 'Filter by Customer'}),
+      'ruiz{Enter}',
+    );
+    await waitFor(() => expect(codes()).toEqual(['W00006']));
+    expect(
+      listCalls(api).at(-1)?.url.searchParams.get('filter[customer]'),
+    ).toBe('ruiz');
+
+    await userEvent.click(filterButton('Comments'));
+    await userEvent.click(screen.getByRole('checkbox', {name: /Pinned only/}));
+    expect(
+      listCalls(api).at(-1)?.url.searchParams.getAll('filter[pinned][]'),
+    ).toEqual(['1']);
+  });
+
+  it('on a phone, has no filter row: Filters · N opens the sheet, which counts its draft with one row asked', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query.includes('max-width: 599.98px'),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    try {
+      const {api} = renderTable();
+      await rowOf('W00001');
+      expect(
+        within(screen.getAllByRole('rowgroup')[0]!).getAllByRole('row'),
+      ).toHaveLength(1);
+
+      await userEvent.click(screen.getByRole('button', {name: 'Filters · 0'}));
+      const sheet = screen.getByRole('dialog', {name: 'Filters'});
+      await userEvent.click(
+        within(sheet).getByRole('button', {name: /^Status/}),
+      );
+      await userEvent.click(
+        within(sheet).getByRole('checkbox', {name: /Delivered/}),
+      );
+      await userEvent.click(
+        await within(sheet).findByRole('button', {name: 'Show 1 result'}),
+      );
+
+      await waitFor(() => expect(codes()).toEqual(['W00006']));
+      const counted = listCalls(api).find(
+        (c) => c.url.searchParams.get('per_page') === '1',
+      );
+      expect(counted?.url.searchParams.get('warehouse_id')).toBe('1');
+      expect(
+        screen.getByRole('button', {name: 'Filters · 1'}),
+      ).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

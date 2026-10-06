@@ -8,8 +8,7 @@
     "label": "Order filters",
     "status": "Status",
     "search": "Order number or customer",
-    "from": "Created from",
-    "to": "Created to"
+    "pinnedOnly": "Pinned only"
   },
   "columns": {
     "code": "Order",

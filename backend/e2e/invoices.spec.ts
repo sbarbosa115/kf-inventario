@@ -169,11 +169,17 @@ test.describe('6 Invoices', () => {
 
     await page.getByRole('button', {name: 'Clear filters'}).click();
     await expect(search).toHaveValue('');
+    // The date range is the Date column's filter, in the row under the headers.
+    const dateFilter = page
+      .locator('.kf-table__filters')
+      .getByRole('button', {name: /^Date/});
+    await dateFilter.click();
     await page.getByLabel('From', {exact: true}).fill('2999-01-01');
     await expect(
       page.getByText('Nothing matches these filters.'),
     ).toBeVisible();
     await page.getByRole('button', {name: 'Clear filters'}).click();
+    await dateFilter.click();
     await page.getByLabel('To', {exact: true}).fill('2000-01-01');
     await expect(
       page.getByText('Nothing matches these filters.'),

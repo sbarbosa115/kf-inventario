@@ -1,5 +1,6 @@
-import {render, screen, within} from '@testing-library/react';
+import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {vi} from 'vitest';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import type {StockItem} from '@/entities/product';
 import {fakeApi} from '@/shared/test/fakeApi';
@@ -63,6 +64,7 @@ const STOCK_LIST = {
   fields: {
     code: (r: StockItem) => r.code,
     title: (r: StockItem) => r.title,
+    detail: (r: StockItem) => r.detail,
     quantity: (r: StockItem) => r.quantity,
     price: (r: StockItem) => r.price,
     in_stock: (r: StockItem) => (r.quantity > 0 ? 'yes' : 'no'),
@@ -89,6 +91,17 @@ function stockRoutes() {
 }
 
 const rowOf = (code: string) => screen.getByText(code).closest('tr')!;
+/** The codes of the rows shown. */
+const rows = () =>
+  screen
+    .queryAllByRole('row')
+    .filter((row) => row.closest('tbody'))
+    .map((row) => row.querySelector('.kf-table__mono')?.textContent);
+/** A chip of the active filters above the table. */
+const chipText = (text: string) =>
+  screen.getByText(text, {selector: '.kf-active-filters__text'});
+const stockCalls = (api: ReturnType<typeof fakeApi>) =>
+  api.calls.filter((c) => c.path === '/warehouses/1/stock');
 
 beforeEach(() => localStorage.clear());
 
@@ -154,7 +167,10 @@ describe('StockTable', () => {
     renderTable();
     await screen.findByText('KF-01');
 
-    await userEvent.type(screen.getByRole('searchbox'), 'kf-02');
+    await userEvent.type(
+      screen.getByRole('searchbox', {name: 'Search products'}),
+      'kf-02',
+    );
     await vi.waitFor(() =>
       expect(screen.queryByText('KF-01')).not.toBeInTheDocument(),
     );
@@ -167,7 +183,9 @@ describe('StockTable', () => {
     await userEvent.click(screen.getByRole('button', {name: 'Show all'}));
     expect(await screen.findByText('KF-01')).toBeInTheDocument();
     expect(screen.getByText('KF-04')).toBeInTheDocument();
-    expect(screen.getByRole('searchbox')).toHaveValue('');
+    expect(
+      screen.getByRole('searchbox', {name: 'Search products'}),
+    ).toHaveValue('');
   });
 
   it('reloads for another warehouse, forgets the selection and remembers the choice', async () => {
@@ -349,5 +367,89 @@ describe('StockTable', () => {
       'Something went wrong on our side',
     );
     expect(screen.getByRole('button', {name: 'Try again'})).toBeInTheDocument();
+  });
+
+  it('puts text filters under code, title and detail, and ranges under quantity and price', async () => {
+    const api = fakeApi(stockRoutes());
+    renderTable();
+    await screen.findByText('KF-01');
+    const filters = within(
+      within(screen.getAllByRole('rowgroup')[0]!).getAllByRole('row')[1]!,
+    );
+
+    for (const name of ['Code', 'Title', 'Detail']) {
+      expect(
+        filters.getByRole('searchbox', {name: `Filter by ${name}`}),
+      ).toBeInTheDocument();
+    }
+    await userEvent.click(filters.getByRole('button', {name: 'Price'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Under $100'}));
+    await waitFor(() =>
+      expect(screen.queryByText('KF-01')).not.toBeInTheDocument(),
+    );
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(filters.getByRole('button', {name: 'Quantity'}));
+    await userEvent.click(screen.getByRole('button', {name: '1 – 10'}));
+    await userEvent.keyboard('{Escape}');
+
+    await waitFor(() => expect(rows()).toEqual(['KF-03']));
+    const asked = stockCalls(api).at(-1)!.url.searchParams;
+    expect(asked.get('filter[price][max]')).toBe('99.99');
+    expect(asked.get('filter[quantity][min]')).toBe('1');
+    expect(asked.get('filter[quantity][max]')).toBe('10');
+    expect(chipText('Price: Under $100')).toBeInTheDocument();
+    expect(chipText('Quantity: 1 – 10')).toBeInTheDocument();
+    const figure = (label: string) =>
+      screen.getByText(label, {selector: 'dt'}).nextElementSibling;
+    expect(
+      figure('Products'),
+      "the figures are the warehouse's, from the server's totals, whatever the filters",
+    ).toHaveTextContent('4');
+    expect(figure('Stock value')).toHaveTextContent('$11,095.00');
+  });
+
+  it('says the stock chip on a chip above the table, and offers it in the phone sheet', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query.includes('max-width: 599.98px'),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    try {
+      const api = fakeApi(stockRoutes());
+      renderTable();
+      await screen.findByText('KF-01');
+
+      await userEvent.click(screen.getByRole('button', {name: 'Filters · 0'}));
+      const sheet = screen.getByRole('dialog', {name: 'Filters'});
+      await userEvent.click(
+        within(sheet).getByRole('button', {name: /^Stock/}),
+      );
+      await userEvent.click(
+        within(sheet).getByRole('checkbox', {name: /Out of stock/}),
+      );
+      await userEvent.click(
+        await within(sheet).findByRole('button', {name: 'Show 1 result'}),
+      );
+
+      await waitFor(() => expect(rows()).toEqual(['KF-04']));
+      expect(chipText('Stock: Out of stock')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', {name: 'Out of stock 1'}),
+        'the toolbar chip is the same filter',
+      ).toHaveAttribute('aria-pressed', 'true');
+      expect(
+        stockCalls(api).some(
+          (c) =>
+            c.url.searchParams.get('per_page') === '1' &&
+            c.url.searchParams.get('filter[in_stock][]') === 'no',
+        ),
+        'the sheet counted its draft with one row asked',
+      ).toBe(true);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

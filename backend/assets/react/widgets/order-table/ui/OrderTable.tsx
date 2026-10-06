@@ -15,7 +15,6 @@ import {OrderStatusMenu} from '@/features/change-order-status';
 import {DeleteOrderConfirm} from '@/features/delete-order';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import type {DateRangeValue} from '@/shared/api';
 import {
   useDebouncedText,
   useFormat,
@@ -25,7 +24,6 @@ import {
 } from '@/shared/lib';
 import {
   Button,
-  ClearFilters,
   DataTable,
   EmptyState,
   ErrorState,
@@ -36,10 +34,15 @@ import {
   WarehouseSwitch,
   type Column,
   type RowAction,
+  type TableQuery,
 } from '@/shared/ui';
 import './order-table.css';
 
 export type OrderSection = 'products' | 'comments';
+
+/** The list columns whose values are counted (the status chips and the Status, Source and Comments filters). */
+const FACETS = ['status', 'source', 'pinned'];
+const SEVERAL = 'several';
 
 interface Props {
   /** Opens an order's detail (the page shows it), on a section. */
@@ -49,10 +52,11 @@ interface Props {
 }
 
 /**
- * One warehouse's orders (the remembered one, else the first): status chips counting what the other filters keep,
- * a search by number or customer and a creation-date range, filtered, sorted and paged on the server (the query in
- * the address); a row per order with its status menu and its ⋯ menu (edit, getting ready, documents, delete by
- * role). A row opens the order's detail.
+ * One warehouse's orders (the remembered one, else the first): status chips counting what the other filters keep and
+ * a search by number or customer in the toolbar; under the headers a filter per column (number and customer text,
+ * source, status and "Pinned only" lists with their counts, a creation-date range; a sheet on a phone), all filtered,
+ * sorted and paged on the server (the query in the address); a row per order with its status menu and its ⋯ menu
+ * (edit, getting ready, documents, delete by role). A row opens the order's detail.
  */
 export function OrderTable(props: Props) {
   const {t} = useTranslation();
@@ -97,20 +101,27 @@ function WarehouseOrders({
   const list = useListQuery({sort: '-created_at'});
   const key = JSON.stringify(list.query);
   const {data, loading, error, reload} = useLoad(
-    () => listOrders(warehouse.id, {...list.query, facets: ['status']}),
+    () => listOrders(warehouse.id, {...list.query, facets: FACETS}),
     [warehouse.id, key, refreshKey],
   );
+  // The phone's sheet: how many orders a draft keeps, one row asked.
+  const countFor = (query: TableQuery) =>
+    listOrders(warehouse.id, {...query, page: 1, perPage: 1}).then(
+      (page) => page.total,
+    );
   const [deleting, setDeleting] = useState<Order | null>(null);
   const [search, setSearch, flushSearch] = useDebouncedText(
     list.query.q ?? '',
     (q) => list.update({q: q === '' ? undefined : q}),
   );
+  // The toolbar's chip is the one status ticked alone; two or more are the Status column's (and its chip above).
   const statusFilter = list.query.filters?.status;
-  const status = Array.isArray(statusFilter) ? (statusFilter[0] ?? null) : null;
-  const created = (list.query.filters?.created_at ?? {}) as DateRangeValue;
-  const setCreated = (range: DateRangeValue) =>
-    list.setFilter('created_at', range);
-  const filtered = list.activeCount > 0;
+  // With several ticked, no chip is pressed (not even All): a key no chip has.
+  const status = !Array.isArray(statusFilter)
+    ? null
+    : statusFilter.length === 1
+      ? statusFilter[0]!
+      : SEVERAL;
 
   // The chips count what the search and the dates keep (the status facet ignores the status filter itself).
   const facet = data?.facets?.status;
@@ -134,23 +145,41 @@ function WarehouseOrders({
         </button>
       ),
       sortField: 'code',
+      filter: {type: 'text', field: 'code'},
     },
     {
       key: 'customer',
       header: t('orders.columns.customer'),
       render: (order) => <CustomerCell order={order} />,
       sortField: 'customer',
+      filter: {type: 'text', field: 'customer'},
     },
     {
       key: 'source',
       header: t('orders.columns.source'),
       render: (order) => <OrderSource source={order.source} />,
+      filter: {
+        type: 'enum',
+        field: 'source',
+        options: [
+          {value: 'phone', label: t('orders.sources.phone')},
+          {value: 'web', label: t('orders.sources.web')},
+        ],
+      },
     },
     {
       key: 'status',
       header: t('orders.columns.status'),
       render: (order) => <OrderStatusMenu order={order} onChanged={reload} />,
       sortField: 'status',
+      filter: {
+        type: 'enum',
+        field: 'status',
+        options: ORDER_STATUSES.map((value) => ({
+          value: String(value),
+          label: t(`orders.statuses.${value}`),
+        })),
+      },
     },
     {
       key: 'created',
@@ -159,6 +188,7 @@ function WarehouseOrders({
         <span className="text-nowrap">{dateTime(order.created_at)}</span>
       ),
       sortField: 'created_at',
+      filter: {type: 'date', field: 'created_at'},
     },
     {
       key: 'comments',
@@ -178,6 +208,11 @@ function WarehouseOrders({
         </Button>
       ),
       numeric: true,
+      filter: {
+        type: 'enum',
+        field: 'pinned',
+        options: [{value: '1', label: t('orders.filters.pinnedOnly')}],
+      },
     },
   ];
 
@@ -257,19 +292,6 @@ function WarehouseOrders({
             onBlur={flushSearch}
           />
         </div>
-        <DateField
-          label={t('orders.filters.from')}
-          value={created.from ?? ''}
-          max={created.to || undefined}
-          onChange={(from) => setCreated({...created, from})}
-        />
-        <DateField
-          label={t('orders.filters.to')}
-          value={created.to ?? ''}
-          min={created.from || undefined}
-          onChange={(to) => setCreated({...created, to})}
-        />
-        {filtered && <ClearFilters onClick={list.clearFilters} />}
       </Toolbar>
       {forbidden ? (
         <div className="alert alert-warning" role="alert">
@@ -282,6 +304,8 @@ function WarehouseOrders({
           query={list.query}
           onQueryChange={list.update}
           total={data?.total}
+          facets={data?.facets}
+          countFor={countFor}
           rowKey={(order) => order.id}
           rowLabel={(order) => order.code ?? String(order.id)}
           loading={loading && data === undefined}
@@ -330,33 +354,5 @@ function CustomerCell({order}: {order: Order}) {
         <span className="kf-order-table__muted">{email}</span>
       )}
     </span>
-  );
-}
-
-function DateField({
-  label,
-  value,
-  min,
-  max,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  min?: string;
-  max?: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="kf-order-table__date">
-      <span className="kf-order-table__date-label">{label}</span>
-      <input
-        type="date"
-        className="form-control"
-        value={value}
-        min={min}
-        max={max}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
   );
 }
