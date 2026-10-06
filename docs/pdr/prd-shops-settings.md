@@ -836,3 +836,35 @@ signature, a private-host URL refused, a settings row that reads `v1:` in the da
 the manual cases (DS-15, FLT-11 – 12, SHOP-10, ORD-44) at 1440 and 390, EN and ES, light and dark; before/after
 screenshots of the five tables, Settings tabs, a connection, the inbox and the timeline in `docs/design/after/`;
 README API table complete; the cutover checklist in the deploy script header.
+
+## Timeline
+
+Recorded with `timeline.py`, from 2026-10-06 09:04 to now (still open). Active time leaves out the pauses.
+
+| Step | Started | Active | Wall clock |
+|---|---|---|---|
+| Plan | 2026-10-06 09:04 | 46m | 46m |
+| Item 0 (contract) | 2026-10-06 09:50 | 1h 34m | 1h 34m |
+| Build test-first | 2026-10-06 11:24 | 11m | 11m |
+| Merging the items | 2026-10-06 11:35 | 1h 35m | 1h 35m |
+| Barrier (waiting for the items) | 2026-10-06 13:10 | 2m | 2m |
+| Security audit | 2026-10-06 13:30 | 3h 5m | 3h 5m |
+| Definition of done | 2026-10-06 16:36 | 2m | 2m |
+| Pull request | 2026-10-06 16:38 | 0m | 0m |
+| smoke | 2026-10-06 13:12 | 18m | 18m |
+| **Total** | | **7h 34m** | **7h 34m** |
+
+The items of the split (from git: branch created → merged into the base branch):
+
+| Item | Started | Merged | Took |
+|---|---|---|---|
+| comments-api | 2026-10-06 11:24 | 2026-10-06 11:35 | 11m |
+| comments-ui | 2026-10-06 12:26 | 2026-10-06 12:51 | 25m |
+| docs-cutover | 2026-10-06 13:02 | 2026-10-06 13:09 | 8m |
+| list-api | 2026-10-06 11:24 | 2026-10-06 11:45 | 21m |
+| settings-api | 2026-10-06 11:24 | 2026-10-06 11:39 | 15m |
+| settings-ui | 2026-10-06 11:46 | 2026-10-06 12:04 | 18m |
+| shops-api | 2026-10-06 11:24 | 2026-10-06 11:50 | 26m |
+| shops-sync-api | 2026-10-06 11:53 | 2026-10-06 12:16 | 23m |
+| shops-ui | 2026-10-06 12:26 | 2026-10-06 12:58 | 32m |
+| tables-ui | 2026-10-06 11:46 | 2026-10-06 12:24 | 38m |
