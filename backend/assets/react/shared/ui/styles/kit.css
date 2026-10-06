@@ -686,6 +686,24 @@
   width: 44px;
 }
 
+/* The checkbox's whole cell selects the row (a label: a tap there never opens the row). */
+.kf-table__select-hit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  margin: 0;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .kf-table__select-hit {
+    min-width: var(--kf-target);
+    min-height: var(--kf-target);
+  }
+}
+
 .kf-table__actions {
   width: 1%;
   text-align: right !important;
@@ -833,14 +851,24 @@
 
   .kf-table .kf-table__select {
     position: absolute;
-    top: var(--kf-space-2);
-    left: var(--kf-space-2);
+    top: 0;
+    left: 0;
     width: auto;
     padding: 0;
   }
 
+  .kf-table .kf-table__select-hit {
+    min-width: var(--kf-target);
+    min-height: var(--kf-target);
+  }
+
   .kf-table tr:has(.kf-table__select) {
-    padding-left: var(--kf-space-7);
+    padding-left: var(--kf-target);
+  }
+
+  /* A card without a title: its first line leaves room for the row's actions, top right. */
+  .kf-table .kf-table__card-lead {
+    padding-right: 88px;
   }
 
   .kf-table .kf-table__actions {

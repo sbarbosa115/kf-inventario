@@ -224,4 +224,52 @@ describe('DataTable, the kit additions', () => {
     await userEvent.click(screen.getByRole('button', {name: 'Open KF-01'}));
     expect(onRowClick).toHaveBeenCalledTimes(1);
   });
+
+  it('selects a row from the whole box around its checkbox (a 44 px target on a phone) without opening it', async () => {
+    const onRowClick = vi.fn();
+    function Clickable() {
+      const [selected, setSelected] = useState<Set<string | number>>(new Set());
+      return (
+        <>
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey={(r) => r.id}
+            selected={selected}
+            onSelectedChange={setSelected}
+            onRowClick={onRowClick}
+          />
+          <output>{[...selected].join(',')}</output>
+        </>
+      );
+    }
+    render(<Clickable />);
+
+    const [box] = screen.getAllByRole('checkbox', {name: 'Select row'});
+    const hit = box!.closest('label');
+    expect(hit).toHaveClass('kf-table__select-hit');
+    await userEvent.click(hit!);
+    expect(box).toBeChecked();
+    expect(screen.getByRole('status')).toHaveTextContent('1');
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it('keeps room for the row menu on a card without a title: its first fact is the lead line', () => {
+    render(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        cardFacts={['quantity']}
+        rowActions={() => [{label: 'Edit', onSelect: vi.fn()}]}
+      />,
+    );
+
+    const row = screen.getAllByRole('row')[1]!;
+    const quantity = [...row.querySelectorAll('td')].find(
+      (c) => c.getAttribute('data-label') === 'Quantity',
+    );
+    expect(quantity).toHaveClass('kf-table__card-lead');
+    expect(row.querySelectorAll('.kf-table__card-lead')).toHaveLength(1);
+  });
 });

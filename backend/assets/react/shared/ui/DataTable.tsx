@@ -143,6 +143,11 @@ export function DataTable<Row>({
   const selectedRows = (rows ?? []).filter((row) => selected?.has(rowKey(row)));
   const hiddenOnCard = (key: string) =>
     cardFacts !== undefined && !cardFacts.includes(key);
+  // A card without a title shares its first line with the row's actions: that line keeps room for them.
+  const cardLead =
+    !cardTitle && hasActions
+      ? columns.find((column) => !hiddenOnCard(column.key))?.key
+      : undefined;
   const tableClass = [
     'kf-table',
     density === 'comfortable' ? 'kf-table--comfortable' : null,
@@ -321,14 +326,16 @@ export function DataTable<Row>({
                   >
                     {selectable && (
                       <td role="cell" className="kf-table__select">
-                        <input
-                          type="checkbox"
-                          aria-label={t('common.selectRow')}
-                          checked={isSelected}
-                          onChange={(event) =>
-                            toggle([key], event.target.checked)
-                          }
-                        />
+                        <label className="kf-table__select-hit">
+                          <input
+                            type="checkbox"
+                            aria-label={t('common.selectRow')}
+                            checked={isSelected}
+                            onChange={(event) =>
+                              toggle([key], event.target.checked)
+                            }
+                          />
+                        </label>
                       </td>
                     )}
                     {cardTitle && (
@@ -347,6 +354,9 @@ export function DataTable<Row>({
                             column.mono ? 'kf-table__mono' : null,
                             hiddenOnCard(column.key)
                               ? 'kf-table__card-hidden'
+                              : null,
+                            column.key === cardLead
+                              ? 'kf-table__card-lead'
                               : null,
                           ]
                             .filter(Boolean)
