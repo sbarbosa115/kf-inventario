@@ -31,7 +31,7 @@ page **`/admin/_kit`** shows each one in its states, in the current theme and la
 | Type | `--kf-font-sans` (Geist), `--kf-font-mono` (Geist Mono); `--kf-text-label` .75 · `-sm` .875 · `-body` 1 · `-lg` 1.125 · `-title` 1.375 · `-kpi` 1.75 rem | |
 | Space | `--kf-space-1` 4 px … `--kf-space-8` 48 px | |
 | Shape | `--kf-radius-control` 6, `--kf-radius-card` 10, `--kf-radius-pill`; `--kf-row-height` 44, `-comfortable` 52; `--kf-target` 44 | |
-| Depth | `--kf-shadow-float` (floating things only: drawer, menu, toast, dialog, slide-over); `--kf-z-dropdown` 100 · `-sticky` 200 · `-drawer` 300 · `-dialog` 400 · `-toast` 500 | cards have a border, not a shadow |
+| Depth | `--kf-shadow-float` (floating things only: drawer, menu, toast, dialog, slide-over); `--kf-z-dropdown` 100 · `-sticky` 200 · `-popover` 250 (a panel opened from the page, such as PageHeader's "More": above the sticky toolbar) · `-drawer` 300 · `-dialog` 400 · `-toast` 500 | cards have a border, not a shadow |
 | Layout | `--kf-content-max` 1200, `--kf-form-max` 720, `--kf-form-narrow` 640, `--kf-topbar-height`, `--kf-tabbar-height`; `--kf-toolbar-top` and `--kf-shell-bottom` set by the shell | |
 | Motion | `--kf-duration-fast` 150 ms, `--kf-duration` 200 ms, `--kf-ease` (0 with reduced motion) | |
 

@@ -91,6 +91,7 @@
   /* Layers */
   --kf-z-dropdown: 100;
   --kf-z-sticky: 200;
+  --kf-z-popover: 250;
   --kf-z-drawer: 300;
   --kf-z-dialog: 400;
   --kf-z-toast: 500;
