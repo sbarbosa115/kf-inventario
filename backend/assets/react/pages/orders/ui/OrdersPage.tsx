@@ -4,6 +4,7 @@ import {useCan} from '@/entities/session';
 import {SyncOrdersButton} from '@/features/sync-orders';
 import {useTranslation} from '@/shared/i18n';
 import {Button, PageHeader} from '@/shared/ui';
+import {CommentTimeline} from '@/widgets/comment-timeline';
 import {OrderDetail, type OrderDetailSection} from '@/widgets/order-detail';
 import {OrderTable} from '@/widgets/order-table';
 
@@ -50,6 +51,9 @@ export function OrdersPage() {
           section={detail.section}
           onClose={close}
           onChanged={refresh}
+          comments={(order, changed) => (
+            <CommentTimeline order={order} onChanged={changed} />
+          )}
         />
       )}
     </>

@@ -98,17 +98,31 @@ describe('OrdersPage', () => {
     expect(listCalls(api)).toHaveLength(2);
   });
 
-  it('opens an order’s detail beside the list, and the list counts a comment saved there', async () => {
-    let comments: {id: number; content: string}[] = [];
+  it('opens an order’s detail beside the list with its comment timeline, and the list counts a comment added there', async () => {
+    let comments: unknown[] = [];
     const api = renderPage(['ROLE_USER'], {
       'GET /orders': () => [
         200,
         pageOf([{...ORDER, comments_count: comments.length}]),
       ],
       'GET /orders/1': () => [200, {...ORDER, comments, products: []}],
-      'PUT /orders/1/comments': () => {
-        comments = [{id: 5, content: 'Ring twice'}];
-        return [200, {comments}];
+      'GET /settings/quick-phrases': [200, []],
+      'POST /orders/1/comments': (body) => {
+        const added = {
+          id: 5,
+          content: (body as {content: string}).content,
+          created_at: '2026-10-06T09:00:00-05:00',
+          approximate: false,
+          author: {id: 1, name: 'Ana'},
+          origin: 'app',
+          shop: null,
+          pinned: false,
+          pinned_at: null,
+          pinned_by: null,
+          sent_to_shop: false,
+        };
+        comments = [added];
+        return [201, added];
       },
     });
 
@@ -120,17 +134,15 @@ describe('OrdersPage', () => {
       ),
     );
     const detail = await screen.findByRole('dialog', {name: 'Order W00001'});
-    await userEvent.click(
-      await within(detail).findByRole('button', {name: 'Add a comment'}),
-    );
     await userEvent.type(
-      within(detail).getByLabelText('Comment 1'),
-      'Ring twice',
-    );
-    await userEvent.click(
-      within(detail).getByRole('button', {name: 'Save comment 1'}),
+      await within(detail).findByRole('textbox', {name: 'Write a note…'}),
+      'Ring twice{Enter}',
     );
 
+    expect(
+      await within(detail).findByText('Ring twice'),
+      'the timeline shows it',
+    ).toBeInTheDocument();
     expect(
       await screen.findByRole('button', {name: 'Comments of order W00001: 1'}),
     ).toBeInTheDocument();

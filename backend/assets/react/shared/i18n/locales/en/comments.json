@@ -1,1 +1,46 @@
-{}
+{
+  "timeline": "Comments of order {{code}}",
+  "empty": "No comments yet. Write the first one below.",
+  "unknownAuthor": "Unknown author",
+  "shopAuthor": "Shop · {{shop}}",
+  "shopNote": "Shop note",
+  "phrase": "Quick phrase",
+  "approximate": "Approximate date (the order's): written before comments had dates",
+  "sentToShop": "Sent to the shop",
+  "pinned": "Pinned",
+  "pinnedBy": "Pinned by {{name}}",
+  "pin": "Pin",
+  "unpin": "Unpin",
+  "pinnedDone": "The comment is pinned to the order.",
+  "unpinnedDone": "The comment is no longer pinned.",
+  "actions": "Actions for comment {{number}}",
+  "edit": "Edit",
+  "editLabel": "Edit comment {{number}}",
+  "save": "Save",
+  "cancel": "Cancel",
+  "saved": "The comment was saved.",
+  "blank": "Write the comment first.",
+  "remove": "Remove",
+  "removeTitle": "Remove this comment?",
+  "removeBody": "It leaves the order's comments. This cannot be undone.",
+  "removed": "The comment was removed.",
+  "box": {
+    "label": "Write a note…",
+    "placeholder": "Write a note…",
+    "hint": "Enter sends · Shift+Enter starts a new line",
+    "send": "Send",
+    "alsoToShop": "Also send to {{shop}} as an order note"
+  },
+  "phrases": {
+    "label": "Quick phrases",
+    "add": "Add “{{text}}” as a comment",
+    "added": "“{{text}}” was added."
+  },
+  "errors": {
+    "shop_note_unavailable": "This order cannot send notes to its shop now (the connection is off or does not send notes). The comment was not saved: send it without the shop.",
+    "quick_phrase_not_found": "That quick phrase no longer exists. Reload the order.",
+    "comment_not_found": "That comment no longer exists. Reload the order.",
+    "order_not_found": "This order no longer exists. Reload the list.",
+    "validation_failed": "Write the comment first."
+  }
+}

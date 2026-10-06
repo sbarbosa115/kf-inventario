@@ -1,0 +1,53 @@
+/* The order's write box (features/add-comment): the text area and Send side by side, the shop checkbox and the
+   keyboard hint under them. Tokens only. */
+.kf-add-comment__row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--kf-space-2);
+}
+
+.kf-add-comment__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--kf-target);
+  resize: none;
+}
+
+.kf-add-comment__extras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kf-space-1) var(--kf-space-3);
+  margin-top: var(--kf-space-1);
+  font-size: var(--kf-text-sm);
+}
+
+.kf-add-comment__shop {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kf-space-2);
+  min-height: var(--kf-target);
+  margin: 0;
+  cursor: pointer;
+}
+
+.kf-add-comment__shop input {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.kf-add-comment__hint {
+  color: var(--kf-text-muted);
+}
+
+.kf-add-comment__alert {
+  margin-bottom: var(--kf-space-2);
+}
+
+/* A phone sends with the button: the keyboard hint says nothing there. */
+@media (pointer: coarse) {
+  .kf-add-comment__hint {
+    display: none;
+  }
+}

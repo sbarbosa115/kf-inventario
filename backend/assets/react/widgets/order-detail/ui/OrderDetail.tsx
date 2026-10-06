@@ -1,4 +1,11 @@
-import {useEffect, useMemo, useRef, type ReactNode, type Ref} from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+  type Ref,
+  type RefObject,
+} from 'react';
 import {
   customerName,
   getOrder,
@@ -10,7 +17,6 @@ import {
 } from '@/entities/order';
 import {useCan} from '@/entities/session';
 import {OrderStatusMenu} from '@/features/change-order-status';
-import {OrderComments} from '@/features/edit-order-comments';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {useFormat, useLoad} from '@/shared/lib';
@@ -30,15 +36,23 @@ export type OrderDetailSection = 'products' | 'comments';
 
 type Line = Order['products'][number];
 
+/** The comments section's content (the page gives the comment timeline); `onChanged` after each change. */
+export type OrderCommentsSlot = (
+  order: Order,
+  onChanged: () => void,
+) => ReactNode;
+
 /**
  * An order in a slide-over beside its list: the code, status, source, warehouse and date on top with what can be done
- * to it (status, edit, getting ready, documents), then its customer, products and comments as sections. `onChanged`
- * runs after the status or the comments change, so the list can reload.
+ * to it (status, edit, getting ready, documents) and its pinned comment, then its customer, products and comments as
+ * sections (the comments are what `comments` renders: the page composes the timeline). `onChanged` runs after the
+ * status or the comments change, so the list can reload.
  */
 export function OrderDetail({
   orderId,
   code,
   section = 'products',
+  comments,
   onClose,
   onChanged,
 }: {
@@ -47,6 +61,7 @@ export function OrderDetail({
   code?: string | null;
   /** Comments scrolls the comments into view. */
   section?: OrderDetailSection;
+  comments?: OrderCommentsSlot;
   onClose: () => void;
   onChanged?: () => void;
 }) {
@@ -55,6 +70,8 @@ export function OrderDetail({
   const title = t('orders.detail.title', {
     code: data?.code ?? code ?? String(orderId),
   });
+  const commentsRef = useRef<HTMLElement>(null);
+  const showComments = () => commentsRef.current?.scrollIntoView?.();
 
   return (
     <SlideOver
@@ -69,6 +86,7 @@ export function OrderDetail({
               reload();
               onChanged?.();
             }}
+            onShowComments={showComments}
           />
         )
       }
@@ -85,7 +103,12 @@ export function OrderDetail({
         <Sections
           order={data}
           section={section}
-          onCommentsSaved={() => onChanged?.()}
+          commentsRef={commentsRef}
+          renderComments={comments}
+          onCommentsChanged={() => {
+            reload();
+            onChanged?.();
+          }}
         />
       )}
     </SlideOver>
@@ -95,9 +118,11 @@ export function OrderDetail({
 function OrderHeader({
   order,
   onStatusChanged,
+  onShowComments,
 }: {
   order: Order;
   onStatusChanged: () => void;
+  onShowComments: () => void;
 }) {
   const {t} = useTranslation();
   const {dateTime} = useFormat();
@@ -124,6 +149,20 @@ function OrderHeader({
           {dateTime(order.created_at)}
         </Fact>
       </dl>
+      {order.pinned_comment && (
+        <button
+          type="button"
+          className="kf-order-detail__pinned"
+          aria-label={`${t('orders.detail.pinned')}: ${order.pinned_comment.content}`}
+          title={order.pinned_comment.content}
+          onClick={onShowComments}
+        >
+          <i className="fas fa-thumbtack" aria-hidden="true" />
+          <span className="kf-order-detail__pinned-text">
+            {order.pinned_comment.content}
+          </span>
+        </button>
+      )}
       <div className="kf-order-detail__actions">
         {canEdit && (
           <Button size="sm" icon="fa-pen" to={`/admin/orders/${order.id}/edit`}>
@@ -179,18 +218,21 @@ function OrderHeader({
 function Sections({
   order,
   section,
-  onCommentsSaved,
+  commentsRef,
+  renderComments,
+  onCommentsChanged,
 }: {
   order: Order;
   section: OrderDetailSection;
-  onCommentsSaved: () => void;
+  commentsRef: RefObject<HTMLElement | null>;
+  renderComments?: OrderCommentsSlot;
+  onCommentsChanged: () => void;
 }) {
   const {t} = useTranslation();
-  const comments = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (section === 'comments') comments.current?.scrollIntoView?.();
-  }, [section]);
+    if (section === 'comments') commentsRef.current?.scrollIntoView?.();
+  }, [section, commentsRef]);
 
   const columns = useMemo<Column<Line>[]>(
     () => [
@@ -231,12 +273,8 @@ function Sections({
           emptyMessage={t('orders.products.empty')}
         />
       </Section>
-      <Section title={t('orders.detail.comments')} sectionRef={comments}>
-        <OrderComments
-          orderId={order.id}
-          comments={order.comments}
-          onSaved={onCommentsSaved}
-        />
+      <Section title={t('orders.detail.comments')} sectionRef={commentsRef}>
+        {renderComments?.(order, onCommentsChanged)}
       </Section>
     </>
   );

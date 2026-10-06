@@ -486,11 +486,11 @@ address on file."; a webhook order without a customer says "No customer".
 
 **ORD-06 · Comments are added, edited and removed from the detail**
 Smoke: `e2e/orders.spec.ts`.
-W00004's comments count (1) opens its detail with the Comments section in view: "Comment for W00004" in a box with its
-save and remove buttons. Add a comment adds an empty box with the cursor in it; type "Smoke comment" and its save
-button: the toast "The comments were saved." and the list's count says 2 at once. Reopen, remove the second comment:
-the count says 1. By hand: saving an empty new box says "Write the comment, or remove it." under it and sends
-nothing; edit the first comment, save, reopen: the new text is there.
+W00004's comments count (1) opens its detail with the Comments section in view: "Comment for W00004" in the timeline
+(ORD-38). Type "Smoke comment" in the write box and press Enter: it is added at the bottom and the list's count says 2
+at once. Reopen; in the second comment's ⋯, Remove, and confirm "Remove this comment?": the toast "The comment was
+removed." and the count says 1. By hand: ⋯ › Edit on the first comment opens it in place with Save and Cancel; saving
+it empty says "Write the comment first." and sends nothing; save a new text, reopen: the new text is there.
 
 **ORD-07 · The order's documents download**
 Smoke (part): `e2e/orders.spec.ts` checks that Order PDF, Remaining products PDF and Excel sheet in W00001's "⋯" answer a
@@ -555,7 +555,7 @@ list and in the detail.
 **ORD-26 · On a phone the orders are cards**
 Smoke (part): `e2e/orders.spec.ts` at 390 px: W00010 is a card, nothing scrolls sideways, a tap on the card opens the
 detail across the whole width.
-By hand at 390 px: each card is titled "W00010 · Jose Perez" with Source, Status, Created and Comments as labelled
+By hand at 390 px: each card is titled "W00010 · Jose Perez" with Source, Status, Created and Notes as labelled
 lines and the "⋯" at its top right; the status badge still opens its menu; Sync shop orders is behind More next to
 Create order; toasts sit above the tab bar.
 
@@ -752,6 +752,65 @@ With a shop whose keys cannot write (401) the health says `keys_read_only` at th
 <!-- shops-settings item 8 (comments-ui) adds ORD-38 – 44 here, smoke in e2e/comments.spec.ts: the timeline (author,
      date, the dateless W00003 comment marked approximate), Enter sends, pin, quick phrases, also send to the shop, shop
      notes, and ORD-44 by hand (390 px, dark, Spanish). -->
+
+The order's detail holds its comments as a timeline: the pinned comment first, in its own card with Unpin; then every
+comment oldest to newest with its author (a shop's note says "Shop · <shop>" with a store icon and "Shop note"), its
+date and time, the text as typed, "Quick phrase" or "Sent to the shop" when so, and a ⋯ (Pin / Unpin; Edit and Remove
+for comments written here). At the bottom of the panel, always in view: the quick phrases as chips, the write box
+"Write a note…" with Send, and, on an order from a shop connection, "Also send to <shop> as an order note". On the
+orders list the Comments column is **Notes**: the pinned comment's first line under a pin (the whole note on hover),
+else the count; either opens the detail on the comments.
+
+**ORD-38 · The timeline shows who wrote each comment and when; a dateless one shows the order's date, marked approximate**
+Smoke: `e2e/comments.spec.ts`.
+W00003's count opens its detail: "Comment for W00003" by Sergio Barbosa, its date shown as "≈ <the order's Created
+date and time>" with the hover text "Approximate date (the order's): written before comments had dates" (the fixtures
+leave that comment without a date). By hand: a comment written today shows today's date and time without "≈".
+
+**ORD-39 · Enter sends, Shift+Enter starts a line, and the box keeps the focus**
+Smoke: `e2e/comments.spec.ts`.
+In W00005's detail type a line, press Shift+Enter, type a second line: the box holds both lines and nothing is sent.
+Press Enter: the comment appears at the bottom with a short highlight, signed by you, dated now, both lines kept; the
+box is empty with the cursor still in it, and the list's count says 2. By hand: the Send button sends too and is off
+while the box is empty or blank; with the network off (DevTools › Offline) Enter says "Could not load this. Check your
+connection…" under the box and the text stays.
+
+**ORD-40 · A pinned comment is shown on top of the order and on its row; pinning another unpins it**
+Smoke: `e2e/comments.spec.ts`.
+In W00006's detail add two comments; ⋯ › Pin on the first: the toast "The comment is pinned to the order.", a "Pinned"
+card above the timeline holds it ("Pinned by Sergio Barbosa"), the order's header shows it on one line (a click
+scrolls to the comments), and the list's Notes cell shows its first line under a pin. Pin the second: the card and the
+Notes cell show the second only. Unpin in the card: the card goes and the Notes cell shows the count again. By hand: the
+list's "Pinned only" filter in Notes keeps the orders with a pinned comment.
+
+**ORD-41 · A quick phrase adds a dated comment in one tap**
+Smoke: `e2e/comments.spec.ts`.
+With an active phrase in Settings › Quick phrases, the detail's phrase bar shows it (active ones only, in their order);
+one tap adds it to the timeline at once, marked "Quick phrase", signed and dated now; the box is untouched. By hand: a
+long list of phrases scrolls sideways and never widens the panel at 390 px.
+
+**ORD-42 · On a shop's order, "Also send to the shop" sends the note to the shop**
+Smoke: `e2e/comments.spec.ts` (the fake shop).
+Post a signed order to the Fake shop's webhook (HOOK-03) and open it: the box offers "Also send to Fake shop as an
+order note" (an order typed here has no such checkbox). Tick it and send: the comment shows "Sent to the shop", the
+checkbox is cleared for the next note, and within seconds the fake shop's `writes` hold `{"call":"note"}` with the
+text. By hand: switch the connection's "Order notes" off and try again: the box says the order cannot send notes to
+its shop now, keeps the text and drops the checkbox (send it without the shop).
+
+**ORD-43 · The shop's notes come in with Check now, marked with the shop, among the others, once**
+Smoke: `e2e/comments.spec.ts` (the fake shop, through the API).
+Place a shop order (HOOK-03), add a comment to it, then give the fake shop a customer note on that order dated now and
+mark the order modified now; Check now twice. In the detail the note appears once, as "Shop · Fake shop", between
+the comment written before it and one written after (by date); the checkout note of the order is there too, as a shop
+note.
+
+**ORD-44 · The timeline at 390 px, dark, in Spanish** (by hand)
+At 390 × 844, dark theme, Español: open an order with a pinned comment, a shop note and a quick-phrase comment.
+"Comentarios", "Fijada" card with "Desfijar", "Tienda · <shop>" and "Nota de la tienda", "Frase rápida", "Enviado a la
+tienda", "≈" dates with their Spanish hover text; the box "Escriba una nota…", "Enviar", "Enviar también a <shop>
+como nota del pedido". The panel never scrolls sideways (the phrase chips scroll inside their bar), the write box stays
+at the bottom while the comments scroll, every button and chip is 44 px, Send works from the phone keyboard's Send key,
+the list's "Notas" cards show the pinned line, and every text is readable in dark. No raw key.
 
 ## 6. Invoices (INVC)
 
@@ -1287,5 +1346,5 @@ On each of the five lists: "Filtrar por <columna>" in the text filters, the list
 Últimos 7 días / Últimos 30 días / Este mes, Desde / Hasta, Mín. / Máx., Menos de $100 / Más de $500, the chips
 ("Estado: Creado, Procesado ×"), Quitar filtros, the pager ("1 – 25 de 1.240", Filas por página), the phone's
 "Filtros · N", Ordenar and "Mostrar N resultados"; the new labels País (Customers), Pago and Mostrador (Invoices),
-"Solo fijados" (Orders › Comments) and "Buscar clientes". No English string and no raw key is left.
+"Solo fijados" (Orders › Notas) and "Buscar clientes". No English string and no raw key is left.
 

@@ -72,7 +72,8 @@
     "address": "Dirección",
     "noAddress": "No hay una dirección registrada.",
     "products": "Productos",
-    "comments": "Comentarios"
+    "comments": "Comentarios",
+    "pinned": "Fijada"
   },
   "products": {
     "code": "Código",
@@ -80,19 +81,14 @@
     "quantity": "Cant. pedida",
     "empty": "Este pedido no tiene productos."
   },
-  "comments": {
-    "empty": "Este pedido aún no tiene comentarios.",
-    "label": "Comentario {{number}}",
-    "add": "Agregar un comentario",
-    "save": "Guardar el comentario {{number}}",
-    "remove": "Quitar el comentario {{number}}",
-    "blank": "Escriba el comentario o quítelo.",
-    "saved": "Los comentarios se guardaron."
-  },
   "errors": {
     "order_not_found": "Este pedido ya no existe. Recargue la lista.",
     "order_sync_unavailable": "La sincronización de pedidos de las tiendas aún no está disponible.",
     "order_sync_failed": "No se pudo conectar con las tiendas, así que no se importó ningún pedido. Intente de nuevo en un momento.",
     "validation_failed": "Se rechazó el cambio. Recargue el pedido e intente de nuevo."
+  },
+  "notes": {
+    "column": "Notas",
+    "pinnedOf": "Nota fijada del pedido {{code}}: {{text}}"
   }
 }

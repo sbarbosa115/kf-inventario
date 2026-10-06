@@ -192,22 +192,13 @@ function WarehouseOrders({
     },
     {
       key: 'comments',
-      header: t('orders.columns.comments'),
+      header: t('orders.notes.column'),
       render: (order) => (
-        <Button
-          size="sm"
-          variant="ghost"
-          icon="fa-comment"
-          aria-label={t('orders.commentsOf', {
-            code: order.code ?? order.id,
-            count: order.comments_count,
-          })}
-          onClick={() => onOpenDetail(order, 'comments')}
-        >
-          {order.comments_count}
-        </Button>
+        <NotesCell
+          order={order}
+          onOpen={() => onOpenDetail(order, 'comments')}
+        />
       ),
-      numeric: true,
       filter: {
         type: 'enum',
         field: 'pinned',
@@ -354,5 +345,42 @@ function CustomerCell({order}: {order: Order}) {
         <span className="kf-order-table__muted">{email}</span>
       )}
     </span>
+  );
+}
+
+/** The Notes column: the pinned comment's first line under a pin (the whole note in its title), else the count. */
+function NotesCell({order, onOpen}: {order: Order; onOpen: () => void}) {
+  const {t} = useTranslation();
+  const code = order.code ?? order.id;
+  const pinned = order.pinned_comment?.content;
+  if (pinned) {
+    return (
+      <button
+        type="button"
+        className="kf-order-table__pinned"
+        title={pinned}
+        aria-label={t('orders.notes.pinnedOf', {
+          code,
+          text: pinned.replace(/\s+/g, ' ').trim(),
+        })}
+        onClick={onOpen}
+      >
+        <i className="fas fa-thumbtack" aria-hidden="true" />
+        <span className="kf-order-table__pinned-text">
+          {pinned.split('\n')[0]}
+        </span>
+      </button>
+    );
+  }
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      icon="fa-comment"
+      aria-label={t('orders.commentsOf', {code, count: order.comments_count})}
+      onClick={onOpen}
+    >
+      {order.comments_count}
+    </Button>
   );
 }
