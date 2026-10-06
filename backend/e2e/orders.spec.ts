@@ -92,7 +92,7 @@ test.describe('5 Orders', () => {
       'Source',
       'Status',
       'Created',
-      'Comments',
+      'Notes',
     ]) {
       await expect(
         page.getByRole('columnheader', {name: header, exact: true}),
@@ -202,13 +202,16 @@ test.describe('5 Orders', () => {
       .getByRole('button', {name: 'Comments of order W00004: 1'})
       .click();
     const detail = page.getByRole('dialog', {name: 'Order W00004'});
-    await expect(detail.getByLabel('Comment 1', {exact: true})).toHaveValue(
-      'Comment for W00004',
-    );
-    await detail.getByRole('button', {name: 'Add a comment'}).click();
-    await detail.getByLabel('Comment 2', {exact: true}).fill('Smoke comment');
-    await detail.getByRole('button', {name: 'Save comment 2'}).click();
-    await expect(toast(page, 'The comments were saved.')).toBeVisible();
+    const timeline = detail.getByRole('list', {
+      name: 'Comments of order W00004',
+    });
+    await expect(timeline.getByRole('listitem')).toHaveText([
+      /Comment for W00004/,
+    ]);
+    const box = detail.getByRole('textbox', {name: 'Write a note…'});
+    await box.fill('Smoke comment');
+    await box.press('Enter');
+    await expect(timeline.getByRole('listitem')).toHaveCount(2);
     await expect(
       row.getByRole('button', {name: 'Comments of order W00004: 2'}),
     ).toBeAttached();
@@ -217,11 +220,19 @@ test.describe('5 Orders', () => {
     await row
       .getByRole('button', {name: 'Comments of order W00004: 2'})
       .click();
-    await expect(detail.getByLabel('Comment 2', {exact: true})).toHaveValue(
+    await expect(timeline.getByRole('listitem').nth(1)).toContainText(
       'Smoke comment',
     );
-    await detail.getByRole('button', {name: 'Remove comment 2'}).click();
-    await expect(detail.getByLabel('Comment 2', {exact: true})).toHaveCount(0);
+    await timeline
+      .getByRole('button', {name: 'Actions for comment 2'})
+      .click();
+    await page.getByRole('menuitem', {name: 'Remove'}).click();
+    await page
+      .getByRole('dialog', {name: 'Remove this comment?'})
+      .getByRole('button', {name: 'Remove'})
+      .click();
+    await expect(toast(page, 'The comment was removed.')).toBeVisible();
+    await expect(timeline.getByRole('listitem')).toHaveCount(1);
     await detail.getByRole('button', {name: 'Close'}).click();
     await expect(
       row.getByRole('button', {name: 'Comments of order W00004: 1'}),
