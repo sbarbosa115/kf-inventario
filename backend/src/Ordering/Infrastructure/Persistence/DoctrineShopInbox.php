@@ -22,8 +22,8 @@ final class DoctrineShopInbox implements ShopInbox
             ->leftJoin('d.order', 'o')
             ->where('d.connection = :connection')
             ->setParameter('connection', $connection)
-            ->orderBy('d.receivedAt', 'DESC')
-            ->addOrderBy('d.id', 'DESC')
+            ->orderBy('d.receivedAt', \SortDirection::Descending)
+            ->addOrderBy('d.id', \SortDirection::Descending)
             ->getQuery()
             ->getResult();
 

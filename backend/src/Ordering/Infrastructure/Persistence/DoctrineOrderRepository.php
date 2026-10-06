@@ -81,7 +81,7 @@ final class DoctrineOrderRepository implements OrderRepository, OrderList
             ->innerJoin('o.warehouse', 'w')
             ->where('w.id = :warehouse')
             ->setParameter('warehouse', $warehouseId)
-            ->orderBy('o.id', 'DESC')
+            ->orderBy('o.id', \SortDirection::Descending)
             ->getQuery()
             ->getResult();
 

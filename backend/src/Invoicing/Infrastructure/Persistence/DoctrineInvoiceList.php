@@ -38,7 +38,7 @@ final class DoctrineInvoiceList implements InvoiceList
                 ->leftJoin('it.product', 'p')
                 ->where('i.id IN (:ids)')
                 ->setParameter('ids', $ids)
-                ->orderBy('it.id', 'ASC')
+                ->orderBy('it.id', \SortDirection::Ascending)
                 ->getQuery()
                 ->getResult();
         }
