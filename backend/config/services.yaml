@@ -8,8 +8,6 @@ parameters:
   test: 'en'
   # The printer email of a new order (Ordering): who else gets a copy.
   ordering.order_email.cc: ['sales@klassicfab.com']
-  # The legacy webhook's printed warehouse (while the legacy URL is active). Per-connection webhooks use the connection's printer switch instead.
-  ordering.webhook_email_warehouse_id: '%env(int:ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID)%'
   mailer:
     from_address: '%env(MAILER_FROM_ADDRESS)%'
     from_name: '%env(MAILER_FROM_NAME)%'
@@ -48,11 +46,6 @@ services:
       - '../src/Shared/UI/Http/ApiResponse.php'
       # Needs NelmioApiDocBundle, which only dev and test install: registered below for those.
       - '../src/Shared/UI/Http/OpenApi/'
-
-  # The webhook prints the orders of one warehouse only.
-  App\Ordering\Application\Command\ImportShopOrderHandler:
-    arguments:
-      $printedWarehouseId: '%ordering.webhook_email_warehouse_id%'
 
   # Settings › Email, with the env as the fallback of each value (docs/pdr/prd-shops-settings.md, Decisions 3). The
   # order email reads it through Ordering's OrderEmailSettings port.

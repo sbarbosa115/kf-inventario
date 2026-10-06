@@ -9,7 +9,7 @@ use App\Tests\Support\SignsIn;
 /**
  * The settings endpoints item 0 of shops-settings builds for the Settings shell (docs/pdr/prd-shops-settings.md,
  * Decisions: coordinator note 0.4): the analytics IDs every signed-in page reads, where email leaves from, and the
- * legacy webhook switch of the General tab. Item 3 (settings-api) builds the rest of /settings.
+ * hits on the old webhook URL (read-only: the URL is a tombstone). Item 3 (settings-api) builds the rest of /settings.
  */
 final class SettingsShellApiTest extends ApiTestCase
 {
@@ -39,21 +39,17 @@ final class SettingsShellApiTest extends ApiTestCase
         self::assertArrayNotHasKey('dsn', $email);
     }
 
-    public function testTheLegacyWebhookSwitchIsOnUntilTurnedOffWhichRestartsItsCounter(): void
+    public function testTheOldWebhookUrlsHitsAreReadOnly(): void
     {
         $this->signInAs(['ROLE_ADMIN']);
         $this->save(
             new AppSetting('webhooks.legacy_hits', '7', false, new \DateTimeImmutable()),
         );
 
-        self::assertSame(['legacy_enabled' => true, 'legacy_hits_since' => 7, 'legacy_last_hit_at' => null], $this->getJson('/api/v1/settings/webhooks'));
+        self::assertSame(['legacy_hits' => 7, 'legacy_last_hit_at' => null], $this->getJson('/api/v1/settings/webhooks'));
 
-        $off = $this->sendJson('PUT', '/api/v1/settings/webhooks', ['legacy_enabled' => false]);
-
-        $this->assertStatus(200);
-        self::assertSame(['legacy_enabled' => false, 'legacy_hits_since' => 0, 'legacy_last_hit_at' => null], $off);
-        $this->sendJson('PUT', '/api/v1/settings/webhooks', ['legacy_enabled' => 'nope']);
-        $this->assertStatus(422);
+        $this->sendJson('PUT', '/api/v1/settings/webhooks', ['legacy_enabled' => false]);
+        $this->assertStatus(405, 'No switch any more: the old URL is a tombstone.');
     }
 
     public function testOnlyAnAdminReadsOrChangesThem(): void
@@ -62,7 +58,7 @@ final class SettingsShellApiTest extends ApiTestCase
 
         $this->getJson('/api/v1/settings/email');
         $this->assertStatus(403);
-        $this->sendJson('PUT', '/api/v1/settings/webhooks', ['legacy_enabled' => false]);
+        $this->getJson('/api/v1/settings/webhooks');
         $this->assertStatus(403);
     }
 }

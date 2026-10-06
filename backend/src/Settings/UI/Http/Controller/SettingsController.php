@@ -5,7 +5,6 @@ namespace App\Settings\UI\Http\Controller;
 use App\Identity\Domain\Model\User;
 use App\Settings\Application\Command\SaveAnalyticsSettings;
 use App\Settings\Application\Command\SaveEmailSettings;
-use App\Settings\Application\Command\SaveWebhookSettings;
 use App\Settings\Application\Command\SendTestEmail;
 use App\Settings\Application\Command\SentTestEmail;
 use App\Settings\Application\Query\AnalyticsSettings;
@@ -14,7 +13,6 @@ use App\Settings\Application\Query\WebhookSettings;
 use App\Settings\UI\Http\Input\AnalyticsSettingsInput;
 use App\Settings\UI\Http\Input\EmailSettingsInput;
 use App\Settings\UI\Http\Input\TestEmailInput;
-use App\Settings\UI\Http\Input\WebhookSettingsInput;
 use App\Settings\UI\Http\Output\AnalyticsSettingsOutput;
 use App\Settings\UI\Http\Output\EmailSettingsOutput;
 use App\Settings\UI\Http\Output\EmailSourcesOutput;
@@ -31,8 +29,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Settings (docs/pdr/prd-shops-settings.md, "API changes" › Settings): the admin's email, analytics and webhook
- * settings, and the analytics IDs every signed-in page reads. Every change is in the activity log by key, never by
+ * Settings (docs/pdr/prd-shops-settings.md, "API changes" › Settings): the admin's email and analytics
+ * settings, the hits on the old webhook URL, and the analytics IDs every signed-in page reads. Every change is in the activity log by key, never by
  * value.
  */
 final class SettingsController extends AbstractController
@@ -144,28 +142,13 @@ final class SettingsController extends AbstractController
     }
 
     /**
-     * The legacy webhook URL's switch (on until turned off: Decisions 8) and the hits it took since it was turned off.
+     * The hits on the old webhook URL since the deploy (read-only: it is a 410 tombstone; a hit is a shop not re-pointed).
      */
     #[Route('/api/v1/settings/webhooks', name: 'api_settings_webhooks', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     #[ApiResponse(WebhookSettingsOutput::class)]
     public function webhooks(): JsonResponse
     {
-        return $this->json($this->webhooksOutput());
-    }
-
-    /**
-     * WebhookSettingsInput: turns the legacy webhook URL off (410 from then on; its counter starts at 0) or on.
-     */
-    #[Route('/api/v1/settings/webhooks', name: 'api_settings_webhooks_save', methods: ['PUT'])]
-    #[IsGranted('ROLE_ADMIN')]
-    #[ApiResponse(WebhookSettingsOutput::class)]
-    public function saveWebhooks(Request $request): JsonResponse
-    {
-        $input = $this->inputs->map($this->inputs->json($request), WebhookSettingsInput::class);
-
-        $this->commands->dispatch(new SaveWebhookSettings((bool) $input->legacyEnabled, $this->actorId()));
-
         return $this->json($this->webhooksOutput());
     }
 
@@ -199,7 +182,7 @@ final class SettingsController extends AbstractController
     {
         $legacy = $this->webhooks->legacy();
 
-        return new WebhookSettingsOutput($legacy->enabled, $legacy->hitsSince, $legacy->lastHitAt?->format(\DATE_ATOM));
+        return new WebhookSettingsOutput($legacy->hits, $legacy->lastHitAt?->format(\DATE_ATOM));
     }
 
     private function actorId(): ?int

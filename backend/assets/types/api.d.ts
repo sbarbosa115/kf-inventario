@@ -961,10 +961,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The legacy webhook URL's switch (on until turned off: Decisions 8) and the hits it took since it was turned off. */
+        /** The hits on the old webhook URL since the deploy (read-only: it is a 410 tombstone; a hit is a shop not re-pointed). */
         get: operations["get_api_settings_webhooks"];
-        /** WebhookSettingsInput: turns the legacy webhook URL off (410 from then on; its counter starts at 0) or on. */
-        put: operations["put_api_settings_webhooks_save"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1464,8 +1463,7 @@ export interface components {
             clarity_project_id?: string | null;
         };
         WebhookSettingsOutput: {
-            legacy_enabled: boolean;
-            legacy_hits_since: number;
+            legacy_hits: number;
             /** ISO 8601 */
             legacy_last_hit_at?: string | null;
         };
@@ -2993,26 +2991,6 @@ export interface operations {
         };
     };
     get_api_settings_webhooks: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WebhookSettingsOutput"];
-                };
-            };
-        };
-    };
-    put_api_settings_webhooks_save: {
         parameters: {
             query?: never;
             header?: never;

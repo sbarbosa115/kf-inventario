@@ -16,9 +16,7 @@ final class SettingKey
     public const EMAIL_CC = 'email.cc';
     public const ANALYTICS_GA4_ID = 'analytics.ga4_id';
     public const ANALYTICS_CLARITY_ID = 'analytics.clarity_id';
-    /** "1"/"0"; no row = on (Decisions 8: the legacy URL keeps working after the deploy). */
-    public const WEBHOOKS_LEGACY_ENABLED = 'webhooks.legacy_enabled';
-    /** Hits on the legacy URL since it was turned off, and the last one. */
+    /** Hits on the old webhook URL (a 410 tombstone) since the deploy, and the last one. */
     public const WEBHOOKS_LEGACY_HITS = 'webhooks.legacy_hits';
     public const WEBHOOKS_LEGACY_LAST_HIT_AT = 'webhooks.legacy_last_hit_at';
     /** When the catch-up pull last ran over the connections (app:shops:pull). */

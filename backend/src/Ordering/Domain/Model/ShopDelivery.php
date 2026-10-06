@@ -5,7 +5,7 @@ namespace App\Ordering\Domain\Model;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * The failed-deliveries inbox: a shop order the app received (webhook, pull, the legacy URL) and could not place,
+ * The failed-deliveries inbox: a shop order the app received (webhook, pull) and could not place,
  * with its body, so an admin fixes the cause and presses Retry. Placed deliveries are not stored (the order and its
  * link are the record); a refused signature keeps no body (docs/pdr/prd-shops-settings.md, Decisions 7).
  */
@@ -16,6 +16,7 @@ class ShopDelivery
 {
     public const KIND_WEBHOOK = 'webhook';
     public const KIND_PULL = 'pull';
+    /** Rows the removed legacy webhook URL kept: still listed, no longer written. */
     public const KIND_LEGACY = 'legacy';
 
     public const STATUS_PLACED = 'placed';

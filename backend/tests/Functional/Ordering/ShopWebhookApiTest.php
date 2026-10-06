@@ -2,6 +2,9 @@
 
 namespace App\Tests\Functional\Ordering;
 
+use App\Customers\Domain\Model\Country;
+use App\Customers\Domain\Model\Customer;
+use App\Customers\Domain\Model\CustomerAddress;
 use App\Ordering\Domain\Model\Comment;
 use App\Ordering\Domain\Model\Order;
 use App\Ordering\Domain\Model\OrderCommentMeta;
@@ -77,7 +80,7 @@ final class ShopWebhookApiTest extends ApiTestCase
         $this->deliver(self::tokenOf($connection), self::shopOrder(5601), (string) $connection['webhook_secret']);
 
         $this->assertStatus(200);
-        self::assertEmailCount(1, message: 'A printing connection emails the printer, whatever ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID says.');
+        self::assertEmailCount(1, message: 'A printing connection emails the printer, whatever its warehouse.');
         $email = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $email);
         self::assertSame('Order #5601 was created', $email->getSubject());
@@ -155,6 +158,58 @@ final class ShopWebhookApiTest extends ApiTestCase
         self::assertSame([], $this->deliveries(), 'A duplicate stores nothing (Decisions 6).');
     }
 
+    /**
+     * Moved from the legacy webhook's tests when it was removed: how a shop order becomes a customer.
+     */
+    public function testTheCustomerIsPlacedWithBillingAndShippingAddresses(): void
+    {
+        $warehouse = $this->aWarehouse();
+        $this->aProduct('KF-01', $warehouse);
+        $this->aProduct('KF-02', $warehouse);
+        $connection = $this->aConnection($warehouse, ['email_printer' => false]);
+
+        $this->deliver(self::tokenOf($connection), self::shopOrder(5511), (string) $connection['webhook_secret']);
+
+        $this->assertStatus(200);
+        $this->em()->clear();
+        $order = $this->em()->getRepository(Order::class)->findOneBy(['code' => '5511']);
+        self::assertNotNull($order);
+        self::assertSame(Order::STATUS_CREATED, $order->getStatus());
+        self::assertSame(Order::PAYMENT_CREDIT_CARD, $order->getPaymentMethod());
+        self::assertSame([['KF-01', 2], ['KF-02', 1]], array_map(static fn ($line) => [$line->getProduct()?->getCode(), $line->getQuantity()], $order->getOrderProducts()->toArray()), 'Line items by SKU.');
+        $customer = $order->getCustomer();
+        self::assertInstanceOf(Customer::class, $customer);
+        self::assertSame(['ana@example.com', 'Ana', 'Gomez', '555-0100'], [$customer->getEmail(), $customer->getFirstName(), $customer->getLastName(), $customer->getPhone()]);
+        $addresses = $customer->getAddresses()->toArray();
+        self::assertCount(2, $addresses, 'Billing and shipping, two addresses.');
+        // The shop sends state and country codes: Customers' rule (CustomerRegistry) finds the existing state and
+        // country by code instead of creating a "FL" state and a "US" country beside them.
+        self::assertSame([CustomerAddress::ADDRESS_BILLING, '1 Billing St', '33101', 'Miami', 'Florida', 'United States'], self::address($addresses[0]));
+        self::assertSame([CustomerAddress::ADDRESS_SHIPPING, '2 Shipping Ave', '10001', 'New York', 'New York', 'United States'], self::address($addresses[1]));
+        self::assertSame(1, $this->em()->getRepository(Country::class)->count(['code' => 'US']), 'No second United States is created.');
+    }
+
+    public function testAnOrderDeletedInTheAppIsNotBroughtBackByTheWebhook(): void
+    {
+        $warehouse = $this->aWarehouse();
+        $this->aProduct('KF-01', $warehouse);
+        $this->aProduct('KF-02', $warehouse);
+        $connection = $this->aConnection($warehouse, ['email_printer' => false]);
+        $this->deliver(self::tokenOf($connection), self::shopOrder(5802), (string) $connection['webhook_secret']);
+        $this->em()->clear();
+        $order = $this->em()->getRepository(Order::class)->findOneBy(['code' => '5802']);
+        self::assertNotNull($order);
+        $this->em()->remove($order);
+        $this->em()->flush();
+
+        $this->deliver(self::tokenOf($connection), self::shopOrder(5802), (string) $connection['webhook_secret']);
+
+        $this->assertStatus(200);
+        $this->em()->clear();
+        $this->em()->getFilters()->disable('softdeleteable');
+        self::assertSame(1, $this->em()->getRepository(Order::class)->count(['code' => '5802']), 'Deleted orders count as existing (RemoteOrderKey), as for the pull.');
+    }
+
     public function testABodyOverOneMegabyteIsRefusedBeforeParsing(): void
     {
         $connection = $this->aConnection($this->aWarehouse());
@@ -180,5 +235,13 @@ final class ShopWebhookApiTest extends ApiTestCase
 
         self::assertSame([], $this->deliveries());
         self::assertNotNull($this->connection($connection['id'])->lastWebhookAt(), 'The ping shows the shop reaches its connection.');
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private static function address(CustomerAddress $address): array
+    {
+        return [$address->getAddressType(), $address->getAddress(), $address->getZipCode(), $address->getCity()?->getName(), $address->getCity()?->getState()?->getName(), $address->getCity()?->getState()?->getCountry()?->getName()];
     }
 }

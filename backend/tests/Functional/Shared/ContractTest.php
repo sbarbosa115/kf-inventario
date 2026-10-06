@@ -71,7 +71,6 @@ final class ContractTest extends ApiTestCase
         yield 'GET /api/v1/settings/analytics' => ['GET', '/api/v1/settings/analytics', 'ROLE_ADMIN', 'ss-3'];
         yield 'PUT /api/v1/settings/analytics' => ['PUT', '/api/v1/settings/analytics', 'ROLE_ADMIN', 'ss-3'];
         yield 'GET /api/v1/settings/webhooks' => ['GET', '/api/v1/settings/webhooks', 'ROLE_ADMIN', 'ss-0'];
-        yield 'PUT /api/v1/settings/webhooks' => ['PUT', '/api/v1/settings/webhooks', 'ROLE_ADMIN', 'ss-0'];
         yield 'GET /api/v1/settings/quick-phrases' => ['GET', '/api/v1/settings/quick-phrases', 'ROLE_USER', 'ss-3'];
         yield 'POST /api/v1/settings/quick-phrases' => ['POST', '/api/v1/settings/quick-phrases', 'ROLE_ADMIN', 'ss-3'];
         yield 'PUT /api/v1/settings/quick-phrases/order' => ['PUT', '/api/v1/settings/quick-phrases/order', 'ROLE_ADMIN', 'ss-3'];
@@ -109,6 +108,19 @@ final class ContractTest extends ApiTestCase
             $this->client->request($method, '/webhooks/shops/'.str_repeat('ab', 32), server: ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'], content: '{}');
 
             $this->assertStatus(404, "{$method} /webhooks/shops/{token} is public (no sign-in): an unknown token is not found.");
+        }
+    }
+
+    /**
+     * The old webhook URL is a public tombstone (the legacy webhook was removed, 2026-10-06): 410 for POST and GET,
+     * no sign-in, never the SPA (WebhookApiTest covers the rest).
+     */
+    public function testTheOldWebhookUrlIsAPublicTombstone(): void
+    {
+        foreach (['POST', 'GET'] as $method) {
+            $this->client->request($method, '/admin/order/1H39j0jpQPsWL958v9R4', server: ['CONTENT_TYPE' => 'application/json'], content: '{}');
+
+            $this->assertStatus(410, "{$method} on the old webhook URL answers 410 webhook_moved.");
         }
     }
 

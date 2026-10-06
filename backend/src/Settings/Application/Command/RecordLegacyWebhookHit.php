@@ -2,7 +2,7 @@
 
 namespace App\Settings\Application\Command;
 
-/** A shop posted to the legacy URL after it was turned off. */
+/** Something reached the old webhook URL (the 410 tombstone). */
 final readonly class RecordLegacyWebhookHit
 {
 }

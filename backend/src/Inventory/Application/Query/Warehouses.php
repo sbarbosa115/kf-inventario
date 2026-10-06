@@ -30,12 +30,4 @@ final class Warehouses
     {
         return $this->warehouses->get($id);
     }
-
-    /**
-     * The warehouse whose shop sends orders from this address (the webhook's X-WC-Webhook-Source), if any.
-     */
-    public function byWebhookSource(string $source): ?Warehouse
-    {
-        return $this->warehouses->findByUrl($source);
-    }
 }

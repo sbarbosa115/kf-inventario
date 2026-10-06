@@ -6,7 +6,7 @@ use App\Identity\Domain\Model\User;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * One setting the admin changed in Settings (email.dsn, analytics.ga4_id, webhooks.legacy_enabled…). An empty value
+ * One setting the admin changed in Settings (email.dsn, analytics.ga4_id, webhooks.legacy_hits…). An empty value
  * means "not set here": the env fallback applies (docs/pdr/prd-shops-settings.md, Decisions 3). A secret is stored
  * sealed (SecretBox: "v1:" + base64(nonce‖box)) and flagged `encrypted`.
  */

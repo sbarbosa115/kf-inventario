@@ -16,9 +16,4 @@ interface WarehouseRepository
      * @return list<Warehouse> by id
      */
     public function all(): array;
-
-    /**
-     * The warehouse whose shop sends its WooCommerce orders from this address (one of Warehouse::$urls).
-     */
-    public function findByUrl(string $url): ?Warehouse;
 }

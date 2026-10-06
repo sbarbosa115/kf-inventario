@@ -31,8 +31,7 @@ use Psr\Log\LoggerInterface;
  *
  * Through a connection, the placed order is linked to it (shop_order_link: the order names its shop), the
  * customer's checkout note becomes a `shop` comment (customer notes only: Open questions, answer 2), and the
- * connection's health records the import or the failure. Without one (the legacy URL for a shop with no connection
- * yet) the order is placed as before, unlinked.
+ * connection's health records the import or the failure.
  */
 final class ShopOrderImport
 {
@@ -51,13 +50,12 @@ final class ShopOrderImport
     }
 
     /**
-     * @param ShopConnection|null $connection null: the legacy URL, for a shop that has no connection
-     * @param string              $kind       ShopDelivery::KIND_* (where the order came from)
-     * @param mixed               $shopOrder  the decoded JSON
-     * @param string              $payload    the body as received, kept when it cannot be placed
-     * @param ShopDelivery|null   $retrying   the inbox row being retried: updated instead of a new one
+     * @param string            $kind      ShopDelivery::KIND_* (where the order came from)
+     * @param mixed             $shopOrder the decoded JSON
+     * @param string            $payload   the body as received, kept when it cannot be placed
+     * @param ShopDelivery|null $retrying  the inbox row being retried: updated instead of a new one
      */
-    public function import(?ShopConnection $connection, int $warehouseId, bool $notifyPrinter, string $kind, mixed $shopOrder, string $payload, string $from, ?ShopDelivery $retrying = null): ShopImportResult
+    public function import(ShopConnection $connection, int $warehouseId, bool $notifyPrinter, string $kind, mixed $shopOrder, string $payload, string $from, ?ShopDelivery $retrying = null): ShopImportResult
     {
         if (!\is_array($shopOrder)) {
             return $this->fail($connection, $kind, null, ShopDelivery::REASON_NOT_AN_ORDER, 'The body is not a WooCommerce order (no JSON object).', $payload, $from, $retrying);
@@ -104,7 +102,7 @@ final class ShopOrderImport
         $orderId = ($this->placeOrder)($placeOrder);
         $now = $this->clock->now();
         $order = $this->orders->get($orderId);
-        if (null !== $connection && null !== $remoteId) {
+        if (null !== $remoteId) {
             $status = \is_string($shopOrder['status'] ?? null) ? $shopOrder['status'] : null;
             $this->links->add(new ShopOrderLink($order, $connection, $remoteId, $status, $now));
             $note = \is_string($shopOrder['customer_note'] ?? null) ? trim($shopOrder['customer_note']) : '';
@@ -116,17 +114,17 @@ final class ShopOrderImport
                 $this->commentMeta->add(new OrderCommentMeta($comment, OrderCommentMeta::ORIGIN_SHOP, $connection));
             }
         }
-        $connection?->recordImport($now);
+        $connection->recordImport($now);
         $retrying?->placed($order, $now);
 
         return ShopImportResult::placed($orderId);
     }
 
     /**
-     * Keeps a delivery the caller already knows it cannot place (a refused signature, an inactive connection, no
-     * warehouse for the legacy URL) in the inbox.
+     * Keeps a delivery the caller already knows it cannot place (a refused signature, an inactive connection) in
+     * the inbox.
      */
-    public function keep(?ShopConnection $connection, string $kind, ?string $remoteId, string $reasonCode, string $reason, ?string $payload): ShopDelivery
+    public function keep(ShopConnection $connection, string $kind, ?string $remoteId, string $reasonCode, string $reason, ?string $payload): ShopDelivery
     {
         $delivery = new ShopDelivery($connection, $kind, $remoteId, $reasonCode, $reason, $payload, $this->clock->now());
         $this->deliveries->add($delivery);
@@ -137,16 +135,14 @@ final class ShopOrderImport
     /**
      * @return int|false|null false: not in the app; null: in the app (by its code, no link); the linked order's id
      */
-    private function duplicate(?ShopConnection $connection, int $warehouseId, ?string $remoteId): int|false|null
+    private function duplicate(ShopConnection $connection, int $warehouseId, ?string $remoteId): int|false|null
     {
         if (null === $remoteId) {
             return false;
         }
-        if (null !== $connection) {
-            $link = $this->links->byRemoteOrder($connection, $remoteId);
-            if (null !== $link) {
-                return (int) $link->order()->getId();
-            }
+        $link = $this->links->byRemoteOrder($connection, $remoteId);
+        if (null !== $link) {
+            return (int) $link->order()->getId();
         }
         $key = RemoteOrderKey::ofOrder($warehouseId, $remoteId);
         foreach ($this->importedCodes->of($warehouseId) as $code) {
@@ -159,7 +155,7 @@ final class ShopOrderImport
         return false;
     }
 
-    private function fail(?ShopConnection $connection, string $kind, ?string $remoteId, string $reasonCode, string $reason, string $payload, string $from, ?ShopDelivery $retrying): ShopImportResult
+    private function fail(ShopConnection $connection, string $kind, ?string $remoteId, string $reasonCode, string $reason, string $payload, string $from, ?ShopDelivery $retrying): ShopImportResult
     {
         $now = $this->clock->now();
         $this->logger->error(\sprintf('WooCommerce order [%s] from [%s] was not placed: %s', $remoteId ?? '?', $from, $reason));
@@ -168,7 +164,7 @@ final class ShopOrderImport
         } else {
             $retrying->failedAgain($reasonCode, $reason, $now);
         }
-        $connection?->recordFailure($now, $reasonCode, $reason);
+        $connection->recordFailure($now, $reasonCode, $reason);
 
         return ShopImportResult::failed($reasonCode);
     }

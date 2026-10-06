@@ -1859,24 +1859,8 @@
         },
         "/api/v1/settings/webhooks": {
             "get": {
-                "summary": "The legacy webhook URL's switch (on until turned off: Decisions 8) and the hits it took since it was turned off.",
+                "summary": "The hits on the old webhook URL since the deploy (read-only: it is a 410 tombstone; a hit is a shop not re-pointed).",
                 "operationId": "get_api_settings_webhooks",
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/WebhookSettingsOutput"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "summary": "WebhookSettingsInput: turns the legacy webhook URL off (410 from then on; its counter starts at 0) or on.",
-                "operationId": "put_api_settings_webhooks_save",
                 "responses": {
                     "200": {
                         "description": "OK.",
@@ -3527,14 +3511,10 @@
             },
             "WebhookSettingsOutput": {
                 "required": [
-                    "legacy_enabled",
-                    "legacy_hits_since"
+                    "legacy_hits"
                 ],
                 "properties": {
-                    "legacy_enabled": {
-                        "type": "boolean"
-                    },
-                    "legacy_hits_since": {
+                    "legacy_hits": {
                         "type": "integer"
                     },
                     "legacy_last_hit_at": {

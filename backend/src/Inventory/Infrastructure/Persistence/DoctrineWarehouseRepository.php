@@ -25,15 +25,4 @@ final class DoctrineWarehouseRepository implements WarehouseRepository
 
         return $warehouses;
     }
-
-    public function findByUrl(string $url): ?Warehouse
-    {
-        foreach ($this->all() as $warehouse) {
-            if (\in_array($url, $warehouse->getUrls(), true)) {
-                return $warehouse;
-            }
-        }
-
-        return null;
-    }
 }
