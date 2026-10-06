@@ -11,7 +11,6 @@ use App\Shared\Application\Query\ListField;
 use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\ApiValidationException;
-use App\Shared\UI\Http\InMemoryList;
 use App\Shared\UI\Http\InputMapper;
 use App\Shared\UI\Http\ListQueryParser;
 use App\Shared\UI\Http\Output\PageOutput;
@@ -55,7 +54,8 @@ final class CustomerController extends AbstractController
 
     /**
      * A page of customers, newest first: the list contract (q over first/last name, email, phone and city; filters
-     * name, email, phone, city, country[] (country ids, any address); sorts name, email, city).
+     * name, email, phone, city (the first address's), country[] (country ids, any address); sorts name, email, city;
+     * facet of country).
      */
     #[Route('/api/v1/customers', name: 'api_customers_page', methods: ['GET'])]
     #[IsGranted('ROLE_MANAGE_CUSTOMERS')]
@@ -64,25 +64,9 @@ final class CustomerController extends AbstractController
     {
         $query = $this->lists->parse($request, self::listSchema());
 
-        // Item 0's walking skeleton: filtered in memory; item 1 (list-api) moves it into SQL.
-        $name = static fn (CustomerOutput $c): string => trim(($c->firstName ?? '').' '.($c->lastName ?? ''));
-        $city = static fn (CustomerOutput $c): ?string => ($c->addresses[0] ?? null)?->city?->name;
-        $page = InMemoryList::page(
-            array_map(CustomerOutput::of(...), $this->customers->all()),
-            $query,
-            [
-                'id' => static fn (CustomerOutput $c) => $c->id,
-                'name' => $name,
-                'email' => static fn (CustomerOutput $c) => $c->email,
-                'phone' => static fn (CustomerOutput $c) => $c->phone,
-                'city' => $city,
-                'country' => static fn (CustomerOutput $c) => array_values(array_unique(array_filter(array_map(static fn ($a): ?string => null === $a->city ? null : (string) $a->city->state->country->id, $c->addresses)))),
-            ],
-            [$name, static fn (CustomerOutput $c) => $c->email, static fn (CustomerOutput $c) => $c->phone, $city],
-            static fn (CustomerOutput $c) => $c->id,
-        );
+        $page = $this->customers->list($query);
 
-        return $this->json(PageOutput::of($page, $query, static fn (CustomerOutput $c) => $c));
+        return $this->json(PageOutput::of($page, $query, CustomerOutput::of(...)));
     }
 
     /**

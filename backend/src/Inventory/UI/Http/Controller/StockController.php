@@ -21,7 +21,6 @@ use App\Shared\Application\Command\CommandBus;
 use App\Shared\Application\Query\ListField;
 use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
-use App\Shared\UI\Http\InMemoryList;
 use App\Shared\UI\Http\InputMapper;
 use App\Shared\UI\Http\ListQueryParser;
 use App\Shared\UI\Http\Output\PageOutput;
@@ -66,8 +65,8 @@ final class StockController extends AbstractController
     /**
      * A page of the warehouse's stock rows with `status` (1 in stock, default; 0 incoming): the list contract (q over
      * code, title and detail; filters code, title, detail, quantity, price, in_stock; sorts code, title, quantity,
-     * price; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row the filters keep.
-     * 404 warehouse_not_found.
+     * price; facet of in_stock; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row
+     * the filters keep, whatever the page. 404 warehouse_not_found.
      */
     #[Route('/api/v1/warehouses/{id}/stock', name: 'api_stock_list', methods: ['GET'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_MANAGE_INVENTORY')]
@@ -77,25 +76,10 @@ final class StockController extends AbstractController
         $status = $request->query->getInt('status', ProductWarehouse::STATUS_CONFIRMED);
         $query = $this->lists->parse($request, self::listSchema());
 
-        // Item 0's walking skeleton: filtered in memory; item 1 (list-api) moves it into SQL.
-        $rows = array_map(self::output(...), $this->stock->ofWarehouse($id, $status));
-        $fields = [
-            'code' => static fn (StockOutput $r) => $r->code,
-            'title' => static fn (StockOutput $r) => $r->title,
-            'detail' => static fn (StockOutput $r) => $r->detail,
-            'quantity' => static fn (StockOutput $r) => $r->quantity,
-            'price' => static fn (StockOutput $r) => $r->price,
-            'in_stock' => static fn (StockOutput $r) => $r->quantity > 0 ? 'yes' : 'no',
-        ];
-        $search = [static fn (StockOutput $r) => $r->code, static fn (StockOutput $r) => $r->title, static fn (StockOutput $r) => $r->detail];
-        $page = InMemoryList::page($rows, $query, $fields, $search, static fn (StockOutput $r) => $r->id);
-        $all = InMemoryList::page($rows, new \App\Shared\Application\Query\ListQuery(1, 0, null, $query->q, $query->filters, []), $fields, $search, static fn (StockOutput $r) => $r->id);
-        $totals = new StockTotalsOutput(
-            array_sum(array_map(static fn (StockOutput $r) => $r->quantity, $all->items)),
-            round(array_sum(array_map(static fn (StockOutput $r) => $r->quantity * ($r->price ?? 0.0), $all->items)), 2),
-        );
+        $page = $this->stock->page($id, $status, $query);
+        $totals = $this->stock->totals($id, $status, $query);
 
-        return $this->json(PageOutput::of($page, $query, static fn (StockOutput $r) => $r, $totals));
+        return $this->json(PageOutput::of($page, $query, self::output(...), new StockTotalsOutput($totals['units'], $totals['value'])));
     }
 
     /**

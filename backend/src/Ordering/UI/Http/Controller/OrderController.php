@@ -31,10 +31,10 @@ use App\Ordering\UI\Http\Output\ShopsSyncResultOutput;
 use App\Ordering\UI\Http\Output\SyncResultOutput;
 use App\Shared\Application\Command\CommandBus;
 use App\Shared\Application\Query\ListField;
+use App\Shared\Application\Query\ListPage;
 use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\ApiValidationException;
-use App\Shared\UI\Http\InMemoryList;
 use App\Shared\UI\Http\InputMapper;
 use App\Shared\UI\Http\ListQueryParser;
 use App\Shared\UI\Http\Output\PageOutput;
@@ -81,8 +81,9 @@ final class OrderController extends AbstractController
 
     /**
      * `warehouse_id` (required): a page of that warehouse's orders, newest first — the list contract (q over code,
-     * customer name and email; filters code, customer, status[] 1–6, source[] phone|web|shop:<id>, created_at,
-     * pinned[] 1; sorts code, customer, status, created_at; facets of status and source).
+     * customer name and email; filters code, customer (name or email), status[] 1–6, source[] phone|web|shop:<id>
+     * (web: a web order no connection brought), created_at, pinned[] 1; sorts code, customer, status, created_at;
+     * facets of status, source and pinned).
      */
     #[Route('/api/v1/orders', name: 'api_orders_list', methods: ['GET'])]
     #[IsGranted('ROLE_CAN_READ_ORDERS')]
@@ -95,24 +96,9 @@ final class OrderController extends AbstractController
         }
         $query = $this->lists->parse($request, self::listSchema());
 
-        // Item 0's walking skeleton: filtered in memory; item 1 (list-api) moves it into SQL.
-        $customer = static fn (OrderOutput $o): string => null === $o->customer ? '' : trim(($o->customer->firstName ?? '').' '.($o->customer->lastName ?? ''));
-        $page = InMemoryList::page(
-            $this->presenter->orders($this->orders->ofWarehouse($warehouseId)),
-            $query,
-            [
-                'code' => static fn (OrderOutput $o) => $o->code,
-                'customer' => static fn (OrderOutput $o) => trim($customer($o).' '.($o->customer->email ?? '')),
-                'status' => static fn (OrderOutput $o) => (string) $o->status,
-                'source' => static fn (OrderOutput $o) => null !== $o->shop ? 'shop:'.$o->shop->id : (Order::SOURCE_PHONE === $o->source ? 'phone' : 'web'),
-                'created_at' => static fn (OrderOutput $o) => null === $o->createdAt ? null : new \DateTimeImmutable($o->createdAt),
-                'pinned' => static fn (OrderOutput $o) => null === $o->pinnedComment ? null : '1',
-            ],
-            [static fn (OrderOutput $o) => $o->code, $customer, static fn (OrderOutput $o) => $o->customer?->email],
-            static fn (OrderOutput $o) => $o->id,
-        );
+        $page = $this->orders->page($warehouseId, $query);
 
-        return $this->json(PageOutput::of($page, $query, static fn (OrderOutput $o) => $o));
+        return $this->json(PageOutput::of(new ListPage($this->presenter->orders($page->items), $page->total, $page->facets), $query, static fn (OrderOutput $o) => $o));
     }
 
     /**

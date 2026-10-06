@@ -15,7 +15,6 @@ use App\Shared\Application\Command\CommandBus;
 use App\Shared\Application\Query\ListField;
 use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
-use App\Shared\UI\Http\InMemoryList;
 use App\Shared\UI\Http\InputMapper;
 use App\Shared\UI\Http\ListQueryParser;
 use App\Shared\UI\Http\Output\PageOutput;
@@ -58,7 +57,8 @@ final class InvoiceController extends AbstractController
 
     /**
      * A page of invoices, newest first: the list contract (q over code, customer name and email; filters code,
-     * customer, payment_method[], created_at, total, walk_in[] yes/no; sorts code, customer, created_at, total).
+     * customer, payment_method[], created_at, total, walk_in[] yes/no (yes: no customer); sorts code, customer,
+     * created_at, total; facets of payment_method and walk_in).
      */
     #[Route('/api/v1/invoices', name: 'api_invoices_list', methods: ['GET'])]
     #[IsGranted('ROLE_CAN_READ_INVOICES')]
@@ -67,25 +67,9 @@ final class InvoiceController extends AbstractController
     {
         $query = $this->lists->parse($request, self::listSchema());
 
-        // Item 0's walking skeleton: filtered in memory; item 1 (list-api) moves it into SQL.
-        $customer = static fn (InvoiceOutput $i): string => null === $i->customer ? '' : trim(($i->customer->firstName ?? '').' '.($i->customer->lastName ?? ''));
-        $created = static fn (InvoiceOutput $i): ?\DateTimeImmutable => null === $i->createdAt ? null : new \DateTimeImmutable($i->createdAt);
-        $page = InMemoryList::page(
-            array_map($this->presenter->invoice(...), $this->invoices->all()),
-            $query,
-            [
-                'code' => static fn (InvoiceOutput $i) => $i->code,
-                'customer' => static fn (InvoiceOutput $i) => trim($customer($i).' '.($i->customer->email ?? '')),
-                'payment_method' => static fn (InvoiceOutput $i) => $i->paymentMethod,
-                'created_at' => $created,
-                'total' => static fn (InvoiceOutput $i) => $i->total,
-                'walk_in' => static fn (InvoiceOutput $i) => null === $i->customer ? 'yes' : 'no',
-            ],
-            [static fn (InvoiceOutput $i) => $i->code, $customer, static fn (InvoiceOutput $i) => $i->customer?->email],
-            static fn (InvoiceOutput $i) => $i->id,
-        );
+        $page = $this->invoices->page($query);
 
-        return $this->json(PageOutput::of($page, $query, static fn (InvoiceOutput $i) => $i));
+        return $this->json(PageOutput::of($page, $query, $this->presenter->invoice(...)));
     }
 
     /**
