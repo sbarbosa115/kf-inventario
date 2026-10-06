@@ -65,6 +65,38 @@ test.describe('10 Design system, at 1440 px', () => {
     ).toBeVisible();
   });
 
+  test('DS-04 · the menus work with the keyboard: Enter opens with the first item focused, arrows, Home/End, Escape back', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    await page.goto('/admin/orders');
+
+    const rowMenu = page.getByRole('button', {name: /^Actions for /}).first();
+    await rowMenu.focus();
+    await page.keyboard.press('Enter');
+    const menu = page.getByRole('menu');
+    const items = menu.getByRole('menuitem');
+    await expect(items.first()).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(items.nth(1)).toBeFocused();
+    await page.keyboard.press('End');
+    await expect(items.last()).toBeFocused();
+    await page.keyboard.press('Home');
+    await expect(items.first()).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(menu).toHaveCount(0);
+    await expect(rowMenu).toBeFocused();
+
+    const theme = page.getByRole('button', {name: /^Theme: /});
+    await theme.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('menuitemradio').first()).toBeFocused();
+    await page.keyboard.press('ArrowUp');
+    await expect(page.getByRole('menuitemradio').last()).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(theme).toBeFocused();
+  });
+
   test('DS-05 · the tab title follows the page', async ({signedInAs, page}) => {
     const admin = await signedInAs(ADMIN);
     await admin.goto('/admin/orders');

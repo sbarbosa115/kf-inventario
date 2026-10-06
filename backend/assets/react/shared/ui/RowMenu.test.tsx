@@ -59,4 +59,32 @@ describe('RowMenu', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     expect(button).toHaveFocus();
   });
+
+  it('focuses the first item only once the menu is shown (a hidden element cannot take the focus in a browser)', async () => {
+    renderMenu();
+    const seen: string[] = [];
+    const focus = HTMLElement.prototype.focus;
+    const spy = vi
+      .spyOn(HTMLElement.prototype, 'focus')
+      .mockImplementation(function (this: HTMLElement, options) {
+        const menu = this.closest<HTMLElement>('[role="menu"]');
+        if (menu) seen.push(menu.style.visibility || 'visible');
+        focus.call(this, options);
+      });
+    try {
+      const button = screen.getByRole('button', {name: 'Actions for W00001'});
+      button.focus();
+      await userEvent.keyboard('{Enter}');
+      expect(screen.getByRole('menuitem', {name: 'Edit'})).toHaveFocus();
+      expect(seen.length).toBeGreaterThan(0);
+      expect(seen).not.toContain('hidden');
+
+      await userEvent.keyboard('{Escape}');
+      await userEvent.keyboard('{Enter}');
+      expect(screen.getByRole('menuitem', {name: 'Edit'})).toHaveFocus();
+      expect(seen).not.toContain('hidden');
+    } finally {
+      spy.mockRestore();
+    }
+  });
 });

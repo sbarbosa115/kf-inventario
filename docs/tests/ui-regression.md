@@ -927,6 +927,9 @@ At 390 px: no sidebar; "Menu" opens the whole menu as a drawer from the left (Es
 bottom shows the role's first entries and More.
 
 **DS-04 · A visible focus everywhere**
+Smoke (part): `e2e/design-system.spec.ts` opens a row's "⋯" and the theme menu with Enter and checks that the first
+item takes the focus, the arrows, Home and End move it, and Escape closes the menu with the focus back on its button;
+by hand: the ring itself, everywhere.
 With the keyboard only (Tab, Shift+Tab, arrows), go through the shell, a list and a form in both themes: every button,
 link, input, chip, row menu and menu item shows the 2 px accent ring when focused; nothing is reached without it.
 

@@ -65,6 +65,7 @@ export function RowMenu({
 
   const close = useCallback((refocus: boolean) => {
     setOpen(false);
+    setPosition(undefined);
     if (refocus) button.current?.focus();
   }, []);
 
@@ -83,8 +84,13 @@ export function RowMenu({
         ? rect.top - height - 4
         : below;
     setPosition({top, left});
-    items()[0]?.focus();
   }, [open, align]);
+
+  // The first item takes the focus once the menu has its place: while it is still `visibility: hidden` (being
+  // measured) a browser ignores `focus()`.
+  useEffect(() => {
+    if (open && position) items()[0]?.focus();
+  }, [open, position]);
 
   useEffect(() => {
     if (!open) return;
@@ -141,7 +147,8 @@ export function RowMenu({
         aria-controls={open ? id : undefined}
         onClick={(event) => {
           event.stopPropagation();
-          setOpen((now) => !now);
+          if (open) close(false);
+          else setOpen(true);
         }}
         onKeyDown={(event) => {
           if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
