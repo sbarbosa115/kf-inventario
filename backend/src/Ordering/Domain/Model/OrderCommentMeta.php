@@ -22,7 +22,7 @@ class OrderCommentMeta
 
     #[ORM\Id]
     #[ORM\OneToOne(targetEntity: Comment::class)]
-    #[ORM\JoinColumn(name: 'comment_id', nullable: false, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(name: 'comment_id', onDelete: 'CASCADE')]
     private Comment $comment;
 
     #[ORM\Column(type: 'string', length: 16)]
