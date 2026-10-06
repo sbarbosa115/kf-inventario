@@ -155,15 +155,6 @@ final class ContractTest extends ApiTestCase
     private static function notBuilt(): array
     {
         return [
-            'PUT /api/v1/settings/email',
-            'POST /api/v1/settings/email/test',
-            'GET /api/v1/settings/analytics',
-            'PUT /api/v1/settings/analytics',
-            'GET /api/v1/settings/quick-phrases',
-            'POST /api/v1/settings/quick-phrases',
-            'PUT /api/v1/settings/quick-phrases/order',
-            'PUT /api/v1/settings/quick-phrases/1',
-            'DELETE /api/v1/settings/quick-phrases/1',
             'GET /api/v1/shops',
             'GET /api/v1/shops/1',
             'POST /api/v1/shops',
