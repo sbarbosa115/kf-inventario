@@ -405,14 +405,14 @@ this."; `/api/v1/customers` answers 403.
 
 ### Customers, redesigned (item 5)
 
-**CUS-07 · The header counts the page, the search says it covers this page, and a row opens the form**
+**CUS-07 · The header counts the page, the search covers every customer, and a row opens the form**
 Smoke: `e2e/customers.spec.ts`.
 Open Customers: the header's subtitle reads "1–N of N" (the range of the page, the total of the API). The search box is
-named "Search this page" (the API pages without searching, so it only filters what is loaded); typing a customer's email
-leaves its row. The row's "⋯" menu has Edit and Delete and nothing else (Delete in the danger colour); no other
-button on the row. Clicking the row (not a control) opens Edit customer. By hand: a search that finds nothing says
-"Nothing matches these filters." with "Show all"; with 100+ customers the sort headers (Name, Email, Phone, City)
-sort the page.
+named "Search customers" and searches every customer on the server (name, email, phone, city), not only the loaded page;
+typing a customer's email leaves its row. The row's "⋯" menu has Edit and Delete and nothing else (Delete in the danger
+colour); no other button on the row. Clicking the row (not a control) opens Edit customer. By hand: a search that finds
+nothing says "Nothing matches these filters." with "Show all"; the sort headers (Name, Email, Phone, City) sort every
+customer, not only the page.
 
 **CUS-08 · The form has Contact and Addresses sections, address cards, and Cancel leaves without saving**
 Smoke: `e2e/customers.spec.ts`.

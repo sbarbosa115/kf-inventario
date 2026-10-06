@@ -332,8 +332,8 @@ test.describe('5 Orders', () => {
     await partial.click();
 
     await expect(partial).toHaveAttribute('aria-pressed', 'true');
-    // The header row, then one row per partial order.
-    await expect(page.getByRole('row')).toHaveCount(count + 1);
+    // One body row per partial order (the header and its filter row left out).
+    await expect(page.locator('tbody tr[role="row"]')).toHaveCount(count);
     await expect(page.getByRole('row', {name: /W00004/})).toBeVisible();
     await expect(page.getByRole('row', {name: /W00001/})).toHaveCount(0);
   });
@@ -348,14 +348,24 @@ test.describe('5 Orders', () => {
     await statusChips(page)
       .getByRole('button', {name: /^Created/})
       .click();
-    await page.getByLabel('Created from').fill('2999-01-01');
+    // The date range is the Created column's filter, in the row under the headers.
+    await page
+      .locator('.kf-table__filters')
+      .getByRole('button', {name: 'Created', exact: true})
+      .click();
+    await page.getByLabel('From', {exact: true}).fill('2999-01-01');
 
     await expect(
       page.getByText('Nothing matches these filters.'),
     ).toBeVisible();
     await page.getByRole('button', {name: 'Show all'}).click();
     await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
-    await expect(page.getByLabel('Created from')).toHaveValue('');
+    await expect(
+      page
+        .locator('.kf-table__filters')
+        .getByRole('button', {name: 'Created', exact: true}),
+      'the range is gone: the button names the column alone',
+    ).toBeVisible();
     await expect(
       statusChips(page).getByRole('button', {name: /^All/}),
     ).toHaveAttribute('aria-pressed', 'true');

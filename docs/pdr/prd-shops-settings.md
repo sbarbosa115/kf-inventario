@@ -741,6 +741,12 @@ never runs the whole suite (the coordinator runs it once at the barrier).
     RequireRole`. The analytics loader reads `/settings/public` on each change of path, so saved IDs load on the next
     navigation.
 
+23. **Coordinator note (item 2):** Customers page 25 rows by default (25/50/100), not the 100 of note 20, so the pager
+    shows on realistic data (FLT-05 reads "1 – 25 of 1,240"). The list dropdowns apply each tick at once (no
+    Done/Clear footer: Escape or a click outside closes them, "Clear filters" clears). Orders, invoices: the toolbar
+    date fields are gone, the Created/Date column's range replaces them. Customers gain a Country column, invoices a
+    Payment column, each with a list filter. A server table filtered to nothing keeps its header and filter row.
+
 ## Risks
 
 - **Cutover gap.** Between the deploy and re-pointing the shops, the legacy URL must keep working: the switch
