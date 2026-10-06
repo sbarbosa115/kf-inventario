@@ -303,7 +303,9 @@ describe('OrderFormPage', () => {
     await userEvent.type(screen.getByLabelText('Quantity of product 1'), '2');
 
     expect(screen.getByLabelText('Warehouse')).toBeDisabled();
-    expect(screen.getByText(note)).toBeInTheDocument();
+    expect(screen.getByLabelText('Warehouse')).toHaveAccessibleDescription(
+      note,
+    );
   });
 
   it('locks the warehouse once a product is filled, and unlocks it when the product goes', async () => {

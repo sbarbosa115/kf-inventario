@@ -340,6 +340,14 @@ export function OrderForm({
           <div className="col-md-6">
             <Field
               label={t('orderForm.warehouse')}
+              hint={
+                locked && (
+                  <>
+                    <i className="fas fa-lock" aria-hidden="true" />{' '}
+                    {t('orderForm.warehouseLocked')}
+                  </>
+                )
+              }
               error={required('warehouse')}
             >
               <select
@@ -365,12 +373,6 @@ export function OrderForm({
                 ))}
               </select>
             </Field>
-            {locked && (
-              <p className="order-form__lock">
-                <i className="fas fa-lock" aria-hidden="true" />{' '}
-                {t('orderForm.warehouseLocked')}
-              </p>
-            )}
           </div>
           <div className="col-md-6">
             <Field

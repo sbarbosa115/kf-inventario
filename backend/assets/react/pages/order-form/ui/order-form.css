@@ -11,7 +11,6 @@
   color: var(--kf-danger-text);
 }
 
-.order-form__lock,
 .order-form__note {
   margin: calc(-1 * var(--kf-space-2)) 0 var(--kf-space-3);
   color: var(--kf-text-muted);
