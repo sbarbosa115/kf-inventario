@@ -14,7 +14,7 @@
   "phone": "Phone",
   "comment": "Comment",
   "orderDetail": "Order",
-  "orderHint": "The warehouse comes first: its products are the ones offered.",
+  "orderHint": "The warehouse comes first: its products are the ones offered. Fields marked * are required.",
   "warehouse": "Warehouse",
   "selectWarehouse": "Choose a warehouse",
   "warehouseLocked": "Remove the products to change the warehouse.",

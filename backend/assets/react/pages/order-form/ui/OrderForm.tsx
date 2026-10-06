@@ -498,7 +498,7 @@ export function OrderForm({
         </Button>
 
         <div className="form-row">
-          <div className="col-md-4">
+          <div className="col-md-6">
             <Field label={t('orderForm.code')}>
               <input
                 className="form-control order-form__code"
@@ -508,7 +508,7 @@ export function OrderForm({
               />
             </Field>
           </div>
-          <div className="col-md-4">
+          <div className="col-md-6">
             <Field label={t('orderForm.source')} error={required('source')}>
               <select
                 name="source"
@@ -526,7 +526,7 @@ export function OrderForm({
               </select>
             </Field>
           </div>
-          <div className="col-md-4">
+          <div className="col-md-6">
             <Field label={t('orderForm.status')} error={required('status')}>
               <select
                 name="status"

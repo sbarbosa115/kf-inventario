@@ -14,7 +14,7 @@
   "phone": "Teléfono",
   "comment": "Comentario",
   "orderDetail": "Pedido",
-  "orderHint": "Primero la bodega: se ofrecen sus productos.",
+  "orderHint": "Primero la bodega: se ofrecen sus productos. Los campos marcados con * son obligatorios.",
   "warehouse": "Bodega",
   "selectWarehouse": "Elija una bodega",
   "warehouseLocked": "Quite los productos para cambiar la bodega.",

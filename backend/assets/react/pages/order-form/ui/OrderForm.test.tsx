@@ -288,6 +288,16 @@ describe('OrderFormPage', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('says in both sections that the fields marked * are required', async () => {
+    fakeApi({...BASE_ROUTES});
+    renderAt('/admin/orders/new');
+    await screen.findByLabelText('Warehouse');
+
+    expect(screen.getAllByText(/Fields marked \* are required\./)).toHaveLength(
+      2,
+    );
+  });
+
   it('explains the lock next to the warehouse', async () => {
     fakeApi({...BASE_ROUTES});
     renderAt('/admin/orders/new');
