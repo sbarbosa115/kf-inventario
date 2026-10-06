@@ -31,6 +31,6 @@ final class DoctrineShopOutboxRepository implements ShopOutboxRepository
 
     public function ofConnection(ShopConnection $connection, string $status): array
     {
-        return array_values($this->em->getRepository(ShopOutbox::class)->findBy(['connection' => $connection, 'status' => $status], ['id' => 'DESC']));
+        return $this->em->getRepository(ShopOutbox::class)->findBy(['connection' => $connection, 'status' => $status], ['id' => 'DESC']);
     }
 }

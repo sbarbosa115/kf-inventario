@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/settings/quick-phrases/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** QuickPhraseOrderInput: the phrases' new order → the list. */
+        put: operations["put_api_quick_phrases_order"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -401,6 +418,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orders/{id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The order's comments, oldest first; a legacy comment without a date carries the order's (`approximate`). */
+        get: operations["get_api_order_comments"];
+        /**
+         * OrderCommentsInput: the order's comments as they should be: no id adds one (signed by you), an id edits it, a
+         *     comment left out leaves the order. As before: any signed-in user.
+         */
+        put: operations["put_api_orders_comments"];
+        /**
+         * AddOrderCommentInput → 201 the comment (signed by you, dated now). 422 shop_note_unavailable when it cannot be
+         *     sent to the shop (the order is not linked, or the connection's order_note capability is off).
+         */
+        post: operations["post_api_order_comments_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{id}/comments/{commentId}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pins the comment (the order's only pinned one: the previous one is unpinned). 404 comment_not_found. */
+        post: operations["post_api_order_comments_pin"];
+        /** Unpins it. 404 comment_not_found. */
+        delete: operations["delete_api_order_comments_unpin"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/orders": {
         parameters: {
             query?: never;
@@ -456,26 +516,6 @@ export interface paths {
         put?: never;
         /** OrderStatusInput: moves the order to another status (a status history row; stock is not touched). */
         post: operations["post_api_orders_status"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/orders/{id}/comments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * OrderCommentsInput: the order's comments as they should be: no id adds one (signed by you), an id edits it, a
-         *     comment left out leaves the order. As before: any signed-in user.
-         */
-        put: operations["put_api_orders_comments"];
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -584,6 +624,316 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/shops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every connection by name, with its health. */
+        get: operations["get_api_shops_list"];
+        put?: never;
+        /**
+         * ShopConnectionInput → 201 with `webhook_secret` (once) and `webhook_url`. 409 shop_url_taken, shop_name_taken;
+         *     404 warehouse_not_found; 422 shop_url_invalid (not https, a private host).
+         */
+        post: operations["post_api_shops_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shops/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One connection. 404 shop_not_found. */
+        get: operations["get_api_shops_show"];
+        /** ShopConnectionInput: blank consumer_key/consumer_secret keep the saved ones. 404 shop_not_found. */
+        put: operations["put_api_shops_update"];
+        post?: never;
+        /** 204; 409 shop_has_orders when orders came from it (deactivate it instead). */
+        delete: operations["delete_api_shops_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shops/{id}/webhook-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The webhook URL and signing secret to paste in WooCommerce (the consumer secret is never readable). */
+        get: operations["get_api_shops_webhook_secret"];
+        put?: never;
+        /** Rotates the signing secret → the new one, to paste. */
+        post: operations["post_api_shops_webhook_secret_rotate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shops/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** ShopTestInput (the keys as typed, else the saved ones): "Test connection", 15 s, never an error status. */
+        post: operations["post_api_shops_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shops/{id}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A page of the connection's inbox (`?status=failed`; the list contract). */
+        get: operations["get_api_shops_deliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shops/{id}/deliveries/{deliveryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One inbox row with its body. 404 delivery_not_found. */
+        get: operations["get_api_shops_delivery"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shops/{id}/deliveries/{deliveryId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs the import again from the stored body: `placed` with its order, or still `failed` with the new reason. */
+        post: operations["post_api_shops_delivery_retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shops/{id}/deliveries/{deliveryId}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marks the row discarded. */
+        post: operations["post_api_shops_delivery_discard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shops/{id}/outbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The connection's writes in a status (`?status=failed`). */
+        get: operations["get_api_shops_outbox"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shops/{id}/outbox/{outboxId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Queues a failed write again → pending. */
+        post: operations["post_api_shops_outbox_retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/quick-phrases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The active phrases in order (`?all=1`: every one, for the admin's tab). */
+        get: operations["get_api_quick_phrases"];
+        put?: never;
+        /** QuickPhraseInput: a phrase at the end → 201. */
+        post: operations["post_api_quick_phrases_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/quick-phrases/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** QuickPhraseInput: renames it or switches it off. 404 quick_phrase_not_found. */
+        put: operations["put_api_quick_phrases_update"];
+        post?: never;
+        /** 204. 404 quick_phrase_not_found. */
+        delete: operations["delete_api_quick_phrases_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/public": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The analytics IDs every signed-in page loads (null: that tool is off). Any signed-in user. */
+        get: operations["get_api_settings_public"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Settings › Email: the SMTP server (never its password: `has_password`), the sender, the printer and the cc, each
+         *     with where the effective value comes from (settings, env, none).
+         */
+        get: operations["get_api_settings_email"];
+        /**
+         * EmailSettingsInput: saves Settings › Email (a blank password keeps the saved one; everything empty clears it, the
+         *     env applies) → EmailSettingsOutput; 422 on a bad address. Item 3.
+         */
+        put: operations["put_api_settings_email_save"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/email/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * TestEmailInput: sends "KF Inventory test email" to `to` through the effective server, at once (not queued) →
+         *     202; 502 smtp_failed with the server's message in detail.reason; 429 more than once in 10 s. Item 3.
+         */
+        post: operations["post_api_settings_email_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Settings › Analytics. Item 3. */
+        get: operations["get_api_settings_analytics"];
+        /** AnalyticsSettingsInput: G-XXXXXXX and the Clarity Project ID (empty turns one off); 422 on a wrong shape. Item 3. */
+        put: operations["put_api_settings_analytics_save"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The legacy webhook URL's switch (on until turned off: Decisions 8) and the hits it took since it was turned off. */
+        get: operations["get_api_settings_webhooks"];
+        /** WebhookSettingsInput: turns the legacy webhook URL off (410 from then on; its counter starts at 0) or on. */
+        put: operations["put_api_settings_webhooks_save"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invoices": {
         parameters: {
             query?: never;
@@ -663,6 +1013,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        QuickPhraseOutput: {
+            id: number;
+            text: string;
+            position: number;
+            active: boolean;
+        };
         SessionOutput: {
             id: number;
             username: string;
@@ -791,16 +1147,40 @@ export interface components {
             code?: string | null;
             states: components["schemas"]["StateOutput"][];
         };
+        CommentAuthorOutput: {
+            id: number;
+            name: string;
+        };
+        ShopRefOutput: {
+            id: number;
+            name: string;
+        };
+        OrderCommentOutput: {
+            id: number;
+            content?: string | null;
+            /** ISO 8601; a legacy comment without a date carries the order's, with `approximate` */
+            created_at?: string | null;
+            /** true when created_at is the order's date, not the comment's */
+            approximate: boolean;
+            /** null for a shop note, or a legacy comment without a user */
+            author?: components["schemas"]["CommentAuthorOutput"] | null;
+            /** app (typed here), shop (a note pulled from the shop), phrase (a quick phrase) */
+            origin: string;
+            /** the connection a shop note came from */
+            shop?: components["schemas"]["ShopRefOutput"] | null;
+            pinned: boolean;
+            /** ISO 8601 */
+            pinned_at?: string | null;
+            pinned_by?: components["schemas"]["CommentAuthorOutput"] | null;
+            /** the comment was also sent to the order's shop as an order note */
+            sent_to_shop: boolean;
+        };
         CustomerRefOutput: {
             id: number;
             first_name?: string | null;
             last_name?: string | null;
             email?: string | null;
             phone?: string | null;
-        };
-        ShopRefOutput: {
-            id: number;
-            name: string;
         };
         PinnedCommentOutput: {
             id: number;
@@ -826,30 +1206,6 @@ export interface components {
             /** The shop connection the order came from (shop_order_link); null for orders typed here or imported before connections */
             shop?: components["schemas"]["ShopRefOutput"] | null;
             pinned_comment?: components["schemas"]["PinnedCommentOutput"] | null;
-        };
-        CommentAuthorOutput: {
-            id: number;
-            name: string;
-        };
-        OrderCommentOutput: {
-            id: number;
-            content?: string | null;
-            /** ISO 8601; a legacy comment without a date carries the order's, with `approximate` */
-            created_at?: string | null;
-            /** true when created_at is the order's date, not the comment's */
-            approximate: boolean;
-            /** null for a shop note, or a legacy comment without a user */
-            author?: components["schemas"]["CommentAuthorOutput"] | null;
-            /** app (typed here), shop (a note pulled from the shop), phrase (a quick phrase) */
-            origin: string;
-            /** the connection a shop note came from */
-            shop?: components["schemas"]["ShopRefOutput"] | null;
-            pinned: boolean;
-            /** ISO 8601 */
-            pinned_at?: string | null;
-            pinned_by?: components["schemas"]["CommentAuthorOutput"] | null;
-            /** the comment was also sent to the order's shop as an order note */
-            sent_to_shop: boolean;
         };
         OrderLineProductOutput: {
             code: string;
@@ -884,6 +1240,21 @@ export interface components {
             /** Already imported (deleted ones included), or not placeable (unknown SKU, no lines) */
             skipped: number;
         };
+        ShopSyncConnectionOutput: {
+            id: number;
+            name: string;
+            imported: number;
+            skipped: number;
+            /** Why the shop could not be read; null when it was */
+            error?: string | null;
+        };
+        ShopsSyncResultOutput: {
+            imported: number;
+            skipped: number;
+            /** Connections that could not be read */
+            failed: number;
+            connections: components["schemas"]["ShopSyncConnectionOutput"][];
+        };
         PartialLineProductOutput: {
             code: string;
         };
@@ -904,6 +1275,160 @@ export interface components {
             products_aggregate: components["schemas"]["PartialLineOutput"][];
             pending: components["schemas"]["PendingLineOutput"][];
             inventory: components["schemas"]["StockOutput"][];
+        };
+        ShopCapabilitiesOutput: {
+            /** Processed → processing, Sent and Delivered → completed */
+            order_status: boolean;
+            /** Comments marked "also send to the shop" */
+            order_note: boolean;
+        };
+        ShopHealthOutput: {
+            last_webhook_at?: string | null;
+            last_import_at?: string | null;
+            last_pull_at?: string | null;
+            last_pull_ok_at?: string | null;
+            last_failure_at?: string | null;
+            /** bad_signature, unknown_product, keys_read_only, unreachable… */
+            last_failure_code?: string | null;
+            last_failure?: string | null;
+            /** Deliveries waiting in the inbox */
+            failed_deliveries: number;
+            /** Writes to the shop that failed every retry */
+            failed_pushes: number;
+        };
+        ShopConnectionOutput: {
+            id: number;
+            name: string;
+            site_url: string;
+            active: boolean;
+            warehouse: components["schemas"]["WarehouseRefOutput"];
+            email_printer: boolean;
+            capabilities: components["schemas"]["ShopCapabilitiesOutput"];
+            /** The connection's own webhook URL, to paste in WooCommerce */
+            webhook_url: string;
+            has_keys: boolean;
+            health: components["schemas"]["ShopHealthOutput"];
+            /** Only in the answer that created the connection */
+            webhook_secret?: string | null;
+        };
+        WebhookSecretOutput: {
+            webhook_secret: string;
+            webhook_url: string;
+        };
+        ShopRestTestOutput: {
+            ok: boolean;
+            store_name?: string | null;
+            wc_version?: string | null;
+            /** null: unknown until a write succeeded (a read cannot prove write access) */
+            can_write?: boolean | null;
+            /** The shop's message when it failed (never the keys) */
+            error?: string | null;
+        };
+        ShopTestResultOutput: {
+            rest: components["schemas"]["ShopRestTestOutput"];
+            webhook_url?: string | null;
+            webhook_secret_set: boolean;
+        };
+        OrderRefOutput: {
+            id: number;
+            code?: string | null;
+        };
+        DeliveryLineOutput: {
+            sku?: string | null;
+            quantity: number;
+        };
+        DeliverySummaryOutput: {
+            customer?: string | null;
+            lines: components["schemas"]["DeliveryLineOutput"][];
+        };
+        ShopDeliveryOutput: {
+            id: number;
+            /** webhook, pull or legacy */
+            kind: string;
+            remote_order_id?: string | null;
+            /** placed, failed or discarded */
+            status: string;
+            /** bad_signature, unknown_product, no_warehouse, not_an_order, no_lines, duplicate, inactive */
+            reason_code?: string | null;
+            reason?: string | null;
+            /** ISO 8601 */
+            received_at: string;
+            attempts: number;
+            order?: components["schemas"]["OrderRefOutput"] | null;
+            summary: components["schemas"]["DeliverySummaryOutput"];
+        };
+        ShopDeliveryDetailOutput: {
+            id: number;
+            /** webhook, pull or legacy */
+            kind: string;
+            remote_order_id?: string | null;
+            /** placed, failed or discarded */
+            status: string;
+            reason_code?: string | null;
+            reason?: string | null;
+            /** ISO 8601 */
+            received_at: string;
+            attempts: number;
+            order?: components["schemas"]["OrderRefOutput"] | null;
+            summary: components["schemas"]["DeliverySummaryOutput"];
+            /** The raw JSON body; null for a refused signature */
+            payload?: string | null;
+        };
+        ShopOutboxOutput: {
+            id: number;
+            /** order_status or order_note */
+            capability: string;
+            order: components["schemas"]["OrderRefOutput"];
+            payload: {
+                [key: string]: unknown;
+            };
+            /** pending, sent or failed */
+            status: string;
+            attempts: number;
+            last_error?: string | null;
+            /** ISO 8601 */
+            created_at: string;
+        };
+        PublicSettingsOutput: {
+            ga4_measurement_id?: string | null;
+            clarity_project_id?: string | null;
+        };
+        EmailSourcesOutput: {
+            dsn: string;
+            from: string;
+            printer: string;
+            cc: string;
+        };
+        EmailSettingsOutput: {
+            dsn_host?: string | null;
+            dsn_port?: number | null;
+            dsn_user?: string | null;
+            has_password: boolean;
+            /** tls, ssl or none */
+            encryption: string;
+            from_address?: string | null;
+            from_name?: string | null;
+            printer_address?: string | null;
+            cc: string[];
+            source: components["schemas"]["EmailSourcesOutput"];
+            env_host?: string | null;
+        };
+        TestEmailResultOutput: {
+            queued: boolean;
+            /** The SMTP host it went through */
+            host?: string | null;
+        };
+        AnalyticsSettingsOutput: {
+            /** G-XXXXXXX, from GA4 › Admin › Data streams */
+            ga4_measurement_id?: string | null;
+            /** Clarity › Settings › Project ID */
+            clarity_project_id?: string | null;
+        };
+        WebhookSettingsOutput: {
+            legacy_enabled: boolean;
+            legacy_hits_since: number;
+            /** ISO 8601 */
+            legacy_last_hit_at?: string | null;
         };
         InvoiceProductOutput: {
             id: number;
@@ -948,6 +1473,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    put_api_quick_phrases_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickPhraseOutput"][];
+                };
+            };
+        };
+    };
     post_api_auth_login: {
         parameters: {
             query?: never;
@@ -1524,6 +2069,122 @@ export interface operations {
             };
         };
     };
+    get_api_order_comments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        comments: components["schemas"]["OrderCommentOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    put_api_orders_comments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        comments: components["schemas"]["OrderCommentOutput"][];
+                    };
+                };
+            };
+        };
+    };
+    post_api_order_comments_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderCommentOutput"];
+                };
+            };
+        };
+    };
+    post_api_order_comments_pin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderCommentOutput"];
+                };
+            };
+        };
+    };
+    delete_api_order_comments_unpin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderCommentOutput"];
+                };
+            };
+        };
+    };
     get_api_orders_list: {
         parameters: {
             query?: never;
@@ -1657,30 +2318,6 @@ export interface operations {
             };
         };
     };
-    put_api_orders_comments: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        comments: components["schemas"]["OrderCommentOutput"][];
-                    };
-                };
-            };
-        };
-    };
     post_api_orders_sync: {
         parameters: {
             query?: never;
@@ -1690,13 +2327,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK. */
+            /** @description One of these. */
             202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SyncResultOutput"];
+                    "application/json": components["schemas"]["SyncResultOutput"] | components["schemas"]["ShopsSyncResultOutput"];
                 };
             };
         };
@@ -1798,6 +2435,560 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrderPartialsOutput"];
+                };
+            };
+        };
+    };
+    get_api_shops_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopConnectionOutput"][];
+                };
+            };
+        };
+    };
+    post_api_shops_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopConnectionOutput"];
+                };
+            };
+        };
+    };
+    get_api_shops_show: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopConnectionOutput"];
+                };
+            };
+        };
+    };
+    put_api_shops_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopConnectionOutput"];
+                };
+            };
+        };
+    };
+    delete_api_shops_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_api_shops_webhook_secret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookSecretOutput"];
+                };
+            };
+        };
+    };
+    post_api_shops_webhook_secret_rotate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookSecretOutput"];
+                };
+            };
+        };
+    };
+    post_api_shops_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopTestResultOutput"];
+                };
+            };
+        };
+    };
+    get_api_shops_deliveries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ShopDeliveryOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                        facets?: {
+                            [key: string]: components["schemas"]["FacetCountOutput"][];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    get_api_shops_delivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                deliveryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopDeliveryDetailOutput"];
+                };
+            };
+        };
+    };
+    post_api_shops_delivery_retry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                deliveryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopDeliveryOutput"];
+                };
+            };
+        };
+    };
+    post_api_shops_delivery_discard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                deliveryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopDeliveryOutput"];
+                };
+            };
+        };
+    };
+    get_api_shops_outbox: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOutboxOutput"][];
+                };
+            };
+        };
+    };
+    post_api_shops_outbox_retry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                outboxId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopOutboxOutput"];
+                };
+            };
+        };
+    };
+    get_api_quick_phrases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickPhraseOutput"][];
+                };
+            };
+        };
+    };
+    post_api_quick_phrases_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickPhraseOutput"];
+                };
+            };
+        };
+    };
+    put_api_quick_phrases_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickPhraseOutput"];
+                };
+            };
+        };
+    };
+    delete_api_quick_phrases_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_api_settings_public: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicSettingsOutput"];
+                };
+            };
+        };
+    };
+    get_api_settings_email: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailSettingsOutput"];
+                };
+            };
+        };
+    };
+    put_api_settings_email_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailSettingsOutput"];
+                };
+            };
+        };
+    };
+    post_api_settings_email_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestEmailResultOutput"];
+                };
+            };
+        };
+    };
+    get_api_settings_analytics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalyticsSettingsOutput"];
+                };
+            };
+        };
+    };
+    put_api_settings_analytics_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalyticsSettingsOutput"];
+                };
+            };
+        };
+    };
+    get_api_settings_webhooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookSettingsOutput"];
+                };
+            };
+        };
+    };
+    put_api_settings_webhooks_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookSettingsOutput"];
                 };
             };
         };

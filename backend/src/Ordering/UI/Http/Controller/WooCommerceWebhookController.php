@@ -4,6 +4,8 @@ namespace App\Ordering\UI\Http\Controller;
 
 use App\Ordering\Application\Command\ImportShopOrder;
 use App\Ordering\UI\Http\Security\WooCommerceWebhookSignature;
+use App\Settings\Application\Command\RecordLegacyWebhookHit;
+use App\Settings\Application\Query\WebhookSettings;
 use App\Shared\Application\Command\CommandBus;
 use App\Shared\Domain\Error\DomainError;
 use Psr\Log\LoggerInterface;
@@ -17,6 +19,10 @@ use Symfony\Component\Routing\Attribute\Route;
  * shops are configured with it): public (security.yaml), outside /api/ and the SPA. The shop always gets
  * {status: true}; what could not be placed is logged. With WOO_COMMERCE_WEBHOOK_SECRET set, a delivery without the
  * shop's signature is logged and not placed (WooCommerceWebhookSignature).
+ *
+ * The connections of shops-settings replace it (/webhooks/shops/{token}): once the admin turns this URL off in
+ * Settings › General, it answers 410 {status: false, error: "webhook_moved"}, places nothing and counts the hit
+ * (docs/pdr/prd-shops-settings.md, Decisions 8). On (the default after the deploy), it works as before.
  */
 final class WooCommerceWebhookController extends AbstractController
 {
@@ -24,6 +30,7 @@ final class WooCommerceWebhookController extends AbstractController
         private readonly CommandBus $commands,
         private readonly LoggerInterface $logger,
         private readonly WooCommerceWebhookSignature $signature,
+        private readonly WebhookSettings $webhooks,
     ) {
     }
 
@@ -31,6 +38,12 @@ final class WooCommerceWebhookController extends AbstractController
     public function __invoke(Request $request): JsonResponse
     {
         $source = $request->headers->get('X-WC-Webhook-Source');
+        if (!$this->webhooks->legacyEnabled()) {
+            $this->commands->dispatch(new RecordLegacyWebhookHit());
+            $this->logger->warning(\sprintf('WooCommerce delivery from [%s] refused: the legacy webhook URL is turned off (410).', $source));
+
+            return new JsonResponse(['status' => false, 'error' => 'webhook_moved'], 410);
+        }
         if (!$this->signature->accepts($request->getContent(), $request->headers->get('X-WC-Webhook-Signature'))) {
             $this->logger->warning(\sprintf('WooCommerce delivery from [%s] refused: missing or wrong X-WC-Webhook-Signature.', $source));
 

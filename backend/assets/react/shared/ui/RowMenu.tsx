@@ -69,8 +69,9 @@ export function RowMenu({
     if (refocus) button.current?.focus();
   }, []);
 
-  useLayoutEffect(() => {
-    if (!open || !button.current || !menu.current) return;
+  // Where the menu goes: under its button (above it when there is no room), inside the window.
+  const place = useCallback((): {top: number; left: number} | null => {
+    if (!button.current || !menu.current) return null;
     const rect = button.current.getBoundingClientRect();
     const width = menu.current.offsetWidth;
     const height = menu.current.offsetHeight;
@@ -83,8 +84,14 @@ export function RowMenu({
       below + height > window.innerHeight && rect.top - height - 4 > 0
         ? rect.top - height - 4
         : below;
-    setPosition({top, left});
-  }, [open, align]);
+    return {top, left};
+  }, [align]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const at = place();
+    if (at) setPosition(at);
+  }, [open, place]);
 
   // The first item takes the focus once the menu has its place: while it is still `visibility: hidden` (being
   // measured) a browser ignores `focus()`.
@@ -99,7 +106,23 @@ export function RowMenu({
       if (!menu.current?.contains(target) && !button.current?.contains(target))
         close(false);
     };
-    const onMove = () => close(false);
+    // The page scrolled or the list under the menu changed size (a search narrowed it): the menu follows its
+    // button, and closes only when the button left the window.
+    const onMove = (event: Event) => {
+      if (menu.current?.contains(event.target as Node)) return;
+      const rect = button.current?.getBoundingClientRect();
+      if (
+        !rect ||
+        !button.current?.isConnected ||
+        rect.bottom < 0 ||
+        rect.top > window.innerHeight
+      ) {
+        close(false);
+        return;
+      }
+      const at = place();
+      if (at) setPosition(at);
+    };
     document.addEventListener('pointerdown', onPointer);
     window.addEventListener('resize', onMove);
     window.addEventListener('scroll', onMove, true);
@@ -108,7 +131,7 @@ export function RowMenu({
       window.removeEventListener('resize', onMove);
       window.removeEventListener('scroll', onMove, true);
     };
-  }, [open, close]);
+  }, [open, close, place]);
 
   const onMenuKey = (event: KeyboardEvent) => {
     const list = items();

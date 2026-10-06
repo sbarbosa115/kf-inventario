@@ -45,6 +45,8 @@ final class ListQueryParserTest extends TestCase
 
     /**
      * @param array<string, mixed> $query
+     *
+     * @return list<string>
      */
     private function violationsOf(array $query, bool $allowAll = false): array
     {
@@ -78,8 +80,9 @@ final class ListQueryParserTest extends TestCase
         self::assertSame(3, $query->page);
         self::assertSame(50, $query->perPage);
         self::assertSame(100, $query->offset());
-        self::assertSame('code', $query->sort?->field);
-        self::assertFalse($query->sort?->descending);
+        self::assertNotNull($query->sort);
+        self::assertSame('code', $query->sort->field);
+        self::assertFalse($query->sort->descending);
         self::assertSame('W0001', $query->q, 'q is trimmed.');
     }
 
@@ -102,9 +105,11 @@ final class ListQueryParserTest extends TestCase
         self::assertInstanceOf(AnyOfFilter::class, $query->filters['source']);
         $created = $query->filters['created_at'];
         self::assertInstanceOf(DateRangeFilter::class, $created);
-        self::assertSame('2026-10-01 00:00:00', $created->from?->format('Y-m-d H:i:s'));
-        self::assertSame('2026-10-06 00:00:00', $created->to?->format('Y-m-d H:i:s'), 'Both ends are days; the applier makes "to" inclusive.');
-        self::assertSame('America/Bogota', $created->from?->getTimezone()->getName(), 'Days are Bogota days.');
+        self::assertNotNull($created->from);
+        self::assertNotNull($created->to);
+        self::assertSame('2026-10-01 00:00:00', $created->from->format('Y-m-d H:i:s'));
+        self::assertSame('2026-10-06 00:00:00', $created->to->format('Y-m-d H:i:s'), 'Both ends are days; the applier makes "to" inclusive.');
+        self::assertSame('America/Bogota', $created->from->getTimezone()->getName(), 'Days are Bogota days.');
         $total = $query->filters['total'];
         self::assertInstanceOf(NumberRangeFilter::class, $total);
         self::assertSame('100', $total->min);

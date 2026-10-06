@@ -19,6 +19,11 @@ ordering_controllers:
     path: ../src/Ordering/UI/Http/Controller/
     namespace: App\Ordering\UI\Http\Controller
   type: attribute
+settings_controllers:
+  resource:
+    path: ../src/Settings/UI/Http/Controller/
+    namespace: App\Settings\UI\Http\Controller
+  type: attribute
 invoicing_controllers:
   resource:
     path: ../src/Invoicing/UI/Http/Controller/

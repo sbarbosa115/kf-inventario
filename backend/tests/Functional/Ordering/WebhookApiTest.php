@@ -8,6 +8,7 @@ use App\Customers\Domain\Model\CustomerAddress;
 use App\Inventory\Domain\Model\Warehouse;
 use App\Ordering\Domain\Model\Order;
 use App\Ordering\Domain\Model\OrderStatus;
+use App\Settings\Domain\Model\AppSetting;
 use App\Tests\Support\ApiTestCase;
 use Monolog\Handler\TestHandler;
 use Symfony\Component\Mime\Email;
@@ -210,6 +211,37 @@ final class WebhookApiTest extends ApiTestCase
     {
         $_SERVER['WOO_COMMERCE_WEBHOOK_SECRET'] = $_ENV['WOO_COMMERCE_WEBHOOK_SECRET'] = '';
         parent::tearDown();
+    }
+
+    public function testOnceTheLegacyUrlIsTurnedOffItAnswers410AndCountsTheHit(): void
+    {
+        $warehouse = $this->aWarehouse('Usa', ['https://usa.test']);
+        $this->aProduct('KF-01', $warehouse);
+        $this->aProduct('KF-02', $warehouse);
+        $this->save(new AppSetting('webhooks.legacy_enabled', '0', false, new \DateTimeImmutable()));
+
+        $answer = $this->postWebhook('https://usa.test', self::payload());
+
+        $this->assertStatus(410, 'The old URL is gone once every shop points at its connection (Decisions 8).');
+        self::assertSame(['status' => false, 'error' => 'webhook_moved'], $answer);
+        $this->em()->clear();
+        self::assertNull($this->em()->getRepository(Order::class)->findOneBy(['code' => '5501']), 'Nothing is placed.');
+        self::assertSame('1', $this->em()->find(AppSetting::class, 'webhooks.legacy_hits')?->value(), 'The hit is counted.');
+        self::assertNotNull($this->em()->find(AppSetting::class, 'webhooks.legacy_last_hit_at')?->value());
+    }
+
+    public function testWithTheSwitchOnTheLegacyUrlWorksAsBefore(): void
+    {
+        $warehouse = $this->aWarehouse('Usa', ['https://usa.test']);
+        $this->aProduct('KF-01', $warehouse);
+        $this->aProduct('KF-02', $warehouse);
+        $this->save(new AppSetting('webhooks.legacy_enabled', '1', false, new \DateTimeImmutable()));
+
+        $this->postWebhook('https://usa.test', self::payload());
+
+        $this->assertStatus(200);
+        $this->em()->clear();
+        self::assertNotNull($this->em()->getRepository(Order::class)->findOneBy(['code' => '5501']));
     }
 
     /**

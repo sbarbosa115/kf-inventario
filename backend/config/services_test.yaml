@@ -4,3 +4,9 @@ services:
   # (tests/Functional/Ordering/SyncOrdersApiTest.php).
   App\Ordering\Application\Port\RemoteOrderSource:
     class: App\Tests\Functional\Ordering\FakeRemoteOrderSource
+
+  # The shops' REST API (shops-settings: ShopGateway): tests talk to a fake (tests/Functional/Ordering/
+  # FakeShopGateway.php); item 5b retires FakeRemoteOrderSource with the old sync.
+  App\Ordering\Application\Port\ShopGateway:
+    class: App\Tests\Functional\Ordering\FakeShopGateway
+    public: true

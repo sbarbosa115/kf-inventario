@@ -35,12 +35,12 @@ final class DoctrineShopConnectionRepository implements ShopConnectionRepository
 
     public function all(): array
     {
-        return array_values($this->em->getRepository(ShopConnection::class)->findBy([], ['name' => 'ASC']));
+        return $this->em->getRepository(ShopConnection::class)->findBy([], ['name' => 'ASC']);
     }
 
     public function active(): array
     {
-        return array_values($this->em->getRepository(ShopConnection::class)->findBy(['active' => true], ['name' => 'ASC']));
+        return $this->em->getRepository(ShopConnection::class)->findBy(['active' => true], ['name' => 'ASC']);
     }
 
     public function add(ShopConnection $connection): void

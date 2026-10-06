@@ -32,7 +32,7 @@ final class DoctrineQuickPhraseRepository implements QuickPhraseRepository
     {
         $criteria = $activeOnly ? ['active' => true] : [];
 
-        return array_values($this->em->getRepository(QuickPhrase::class)->findBy($criteria, ['position' => 'ASC', 'id' => 'ASC']));
+        return $this->em->getRepository(QuickPhrase::class)->findBy($criteria, ['position' => 'ASC', 'id' => 'ASC']);
     }
 
     public function nextPosition(): int

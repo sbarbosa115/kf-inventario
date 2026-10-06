@@ -27,6 +27,7 @@ use App\Ordering\UI\Http\OrderPresenter;
 use App\Ordering\UI\Http\Output\OrderCommentOutput;
 use App\Ordering\UI\Http\Output\OrderDetailOutput;
 use App\Ordering\UI\Http\Output\OrderOutput;
+use App\Ordering\UI\Http\Output\ShopsSyncResultOutput;
 use App\Ordering\UI\Http\Output\SyncResultOutput;
 use App\Shared\Application\Command\CommandBus;
 use App\Shared\Application\Query\ListField;
@@ -216,6 +217,8 @@ final class OrderController extends AbstractController
     #[Route('/api/v1/orders/sync', name: 'api_orders_sync', methods: ['POST'])]
     #[IsGranted('ROLE_CAN_SYNC_ORDERS')]
     #[ApiResponse(SyncResultOutput::class, status: 202)]
+    // What "Check now" answers once item 5b pulls every connection (a oneOf until then).
+    #[ApiResponse(ShopsSyncResultOutput::class, status: 202)]
     public function sync(): JsonResponse
     {
         $synced = $this->commands->dispatch(new SyncRemoteOrders());

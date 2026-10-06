@@ -39,7 +39,7 @@ final class EmailSettings
             fromAddress: $fromInSettings ? (string) $fromAddress : $this->envFromAddress,
             fromName: $fromInSettings ? (string) $fromName : $this->envFromName,
             printerAddress: $printer ?? $this->envPrinterAddress,
-            cc: [] !== $cc ? $cc : array_values($this->envCc),
+            cc: [] !== $cc ? $cc : $this->envCc,
             sources: [
                 'dsn' => self::source(null !== $dsn, '' !== $this->envDsn),
                 'from' => self::source($fromInSettings, '' !== $this->envFromAddress),
@@ -53,20 +53,20 @@ final class EmailSettings
     {
         $dsn = $this->values->get(SettingKey::EMAIL_DSN);
         $server = null === $dsn ? null : SmtpServer::fromDsn($dsn);
-        $env = '' === $this->envDsn ? null : SmtpServer::fromDsn($this->envDsn);
+        $envHost = '' === $this->envDsn ? null : parse_url($this->envDsn, \PHP_URL_HOST);
 
         return new StoredEmail(
             host: $server?->host,
             port: $server?->port,
             user: $server?->user,
             hasPassword: null !== $server?->password && '' !== $server->password,
-            encryption: $server?->encryption ?? 'tls',
+            encryption: $server->encryption ?? 'tls',
             fromAddress: $this->values->get(SettingKey::EMAIL_FROM_ADDRESS),
             fromName: $this->values->get(SettingKey::EMAIL_FROM_NAME),
             printerAddress: $this->values->get(SettingKey::EMAIL_PRINTER_ADDRESS),
             cc: $this->values->getList(SettingKey::EMAIL_CC),
             sources: $this->effective()->sources,
-            envHost: $env?->host,
+            envHost: \is_string($envHost) && '' !== $envHost ? $envHost : null,
         );
     }
 

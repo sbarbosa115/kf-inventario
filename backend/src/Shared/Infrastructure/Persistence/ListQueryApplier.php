@@ -29,10 +29,11 @@ final class ListQueryApplier
     public function apply(QueryBuilder $qb, ListQuery $query, ListMapping $mapping): void
     {
         $this->filter($qb, $query, $mapping);
-        $sort = null === $query->sort ? null : $mapping->sortExpression($query->sort->field);
-        if (null !== $sort && null !== $query->sort) {
-            $qb->orderBy($sort, $query->sort->descending ? 'DESC' : 'ASC');
-            $qb->addOrderBy($mapping->id, $query->sort->descending ? 'DESC' : 'ASC');
+        $sort = $query->sort;
+        $expression = null === $sort ? null : $mapping->sortExpression($sort->field);
+        if (null !== $sort && null !== $expression) {
+            $qb->orderBy($expression, $sort->descending ? 'DESC' : 'ASC');
+            $qb->addOrderBy($mapping->id, $sort->descending ? 'DESC' : 'ASC');
         } else {
             $qb->orderBy($mapping->id, 'DESC');
         }

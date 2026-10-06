@@ -4,9 +4,13 @@ namespace App\Tests\Functional\Ordering;
 
 use App\Audit\Domain\Model\Log;
 use App\Customers\Domain\Model\Customer;
+use App\Inventory\Domain\Model\Warehouse;
 use App\Ordering\Domain\Model\Comment;
 use App\Ordering\Domain\Model\Order;
+use App\Ordering\Domain\Model\OrderCommentMeta;
 use App\Ordering\Domain\Model\OrderStatus;
+use App\Ordering\Domain\Model\ShopConnection;
+use App\Ordering\Domain\Model\ShopOrderLink;
 use App\Tests\Support\ApiTestCase;
 use App\Tests\Support\SignsIn;
 
@@ -102,6 +106,52 @@ final class OrderApiTest extends ApiTestCase
 
         $this->em()->clear();
         self::assertSame(0, $this->em()->getRepository(Order::class)->count([]), 'A refused order leaves nothing behind.');
+    }
+
+    public function testAnOrderNamesItsShopAndItsPinnedCommentFromTheShopsSettingsTables(): void
+    {
+        $this->signInAs(['ROLE_MANAGE_ORDERS']);
+        $warehouse = $this->aWarehouse();
+        $id = $this->placeOrder($warehouse, $this->aCustomer(), [[$this->aProduct('KF-A', $warehouse), 1]], ['code' => 'SHOP-1', 'comments' => [['content' => 'Ring twice']]]);
+        $plain = $this->placeOrder($warehouse, $this->aCustomer('other@kf.test'), [[$this->aProduct('KF-B', $warehouse), 1]], ['code' => 'PHONE-1']);
+
+        $list = $this->getJson('/api/v1/orders?warehouse_id='.$warehouse->getId())['items'];
+        self::assertSame([null, null], array_column($list, 'shop'), 'Orders without a link name no shop.');
+        self::assertSame([null, null], array_column($list, 'pinned_comment'));
+        $comment = $this->getJson('/api/v1/orders/'.$id)['comments'][0];
+        self::assertSame('app', $comment['origin'], 'A comment without metadata is an app comment.');
+        self::assertFalse($comment['pinned']);
+        self::assertFalse($comment['approximate'], 'Comments written by the app have their date.');
+        self::assertNotNull($comment['created_at']);
+        self::assertSame('Test tester', $comment['author']['name'] ?? null, 'Signed by whoever wrote it.');
+        self::assertFalse($comment['sent_to_shop']);
+
+        $em = $this->em();
+        $order = $em->find(Order::class, $id);
+        self::assertNotNull($order);
+        $managedWarehouse = $em->find(Warehouse::class, $warehouse->getId());
+        self::assertNotNull($managedWarehouse);
+        $connection = new ShopConnection('Kfvintage', 'https://kfvintage.test', 'v1:k', 'v1:s', str_repeat('ab', 32), 'v1:w', $managedWarehouse, true, true, [], new \DateTimeImmutable());
+        $em->persist($connection);
+        $em->persist(new ShopOrderLink($order, $connection, '5501', 'processing', new \DateTimeImmutable()));
+        $pinned = $em->find(Comment::class, $comment['id']);
+        self::assertNotNull($pinned);
+        $meta = new OrderCommentMeta($pinned, OrderCommentMeta::ORIGIN_APP);
+        $meta->pin(new \DateTimeImmutable(), null);
+        $em->persist($meta);
+        $em->flush();
+        $em->clear();
+
+        $list = $this->getJson('/api/v1/orders?warehouse_id='.$warehouse->getId())['items'];
+        $byCode = array_column($list, null, 'code');
+        self::assertSame(['id' => $connection->id(), 'name' => 'Kfvintage'], $byCode['SHOP-1']['shop']);
+        self::assertSame('Ring twice', $byCode['SHOP-1']['pinned_comment']['content'] ?? null);
+        self::assertNull($byCode['PHONE-1']['shop']);
+        $detail = $this->getJson('/api/v1/orders/'.$id);
+        self::assertSame('Kfvintage', $detail['shop']['name'] ?? null);
+        self::assertTrue($detail['comments'][0]['pinned']);
+        self::assertSame(['shop:'.$connection->id()], array_unique(array_map(static fn (array $o) => 'shop:'.($o['shop']['id'] ?? ''), $this->getJson('/api/v1/orders?warehouse_id='.$warehouse->getId().'&filter[source][]=shop:'.$connection->id())['items'])), 'The source filter knows the shop.');
+        self::assertSame([$plain], array_column($this->getJson('/api/v1/orders?warehouse_id='.$warehouse->getId().'&filter[source][]=phone')['items'], 'id'));
     }
 
     public function testAnOrderIsReadAndListedByWarehouseNewestFirst(): void

@@ -77,8 +77,10 @@ security:
   # The roles above are the production roles, unchanged; each endpoint asks for the role its legacy page asked for.
   access_control:
     - {path: ^/api/v1/auth/login$, roles: PUBLIC_ACCESS}
-    # WooCommerce's webhook: its URL is configured in the shop and does not change.
+    # WooCommerce's legacy webhook: configured in the shops; answers 410 once turned off in Settings › General.
     - {path: ^/admin/order/1H39j0jpQPsWL958v9R4$, roles: PUBLIC_ACCESS}
+    # Each shop connection's webhook (shops-settings): the token names the connection, a signature is required.
+    - {path: ^/webhooks/shops/, roles: PUBLIC_ACCESS}
     - {path: ^/api/, roles: ROLE_USER}
     # The legacy Twig pages, until each is replaced (they redirect to the React sign-in page).
     - {

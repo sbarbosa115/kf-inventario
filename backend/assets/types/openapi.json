@@ -6,6 +6,27 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/v1/settings/quick-phrases/order": {
+            "put": {
+                "summary": "QuickPhraseOrderInput: the phrases' new order \u2192 the list.",
+                "operationId": "put_api_quick_phrases_order",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/QuickPhraseOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/login": {
             "post": {
                 "summary": "{\"username\", \"password\", \"remember_me\"?}: the session starts and the answer is who signed in. 401\ninvalid_credentials for a wrong username or password.",
@@ -711,6 +732,185 @@
                 }
             }
         },
+        "/api/v1/orders/{id}/comments": {
+            "get": {
+                "summary": "The order's comments, oldest first; a legacy comment without a date carries the order's (`approximate`).",
+                "operationId": "get_api_order_comments",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "comments"
+                                    ],
+                                    "properties": {
+                                        "comments": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OrderCommentOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "OrderCommentsInput: the order's comments as they should be: no id adds one (signed by you), an id edits it, a\ncomment left out leaves the order. As before: any signed-in user.",
+                "operationId": "put_api_orders_comments",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "comments"
+                                    ],
+                                    "properties": {
+                                        "comments": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OrderCommentOutput"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "AddOrderCommentInput \u2192 201 the comment (signed by you, dated now). 422 shop_note_unavailable when it cannot be\nsent to the shop (the order is not linked, or the connection's order_note capability is off).",
+                "operationId": "post_api_order_comments_add",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderCommentOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{id}/comments/{commentId}/pin": {
+            "post": {
+                "summary": "Pins the comment (the order's only pinned one: the previous one is unpinned). 404 comment_not_found.",
+                "operationId": "post_api_order_comments_pin",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    },
+                    {
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderCommentOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Unpins it. 404 comment_not_found.",
+                "operationId": "delete_api_order_comments_unpin",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    },
+                    {
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderCommentOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/orders": {
             "get": {
                 "summary": "`warehouse_id` (required): a page of that warehouse's orders, newest first \u2014 the list contract (q over code,\ncustomer name and email; filters code, customer, status[] 1\u20136, source[] phone|web|shop:<id>, created_at,\npinned[] 1; sorts code, customer, status, created_at; facets of status and source).",
@@ -882,57 +1082,24 @@
                 }
             }
         },
-        "/api/v1/orders/{id}/comments": {
-            "put": {
-                "summary": "OrderCommentsInput: the order's comments as they should be: no id adds one (signed by you), an id edits it, a\ncomment left out leaves the order. As before: any signed-in user.",
-                "operationId": "put_api_orders_comments",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "pattern": "\\d+"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "required": [
-                                        "comments"
-                                    ],
-                                    "properties": {
-                                        "comments": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/OrderCommentOutput"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/orders/sync": {
             "post": {
                 "summary": "Pulls the orders the WooCommerce shops have waiting (REST API) and places the ones the app does not have yet,\nas the webhook would: `imported` placed, `skipped` already imported (deleted ones included) or not placeable\n(logged). A warehouse whose shop the app holds no keys for is not pulled. 502 order_sync_failed when a shop\ncannot be read (nothing is kept).",
                 "operationId": "post_api_orders_sync",
                 "responses": {
                     "202": {
-                        "description": "OK.",
+                        "description": "One of these.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/SyncResultOutput"
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/SyncResultOutput"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/ShopsSyncResultOutput"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -1055,6 +1222,673 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/OrderPartialsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/shops": {
+            "get": {
+                "summary": "Every connection by name, with its health.",
+                "operationId": "get_api_shops_list",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ShopConnectionOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "ShopConnectionInput \u2192 201 with `webhook_secret` (once) and `webhook_url`. 409 shop_url_taken, shop_name_taken;\n404 warehouse_not_found; 422 shop_url_invalid (not https, a private host).",
+                "operationId": "post_api_shops_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShopConnectionOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/shops/{id}": {
+            "get": {
+                "summary": "One connection. 404 shop_not_found.",
+                "operationId": "get_api_shops_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShopConnectionOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "ShopConnectionInput: blank consumer_key/consumer_secret keep the saved ones. 404 shop_not_found.",
+                "operationId": "put_api_shops_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShopConnectionOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "204; 409 shop_has_orders when orders came from it (deactivate it instead).",
+                "operationId": "delete_api_shops_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/shops/{id}/webhook-secret": {
+            "get": {
+                "summary": "The webhook URL and signing secret to paste in WooCommerce (the consumer secret is never readable).",
+                "operationId": "get_api_shops_webhook_secret",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookSecretOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Rotates the signing secret \u2192 the new one, to paste.",
+                "operationId": "post_api_shops_webhook_secret_rotate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookSecretOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/shops/{id}/test": {
+            "post": {
+                "summary": "ShopTestInput (the keys as typed, else the saved ones): \"Test connection\", 15 s, never an error status.",
+                "operationId": "post_api_shops_test",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShopTestResultOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/shops/{id}/deliveries": {
+            "get": {
+                "summary": "A page of the connection's inbox (`?status=failed`; the list contract).",
+                "operationId": "get_api_shops_deliveries",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ShopDeliveryOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "facets": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/components/schemas/FacetCountOutput"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/shops/{id}/deliveries/{deliveryId}": {
+            "get": {
+                "summary": "One inbox row with its body. 404 delivery_not_found.",
+                "operationId": "get_api_shops_delivery",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    },
+                    {
+                        "name": "deliveryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShopDeliveryDetailOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/shops/{id}/deliveries/{deliveryId}/retry": {
+            "post": {
+                "summary": "Runs the import again from the stored body: `placed` with its order, or still `failed` with the new reason.",
+                "operationId": "post_api_shops_delivery_retry",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    },
+                    {
+                        "name": "deliveryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShopDeliveryOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/shops/{id}/deliveries/{deliveryId}/discard": {
+            "post": {
+                "summary": "Marks the row discarded.",
+                "operationId": "post_api_shops_delivery_discard",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    },
+                    {
+                        "name": "deliveryId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShopDeliveryOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/shops/{id}/outbox": {
+            "get": {
+                "summary": "The connection's writes in a status (`?status=failed`).",
+                "operationId": "get_api_shops_outbox",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ShopOutboxOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/shops/{id}/outbox/{outboxId}/retry": {
+            "post": {
+                "summary": "Queues a failed write again \u2192 pending.",
+                "operationId": "post_api_shops_outbox_retry",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    },
+                    {
+                        "name": "outboxId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShopOutboxOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/settings/quick-phrases": {
+            "get": {
+                "summary": "The active phrases in order (`?all=1`: every one, for the admin's tab).",
+                "operationId": "get_api_quick_phrases",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/QuickPhraseOutput"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "QuickPhraseInput: a phrase at the end \u2192 201.",
+                "operationId": "post_api_quick_phrases_create",
+                "responses": {
+                    "201": {
+                        "description": "Created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QuickPhraseOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/settings/quick-phrases/{id}": {
+            "put": {
+                "summary": "QuickPhraseInput: renames it or switches it off. 404 quick_phrase_not_found.",
+                "operationId": "put_api_quick_phrases_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QuickPhraseOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "204. 404 quick_phrase_not_found.",
+                "operationId": "delete_api_quick_phrases_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "\\d+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/settings/public": {
+            "get": {
+                "summary": "The analytics IDs every signed-in page loads (null: that tool is off). Any signed-in user.",
+                "operationId": "get_api_settings_public",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PublicSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/settings/email": {
+            "get": {
+                "summary": "Settings \u203a Email: the SMTP server (never its password: `has_password`), the sender, the printer and the cc, each\nwith where the effective value comes from (settings, env, none).",
+                "operationId": "get_api_settings_email",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EmailSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "EmailSettingsInput: saves Settings \u203a Email (a blank password keeps the saved one; everything empty clears it, the\nenv applies) \u2192 EmailSettingsOutput; 422 on a bad address. Item 3.",
+                "operationId": "put_api_settings_email_save",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EmailSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/settings/email/test": {
+            "post": {
+                "summary": "TestEmailInput: sends \"KF Inventory test email\" to `to` through the effective server, at once (not queued) \u2192\n202; 502 smtp_failed with the server's message in detail.reason; 429 more than once in 10 s. Item 3.",
+                "operationId": "post_api_settings_email_test",
+                "responses": {
+                    "202": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TestEmailResultOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/settings/analytics": {
+            "get": {
+                "summary": "Settings \u203a Analytics. Item 3.",
+                "operationId": "get_api_settings_analytics",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnalyticsSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "AnalyticsSettingsInput: G-XXXXXXX and the Clarity Project ID (empty turns one off); 422 on a wrong shape. Item 3.",
+                "operationId": "put_api_settings_analytics_save",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnalyticsSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/settings/webhooks": {
+            "get": {
+                "summary": "The legacy webhook URL's switch (on until turned off: Decisions 8) and the hits it took since it was turned off.",
+                "operationId": "get_api_settings_webhooks",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookSettingsOutput"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "WebhookSettingsInput: turns the legacy webhook URL off (410 from then on; its counter starts at 0) or on.",
+                "operationId": "put_api_settings_webhooks_save",
+                "responses": {
+                    "200": {
+                        "description": "OK.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhookSettingsOutput"
                                 }
                             }
                         }
@@ -1200,6 +2034,29 @@
     },
     "components": {
         "schemas": {
+            "QuickPhraseOutput": {
+                "required": [
+                    "id",
+                    "text",
+                    "position",
+                    "active"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
             "SessionOutput": {
                 "required": [
                     "id",
@@ -1668,6 +2525,106 @@
                 },
                 "type": "object"
             },
+            "CommentAuthorOutput": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ShopRefOutput": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "OrderCommentOutput": {
+                "required": [
+                    "id",
+                    "approximate",
+                    "origin",
+                    "pinned",
+                    "sent_to_shop"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "content": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "title": "ISO 8601; a legacy comment without a date carries the order's, with `approximate`",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "approximate": {
+                        "title": "true when created_at is the order's date, not the comment's",
+                        "type": "boolean"
+                    },
+                    "author": {
+                        "title": "null for a shop note, or a legacy comment without a user",
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CommentAuthorOutput"
+                            }
+                        ]
+                    },
+                    "origin": {
+                        "title": "app (typed here), shop (a note pulled from the shop), phrase (a quick phrase)",
+                        "type": "string"
+                    },
+                    "shop": {
+                        "title": "the connection a shop note came from",
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ShopRefOutput"
+                            }
+                        ]
+                    },
+                    "pinned": {
+                        "type": "boolean"
+                    },
+                    "pinned_at": {
+                        "title": "ISO 8601",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "pinned_by": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CommentAuthorOutput"
+                            }
+                        ]
+                    },
+                    "sent_to_shop": {
+                        "title": "the comment was also sent to the order's shop as an order note",
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
             "CustomerRefOutput": {
                 "required": [
                     "id"
@@ -1691,21 +2648,6 @@
                     "phone": {
                         "type": "string",
                         "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "ShopRefOutput": {
-                "required": [
-                    "id",
-                    "name"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "integer"
-                    },
-                    "name": {
-                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -1802,91 +2744,6 @@
                                 "$ref": "#/components/schemas/PinnedCommentOutput"
                             }
                         ]
-                    }
-                },
-                "type": "object"
-            },
-            "CommentAuthorOutput": {
-                "required": [
-                    "id",
-                    "name"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "integer"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "OrderCommentOutput": {
-                "required": [
-                    "id",
-                    "approximate",
-                    "origin",
-                    "pinned",
-                    "sent_to_shop"
-                ],
-                "properties": {
-                    "id": {
-                        "type": "integer"
-                    },
-                    "content": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "created_at": {
-                        "title": "ISO 8601; a legacy comment without a date carries the order's, with `approximate`",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "approximate": {
-                        "title": "true when created_at is the order's date, not the comment's",
-                        "type": "boolean"
-                    },
-                    "author": {
-                        "title": "null for a shop note, or a legacy comment without a user",
-                        "nullable": true,
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/CommentAuthorOutput"
-                            }
-                        ]
-                    },
-                    "origin": {
-                        "title": "app (typed here), shop (a note pulled from the shop), phrase (a quick phrase)",
-                        "type": "string"
-                    },
-                    "shop": {
-                        "title": "the connection a shop note came from",
-                        "nullable": true,
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/ShopRefOutput"
-                            }
-                        ]
-                    },
-                    "pinned": {
-                        "type": "boolean"
-                    },
-                    "pinned_at": {
-                        "title": "ISO 8601",
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "pinned_by": {
-                        "nullable": true,
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/CommentAuthorOutput"
-                            }
-                        ]
-                    },
-                    "sent_to_shop": {
-                        "title": "the comment was also sent to the order's shop as an order note",
-                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -2029,6 +2886,61 @@
                 },
                 "type": "object"
             },
+            "ShopSyncConnectionOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "imported",
+                    "skipped"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "imported": {
+                        "type": "integer"
+                    },
+                    "skipped": {
+                        "type": "integer"
+                    },
+                    "error": {
+                        "title": "Why the shop could not be read; null when it was",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ShopsSyncResultOutput": {
+                "required": [
+                    "imported",
+                    "skipped",
+                    "failed",
+                    "connections"
+                ],
+                "properties": {
+                    "imported": {
+                        "type": "integer"
+                    },
+                    "skipped": {
+                        "type": "integer"
+                    },
+                    "failed": {
+                        "title": "Connections that could not be read",
+                        "type": "integer"
+                    },
+                    "connections": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ShopSyncConnectionOutput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "PartialLineProductOutput": {
                 "required": [
                     "code"
@@ -2117,6 +3029,534 @@
                         "items": {
                             "$ref": "#/components/schemas/StockOutput"
                         }
+                    }
+                },
+                "type": "object"
+            },
+            "ShopCapabilitiesOutput": {
+                "required": [
+                    "order_status",
+                    "order_note"
+                ],
+                "properties": {
+                    "order_status": {
+                        "title": "Processed \u2192 processing, Sent and Delivered \u2192 completed",
+                        "type": "boolean"
+                    },
+                    "order_note": {
+                        "title": "Comments marked \"also send to the shop\"",
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "ShopHealthOutput": {
+                "required": [
+                    "failed_deliveries",
+                    "failed_pushes"
+                ],
+                "properties": {
+                    "last_webhook_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_import_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_pull_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_pull_ok_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_failure_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_failure_code": {
+                        "title": "bad_signature, unknown_product, keys_read_only, unreachable\u2026",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_failure": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "failed_deliveries": {
+                        "title": "Deliveries waiting in the inbox",
+                        "type": "integer"
+                    },
+                    "failed_pushes": {
+                        "title": "Writes to the shop that failed every retry",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "ShopConnectionOutput": {
+                "required": [
+                    "id",
+                    "name",
+                    "site_url",
+                    "active",
+                    "warehouse",
+                    "email_printer",
+                    "capabilities",
+                    "webhook_url",
+                    "has_keys",
+                    "health"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "site_url": {
+                        "type": "string"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "warehouse": {
+                        "$ref": "#/components/schemas/WarehouseRefOutput"
+                    },
+                    "email_printer": {
+                        "type": "boolean"
+                    },
+                    "capabilities": {
+                        "$ref": "#/components/schemas/ShopCapabilitiesOutput"
+                    },
+                    "webhook_url": {
+                        "title": "The connection's own webhook URL, to paste in WooCommerce",
+                        "type": "string"
+                    },
+                    "has_keys": {
+                        "type": "boolean"
+                    },
+                    "health": {
+                        "$ref": "#/components/schemas/ShopHealthOutput"
+                    },
+                    "webhook_secret": {
+                        "title": "Only in the answer that created the connection",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookSecretOutput": {
+                "required": [
+                    "webhook_secret",
+                    "webhook_url"
+                ],
+                "properties": {
+                    "webhook_secret": {
+                        "type": "string"
+                    },
+                    "webhook_url": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "ShopRestTestOutput": {
+                "required": [
+                    "ok"
+                ],
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "store_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "wc_version": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "can_write": {
+                        "title": "null: unknown until a write succeeded (a read cannot prove write access)",
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "error": {
+                        "title": "The shop's message when it failed (never the keys)",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ShopTestResultOutput": {
+                "required": [
+                    "rest",
+                    "webhook_secret_set"
+                ],
+                "properties": {
+                    "rest": {
+                        "$ref": "#/components/schemas/ShopRestTestOutput"
+                    },
+                    "webhook_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "webhook_secret_set": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "OrderRefOutput": {
+                "required": [
+                    "id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "DeliveryLineOutput": {
+                "required": [
+                    "quantity"
+                ],
+                "properties": {
+                    "sku": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "quantity": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "DeliverySummaryOutput": {
+                "required": [
+                    "lines"
+                ],
+                "properties": {
+                    "customer": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DeliveryLineOutput"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ShopDeliveryOutput": {
+                "required": [
+                    "id",
+                    "kind",
+                    "status",
+                    "received_at",
+                    "attempts",
+                    "summary"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "kind": {
+                        "title": "webhook, pull or legacy",
+                        "type": "string"
+                    },
+                    "remote_order_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "title": "placed, failed or discarded",
+                        "type": "string"
+                    },
+                    "reason_code": {
+                        "title": "bad_signature, unknown_product, no_warehouse, not_an_order, no_lines, duplicate, inactive",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "received_at": {
+                        "title": "ISO 8601",
+                        "type": "string"
+                    },
+                    "attempts": {
+                        "type": "integer"
+                    },
+                    "order": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OrderRefOutput"
+                            }
+                        ]
+                    },
+                    "summary": {
+                        "$ref": "#/components/schemas/DeliverySummaryOutput"
+                    }
+                },
+                "type": "object"
+            },
+            "ShopDeliveryDetailOutput": {
+                "required": [
+                    "id",
+                    "kind",
+                    "status",
+                    "received_at",
+                    "attempts",
+                    "summary"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "kind": {
+                        "title": "webhook, pull or legacy",
+                        "type": "string"
+                    },
+                    "remote_order_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "title": "placed, failed or discarded",
+                        "type": "string"
+                    },
+                    "reason_code": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "received_at": {
+                        "title": "ISO 8601",
+                        "type": "string"
+                    },
+                    "attempts": {
+                        "type": "integer"
+                    },
+                    "order": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OrderRefOutput"
+                            }
+                        ]
+                    },
+                    "summary": {
+                        "$ref": "#/components/schemas/DeliverySummaryOutput"
+                    },
+                    "payload": {
+                        "title": "The raw JSON body; null for a refused signature",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ShopOutboxOutput": {
+                "required": [
+                    "id",
+                    "capability",
+                    "order",
+                    "payload",
+                    "status",
+                    "attempts",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "capability": {
+                        "title": "order_status or order_note",
+                        "type": "string"
+                    },
+                    "order": {
+                        "$ref": "#/components/schemas/OrderRefOutput"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "nullable": true
+                        }
+                    },
+                    "status": {
+                        "title": "pending, sent or failed",
+                        "type": "string"
+                    },
+                    "attempts": {
+                        "type": "integer"
+                    },
+                    "last_error": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "title": "ISO 8601",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PublicSettingsOutput": {
+                "properties": {
+                    "ga4_measurement_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "clarity_project_id": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "EmailSourcesOutput": {
+                "required": [
+                    "dsn",
+                    "from",
+                    "printer",
+                    "cc"
+                ],
+                "properties": {
+                    "dsn": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "string"
+                    },
+                    "printer": {
+                        "type": "string"
+                    },
+                    "cc": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "EmailSettingsOutput": {
+                "required": [
+                    "has_password",
+                    "encryption",
+                    "cc",
+                    "source"
+                ],
+                "properties": {
+                    "dsn_host": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "dsn_port": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "dsn_user": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "has_password": {
+                        "type": "boolean"
+                    },
+                    "encryption": {
+                        "title": "tls, ssl or none",
+                        "type": "string"
+                    },
+                    "from_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "from_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "printer_address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cc": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/EmailSourcesOutput"
+                    },
+                    "env_host": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "TestEmailResultOutput": {
+                "required": [
+                    "queued"
+                ],
+                "properties": {
+                    "queued": {
+                        "type": "boolean"
+                    },
+                    "host": {
+                        "title": "The SMTP host it went through",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AnalyticsSettingsOutput": {
+                "properties": {
+                    "ga4_measurement_id": {
+                        "title": "G-XXXXXXX, from GA4 \u203a Admin \u203a Data streams",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "clarity_project_id": {
+                        "title": "Clarity \u203a Settings \u203a Project ID",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookSettingsOutput": {
+                "required": [
+                    "legacy_enabled",
+                    "legacy_hits_since"
+                ],
+                "properties": {
+                    "legacy_enabled": {
+                        "type": "boolean"
+                    },
+                    "legacy_hits_since": {
+                        "type": "integer"
+                    },
+                    "legacy_last_hit_at": {
+                        "title": "ISO 8601",
+                        "type": "string",
+                        "nullable": true
                     }
                 },
                 "type": "object"

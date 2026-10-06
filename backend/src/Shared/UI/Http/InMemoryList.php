@@ -60,7 +60,7 @@ final class InMemoryList
 
         $page = $query->all() ? $kept : \array_slice($kept, $query->offset(), $query->perPage);
 
-        return new ListPage(array_values($page), \count($kept), $facets);
+        return new ListPage($page, \count($kept), $facets);
     }
 
     /**
