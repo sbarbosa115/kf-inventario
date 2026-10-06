@@ -56,9 +56,16 @@
   text-align: right;
 }
 
-.kf-invoice-form__line-total {
-  /* Lines up with the text of the inputs next to it. */
-  padding-top: calc(var(--kf-space-2) + 0.375rem + 1px);
+/* The amount takes the height of the inputs next to it (Bootstrap's control: 1.5em + .75rem + 2px), centred in it. */
+.kf-invoice-form__line-total > * {
+  display: inline-block;
+  line-height: calc(1.5rem + 0.75rem + 2px);
+}
+
+@media (pointer: coarse) {
+  .kf-invoice-form__line-total > * {
+    line-height: var(--kf-target);
+  }
 }
 
 .kf-invoice-form__line-actions {
@@ -145,7 +152,7 @@
     text-align: left;
   }
 
-  .kf-invoice-form__line-total {
-    padding-top: var(--kf-space-1);
+  .kf-invoice-form__line-total > * {
+    line-height: inherit;
   }
 }
