@@ -207,3 +207,188 @@ describe('DataTable in server mode', () => {
     );
   });
 });
+
+interface Invoice {
+  id: number;
+  code: string;
+  total: number;
+  created: string;
+}
+
+/** Every filter type in one table, plus a filter with no column (shown on the chips and in the sheet only). */
+function Typed({
+  initial = {page: 1, perPage: 25},
+  asked = [],
+  total = 2,
+}: {
+  initial?: TableQuery;
+  asked?: TableQuery[];
+  total?: number;
+}) {
+  const [query, setQuery] = useState<TableQuery>(initial);
+  const columns: Column<Invoice>[] = [
+    {
+      key: 'code',
+      header: 'Invoice',
+      render: (r) => r.code,
+      filter: {type: 'text', field: 'code'},
+    },
+    {key: 'note', header: 'Note', render: () => '-'},
+    {
+      key: 'created',
+      header: 'Date',
+      render: (r) => r.created,
+      filter: {type: 'date', field: 'created_at'},
+    },
+    {
+      key: 'total',
+      header: 'Total',
+      render: (r) => r.total,
+      numeric: true,
+      filter: {type: 'money', field: 'total'},
+    },
+  ];
+  return (
+    <DataTable
+      columns={columns}
+      extraFilters={[
+        {
+          label: 'Walk-in',
+          filter: {
+            type: 'enum',
+            field: 'walk_in',
+            options: [
+              {value: 'yes', label: 'Walk-in customer'},
+              {value: 'no', label: 'With a customer'},
+            ],
+          },
+        },
+      ]}
+      rows={[
+        {id: 1, code: 'INV-1', total: 100, created: '2026-10-01'},
+        {id: 2, code: 'INV-2', total: 900, created: '2026-10-02'},
+      ]}
+      rowKey={(r) => r.id}
+      query={query}
+      onQueryChange={(next) => {
+        asked.push(next);
+        setQuery(next);
+      }}
+      total={total}
+      countFor={async () => 1}
+      searchable={false}
+    />
+  );
+}
+
+describe('DataTable filters by column type', () => {
+  it('gives each filterable column its control in the filter row: a text input, a date range, a money range', async () => {
+    phone(false);
+    const asked: TableQuery[] = [];
+    render(<Typed asked={asked} />);
+
+    const [, filters] = within(screen.getAllByRole('rowgroup')[0]!).getAllByRole(
+      'row',
+    );
+    const cells = within(filters!).getAllByRole('cell');
+    expect(
+      within(cells[0]!).getByRole('searchbox', {name: 'Filter by Invoice'}),
+    ).toBeInTheDocument();
+    expect(cells[1], 'a column without a filter has an empty cell').toBeEmptyDOMElement();
+    expect(within(cells[2]!).getByRole('button', {name: 'Date'})).toHaveAttribute(
+      'aria-haspopup',
+      'dialog',
+    );
+    expect(
+      within(cells[3]!).getByRole('button', {name: 'Total'}),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {name: 'Walk-in'}),
+      'a filter without a column has no place in the row',
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(within(cells[3]!).getByRole('button', {name: 'Total'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Over $500'}));
+    expect(asked.at(-1)).toMatchObject({
+      filters: {total: {min: '500.01'}},
+      page: 1,
+    });
+    expect(
+      screen.getByRole('button', {name: 'Total: Over $500'}),
+      'the button reads the range',
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Total: Over $500', {
+        selector: '.kf-active-filters__text',
+      }),
+      'and a chip says it above the table',
+    ).toBeInTheDocument();
+  });
+
+  it('shows a filter without a column on its chip, and offers it in the phone sheet', async () => {
+    phone(true);
+    const asked: TableQuery[] = [];
+    render(
+      <Typed
+        asked={asked}
+        initial={{page: 1, perPage: 25, filters: {walk_in: ['yes']}}}
+      />,
+    );
+
+    expect(screen.getByText('Walk-in: Walk-in customer')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', {name: 'Filters · 1'}));
+    const sheet = screen.getByRole('dialog', {name: 'Filters'});
+    expect(
+      within(sheet)
+        .getAllByRole('button', {expanded: false})
+        .concat(within(sheet).getAllByRole('button', {expanded: true}))
+        .map((b) => b.textContent),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^Invoice/),
+        expect.stringMatching(/^Date/),
+        expect.stringMatching(/^Total/),
+        expect.stringMatching(/^Walk-in/),
+      ]),
+    );
+    await userEvent.click(
+      within(sheet).getByRole('checkbox', {name: 'With a customer'}),
+    );
+    await userEvent.click(
+      await within(sheet).findByRole('button', {name: 'Show 1 result'}),
+    );
+    expect(asked.at(-1)).toMatchObject({filters: {walk_in: ['yes', 'no']}});
+  });
+
+  it('offers Clear filters when only the search narrows the list', async () => {
+    phone(false);
+    const asked: TableQuery[] = [];
+    render(<Typed asked={asked} initial={{page: 1, perPage: 25, q: 'kf'}} />);
+
+    await userEvent.click(screen.getByRole('button', {name: 'Clear filters'}));
+    expect(asked.at(-1)).toMatchObject({q: undefined, filters: {}, page: 1});
+    expect(
+      screen.queryByRole('button', {name: 'Clear filters'}),
+    ).not.toBeInTheDocument();
+  });
+
+  it('goes back to page 1 when the rows per page change, and Previous is off on the first page', async () => {
+    const asked: TableQuery[] = [];
+    render(
+      <Typed
+        asked={asked}
+        total={1240}
+        initial={{page: 3, perPage: 25}}
+      />,
+    );
+
+    const pager = screen.getByRole('navigation', {name: 'Pages'});
+    expect(pager).toHaveTextContent('51 – 75 of 1,240');
+    await userEvent.selectOptions(
+      within(pager).getByLabelText('Rows per page'),
+      '100',
+    );
+    expect(asked.at(-1)).toMatchObject({page: 1, perPage: 100});
+    expect(within(pager).getByRole('button', {name: 'Previous'})).toBeDisabled();
+  });
+});

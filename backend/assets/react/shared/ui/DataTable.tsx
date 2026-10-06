@@ -91,6 +91,11 @@ interface Props<Row> {
   countFor?: (query: TableQuery) => Promise<number>;
   /** Server mode: the rows-per-page choices (25, 50, 100). */
   perPageOptions?: number[];
+  /**
+   * Server mode: filters with no column of their own (in stock, walk-in, country): on the chips and in the phone's
+   * sheet, after the columns' filters; never in the filter row (the page offers them as toolbar chips, if at all).
+   */
+  extraFilters?: FilterColumn[];
 }
 
 const INTERACTIVE = 'a, button, input, select, textarea, label, [role="menu"]';
@@ -133,6 +138,7 @@ export function DataTable<Row>({
   facets,
   countFor,
   perPageOptions = PER_PAGE_OPTIONS,
+  extraFilters = [],
 }: Props<Row>) {
   const {t} = useTranslation();
   const phone = usePhone();
@@ -189,12 +195,17 @@ export function DataTable<Row>({
   if (error) return <ErrorState error={error} onRetry={onRetry} />;
 
   // Server mode: the filterable columns, how many filter something, and the ways to change the query.
-  const filterColumns: FilterColumn[] = columns.flatMap((column) =>
-    column.filter ? [{label: column.header, filter: column.filter}] : [],
-  );
+  const filterColumns: FilterColumn[] = [
+    ...columns.flatMap((column) =>
+      column.filter ? [{label: column.header, filter: column.filter}] : [],
+    ),
+    ...extraFilters,
+  ];
+  const rowFilters = columns.some((column) => column.filter !== undefined);
   const serverFilters = server ? activeFilters(server.query.filters) : {};
   const activeCount = Object.keys(serverFilters).length;
-  const filtering = activeCount > 0 || (server?.query.q ?? '').trim() !== '';
+  const searching = (server?.query.q ?? '').trim() !== '';
+  const filtering = activeCount > 0 || searching;
   const change = (patch: Partial<TableQuery>) =>
     server?.change({...server.query, page: 1, ...patch});
   const setFilter = (field: string, value: FilterValue | undefined) =>
@@ -257,6 +268,7 @@ export function DataTable<Row>({
         <ActiveFilters
           columns={filterColumns}
           filters={serverFilters}
+          searching={searching}
           onRemove={(field) => setFilter(field, undefined)}
           onClear={clearServerFilters}
         />
@@ -475,7 +487,7 @@ export function DataTable<Row>({
                   </th>
                 )}
               </tr>
-              {server && filterColumns.length > 0 && !phone && (
+              {server && rowFilters && !phone && (
                 <FilterRow
                   columns={columns.map((column) =>
                     column.filter
