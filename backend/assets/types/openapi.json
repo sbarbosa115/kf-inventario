@@ -8,7 +8,7 @@
     "paths": {
         "/api/v1/settings/quick-phrases/order": {
             "put": {
-                "summary": "QuickPhraseOrderInput: the phrases' new order \u2192 the list.",
+                "summary": "QuickPhraseOrderInput: the phrases' new order (these ids first, the others after them) \u2192 every phrase. 404\nquick_phrase_not_found for an id that is not a phrase.",
                 "operationId": "put_api_quick_phrases_order",
                 "responses": {
                     "200": {
@@ -1674,7 +1674,7 @@
         },
         "/api/v1/settings/quick-phrases": {
             "get": {
-                "summary": "The active phrases in order (`?all=1`: every one, for the admin's tab).",
+                "summary": "The active phrases in order. `?all=1`: every one, the hidden too (an admin's; anyone else still gets the active\nones).",
                 "operationId": "get_api_quick_phrases",
                 "responses": {
                     "200": {
@@ -1794,7 +1794,7 @@
                 }
             },
             "put": {
-                "summary": "EmailSettingsInput: saves Settings \u203a Email (a blank password keeps the saved one; everything empty clears it, the\nenv applies) \u2192 EmailSettingsOutput; 422 on a bad address. Item 3.",
+                "summary": "EmailSettingsInput: saves Settings \u203a Email (a blank password keeps the saved one; everything empty clears it, the\nenv applies) \u2192 EmailSettingsOutput; 422 on a bad address or a host that is not a host name alone. A blank\npassword is kept only while the host stays the same.",
                 "operationId": "put_api_settings_email_save",
                 "responses": {
                     "200": {
@@ -1812,7 +1812,7 @@
         },
         "/api/v1/settings/email/test": {
             "post": {
-                "summary": "TestEmailInput: sends \"KF Inventory test email\" to `to` through the effective server, at once (not queued) \u2192\n202; 502 smtp_failed with the server's message in detail.reason; 429 more than once in 10 s. Item 3.",
+                "summary": "TestEmailInput: sends \"KF Inventory test email\" to `to` through the effective server, at once (not queued) \u2192\n202 with the host it went through; 502 smtp_failed with the server's message in detail.reason; 429\ntest_email_too_soon more than once in 10 s; 422 on from_address when no sender is set anywhere.",
                 "operationId": "post_api_settings_email_test",
                 "responses": {
                     "202": {
@@ -1830,7 +1830,7 @@
         },
         "/api/v1/settings/analytics": {
             "get": {
-                "summary": "Settings \u203a Analytics. Item 3.",
+                "summary": "Settings \u203a Analytics: the GA4 Measurement ID and the Clarity Project ID (null: that tool is off).",
                 "operationId": "get_api_settings_analytics",
                 "responses": {
                     "200": {
@@ -1846,7 +1846,7 @@
                 }
             },
             "put": {
-                "summary": "AnalyticsSettingsInput: G-XXXXXXX and the Clarity Project ID (empty turns one off); 422 on a wrong shape. Item 3.",
+                "summary": "AnalyticsSettingsInput: G-XXXXXXX and the Clarity Project ID (empty turns one off); 422 on a wrong shape.",
                 "operationId": "put_api_settings_analytics_save",
                 "responses": {
                     "200": {
