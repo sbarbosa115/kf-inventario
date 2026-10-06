@@ -68,6 +68,7 @@ step "Checking this account"
 [[ -f "$BACKEND/.env.local" ]] || fail "backend/.env.local is missing: copy deploy/env.local.example, fill it in, then chmod 600 it."
 grep -q '^APP_ENV=prod' "$BACKEND/.env.local" || fail "backend/.env.local must set APP_ENV=prod."
 grep -qE '^APP_SECRET=.{16,}' "$BACKEND/.env.local" || fail "backend/.env.local must set APP_SECRET (see deploy/env.local.example)."
+grep -qE '^APP_ENCRYPTION_KEY=[0-9a-fA-F]{64}$' "$BACKEND/.env.local" || fail "backend/.env.local must set APP_ENCRYPTION_KEY to 64 hex characters (see deploy/env.local.example)."
 [[ -f "$APP_DIR/.env" ]] && warn "There is a .env at the repository root (the old layout's settings): it is no longer read. Move what it holds to backend/.env.local and delete it."
 for key in MAILER_DSN MAILER_FROM_ADDRESS MAILER_PRINTER_ADDRESS; do
     grep -qE "^$key=.+" "$BACKEND/.env.local" || warn "backend/.env.local has no $key: new orders will not be emailed to the printer."
@@ -81,8 +82,9 @@ note "PHP:      $PHP_BIN ($("$PHP_BIN" -r 'echo PHP_VERSION;'))"
 # one PHP while Apache runs the app with another, whose extensions may not match.
 check_extensions() {
     local binary=$1 label=$2 extension
-    # gd and zip: the PDFs (Dompdf) and the stock spreadsheets (PhpSpreadsheet).
-    for extension in pdo_mysql intl zip gd xmlreader mbstring curl; do
+    # gd and zip: the PDFs (Dompdf) and the stock spreadsheets (PhpSpreadsheet). sodium: the secrets kept in the
+    # database (Settings' SecretBox; ea-php84 ships it as a package).
+    for extension in pdo_mysql intl zip gd xmlreader mbstring curl sodium; do
         "$binary" -m | grep -qix "$extension" || fail "$label has no \"$extension\". Enable it in cPanel → Select PHP Version."
     done
 }
@@ -320,13 +322,21 @@ check_timezone() {
 check_timezone "$PHP_BIN" "The command-line PHP"
 [[ -n "${WEB_PHP_BIN:-}" && -x "${WEB_PHP_BIN:-}" ]] && check_timezone "$WEB_PHP_BIN" "$WEB_PHP (the one Apache uses)"
 
-step "Email queue"
+step "Email and shops queue"
 # A worker started by the cron before this deploy would keep running the old code until its time limit; this asks it
 # to stop after its current message, and the next cron run starts one on the new code.
 console messenger:stop-workers --env=prod --no-debug >/dev/null 2>&1 || true
-WORKER_LINE="flock -n $HOME/.kf-worker.lock $PHP_BIN $BACKEND/bin/console messenger:consume mail --time-limit=55 --memory-limit=128M --env=prod --no-debug >> $BACKEND/var/log/worker.log 2>&1"
-if ! crontab -l 2>/dev/null | grep -q 'messenger:consume mail'; then
-    warn "No cron line drains the email queue, so no order email reaches the printer. Add it in cPanel › Cron Jobs (every minute):"
+# One line, every minute (docs/pdr/prd-shops-settings.md, Decisions 11): the shops' catch-up pull when a connection is
+# due (~15 min after its last one; it exits at once otherwise), then the queues of the order emails and of the
+# write-back to the shops. flock keeps two runs from overlapping.
+CONSOLE="$PHP_BIN $BACKEND/bin/console"
+WORKER_LINE="flock -n $HOME/.kf-worker.lock sh -c '$CONSOLE app:shops:pull --if-due --env=prod --no-debug; $CONSOLE messenger:consume mail shops --time-limit=50 --memory-limit=128M --env=prod --no-debug' >> $BACKEND/var/log/worker.log 2>&1"
+if ! crontab -l 2>/dev/null | grep -q 'messenger:consume mail shops'; then
+    if crontab -l 2>/dev/null | grep -q 'messenger:consume mail'; then
+        warn "The cron line drains only the email queue: replace it (cPanel › Cron Jobs) with this one, which also pulls the shops and writes back to them (every minute):"
+    else
+        warn "No cron line drains the queues, so no order email reaches the printer and nothing is written back to the shops. Add it in cPanel › Cron Jobs (every minute):"
+    fi
     note "  $WORKER_LINE"
 fi
 

@@ -26,6 +26,18 @@ framework:
           max_retries: 3
           delay: 60000
           multiplier: 5
+      # What the app writes back to the shops (docs/pdr/prd-shops-settings.md, Decisions 10): the same table, its own
+      # queue, drained by the same cron line as mail (messenger:consume mail shops). A message carries only a
+      # shop_outbox id; three retries (1, 5, 25 min), then the failed transport and the row shows as failed in health.
+      shops:
+        dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+        options:
+          queue_name: shops
+          redeliver_timeout: 300
+        retry_strategy:
+          max_retries: 3
+          delay: 60000
+          multiplier: 5
       failed: 'doctrine://default?queue_name=failed&auto_setup=0'
 
 when@test:
@@ -34,4 +46,5 @@ when@test:
       transports:
         # Delivered on the spot in tests, so every test that asserts an email still sees it at once.
         mail: 'sync://'
+        shops: 'sync://'
         failed: 'in-memory://'
