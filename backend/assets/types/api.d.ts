@@ -651,7 +651,7 @@ export interface paths {
         put?: never;
         /**
          * ShopConnectionInput → 201 with `webhook_secret` (once) and `webhook_url`. 409 shop_url_taken, shop_name_taken;
-         *     404 warehouse_not_found; 422 shop_url_invalid (not https, a private host).
+         *     404 warehouse_not_found; 422 shop_url_invalid (not https, a private host; `detail.reason` says which).
          */
         post: operations["post_api_shops_create"];
         delete?: never;
@@ -669,10 +669,13 @@ export interface paths {
         };
         /** One connection. 404 shop_not_found. */
         get: operations["get_api_shops_show"];
-        /** ShopConnectionInput: blank consumer_key/consumer_secret keep the saved ones. 404 shop_not_found. */
+        /**
+         * ShopConnectionInput: blank consumer_key/consumer_secret keep the saved ones. 404 shop_not_found; the create's
+         *     409 and 422.
+         */
         put: operations["put_api_shops_update"];
         post?: never;
-        /** 204; 409 shop_has_orders when orders came from it (deactivate it instead). */
+        /** 204; 409 shop_has_orders when orders came from it (deactivate it instead). Its inbox goes with it. */
         delete: operations["delete_api_shops_delete"];
         options?: never;
         head?: never;
@@ -689,7 +692,7 @@ export interface paths {
         /** The webhook URL and signing secret to paste in WooCommerce (the consumer secret is never readable). */
         get: operations["get_api_shops_webhook_secret"];
         put?: never;
-        /** Rotates the signing secret → the new one, to paste. */
+        /** Rotates the signing secret → the new one, to paste. Deliveries signed with the old one are refused from now. */
         post: operations["post_api_shops_webhook_secret_rotate"];
         delete?: never;
         options?: never;
@@ -706,7 +709,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** ShopTestInput (the keys as typed, else the saved ones): "Test connection", 15 s, never an error status. */
+        /**
+         * ShopTestInput (the URL and keys as typed, each blank one the saved one): "Test connection", 15 s, never an
+         *     error status — `rest.ok` and `rest.error` say what happened. 404 shop_not_found.
+         */
         post: operations["post_api_shops_test"];
         delete?: never;
         options?: never;
@@ -721,7 +727,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A page of the connection's inbox (`?status=failed`; the list contract). */
+        /**
+         * A page of the connection's inbox, newest first (the list contract: `?status=failed` or filter[status][],
+         *     filter[kind][], filter[reason_code][], filter[received_at][from|to], filter[remote_order_id], filter[customer];
+         *     q over the shop order number and the customer).
+         */
         get: operations["get_api_shops_deliveries"];
         put?: never;
         post?: never;
@@ -738,7 +748,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** One inbox row with its body. 404 delivery_not_found. */
+        /** One inbox row with its body. 404 delivery_not_found (also another connection's). */
         get: operations["get_api_shops_delivery"];
         put?: never;
         post?: never;
@@ -774,7 +784,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Marks the row discarded. */
+        /** Marks the row discarded (a placed row stays placed). */
         post: operations["post_api_shops_delivery_discard"];
         delete?: never;
         options?: never;

@@ -940,10 +940,58 @@ Post the sample order with `X-WC-Webhook-Source: https://unknown-shop.test` (and
 
 ### Per-connection webhooks and the legacy switch (shops-settings item 5a)
 
-<!-- shops-settings item 5a (shops-api) adds HOOK-03 – 06 here, smoke in e2e/webhook.spec.ts: a signed delivery to
-     /webhooks/shops/{token} placed and linked, a wrong signature (401 and the inbox), an unknown SKU kept and retried,
-     the legacy URL on (as above) and off (410 and its counter). The seeded "Fake shop" connection's token and secret are
-     in src/DataFixtures/ShopFixtures.php. -->
+Each connection has its own URL, `/webhooks/shops/{token}`, and every delivery must carry
+`X-WC-Webhook-Signature` = base64(HMAC-SHA256(raw body, the connection's secret)). The fixtures' "Fake shop"
+connection (warehouse Colombia, prints its orders) has the token and secret in `src/DataFixtures/ShopFixtures.php`. To
+post a signed sample order by hand (save the body first: the signature is over the exact bytes):
+
+```bash
+TOKEN=fakeshop0000000000000000000000000000000000000000000000000000001
+SECRET=fake-shop-webhook-secret
+BODY='{"id": 7501, "status": "processing", "customer_note": "Gift wrap, please",
+  "billing": {"first_name": "Hook", "last_name": "Buyer", "email": "hook.buyer@example.com", "phone": "555-0199",
+  "address_1": "1 Billing St", "postcode": "33101", "city": "Miami", "state": "FL", "country": "US"},
+  "shipping": {"address_1": "2 Shipping Ave", "postcode": "10001", "city": "New York", "state": "NY", "country": "US"},
+  "line_items": [{"sku": "KF-01", "quantity": 2}, {"sku": "KF-02", "quantity": 1}]}'
+SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$SECRET" -binary | base64)
+curl -s -X POST "http://localhost:8080/webhooks/shops/$TOKEN" -H 'Content-Type: application/json' \
+  -H "X-WC-Webhook-Signature: $SIG" --data-raw "$BODY"
+```
+
+**HOOK-03 · A signed delivery to a connection is placed in its warehouse, linked and named**
+Smoke: `e2e/webhook.spec.ts`.
+Post the signed sample above. The answer is `{"status":true}`. Orders › Colombia: order `7501` is there, its Source
+names the shop ("Fake shop") in the list and in the detail (`shop` in `GET /api/v1/orders/{id}`), and its comments
+hold "Gift wrap, please" as a shop note (no author). Mailpit has "Order #7501 was created" to the printer (the
+connection prints its orders); edit the connection with "email the printer" off (`PUT /api/v1/shops/{id}`) and a new
+order id sends no email. `GET /api/v1/shops`: the connection's `health.last_webhook_at` and `last_import_at` are now.
+Posting the same body again answers `{"status":true}`, places nothing and sends no email.
+
+**HOOK-04 · A wrong signature is refused, kept without its body and shown in health**
+Smoke: `e2e/webhook.spec.ts`.
+Post the sample with `X-WC-Webhook-Signature: d3Jvbmc=` (or none): 401 `{"status":false}`, nothing is placed.
+`GET /api/v1/shops/{id}/deliveries?status=failed` lists a `bad_signature` row whose detail has `payload: null`; the
+connection's `health.last_failure_code` is `bad_signature` (Settings › Shop connections shows it in danger). A post to
+`/webhooks/shops/abab…` (an unknown token) answers 404 `{"status":false}` and adds no row. A body over 1 MB answers 413.
+
+**HOOK-05 · An unknown SKU is kept in the inbox and placed by Retry once the product exists**
+Smoke: `e2e/webhook.spec.ts` (API).
+Post a signed order with `"id": 7502` whose line has `"sku": "KF-99"`: 200 `{"status":true}`, no order. The inbox
+(`…/deliveries?status=failed`) has it with `reason_code` `unknown_product`, reason "Unknown product KF-99", the
+customer and lines in `summary`, and the body in the detail. Create product `KF-99`, then
+`POST /api/v1/shops/{id}/deliveries/{dId}/retry`: `status` `placed`, `order.code` `7502`, and the order is in
+Colombia, linked to the shop. Discard (`…/discard`) on another failed row sets `discarded` and the health's
+`failed_deliveries` drops by one.
+
+**HOOK-06 · The legacy URL during the cutover: on as before, off 410 and counted**
+Smoke: `e2e/webhook.spec.ts` (the API part); the Orders warning is SHOP-07's (item 6).
+With Settings › General's switch on, HOOK-01 still passes and every post to the old URL adds one to
+`GET /api/v1/settings/webhooks`'s `legacy_hits_since`; an order the old URL cannot place (an unknown shop, an unknown
+SKU) is kept in the inbox as kind `legacy`, and a shop whose address is a connection's site URL is imported through
+that connection (its warehouse, its printer switch, linked). Turn the switch off (`PUT /api/v1/settings/webhooks`
+`{"legacy_enabled": false}`): the counter starts from 0, the HOOK-01 post answers 410
+`{"status":false,"error":"webhook_moved"}`, places nothing, and the counter and `legacy_last_hit_at` move. Turn it
+back on afterwards.
 
 ## 10. Design system (DS)
 

@@ -2,28 +2,30 @@
 
 namespace App\Ordering\Application\Command;
 
-use App\Ordering\Application\Port\ImportedOrderCodes;
+use App\Inventory\Domain\Model\Warehouse;
 use App\Ordering\Application\Port\OrderInventory;
-use App\Ordering\Application\Port\ShopOrderMapper;
-use App\Ordering\Domain\Error\OrderedProductNotFound;
-use App\Ordering\Domain\Error\OrderWithoutProducts;
+use App\Ordering\Domain\Model\ShopDelivery;
+use App\Ordering\Domain\Repository\ShopConnectionRepository;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Domain\Clock;
 use Psr\Log\LoggerInterface;
 
 /**
- * Legacy OrderController::createWebhook: the order goes to the warehouse whose `urls` hold the shop's address and is
- * placed like one typed by hand; the printer gets it only when that warehouse is the printed one
- * (ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID, 1 as before). An unknown shop is logged and ignored. A delivery of an order the
- * warehouse already has (the sync's rule, RemoteOrderKey: the shop id is the code, deleted orders included) is logged
- * and places nothing: WooCommerce may deliver the same order twice.
+ * Legacy OrderController::createWebhook, for the legacy URL while its switch is on (docs/pdr/prd-shops-settings.md,
+ * Decisions 8). A shop that already has a connection (its X-WC-Webhook-Source is the connection's site URL) is
+ * imported through it: the connection's warehouse and printer switch, the link, its health. Any other shop as
+ * before: the warehouse whose `urls` hold its address, placed like an order typed by hand, the printer only for the
+ * printed warehouse (ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID). A delivery of an order the warehouse already has is logged
+ * and places nothing (RemoteOrderKey). What cannot be placed — an unknown shop, a SKU that is no product — is logged,
+ * as before, and kept in the inbox (kind `legacy`, with its body) instead of being lost.
  */
 final class ImportShopOrderHandler implements CommandHandler
 {
     public function __construct(
         private readonly OrderInventory $inventory,
-        private readonly ShopOrderMapper $mapper,
-        private readonly PlaceOrderHandler $placeOrder,
-        private readonly ImportedOrderCodes $importedCodes,
+        private readonly ShopConnectionRepository $connections,
+        private readonly ShopOrderImport $import,
+        private readonly Clock $clock,
         private readonly LoggerInterface $logger,
         /** ordering.webhook_email_warehouse_id */
         private readonly int $printedWarehouseId,
@@ -31,40 +33,68 @@ final class ImportShopOrderHandler implements CommandHandler
     }
 
     /**
-     * @return int|null the new order's id; null when no warehouse receives this shop's orders, or it has this one
-     *
-     * @throws \UnexpectedValueException                   not a WooCommerce order
-     * @throws OrderedProductNotFound|OrderWithoutProducts a SKU that is no product, an order without lines
+     * @return int|null the new order's id; null when it was not placed (kept in the inbox, or already in the app)
      */
     public function __invoke(ImportShopOrder $command): ?int
     {
-        $warehouse = null === $command->source ? null : $this->inventory->warehouseOfShop($command->source);
+        $payload = $command->body ?? (string) json_encode($command->shopOrder);
+        $source = null === $command->source ? '' : trim($command->source);
+        if ([] === $command->shopOrder) {
+            // A GET (WooCommerce checking the URL) or a body that is no JSON object: nothing to place or to keep.
+            $this->logger->warning(\sprintf('WooCommerce delivery from [%s] carried no order: nothing placed.', $source));
+
+            return null;
+        }
+
+        $connection = '' === $source ? null : $this->connections->bySiteUrl($source);
+        if (null !== $connection) {
+            $connection->recordWebhook($this->clock->now());
+            if (!$connection->isActive()) {
+                $this->import->keep($connection, ShopDelivery::KIND_LEGACY, self::remoteId($command->shopOrder), ShopDelivery::REASON_INACTIVE, 'The connection is inactive: activate it, then Retry.', $payload);
+
+                return null;
+            }
+
+            $result = $this->import->import($connection, (int) $connection->warehouse()->getId(), $connection->emailsPrinter(), ShopDelivery::KIND_LEGACY, $command->shopOrder, $payload, $source);
+
+            return $result->isPlaced() ? $result->orderId : null;
+        }
+
+        $warehouse = $this->warehouseOf($source);
         if (null === $warehouse) {
             $this->logger->error(\sprintf('Warehouse [%s] was not found', $command->source));
+            $this->import->keep(null, ShopDelivery::KIND_LEGACY, self::remoteId($command->shopOrder), ShopDelivery::REASON_NO_WAREHOUSE, \sprintf('No connection and no warehouse receives the orders of [%s].', $source), $payload);
 
             return null;
         }
 
         $warehouseId = (int) $warehouse->getId();
-        $key = RemoteOrderKey::ofRemoteOrder($warehouseId, $command->shopOrder);
-        if (null !== $key && $this->alreadyHas($key)) {
-            $this->logger->info(\sprintf('WooCommerce order [%s] from [%s] is already in warehouse %d: not placed again.', $key->code, $command->source, $warehouseId));
+        $result = $this->import->import(null, $warehouseId, $warehouseId === $this->printedWarehouseId, ShopDelivery::KIND_LEGACY, $command->shopOrder, $payload, $source);
 
-            return null;
-        }
-
-        return ($this->placeOrder)($this->mapper->toPlaceOrder($command->shopOrder, $warehouseId, $warehouseId === $this->printedWarehouseId));
+        return $result->isPlaced() ? $result->orderId : null;
     }
 
-    private function alreadyHas(RemoteOrderKey $key): bool
+    /**
+     * The warehouse whose `urls` hold the shop's address: as written, then with and without the trailing slash
+     * WooCommerce adds (home_url('/')).
+     */
+    private function warehouseOf(string $source): ?Warehouse
     {
-        foreach ($this->importedCodes->of($key->warehouseId) as $code) {
-            $known = RemoteOrderKey::ofOrder($key->warehouseId, $code);
-            if (null !== $known && $known->equals($key)) {
-                return true;
-            }
+        if ('' === $source) {
+            return null;
         }
+        $trimmed = rtrim($source, '/');
 
-        return false;
+        return $this->inventory->warehouseOfShop($source)
+            ?? $this->inventory->warehouseOfShop($trimmed)
+            ?? $this->inventory->warehouseOfShop($trimmed.'/');
+    }
+
+    /**
+     * @param array<mixed> $shopOrder
+     */
+    private static function remoteId(array $shopOrder): ?string
+    {
+        return \is_scalar($shopOrder['id'] ?? null) ? (string) $shopOrder['id'] : null;
     }
 }
