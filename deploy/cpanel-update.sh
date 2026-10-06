@@ -86,6 +86,13 @@ step "Checking this account"
 grep -q '^APP_ENV=prod' "$BACKEND/.env.local" || fail "backend/.env.local must set APP_ENV=prod."
 grep -qE '^APP_SECRET=.{16,}' "$BACKEND/.env.local" || fail "backend/.env.local must set APP_SECRET (see deploy/env.local.example)."
 grep -qE '^APP_ENCRYPTION_KEY=[0-9a-fA-F]{64}$' "$BACKEND/.env.local" || fail "backend/.env.local must set APP_ENCRYPTION_KEY to 64 hex characters (see deploy/env.local.example)."
+# The keys committed in backend/.env and backend/.env.test are public: a secret sealed with one is no secret.
+for committed in .env .env.test; do
+    dev_key="$(sed -n 's/^APP_ENCRYPTION_KEY=//p' "$BACKEND/$committed" 2>/dev/null || true)"
+    if [[ -n "$dev_key" ]] && grep -qixF "APP_ENCRYPTION_KEY=$dev_key" "$BACKEND/.env.local"; then
+        fail "backend/.env.local uses the APP_ENCRYPTION_KEY committed in backend/$committed: generate your own (see deploy/env.local.example)."
+    fi
+done
 [[ -f "$APP_DIR/.env" ]] && warn "There is a .env at the repository root (the old layout's settings): it is no longer read. Move what it holds to backend/.env.local and delete it."
 for key in MAILER_DSN MAILER_FROM_ADDRESS MAILER_PRINTER_ADDRESS; do
     grep -qE "^$key=.+" "$BACKEND/.env.local" || warn "backend/.env.local has no $key: new orders will not be emailed to the printer."
