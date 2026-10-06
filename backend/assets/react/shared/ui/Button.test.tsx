@@ -64,6 +64,9 @@ describe('Button', () => {
           Create product
         </Button>
         <Button href="/api/v1/orders/1/pdf">PDF</Button>
+        <Button href="/api/v1/invoices/1/pdf" target="_blank">
+          Open PDF
+        </Button>
       </MemoryRouter>,
     );
 
@@ -74,6 +77,11 @@ describe('Button', () => {
     expect(screen.getByRole('link', {name: 'PDF'})).toHaveAttribute(
       'href',
       '/api/v1/orders/1/pdf',
+    );
+    expect(screen.getByRole('link', {name: 'PDF'})).not.toHaveAttribute('rel');
+    expect(screen.getByRole('link', {name: 'Open PDF'})).toHaveAttribute(
+      'rel',
+      'noopener noreferrer',
     );
   });
 });

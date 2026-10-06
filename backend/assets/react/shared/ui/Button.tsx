@@ -83,7 +83,13 @@ export function Button({
         {content}
       </Link>
     ) : (
-      <a href={href} target={target} download={download} {...common}>
+      <a
+        href={href}
+        target={target}
+        rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+        download={download}
+        {...common}
+      >
         {content}
       </a>
     );
