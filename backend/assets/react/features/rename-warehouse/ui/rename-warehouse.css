@@ -1,5 +1,6 @@
 /* A warehouse's name, renamed in place on its card. */
 .warehouse-name {
+  flex: 1 1 auto;
   margin: 0;
   min-width: 0;
   font-size: var(--kf-text-lg);

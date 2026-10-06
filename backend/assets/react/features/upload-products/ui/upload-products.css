@@ -43,6 +43,10 @@
   min-width: 0;
 }
 
+.upload-step__body > .kf-warehouse-switch {
+  justify-self: start;
+}
+
 .upload-step__title {
   margin: 0;
   padding-top: var(--kf-space-1);

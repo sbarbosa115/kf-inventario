@@ -16,8 +16,10 @@ test.describe.configure({mode: 'serial'});
 
 const scanBox = (page: Page) => page.getByLabel('Barcode', {exact: true});
 
+/** Reads codes as a person types them: an Enter within 50 ms of the last read is a scanner's burst, not a new read. */
 async function scan(page: Page, ...codes: string[]) {
   for (const code of codes) {
+    await page.waitForTimeout(60);
     await scanBox(page).fill(code);
     await scanBox(page).press('Enter');
   }
@@ -75,7 +77,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
       page.getByText('Choose the stock sheet to upload.'),
     ).toBeVisible();
 
-    await page.getByLabel('Stock sheet').setInputFiles({
+    await page.getByLabel('Stock sheet', {exact: true}).setInputFiles({
       name: 'notes.txt',
       mimeType: 'text/plain',
       buffer: Buffer.from('not a spreadsheet'),
@@ -101,7 +103,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await page.goto('/admin/products/upload');
     const sheet = await page.request.get('/api/v1/products/template.xls?all=1');
 
-    await page.getByLabel('Stock sheet').setInputFiles({
+    await page.getByLabel('Stock sheet', {exact: true}).setInputFiles({
       name: 'products.xls',
       mimeType: 'application/vnd.ms-excel',
       buffer: await sheet.body(),
@@ -244,7 +246,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     );
 
     await page.goto('/admin/products/upload');
-    await page.getByLabel('Stock sheet').setInputFiles({
+    await page.getByLabel('Stock sheet', {exact: true}).setInputFiles({
       name: 'products.xls',
       mimeType: 'application/vnd.ms-excel',
       buffer: Buffer.from('x'),
@@ -338,7 +340,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await page.goto('/admin/products/barcode');
     await expect(page.getByText(/What changed/)).toBeVisible();
 
-    await page.getByRole('button', {name: 'Dismiss'}).click();
+    await page.getByRole('button', {name: 'Dismiss', exact: true}).click();
     await expect(page.getByText(/What changed/)).toHaveCount(0);
     await page.reload();
 
@@ -355,7 +357,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await page.goto('/admin/products/upload');
     const sheet = await page.request.get('/api/v1/products/template.xls');
 
-    await page.getByLabel('Stock sheet').setInputFiles({
+    await page.getByLabel('Stock sheet', {exact: true}).setInputFiles({
       name: 'products.xls',
       mimeType: 'application/vnd.ms-excel',
       buffer: await sheet.body(),

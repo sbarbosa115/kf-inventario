@@ -31,7 +31,9 @@ function renderScan(detector?: DetectorFactory) {
 
 const scanBox = () => screen.getByLabelText('Barcode');
 
+/** One read, typed like a person: ScanInput takes an Enter within 50 ms of the last read for the same scanner burst. */
 async function scan(code: string) {
+  await new Promise((resolve) => setTimeout(resolve, 60));
   await userEvent.type(scanBox(), `${code}{Enter}`);
 }
 
