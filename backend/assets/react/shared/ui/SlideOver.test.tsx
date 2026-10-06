@@ -1,6 +1,7 @@
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {useState} from 'react';
+import {ConfirmModal} from './ConfirmModal';
 import {SlideOver} from './SlideOver';
 
 function Page({onClose = vi.fn()}: {onClose?: () => void}) {
@@ -57,5 +58,36 @@ describe('SlideOver', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(opener).toHaveFocus();
     expect(document.body.style.overflow).toBe('');
+  });
+
+  it('with a question asked over it, Escape cancels the question and leaves the panel open', async () => {
+    const onClose = vi.fn();
+    function Stacked() {
+      const [asking, setAsking] = useState(true);
+      return (
+        <SlideOver title="Order W00001" onClose={onClose}>
+          {asking && (
+            <ConfirmModal
+              title="Mark as shipped?"
+              onConfirm={vi.fn()}
+              onCancel={() => setAsking(false)}
+            >
+              W00001 goes to Shipped.
+            </ConfirmModal>
+          )}
+        </SlideOver>
+      );
+    }
+    render(<Stacked />);
+
+    await userEvent.keyboard('{Escape}');
+    expect(
+      screen.queryByRole('dialog', {name: 'Mark as shipped?'}),
+    ).not.toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(document.body).toHaveClass('modal-open');
+
+    await userEvent.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

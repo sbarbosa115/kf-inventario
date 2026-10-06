@@ -56,17 +56,11 @@ export function OrderDetail({
     code: data?.code ?? code ?? String(orderId),
   });
 
-  // A question asked from inside the detail (the status confirm) takes Escape for itself: the detail stays open.
-  const close = () => {
-    if (document.querySelector('.modal[aria-modal="true"]')) return;
-    onClose();
-  };
-
   return (
     <SlideOver
       title={title}
       width="lg"
-      onClose={close}
+      onClose={onClose}
       header={
         data && (
           <OrderHeader

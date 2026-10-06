@@ -443,9 +443,9 @@ menu, options, focus ring) and the row menu are readable. Saving and deleting sh
 
 Twelve fixture orders (W00001 – W00012) are on the first warehouse, Colombia: W00001 – W00006 by phone with the
 statuses Created … Delivered, W00007 – W00012 from the web likewise, each with one comment and three products. Delete
-and Sync Orders need `ROLE_MANAGE_ORDERS`, which the admin does not reach: ORD-08 and ORD-09 sign in as a user who
-holds it (the smoke spec creates `smoke-orders` / `123456` with `ROLE_MANAGE_ORDERS` and `ROLE_UPDATE_ORDERS`; by
-hand, give those two roles to the user of USR-02).
+and Sync Orders need `ROLE_MANAGE_ORDERS`, which the admin reaches through the role hierarchy; ORD-08 and ORD-09 sign
+in as a user who holds it without being admin (the smoke spec creates `smoke-orders` / `123456` with
+`ROLE_MANAGE_ORDERS` and `ROLE_UPDATE_ORDERS`; by hand, give those two roles to the user of USR-02).
 
 **ORD-01 · The list shows the first warehouse's orders, and the old address lands on it**
 Smoke: `e2e/orders.spec.ts`.
