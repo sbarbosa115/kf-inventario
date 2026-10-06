@@ -70,6 +70,9 @@
 }
 
 .kf-order-detail__pinned-text {
+  /* No intrinsic width: a long note never widens the panel's header. */
+  flex: 1 1 0;
+  width: 0;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

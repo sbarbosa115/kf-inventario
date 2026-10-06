@@ -1,6 +1,8 @@
 /* The comment box's phrase bar (features/quick-phrase, item 8): one row of chips that scrolls sideways, 44 px targets.
    Tokens only. */
 .kf-phrase-bar {
+  /* Its chips scroll inside it: their total width never widens the panel around it. */
+  contain: inline-size;
   display: flex;
   gap: var(--kf-space-2);
   margin-bottom: var(--kf-space-2);
