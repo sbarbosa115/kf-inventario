@@ -83,9 +83,7 @@ test.describe('5 Orders', () => {
       page.getByRole('heading', {level: 1, name: 'Orders'}),
     ).toBeVisible();
     await expect(page.getByRole('link', {name: 'Create order'})).toBeVisible();
-    await expect(
-      page.getByRole('button', {name: 'Sync shop orders'}),
-    ).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Check now'})).toBeVisible();
     for (const header of [
       'Order',
       'Customer',
@@ -293,18 +291,22 @@ test.describe('5 Orders', () => {
     await expect(page.getByRole('row', {name: /W00005/})).toHaveCount(0);
   });
 
-  test('ORD-09 · Sync shop orders answers in words', async ({signedInAs}) => {
+  test('ORD-09 · Check now answers in words', async ({signedInAs}) => {
     const page = await signedInAs(ORDERS_CLERK.username);
     await page.goto('/admin/orders');
     await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
 
-    await page.getByRole('button', {name: 'Sync shop orders'}).click();
+    await page.getByRole('button', {name: 'Check now'}).click();
 
     // Without shop credentials on the smoke stack, either answer is right: what matters is a message, not a blank.
     await expect(
       page
-        .getByText(/orders imported, \d+ skipped\./)
-        .or(page.getByText(/shops could not be reached|not available yet/)),
+        .getByText(/orders? imported from \d+ shops?, \d+ skipped/)
+        .or(
+          page.getByText(
+            /no shop connection is active|shops could not be reached/i,
+          ),
+        ),
     ).toBeVisible();
   });
 
@@ -459,9 +461,7 @@ test.describe('5 Orders', () => {
       'Excel sheet',
     ]);
     await expect(page.getByRole('link', {name: 'Create order'})).toBeVisible();
-    await expect(
-      page.getByRole('button', {name: 'Sync shop orders'}),
-    ).toHaveCount(0);
+    await expect(page.getByRole('button', {name: 'Check now'})).toHaveCount(0);
   });
 });
 

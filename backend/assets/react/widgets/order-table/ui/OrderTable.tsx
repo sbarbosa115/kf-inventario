@@ -10,6 +10,7 @@ import {
   type Order,
 } from '@/entities/order';
 import {useCan} from '@/entities/session';
+import {listShops} from '@/entities/shop-connection';
 import {listWarehouses, type Warehouse} from '@/entities/warehouse';
 import {OrderStatusMenu} from '@/features/change-order-status';
 import {DeleteOrderConfirm} from '@/features/delete-order';
@@ -129,6 +130,11 @@ function WarehouseOrders({
     (facet ?? []).map((f) => [f.value, f.count]),
   );
   const allCount = facet?.reduce((sum, f) => sum + f.count, 0);
+  const shopOptions = useShopOptions(
+    data?.items,
+    data?.facets?.source,
+    list.query.filters?.source,
+  );
 
   const columns: Column<Order>[] = [
     {
@@ -157,13 +163,16 @@ function WarehouseOrders({
     {
       key: 'source',
       header: t('orders.columns.source'),
-      render: (order) => <OrderSource source={order.source} />,
+      render: (order) => (
+        <OrderSource source={order.source} shop={order.shop} />
+      ),
       filter: {
         type: 'enum',
         field: 'source',
         options: [
           {value: 'phone', label: t('orders.sources.phone')},
           {value: 'web', label: t('orders.sources.web')},
+          ...shopOptions,
         ],
       },
     },
@@ -383,4 +392,44 @@ function NotesCell({order, onOpen}: {order: Order; onOpen: () => void}) {
       {order.comments_count}
     </Button>
   );
+}
+
+const SHOP_VALUE = /^shop:(\d+)$/;
+
+/**
+ * The Source filter's shops (`shop:<id>`, one per connection, by name; docs/pdr/prd-shops-settings.md, Decisions 9):
+ * every connection for an admin (who may read them), else the shops the source facet counts and the ones ticked,
+ * named after the orders on the page ("Shop #3" when none of its orders is on it).
+ */
+function useShopOptions(
+  orders: Order[] | undefined,
+  facet: {value: string}[] | undefined,
+  ticked: unknown,
+): {value: string; label: string}[] {
+  const {t} = useTranslation();
+  const isAdmin = useCan('ROLE_ADMIN');
+  const shops = useLoad(
+    () => (isAdmin ? listShops() : Promise.resolve([])),
+    [isAdmin],
+  );
+  const names = new Map<number, string>();
+  for (const order of orders ?? []) {
+    if (order.shop) names.set(order.shop.id, order.shop.name);
+  }
+  for (const shop of shops.data ?? []) names.set(shop.id, shop.name);
+  const ids = new Set<number>((shops.data ?? []).map((shop) => shop.id));
+  const values = [
+    ...(facet ?? []).map((f) => f.value),
+    ...(Array.isArray(ticked) ? (ticked as string[]) : []),
+  ];
+  for (const value of values) {
+    const match = SHOP_VALUE.exec(value);
+    if (match) ids.add(Number(match[1]));
+  }
+  return [...ids]
+    .map((id) => ({
+      value: `shop:${id}`,
+      label: names.get(id) ?? t('orders.shop.unknown', {id}),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
