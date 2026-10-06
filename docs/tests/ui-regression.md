@@ -890,6 +890,23 @@ Edit `W00001`, change the comment and the payment method (PayPal), Update order:
      email takes the sender, printer and cc from Settings, the env when empty; a queued email goes through the SMTP
      server saved in Settings. -->
 
+**MAIL-03 · The order email takes its sender, printer and cc from Settings, the env when empty**
+API (no browser): `tests/Functional/Ordering/OrderEmailTest.php` (`testTheSettingsSenderPrinterAndCcWinOverTheEnv`,
+`testAnEmptySettingFallsBackToTheEnv`) and `tests/Functional/Settings/EmailSettingsApiTest.php` (each value's `source`).
+With Settings › Email empty, the order email is from `MAILER_FROM_*` to `MAILER_PRINTER_ADDRESS`, cc
+`sales@klassicfab.com`; with a sender, printer and cc saved there, it uses those; clearing a field brings that field's env
+value back (`source` says `env` again).
+
+**MAIL-04 · A queued email goes through the SMTP server saved in Settings**
+API (no browser): `tests/Functional/Settings/SettingsMailTransportTest.php` (a spy transport stands in for the server)
+and `tests/Functional/Settings/TestEmailApiTest.php`. After an SMTP server is saved in Settings › Email, the next order
+email the `mail` queue sends goes through it, without restarting the worker; clearing the server sends through
+`MAILER_DSN` again. "Send test email" goes through the same server at once and answers its host (202), the server's
+own refusal (502 `smtp_failed`, `detail.reason`), or 429 when asked again within 10 s. By hand on the dev stack (the
+browser side is SET-04/05, item 4's): save Mailpit (`mailpit`, port 1025, encryption none) as the server, place an
+order, and the email reaches Mailpit; save a host that does not exist and "Send test email" shows the connection
+error.
+
 ## 9. WooCommerce webhook (HOOK)
 
 The shops post each new order to `/admin/order/1H39j0jpQPsWL958v9R4` (public, never moved). To run a case by hand,

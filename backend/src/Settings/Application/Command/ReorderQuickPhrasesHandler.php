@@ -6,11 +6,14 @@ use App\Settings\Domain\Error\QuickPhraseNotFound;
 use App\Settings\Domain\Model\QuickPhrase;
 use App\Settings\Domain\Repository\QuickPhraseRepository;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Application\Port\ActivityLog;
 
 final class ReorderQuickPhrasesHandler implements CommandHandler
 {
-    public function __construct(private readonly QuickPhraseRepository $phrases)
-    {
+    public function __construct(
+        private readonly QuickPhraseRepository $phrases,
+        private readonly ActivityLog $activity,
+    ) {
     }
 
     /**
@@ -23,5 +26,6 @@ final class ReorderQuickPhrasesHandler implements CommandHandler
         foreach ([...$listed, ...$rest] as $position => $phrase) {
             $phrase->moveTo($position);
         }
+        $this->activity->record('Settings', 'The quick phrases were reordered.', ['entity' => 'quick_phrase']);
     }
 }

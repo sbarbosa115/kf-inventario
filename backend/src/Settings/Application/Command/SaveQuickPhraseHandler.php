@@ -7,6 +7,7 @@ use App\Settings\Domain\Error\QuickPhraseNotFound;
 use App\Settings\Domain\Model\QuickPhrase;
 use App\Settings\Domain\Repository\QuickPhraseRepository;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Application\Port\ActivityLog;
 use App\Shared\Domain\Clock;
 
 final class SaveQuickPhraseHandler implements CommandHandler
@@ -14,6 +15,7 @@ final class SaveQuickPhraseHandler implements CommandHandler
     public function __construct(
         private readonly QuickPhraseRepository $phrases,
         private readonly Clock $clock,
+        private readonly ActivityLog $activity,
     ) {
     }
 
@@ -29,12 +31,14 @@ final class SaveQuickPhraseHandler implements CommandHandler
         if (null === $command->id) {
             $phrase = new QuickPhrase($text, $this->phrases->nextPosition(), $this->clock->now(), $command->active);
             $this->phrases->add($phrase);
+            $this->activity->record('Settings', 'A quick phrase was added.', ['entity' => 'quick_phrase']);
 
             return new SavedQuickPhrase($phrase);
         }
         $phrase = $this->phrases->get($command->id);
         $phrase->rename($text);
         $phrase->activate($command->active);
+        $this->activity->record('Settings', 'A quick phrase was changed.', ['entity' => 'quick_phrase', 'id' => $command->id]);
 
         return new SavedQuickPhrase($phrase);
     }

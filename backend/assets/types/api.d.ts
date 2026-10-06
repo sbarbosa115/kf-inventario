@@ -12,7 +12,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** QuickPhraseOrderInput: the phrases' new order → the list. */
+        /**
+         * QuickPhraseOrderInput: the phrases' new order (these ids first, the others after them) → every phrase. 404
+         *     quick_phrase_not_found for an id that is not a phrase.
+         */
         put: operations["put_api_quick_phrases_order"];
         post?: never;
         delete?: never;
@@ -817,7 +820,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The active phrases in order (`?all=1`: every one, for the admin's tab). */
+        /**
+         * The active phrases in order. `?all=1`: every one, the hidden too (an admin's; anyone else still gets the active
+         *     ones).
+         */
         get: operations["get_api_quick_phrases"];
         put?: never;
         /** QuickPhraseInput: a phrase at the end → 201. */
@@ -877,7 +883,8 @@ export interface paths {
         get: operations["get_api_settings_email"];
         /**
          * EmailSettingsInput: saves Settings › Email (a blank password keeps the saved one; everything empty clears it, the
-         *     env applies) → EmailSettingsOutput; 422 on a bad address. Item 3.
+         *     env applies) → EmailSettingsOutput; 422 on a bad address or a host that is not a host name alone. A blank
+         *     password is kept only while the host stays the same.
          */
         put: operations["put_api_settings_email_save"];
         post?: never;
@@ -898,7 +905,8 @@ export interface paths {
         put?: never;
         /**
          * TestEmailInput: sends "KF Inventory test email" to `to` through the effective server, at once (not queued) →
-         *     202; 502 smtp_failed with the server's message in detail.reason; 429 more than once in 10 s. Item 3.
+         *     202 with the host it went through; 502 smtp_failed with the server's message in detail.reason; 429
+         *     test_email_too_soon more than once in 10 s; 422 on from_address when no sender is set anywhere.
          */
         post: operations["post_api_settings_email_test"];
         delete?: never;
@@ -914,9 +922,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Settings › Analytics. Item 3. */
+        /** Settings › Analytics: the GA4 Measurement ID and the Clarity Project ID (null: that tool is off). */
         get: operations["get_api_settings_analytics"];
-        /** AnalyticsSettingsInput: G-XXXXXXX and the Clarity Project ID (empty turns one off); 422 on a wrong shape. Item 3. */
+        /** AnalyticsSettingsInput: G-XXXXXXX and the Clarity Project ID (empty turns one off); 422 on a wrong shape. */
         put: operations["put_api_settings_analytics_save"];
         post?: never;
         delete?: never;

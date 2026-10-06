@@ -139,11 +139,12 @@ shops-settings' items (501 `not_implemented` until built).
 | `GET` | `/api/v1/invoices/{id}/pdf` | `ROLE_CAN_READ_INVOICES` | 5: `application/pdf` (`templates/pdf/invoice.html.twig`, the logo from `public/images/`) |
 | `GET` | `/api/v1/settings/public` | `ROLE_USER` | ss-0: `PublicSettingsOutput {ga4_measurement_id, clarity_project_id}` (null when unset) |
 | `GET` | `/api/v1/settings/email` | `ROLE_ADMIN` | ss-0: `EmailSettingsOutput` (never the password: `has_password`; `source` per value: settings, env, none) |
-| `PUT` | `/api/v1/settings/email` · `POST /api/v1/settings/email/test` | `ROLE_ADMIN` | ss-3 |
-| `GET`/`PUT` | `/api/v1/settings/analytics` | `ROLE_ADMIN` | ss-3 |
+| `PUT` | `/api/v1/settings/email` | `ROLE_ADMIN` | ss-3: `{host, port, user, password?, encryption, from_address, from_name, printer_address, cc[]}` → `EmailSettingsOutput`. The server is stored as one DSN sealed with `APP_ENCRYPTION_KEY`; a blank password keeps the saved one **for the same host only**; every field empty clears it (env fallback); 422 on a bad address or a host that is more than a host name. Every email then leaves through it (`SettingsMailTransport` decorates `mailer.transports`), read at send time |
+| `POST` | `/api/v1/settings/email/test` | `ROLE_ADMIN` | ss-3: `{to}` → 202 `{queued: true, host}`, sent at once through the effective server (not the queue); 502 `smtp_failed` with the server's message in `detail.reason`; 429 `test_email_too_soon` (one per 10 s per user) |
+| `GET`/`PUT` | `/api/v1/settings/analytics` | `ROLE_ADMIN` | ss-3: `{ga4_measurement_id, clarity_project_id}`; `^G-[A-Z0-9]{4,12}$` / `^[a-z0-9]{6,20}$` (422 otherwise), empty turns that tool off |
 | `GET`/`PUT` | `/api/v1/settings/webhooks` | `ROLE_ADMIN` | ss-0: `{legacy_enabled, legacy_hits_since, legacy_last_hit_at}`; turning it off restarts the counter |
-| `GET` | `/api/v1/settings/quick-phrases` | `ROLE_USER` | ss-3 |
-| `POST`/`PUT`/`DELETE` | `/api/v1/settings/quick-phrases[/{id}]`, `PUT …/order` | `ROLE_ADMIN` | ss-3 |
+| `GET` | `/api/v1/settings/quick-phrases` | `ROLE_USER` | ss-3: `QuickPhraseOutput[] {id, text, position, active}`, the active ones by position; `?all=1` every one (admins only; anyone else still gets the active ones) |
+| `POST`/`PUT`/`DELETE` | `/api/v1/settings/quick-phrases[/{id}]`, `PUT …/order` | `ROLE_ADMIN` | ss-3: `{text, active}` → 201 (at the end) / 200 / 204; `PUT …/order {ids[]}`: those first, the others after → every phrase; 404 `quick_phrase_not_found`. Settings changes are logged (`log`, entity `settings`) by key, never by value. Key rotation: `bin/console app:settings:rekey --old-key=<previous APP_ENCRYPTION_KEY>` re-seals every stored secret (settings and shop connections), all or nothing |
 | `GET`/`POST`/`PUT`/`DELETE` | `/api/v1/shops[/{id}]`, `…/webhook-secret`, `…/test`, `…/deliveries[/{dId}[/retry\|/discard]]` | `ROLE_ADMIN` | ss-5a |
 | `GET`/`POST` | `/api/v1/shops/{id}/outbox[/{oId}/retry]` | `ROLE_ADMIN` | ss-5b |
 | `GET` | `/api/v1/orders/{id}/comments` | `ROLE_CAN_READ_ORDERS` | ss-7: `{comments: OrderCommentOutput[]}` oldest first (same date: as written); a legacy comment without a date carries the order's with `approximate: true`; `author` null and `shop` named for a shop note (`origin` `shop`); 404 `order_not_found` |
