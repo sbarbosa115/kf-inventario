@@ -26,6 +26,7 @@ the last row is green.
 | 1 | 2026-10-06 10:59 | `f3e75e2` | Not green: 112 passed, 1 failed, 6 skipped | CUS-03; skipped: CUS-04, CUS-05, CUS-06, CUS-07, CUS-08, CUS-09 |
 | 2 | 2026-10-06 11:06 | `9636ed2` | Green: 119 passed, 0 failed | — |
 | 3 | 2026-10-06 11:17 | `7098916` | Green: 119 passed, 0 failed | — |
+| 4 | 2026-10-06 13:12 | `8151dc9` | Not green: 155 passed, 1 failed, 2 skipped | FLT-08; skipped: FLT-09, FLT-10 |
 <!-- smoke.py adds a row per run of the whole suite -->
 
 ### Smoke findings
@@ -43,6 +44,8 @@ the last row is green.
    (`useDebouncedText`'s flush on blur, in the four toolbars, `DataTable`'s server search and the filter row's text
    inputs), so nothing is left pending once the person clicks elsewhere. CUS-04 – 09 were skipped because CUS-03
    failed (serial describe).
+3. FLT-08 (attempt 4): the test was wrong. It counted the rows right after the address changed, before the filtered
+   page arrived (14 instead of 2). It now waits for the chips and a quiet network before counting.
 
 ## Manual run
 

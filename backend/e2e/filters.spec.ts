@@ -346,6 +346,9 @@ test.describe('13 Table filters', () => {
     await expect(page).toHaveURL(/filter%5Bcode%5D=W0000|filter\[code\]=W0000/);
     await expect(page).toHaveURL(/filter%5Bstatus%5D|filter\[status\]/);
     const link = page.url();
+    // The address changes before the filtered page arrives: count once both chips show and the list is quiet.
+    await expect(chip(page, 'Order: W0000')).toBeVisible();
+    await page.waitForLoadState('networkidle');
     const rows = await bodyRows(page).count();
 
     await page.reload();
