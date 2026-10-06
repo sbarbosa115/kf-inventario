@@ -9,14 +9,15 @@
   "filters": {
     "label": "Invoice filters",
     "search": "Customer or invoice number",
-    "from": "From",
-    "to": "To"
+    "walkIn": "Walk-in",
+    "withCustomer": "With a customer"
   },
   "columns": {
     "code": "Invoice",
     "customer": "Customer",
     "total": "Total",
-    "date": "Date"
+    "date": "Date",
+    "payment": "Payment"
   },
   "actions": {
     "detail": "Detail",

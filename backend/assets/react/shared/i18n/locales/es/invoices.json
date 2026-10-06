@@ -9,14 +9,15 @@
   "filters": {
     "label": "Filtros de facturas",
     "search": "Cliente o número de factura",
-    "from": "Desde",
-    "to": "Hasta"
+    "walkIn": "Mostrador",
+    "withCustomer": "Con cliente"
   },
   "columns": {
     "code": "Factura",
     "customer": "Cliente",
     "total": "Total",
-    "date": "Fecha"
+    "date": "Fecha",
+    "payment": "Pago"
   },
   "actions": {
     "detail": "Detalle",
