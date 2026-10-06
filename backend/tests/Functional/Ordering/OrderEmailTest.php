@@ -100,6 +100,23 @@ final class OrderEmailTest extends ApiTestCase
         self::assertSame(['printer@kf.local'], array_map(static fn (Address $a) => $a->getAddress(), $email->getTo()), 'An empty row means "not set here".');
     }
 
+    public function testASenderAddressSavedWithoutANameTakesTheNameFromTheEnv(): void
+    {
+        // Settings › Email says "each value you leave empty falls back to the server's setting": an address alone must
+        // not leave the sender without a name (the email was not built at all, smoke case MAIL-03).
+        $this->save(new AppSetting('email.from_address', 'office@kf.local', false, new \DateTimeImmutable()));
+        $this->signInAs(['ROLE_MANAGE_ORDERS']);
+        $warehouse = $this->aWarehouse();
+
+        $this->placeOrder($warehouse, $this->aCustomer(), [[$this->aProduct('KF-A', $warehouse), 1]]);
+
+        self::assertEmailCount(1);
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertSame('office@kf.local', $email->getFrom()[0]->getAddress());
+        self::assertSame('KF Inventory', $email->getFrom()[0]->getName());
+    }
+
     public function testEditingAnOrderSendsNoEmail(): void
     {
         $this->signInAs(['ROLE_MANAGE_ORDERS']);

@@ -36,8 +36,10 @@ final class EmailSettings
 
         return new EffectiveEmail(
             dsn: $dsn ?? ('' === $this->envDsn ? null : $this->envDsn),
-            fromAddress: $fromInSettings ? (string) $fromAddress : $this->envFromAddress,
-            fromName: $fromInSettings ? (string) $fromName : $this->envFromName,
+            // Each half of the sender falls back on its own: an address saved without a name keeps the env's name
+            // (taking both from Settings, the order email was not built at all for want of a name).
+            fromAddress: $fromAddress ?? $this->envFromAddress,
+            fromName: $fromName ?? $this->envFromName,
             printerAddress: $printer ?? $this->envPrinterAddress,
             cc: [] !== $cc ? $cc : $this->envCc,
             sources: [
