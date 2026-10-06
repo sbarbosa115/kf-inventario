@@ -82,7 +82,7 @@ final class SafeShopHttpTest extends TestCase
             self::assertSame(302, $e->httpStatus());
             self::assertStringContainsString('redirect', $e->reason());
         }
-        self::assertSame(1, $handler->count(), 'The second answer (where the redirect led) was never asked for.');
+        self::assertCount(1, $handler, 'The second answer (where the redirect led) was never asked for.');
     }
 
     public function testTheCallIsPinnedToTheCheckedAddressWithTheKeysAndATimeout(): void

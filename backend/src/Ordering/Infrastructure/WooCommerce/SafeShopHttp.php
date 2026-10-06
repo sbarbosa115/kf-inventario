@@ -48,8 +48,8 @@ final class SafeShopHttp implements ShopUrlGuard
     private readonly Client $client;
 
     /**
-     * @param (\Closure(string): list<string>)|null $resolve the IPv4 addresses of a host name (gethostbynamel)
-     * @param callable|null                         $handler Guzzle's HTTP handler (tests stub it; default: cURL)
+     * @param (\Closure(string): list<string>)|null $resolve  the IPv4 addresses of a host name (gethostbynamel)
+     * @param callable|null                         $handler  Guzzle's HTTP handler (tests stub it; default: cURL)
      * @param list<string>                          $devHosts
      */
     public function __construct(
@@ -59,7 +59,7 @@ final class SafeShopHttp implements ShopUrlGuard
         ?callable $handler = null,
         private readonly array $devHosts = self::DEV_HOSTS,
     ) {
-        $this->resolve = $resolve ?? static fn (string $host): array => array_values(gethostbynamel($host) ?: []);
+        $this->resolve = $resolve ?? static fn (string $host): array => gethostbynamel($host) ?: [];
         $this->client = new Client(['handler' => HandlerStack::create($handler)]);
     }
 

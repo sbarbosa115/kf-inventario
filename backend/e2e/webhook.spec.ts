@@ -181,7 +181,7 @@ test.describe('9 WooCommerce webhook · connections', () => {
       }
     ).items;
     const placed = orders.find((order) => order.code === String(code));
-    expect(placed, 'in the connection\'s warehouse, Colombia').toBeDefined();
+    expect(placed, "in the connection's warehouse, Colombia").toBeDefined();
     expect(placed?.shop?.name, 'the order names its shop').toBe('Fake shop');
     const shops = (await (
       await admin.request.get('/api/v1/shops')
@@ -226,10 +226,11 @@ test.describe('9 WooCommerce webhook · connections', () => {
         )
       ).json()) as {items: Delivery[]}
     ).items;
-    expect(inbox.length).toBeGreaterThan(0);
+    const refused = inbox[0] as Delivery;
+    expect(refused, 'kept in the inbox').toBeDefined();
     const detail = (await (
       await admin.request.get(
-        `/api/v1/shops/${shop.id}/deliveries/${inbox[0].id}`,
+        `/api/v1/shops/${shop.id}/deliveries/${refused.id}`,
       )
     ).json()) as {payload: string | null};
     expect(detail.payload, 'a refused signature keeps no body').toBeNull();
@@ -264,14 +265,15 @@ test.describe('9 WooCommerce webhook · connections', () => {
     expect(kept.map((d) => [d.remote_order_id, d.reason_code])).toEqual([
       [String(code), 'unknown_product'],
     ]);
-    expect(kept[0].reason).toContain(sku);
+    const row = kept[0] as Delivery;
+    expect(row.reason).toContain(sku);
 
     const product = await admin.request.post('/api/v1/products', {
       data: {code: sku, title: `Hook product ${code}`, status: 1, price: 10},
     });
     expect(product.status()).toBe(201);
     const retried = await admin.request.post(
-      `/api/v1/shops/${shop.id}/deliveries/${kept[0].id}/retry`,
+      `/api/v1/shops/${shop.id}/deliveries/${row.id}/retry`,
     );
 
     expect(retried.status()).toBe(200);

@@ -336,7 +336,7 @@ final class ShopConnectionController extends AbstractController
         $lines = [];
         foreach (\is_array($order['line_items'] ?? null) ? $order['line_items'] : [] as $item) {
             if (\is_array($item)) {
-                $lines[] = new DeliveryLineOutput('' === self::text($item, 'sku') ? null : self::text($item, 'sku'), (int) (\is_numeric($item['quantity'] ?? null) ? $item['quantity'] : 0));
+                $lines[] = new DeliveryLineOutput('' === self::text($item, 'sku') ? null : self::text($item, 'sku'), (int) (is_numeric($item['quantity'] ?? null) ? $item['quantity'] : 0));
             }
         }
 

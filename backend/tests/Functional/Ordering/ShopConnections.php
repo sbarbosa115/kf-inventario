@@ -17,7 +17,7 @@ use App\Tests\Support\ApiTestCase;
 trait ShopConnections
 {
     /**
-     * Creates a connection (signed in as an admin) and answers the create answer: id, webhook_url, webhook_secret…
+     * Creates a connection (signed in as an admin) and answers the create answer: id, webhook_url, webhook_secret….
      *
      * @param array<string, mixed> $overrides
      *
