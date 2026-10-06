@@ -178,10 +178,6 @@ final class ContractTest extends ApiTestCase
             'POST /api/v1/shops/1/deliveries/1/discard',
             'GET /api/v1/shops/1/outbox',
             'POST /api/v1/shops/1/outbox/1/retry',
-            'GET /api/v1/orders/1/comments',
-            'POST /api/v1/orders/1/comments',
-            'POST /api/v1/orders/1/comments/1/pin',
-            'DELETE /api/v1/orders/1/comments/1/pin',
         ];
     }
 }

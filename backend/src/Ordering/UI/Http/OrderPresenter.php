@@ -17,6 +17,8 @@ use App\Inventory\UI\Http\Output\StockOutput;
 use App\Inventory\UI\Http\Output\WarehouseRefOutput;
 use App\Ordering\Application\Port\ShopOrderLinks;
 use App\Ordering\Application\Port\ShopRef;
+use App\Ordering\Application\Query\OrderComments;
+use App\Ordering\Domain\Error\CommentNotFound;
 use App\Ordering\Domain\Model\Comment;
 use App\Ordering\Domain\Model\Order;
 use App\Ordering\Domain\Model\OrderCommentMeta;
@@ -43,6 +45,7 @@ final class OrderPresenter
     public function __construct(
         private readonly ShopOrderLinks $links,
         private readonly CommentMetaRepository $metas,
+        private readonly OrderComments $timeline,
     ) {
     }
 
@@ -109,36 +112,50 @@ final class OrderPresenter
     }
 
     /**
-     * The order's comments as the timeline reads them: a legacy comment without a date carries the order's, marked
-     * approximate; a comment without metadata is an `app` comment, not pinned (docs/pdr/prd-shops-settings.md,
-     * Decisions 14). Shops-settings' item 7 orders them and adds the timeline's query.
+     * The order's comments as the timeline reads them, oldest first (OrderComments): a legacy comment without a date
+     * carries the order's, marked approximate; a comment without metadata is an `app` comment, not pinned
+     * (docs/pdr/prd-shops-settings.md, Decisions 14). The metadata of every comment is read in one query.
      *
      * @return list<OrderCommentOutput>
      */
     public function comments(Order $order): array
     {
-        $comments = $order->getComments()->getValues();
+        $comments = $this->timeline->timeline($order);
         $metas = $this->metas->ofComments(array_map(static fn (Comment $c): int => (int) $c->getId(), $comments));
 
-        return array_map(static function (Comment $comment) use ($order, $metas): OrderCommentOutput {
-            $meta = $metas[(int) $comment->getId()] ?? null;
-            $at = $comment->getCreatedAt() ?? $order->getCreatedAt();
-            $connection = $meta?->connection();
+        return array_map(static fn (Comment $comment): OrderCommentOutput => self::comment($order, $comment, $metas[(int) $comment->getId()] ?? null), $comments);
+    }
 
-            return new OrderCommentOutput(
-                id: (int) $comment->getId(),
-                content: $comment->getContent(),
-                createdAt: $at?->format(\DATE_ATOM),
-                approximate: null === $comment->getCreatedAt(),
-                author: self::author($comment->getUser()),
-                origin: $meta?->origin() ?? OrderCommentMeta::ORIGIN_APP,
-                shop: null === $connection ? null : new ShopRefOutput((int) $connection->id(), $connection->name()),
-                pinned: $meta?->isPinned() ?? false,
-                pinnedAt: $meta?->pinnedAt()?->format(\DATE_ATOM),
-                pinnedBy: self::author($meta?->pinnedBy()),
-                sentToShop: $meta?->sendsToShop() ?? false,
-            );
-        }, $comments);
+    /**
+     * One comment of the order, as the timeline shows it (the answer of add, pin and unpin).
+     *
+     * @throws CommentNotFound
+     */
+    public function commentOf(Order $order, int $commentId): OrderCommentOutput
+    {
+        $comment = $this->timeline->of($order, $commentId);
+
+        return self::comment($order, $comment, $this->metas->ofComment($commentId));
+    }
+
+    private static function comment(Order $order, Comment $comment, ?OrderCommentMeta $meta): OrderCommentOutput
+    {
+        $at = $comment->getCreatedAt() ?? $order->getCreatedAt();
+        $connection = $meta?->connection();
+
+        return new OrderCommentOutput(
+            id: (int) $comment->getId(),
+            content: $comment->getContent(),
+            createdAt: $at?->format(\DATE_ATOM),
+            approximate: null === $comment->getCreatedAt(),
+            author: self::author($comment->getUser()),
+            origin: $meta?->origin() ?? OrderCommentMeta::ORIGIN_APP,
+            shop: null === $connection ? null : new ShopRefOutput((int) $connection->id(), $connection->name()),
+            pinned: $meta?->isPinned() ?? false,
+            pinnedAt: $meta?->pinnedAt()?->format(\DATE_ATOM),
+            pinnedBy: self::author($meta?->pinnedBy()),
+            sentToShop: $meta?->sendsToShop() ?? false,
+        );
     }
 
     private static function shop(?ShopRef $shop): ?ShopRefOutput
