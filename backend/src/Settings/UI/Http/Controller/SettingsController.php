@@ -92,7 +92,7 @@ final class SettingsController extends AbstractController
             fromAddress: $input->fromAddress,
             fromName: $input->fromName,
             printerAddress: $input->printerAddress,
-            cc: array_values(array_map(strval(...), $input->cc)),
+            cc: array_map(strval(...), $input->cc),
             actorId: $this->actorId(),
         ));
 

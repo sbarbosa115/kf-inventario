@@ -76,7 +76,7 @@ final class QuickPhraseController extends AbstractController
     {
         $input = $this->inputs->map($this->inputs->json($request), QuickPhraseOrderInput::class);
 
-        $this->commands->dispatch(new ReorderQuickPhrases(array_values(array_map(intval(...), $input->ids))));
+        $this->commands->dispatch(new ReorderQuickPhrases(array_map(intval(...), $input->ids)));
 
         return $this->json($this->outputs(true));
     }

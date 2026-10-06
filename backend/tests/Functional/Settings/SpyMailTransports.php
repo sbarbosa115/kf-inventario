@@ -39,7 +39,7 @@ final class SpyMailTransports implements MailTransportFactory
             {
             }
 
-            public function send(RawMessage $message, ?Envelope $envelope = null): ?SentMessage
+            public function send(RawMessage $message, ?Envelope $envelope = null): SentMessage
             {
                 if (null !== $this->failure) {
                     throw new TransportException($this->failure);
@@ -56,7 +56,11 @@ final class SpyMailTransports implements MailTransportFactory
         };
     }
 
-    /** The host of each email that went through a Settings server, in order. */
+    /**
+     * The host of each email that went through a Settings server, in order.
+     *
+     * @return list<string>
+     */
     public function hosts(): array
     {
         return array_map(static fn (array $s): string => (string) parse_url($s['dsn'], \PHP_URL_HOST), $this->sent);
