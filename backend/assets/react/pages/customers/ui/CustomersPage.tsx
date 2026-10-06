@@ -39,8 +39,9 @@ export function CustomersPage() {
     [key],
   );
   const [deleting, setDeleting] = useState<Customer | null>(null);
-  const [search, setSearch] = useDebouncedText(list.query.q ?? '', (q) =>
-    list.update({q: q === '' ? undefined : q}),
+  const [search, setSearch, flushSearch] = useDebouncedText(
+    list.query.q ?? '',
+    (q) => list.update({q: q === '' ? undefined : q}),
   );
   const page = list.query.page;
 
@@ -128,6 +129,7 @@ export function CustomersPage() {
             <SearchBox
               value={search}
               onChange={setSearch}
+              onBlur={flushSearch}
               label={t('customers.search')}
             />
           </Toolbar>

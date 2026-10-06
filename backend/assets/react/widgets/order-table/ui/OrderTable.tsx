@@ -101,8 +101,9 @@ function WarehouseOrders({
     [warehouse.id, key, refreshKey],
   );
   const [deleting, setDeleting] = useState<Order | null>(null);
-  const [search, setSearch] = useDebouncedText(list.query.q ?? '', (q) =>
-    list.update({q: q === '' ? undefined : q}),
+  const [search, setSearch, flushSearch] = useDebouncedText(
+    list.query.q ?? '',
+    (q) => list.update({q: q === '' ? undefined : q}),
   );
   const statusFilter = list.query.filters?.status;
   const status = Array.isArray(statusFilter) ? (statusFilter[0] ?? null) : null;
@@ -253,6 +254,7 @@ function WarehouseOrders({
             label={t('orders.filters.search')}
             value={search}
             onChange={setSearch}
+            onBlur={flushSearch}
           />
         </div>
         <DateField

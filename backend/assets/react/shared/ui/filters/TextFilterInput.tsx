@@ -50,6 +50,7 @@ export function TextFilterInput({
         clearTimeout(timer.current);
         timer.current = setTimeout(() => apply(next), delay);
       }}
+      onBlur={() => apply(text)}
       onKeyDown={(event) => {
         if (event.key === 'Enter') {
           event.preventDefault();

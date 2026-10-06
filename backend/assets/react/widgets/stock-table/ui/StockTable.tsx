@@ -92,8 +92,9 @@ function WarehouseStock({
   );
   const [selected, setSelected] = useState<Set<string | number>>(new Set());
   const [moving, setMoving] = useState<StockItem[] | null>(null);
-  const [search, setSearch] = useDebouncedText(list.query.q ?? '', (q) =>
-    list.update({q: q === '' ? undefined : q}),
+  const [search, setSearch, flushSearch] = useDebouncedText(
+    list.query.q ?? '',
+    (q) => list.update({q: q === '' ? undefined : q}),
   );
 
   const inStockFilter = list.query.filters?.in_stock;
@@ -180,6 +181,7 @@ function WarehouseStock({
         <SearchBox
           value={search}
           onChange={setSearch}
+          onBlur={flushSearch}
           label={t('products.search')}
         />
         <FilterChips

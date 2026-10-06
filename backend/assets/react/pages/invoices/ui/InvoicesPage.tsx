@@ -40,8 +40,9 @@ export function InvoicesPage() {
     [key],
   );
   const [detail, setDetail] = useState<Invoice | null>(null);
-  const [search, setSearch] = useDebouncedText(list.query.q ?? '', (q) =>
-    list.update({q: q === '' ? undefined : q}),
+  const [search, setSearch, flushSearch] = useDebouncedText(
+    list.query.q ?? '',
+    (q) => list.update({q: q === '' ? undefined : q}),
   );
   const created = (list.query.filters?.created_at ?? {}) as DateRangeValue;
   const setCreated = (range: DateRangeValue) =>
@@ -124,6 +125,7 @@ export function InvoicesPage() {
             label={t('invoices.filters.search')}
             value={search}
             onChange={setSearch}
+            onBlur={flushSearch}
           />
         </div>
         <DateField

@@ -146,7 +146,7 @@ export function DataTable<Row>({
     : null;
 
   // Server mode's own search box is `q`, handed on 300 ms after the last key.
-  const [serverSearch, setServerSearch] = useDebouncedText(
+  const [serverSearch, setServerSearch, flushServerSearch] = useDebouncedText(
     serverQuery?.q ?? '',
     (q) =>
       serverQuery &&
@@ -349,7 +349,11 @@ export function DataTable<Row>({
       {searchable && (
         <div className="kf-data-table__search">
           {server ? (
-            <SearchBox value={serverSearch} onChange={setServerSearch} />
+            <SearchBox
+              value={serverSearch}
+              onChange={setServerSearch}
+              onBlur={flushServerSearch}
+            />
           ) : (
             <SearchBox
               value={query}
