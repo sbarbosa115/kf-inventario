@@ -12,7 +12,7 @@ export type {
   InvoiceLinePayload,
   InvoicePayload,
 } from './api/invoiceApi';
-export {customerLabel, formatInvoiceDate} from './lib/format';
+export {customerName, invoiceDay} from './lib/format';
 export {amountOf, formatCents, invoiceTotals, lineCents} from './lib/money';
 export type {Totals} from './lib/money';
 export {
