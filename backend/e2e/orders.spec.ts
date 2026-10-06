@@ -475,7 +475,10 @@ test.describe('5 Orders, on a phone (390 px)', () => {
     await card.locator('.kf-table__card-title').click();
     const detail = page.getByRole('dialog', {name: 'Order W00010'});
     await expect(detail).toBeVisible();
-    expect((await detail.boundingBox())?.width).toBe(390);
+    // Measured once the slide-in is over (mid-animation it is a fraction short).
+    await expect
+      .poll(async () => Math.round((await detail.boundingBox())?.width ?? 0))
+      .toBe(390);
     expect(errors).toEqual([]);
   });
 });
