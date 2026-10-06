@@ -39,7 +39,7 @@ you add (`.claude/gate.d/compose-cpus` checks it).
 - **The order email** takes its sender, printer address and cc from Settings › Email first, the env as the fallback
   (`MAILER_FROM_*`, `MAILER_PRINTER_ADDRESS`, `ordering.order_email.cc` = `sales@klassicfab.com`); subject "Order
   #<code> was created", the order PDF attached. Shop orders send it when their connection prints orders
-  (`ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID` for the legacy URL).
+  (each connection has a "prints orders" switch in Settings › Shop connections).
 - **Secrets at rest** (SMTP password, shop keys, webhook secrets) are sealed with Settings' `SecretBox`
   (`APP_ENCRYPTION_KEY`, 64 hex): never a raw secret in an Output DTO, a log line or an exception message; Outputs say
   `has_password`/`has_keys` instead.

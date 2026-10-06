@@ -4,61 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ee36523c92c6385aa38438aea7afbb47",
+    "content-hash": "ad882134c7a30908ae5238458f17097c",
     "packages": [
-        {
-            "name": "automattic/woocommerce",
-            "version": "3.1.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/woocommerce/wc-api-php.git",
-                "reference": "e378120df655b7dacbeff4756e23b41b66fe9688"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/woocommerce/wc-api-php/zipball/e378120df655b7dacbeff4756e23b41b66fe9688",
-                "reference": "e378120df655b7dacbeff4756e23b41b66fe9688",
-                "shasum": ""
-            },
-            "require": {
-                "ext-curl": "*",
-                "ext-json": "*",
-                "php": ">= 7.4.0"
-            },
-            "require-dev": {
-                "doctrine/instantiator": "^1.5.0",
-                "phpunit/phpunit": "^9.5.0",
-                "squizlabs/php_codesniffer": "3.*"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Automattic\\WooCommerce\\": [
-                        "src/WooCommerce"
-                    ]
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Claudio Sanches",
-                    "email": "claudio.sanches@automattic.com"
-                }
-            ],
-            "description": "A PHP wrapper for the WooCommerce REST API",
-            "keywords": [
-                "api",
-                "woocommerce"
-            ],
-            "support": {
-                "issues": "https://github.com/woocommerce/wc-api-php/issues",
-                "source": "https://github.com/woocommerce/wc-api-php/tree/3.1.1"
-            },
-            "time": "2026-01-30T16:26:03+00:00"
-        },
         {
             "name": "brick/math",
             "version": "0.14.8",
