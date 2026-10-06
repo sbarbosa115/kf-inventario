@@ -101,14 +101,14 @@ final class ContractTest extends ApiTestCase
 
     /**
      * The per-connection webhook (docs/pdr/prd-shops-settings.md, "Shop connections") is public — WooCommerce posts
-     * it — and answers 501 until item 5a builds it.
+     * it, no sign-in — and an unknown token is not found (item 5a; ShopWebhookApiTest covers the rest).
      */
-    public function testTheShopWebhookIsPublicAndNotBuiltYet(): void
+    public function testTheShopWebhookIsPublic(): void
     {
         foreach (['POST', 'GET'] as $method) {
             $this->client->request($method, '/webhooks/shops/'.str_repeat('ab', 32), server: ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'], content: '{}');
 
-            $this->assertStatus(501, "{$method} /webhooks/shops/{token} is public (no sign-in) and item 5a's to build.");
+            $this->assertStatus(404, "{$method} /webhooks/shops/{token} is public (no sign-in): an unknown token is not found.");
         }
     }
 
@@ -164,18 +164,6 @@ final class ContractTest extends ApiTestCase
             'PUT /api/v1/settings/quick-phrases/order',
             'PUT /api/v1/settings/quick-phrases/1',
             'DELETE /api/v1/settings/quick-phrases/1',
-            'GET /api/v1/shops',
-            'GET /api/v1/shops/1',
-            'POST /api/v1/shops',
-            'PUT /api/v1/shops/1',
-            'DELETE /api/v1/shops/1',
-            'GET /api/v1/shops/1/webhook-secret',
-            'POST /api/v1/shops/1/webhook-secret',
-            'POST /api/v1/shops/1/test',
-            'GET /api/v1/shops/1/deliveries',
-            'GET /api/v1/shops/1/deliveries/1',
-            'POST /api/v1/shops/1/deliveries/1/retry',
-            'POST /api/v1/shops/1/deliveries/1/discard',
             'GET /api/v1/shops/1/outbox',
             'POST /api/v1/shops/1/outbox/1/retry',
             'GET /api/v1/orders/1/comments',

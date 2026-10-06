@@ -22,7 +22,9 @@ use Symfony\Component\Routing\Attribute\Route;
  *
  * The connections of shops-settings replace it (/webhooks/shops/{token}): once the admin turns this URL off in
  * Settings › General, it answers 410 {status: false, error: "webhook_moved"}, places nothing and counts the hit
- * (docs/pdr/prd-shops-settings.md, Decisions 8). On (the default after the deploy), it works as before.
+ * (docs/pdr/prd-shops-settings.md, Decisions 8). On (the default after the deploy), it works as before, with three
+ * additions: every hit is counted (a shop still posting here shows in Settings), a shop that already has a connection
+ * is imported through it, and an order that cannot be placed is kept in the inbox (ImportShopOrderHandler).
  */
 final class WooCommerceWebhookController extends AbstractController
 {
@@ -38,8 +40,8 @@ final class WooCommerceWebhookController extends AbstractController
     public function __invoke(Request $request): JsonResponse
     {
         $source = $request->headers->get('X-WC-Webhook-Source');
+        $this->commands->dispatch(new RecordLegacyWebhookHit());
         if (!$this->webhooks->legacyEnabled()) {
-            $this->commands->dispatch(new RecordLegacyWebhookHit());
             $this->logger->warning(\sprintf('WooCommerce delivery from [%s] refused: the legacy webhook URL is turned off (410).', $source));
 
             return new JsonResponse(['status' => false, 'error' => 'webhook_moved'], 410);
@@ -52,7 +54,7 @@ final class WooCommerceWebhookController extends AbstractController
         $shopOrder = json_decode($request->getContent(), true);
 
         try {
-            $this->commands->dispatch(new ImportShopOrder($source, \is_array($shopOrder) ? $shopOrder : []));
+            $this->commands->dispatch(new ImportShopOrder($source, \is_array($shopOrder) ? $shopOrder : [], $request->getContent()));
         } catch (DomainError|\UnexpectedValueException $e) {
             $this->logger->error(\sprintf('WooCommerce order from [%s] was not placed: %s', $source, $e->getMessage()), ['exception' => $e]);
         }
