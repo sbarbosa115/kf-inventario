@@ -148,7 +148,7 @@ final class DoctrineCustomers implements Customers
             ->leftJoin('a.city', 'city')
             ->leftJoin('city.state', 'state')
             ->leftJoin('state.country', 'country')
-            ->orderBy('c.id', 'ASC')
-            ->addOrderBy('a.id', 'ASC');
+            ->orderBy('c.id', \SortDirection::Ascending)
+            ->addOrderBy('a.id', \SortDirection::Ascending);
     }
 }

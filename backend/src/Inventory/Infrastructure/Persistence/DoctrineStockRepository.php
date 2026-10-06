@@ -42,8 +42,8 @@ final class DoctrineStockRepository implements StockRepository
             ->andWhere('pw.status = :status')
             ->setParameter('warehouse', $warehouse)
             ->setParameter('status', $status)
-            ->orderBy('p.id', 'ASC')
-            ->addOrderBy('pw.id', 'ASC')
+            ->orderBy('p.id', \SortDirection::Ascending)
+            ->addOrderBy('pw.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
 
@@ -66,7 +66,7 @@ final class DoctrineStockRepository implements StockRepository
             ->andWhere('p.uuid IN (:uuids)')
             ->setParameter('warehouse', $warehouse)
             ->setParameter('uuids', $uuids)
-            ->orderBy('pw.id', 'ASC')
+            ->orderBy('pw.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
 

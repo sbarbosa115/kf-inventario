@@ -32,10 +32,10 @@ final class ListQueryApplier
         $sort = $query->sort;
         $expression = null === $sort ? null : $mapping->sortExpression($sort->field);
         if (null !== $sort && null !== $expression) {
-            $qb->orderBy($expression, $sort->descending ? 'DESC' : 'ASC');
-            $qb->addOrderBy($mapping->id, $sort->descending ? 'DESC' : 'ASC');
+            $qb->orderBy($expression, $sort->descending ? \SortDirection::Descending : \SortDirection::Ascending);
+            $qb->addOrderBy($mapping->id, $sort->descending ? \SortDirection::Descending : \SortDirection::Ascending);
         } else {
-            $qb->orderBy($mapping->id, 'DESC');
+            $qb->orderBy($mapping->id, \SortDirection::Descending);
         }
     }
 

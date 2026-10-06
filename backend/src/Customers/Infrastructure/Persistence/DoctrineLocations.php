@@ -20,9 +20,9 @@ final class DoctrineLocations implements Locations
             ->from(Country::class, 'c')
             ->innerJoin('c.states', 's')
             ->leftJoin('s.cities', 'ci')
-            ->orderBy('c.id', 'ASC')
-            ->addOrderBy('s.id', 'ASC')
-            ->addOrderBy('ci.id', 'ASC')
+            ->orderBy('c.id', \SortDirection::Ascending)
+            ->addOrderBy('s.id', \SortDirection::Ascending)
+            ->addOrderBy('ci.id', \SortDirection::Ascending)
             ->getQuery()->getResult();
 
         return $countries;

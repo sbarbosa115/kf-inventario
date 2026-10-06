@@ -37,9 +37,9 @@ final class DoctrineInvoiceRepository implements InvoiceRepository
             ->leftJoin('i.customer', 'c')
             ->leftJoin('i.items', 'it')
             ->leftJoin('it.product', 'p')
-            ->orderBy('i.createdAt', 'DESC')
-            ->addOrderBy('i.id', 'DESC')
-            ->addOrderBy('it.id', 'ASC')
+            ->orderBy('i.createdAt', \SortDirection::Descending)
+            ->addOrderBy('i.id', \SortDirection::Descending)
+            ->addOrderBy('it.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
 
