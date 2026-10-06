@@ -201,6 +201,10 @@ describe('DataTable in server mode', () => {
     expect(
       screen.getByText('Nothing matches these filters.'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('searchbox', {name: 'Filter by Order'}),
+      'the header and its filter row stay, so a filter is changed where it was set',
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', {name: 'Show all'}));
     await waitFor(() =>
       expect(asked.at(-1)).toMatchObject({filters: {}, q: undefined, page: 1}),

@@ -351,6 +351,31 @@ export function DataTable<Row>({
     );
   }
 
+  // Server mode, filtered to nothing: the header and its filter row stay (a filter can be changed where it was set),
+  // and the empty state takes the body. On a phone (no filter row) it replaces the table.
+  const filteredEmpty = server !== null && rows.length === 0 && filtering;
+  const emptyInTable = filteredEmpty && rowFilters && !phone;
+  const filteredEmptyState = (
+        <EmptyState
+          icon="fa-filter"
+          message={t('common.filteredEmpty')}
+          action={
+            <button
+              type="button"
+              className="kf-btn kf-btn--secondary kf-btn--sm"
+              onClick={clearServerFilters}
+            >
+              <span className="kf-btn__label">{t('common.showAll')}</span>
+            </button>
+          }
+        />
+  );
+  const span =
+    columns.length +
+    (selectable ? 1 : 0) +
+    (cardTitle ? 1 : 0) +
+    (hasActions ? 1 : 0);
+
   const clickRow = (row: Row) => (event: MouseEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest(INTERACTIVE)) return;
     onRowClick?.(row);
@@ -395,23 +420,11 @@ export function DataTable<Row>({
           </button>
         </div>
       )}
-      {server && rows.length === 0 && filtering ? (
-        <EmptyState
-          icon="fa-filter"
-          message={t('common.filteredEmpty')}
-          action={
-            <button
-              type="button"
-              className="kf-btn kf-btn--secondary kf-btn--sm"
-              onClick={clearServerFilters}
-            >
-              <span className="kf-btn__label">{t('common.showAll')}</span>
-            </button>
-          }
-        />
-      ) : rows.length === 0 ? (
+      {filteredEmpty && !emptyInTable ? (
+        filteredEmptyState
+      ) : rows.length === 0 && !emptyInTable ? (
         <EmptyState message={emptyMessage ?? t('common.empty')} />
-      ) : visible.length === 0 ? (
+      ) : visible.length === 0 && !emptyInTable ? (
         <EmptyState
           message={t('common.filteredEmpty')}
           action={
@@ -506,7 +519,14 @@ export function DataTable<Row>({
               )}
             </thead>
             <tbody role="rowgroup">
-              {shown.map((row) => {
+              {emptyInTable ? (
+                <tr role="row" className="kf-table__empty-row">
+                  <td role="cell" colSpan={span} className="kf-table__empty">
+                    {filteredEmptyState}
+                  </td>
+                </tr>
+              ) : (
+                shown.map((row) => {
                 const key = rowKey(row);
                 const isSelected = selected?.has(key) ?? false;
                 const actions = rowActions?.(row) ?? [];
@@ -578,7 +598,8 @@ export function DataTable<Row>({
                     )}
                   </tr>
                 );
-              })}
+              })
+              )}
             </tbody>
           </table>
         </div>

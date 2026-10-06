@@ -422,3 +422,15 @@
 .kf-sheet__apply {
   flex: 1 1 auto;
 }
+
+/* A server-mode table filtered to nothing keeps its header and filter row; the empty state is its one body row. */
+.kf-table tbody tr.kf-table__empty-row,
+.kf-table tbody tr.kf-table__empty-row:hover {
+  background-color: transparent;
+  cursor: default;
+}
+
+.kf-table td.kf-table__empty {
+  padding: 0;
+  white-space: normal;
+}
