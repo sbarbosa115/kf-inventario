@@ -288,6 +288,13 @@ test.describe('5 Orders: shops sync and write-back', () => {
       expect(await inUsa(older)).toBeUndefined();
     } finally {
       await request.put(STATE, {data: {orders: [], notes: {}}});
+      // The fixtures have no order in Usa: what this case placed there goes, so ORD-02 still finds Usa empty.
+      const placed = (await (
+        await admin.get('/api/v1/orders?warehouse_id=2&per_page=100')
+      ).json()) as {items: {id: number}[]};
+      for (const order of placed.items) {
+        await admin.delete(`/api/v1/orders/${order.id}`);
+      }
       await putAway(admin, gone.id, `Gone shop ${suffix}`, NO_SHOP, 2);
       await putAway(
         admin,
