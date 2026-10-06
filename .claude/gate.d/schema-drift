@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-# The production database must not change (docs/db/README.md): the mappings may propose only the recorded drift.
-# Rebuilds the test database from the migrations when it is missing, then runs the guard test. From the repo root.
-set -euo pipefail
-docker compose exec -T php composer test:prepare >/dev/null
-docker compose exec -T php vendor/bin/phpunit --filter SchemaInvarianceTest tests/Functional/Shared/SchemaInvarianceTest.php

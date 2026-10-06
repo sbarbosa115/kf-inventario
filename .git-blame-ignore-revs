@@ -1,3 +1,0 @@
-# Formatting-only commits, skipped by git blame (git config blame.ignoreRevsFile .git-blame-ignore-revs).
-# style: apply Symfony/Google code style
-b27c8341a621ae82db6e32a1ab6a10ebe0c0902d

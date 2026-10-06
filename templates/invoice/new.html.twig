@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'invoice.new.title'|trans }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">{{ 'invoice.new.title'|trans }}</div>
+        <div class="card-body">
+            <div id="new-invoice"
+                 data-url="{{ url }}"
+                 data-locations="{{ locations | json_encode }}"
+                 data-warehouses="{{ warehouses | json_encode }}"
+                  data-customers="{{ customers | json_encode }}"
+                  data-suggested-code="{{ suggestedCode }}"
+            ></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('build/invoice.js') }}"></script>
+    
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'invoice.index.title'|trans }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            {{ 'invoice.index.title'|trans }}
+        </div>
+        <div class="card-body">
+            <div id="index-invoices"
+                 data-token="{{ csrf_token('delete-invoice') }}"
+                 data-can-delete="{{ is_granted('ROLE_CAN_DELETE_INVOICES') }}"
+                 data-can-add="{{ is_granted('ROLE_CAN_CREATE_INVOICES') }}"
+            >
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('build/invoice.js') }}"></script>
+{% endblock %}

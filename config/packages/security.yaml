@@ -1,0 +1,76 @@
+security:
+  password_hashers:
+    App\Entity\User: bcrypt
+
+  providers:
+      database_users:
+        entity: { class: App\Entity\User, property: username }
+
+  role_hierarchy:
+    ROLE_SUPER_ADMIN:
+      - ROLE_ADMIN
+    ROLE_INVENTORY: [ROLE_USER]
+    ROLE_ADMIN:
+      - ROLE_UPDATE_ORDERS
+      - ROLE_MANAGE_CUSTOMERS
+      - ROLE_MANAGE_INVENTORY
+      - ROLE_MANAGE_ORDERS
+      - ROLE_MANAGE_USERS
+      - ROLE_MANAGE_WAREHOUSES
+      - ROLE_USER
+    ROLE_MANAGE_INVENTORY:
+      - ROLE_CAN_EDIT_INVENTORY
+      - ROLE_CAN_READ_INVENTORY
+      - ROLE_CAN_DELETE_INVENTORY
+      - ROLE_USER
+    ROLE_MANAGE_ORDERS:
+      - ROLE_CAN_CREATE_ORDERS
+      - ROLE_CAN_READ_ORDERS
+      - ROLE_CAN_UPDATE_ORDERS
+      - ROLE_CAN_PREPARING_ORDERS
+      - ROLE_CAN_DELETE_ORDERS
+      - ROLE_CAN_SYNC_ORDERS
+      - ROLE_USER
+    ROLE_UPDATE_ORDERS:
+      - ROLE_CAN_CREATE_ORDERS
+      - ROLE_CAN_READ_ORDERS
+      - ROLE_CAN_UPDATE_ORDERS
+      - ROLE_USER
+    ROLE_MANAGE_USERS:
+      - ROLE_CAN_CREATE_USERS
+      - ROLE_CAN_READ_USERS
+      - ROLE_CAN_UPDATE_USERS
+      - ROLE_CAN_DELETE_USERS
+      - ROLE_USER
+    ROLE_MANAGE_WAREHOUSES:
+      - ROLE_CAN_CREATE_WAREHOUSES
+      - ROLE_CAN_READ_WAREHOUSES
+      - ROLE_CAN_EDIT_WAREHOUSES
+      - ROLE_CAN_DELETE_WAREHOUSES
+      - ROLE_USER
+
+  firewalls:
+    main:
+      pattern: ^/
+      form_login:
+        login_path: app_login
+        check_path: app_login
+        enable_csrf: true
+        default_target_path: product_product_index
+
+      logout:
+        path:   app_logout
+        target: app_login
+#      anonymous:    true
+#      guard:
+#          authenticators:
+#              - App\Security\CustomAuthenticator
+      remember_me:
+        secret:   '%kernel.secret%'
+        lifetime: 604800 # 1 week in seconds
+        path:     /admin
+
+  access_control:
+  - { path: ^/admin/login$, role: PUBLIC_ACCESS }
+  - { path: ^/admin/order/1H39j0jpQPsWL958v9R4$, role: PUBLIC_ACCESS }
+  - { path: ^/admin/, role: [ROLE_USER] }

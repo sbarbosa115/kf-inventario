@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'customer.edit.title'|trans }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            {{ 'customer.edit.title'|trans }}
+        </div>
+        <div class="card-body">
+            <div
+                id="edit-customer"
+                data-customer="{{ customer|json_encode }}"
+                data-locations="{{ locations|json_encode }}"
+            ></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('build/customer/new.js') }}"></script>
+{% endblock %}
