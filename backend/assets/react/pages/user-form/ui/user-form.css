@@ -59,3 +59,16 @@
   font-size: var(--kf-text-sm);
   color: var(--kf-text-muted);
 }
+
+/* On a touch screen each role's name is a 44 px target (the box beside it is ticked through it). */
+@media (pointer: coarse) {
+  .kf-role__name {
+    display: flex;
+    align-items: center;
+    min-height: var(--kf-target);
+  }
+
+  .kf-role__input {
+    margin-top: calc((var(--kf-target) - 1.125rem) / 2);
+  }
+}

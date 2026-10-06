@@ -98,3 +98,18 @@
     padding-top: var(--kf-space-8);
   }
 }
+
+/* On a touch screen "Remember me" is a 44 px target, like every other control. */
+@media (pointer: coarse) {
+  .kf-login .form-check-label {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--kf-target);
+  }
+
+  .kf-login .form-check-input {
+    top: 50%;
+    margin-top: 0;
+    transform: translateY(-50%);
+  }
+}

@@ -158,6 +158,11 @@
   min-width: 0;
 }
 
+/* The add button keeps its touch width: the field beside it shrinks, not the button. */
+.kf-settings__cc-add .kf-btn {
+  flex: none;
+}
+
 .kf-phrases {
   display: grid;
   gap: var(--kf-space-4);

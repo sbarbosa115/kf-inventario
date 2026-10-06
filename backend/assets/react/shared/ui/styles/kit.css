@@ -1018,6 +1018,11 @@
   border-bottom: 1px solid var(--kf-border);
 }
 
+/* The close button keeps its touch width: a long heading beside it wraps, the button does not shrink. */
+.kf-slideover__header > .kf-btn {
+  flex: none;
+}
+
 .kf-slideover__title {
   margin: 0;
   font-size: var(--kf-text-lg);
