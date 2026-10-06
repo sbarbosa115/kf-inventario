@@ -4,8 +4,9 @@ import {useTranslation} from '@/shared/i18n';
 import {useFocusTrap} from './useFocusTrap';
 
 /**
- * A panel from the right for a detail or a quick edit (480 / 720 px, the whole width on phones): the page stays in
- * view behind it and does not scroll, the focus stays inside, Escape and the × close it.
+ * A centred panel for a detail or a quick edit (560 / 800 px wide, nearly the whole screen on phones; its body
+ * scrolls, the header and footer stay): the page dims behind it and does not scroll, the focus stays inside, Escape
+ * and the × close it.
  */
 export function SlideOver({
   title,

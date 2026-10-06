@@ -86,6 +86,14 @@ const ALL: NavEntry[] = [
     group: 'admin',
     role: 'ROLE_MANAGE_USERS',
   },
+  {
+    key: 'settings',
+    to: '/admin/settings',
+    label: 'nav.settings',
+    icon: 'fa-sliders',
+    group: 'admin',
+    role: 'ROLE_ADMIN',
+  },
 ];
 
 /**
@@ -103,6 +111,7 @@ const TAB_ORDER = [
   'warehouses',
   'users',
   'upload',
+  'settings',
 ];
 
 /** The entries the session's roles open (the server sends every reachable role), in sidebar order. */

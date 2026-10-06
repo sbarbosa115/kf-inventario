@@ -4,13 +4,14 @@
   "edit": "Editar",
   "delete": "Eliminar",
   "empty": "Aún no hay clientes. Cree el primero.",
-  "search": "Buscar en esta página",
+  "search": "Buscar clientes",
   "range": "{{from}}–{{to}} de {{total}}",
   "columns": {
     "name": "Nombre",
     "email": "Correo electrónico",
     "phone": "Teléfono",
-    "city": "Ciudad"
+    "city": "Ciudad",
+    "country": "País"
   },
   "pages": "Páginas",
   "created": "El cliente se creó correctamente.",

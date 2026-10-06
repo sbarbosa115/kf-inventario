@@ -10,7 +10,7 @@ final readonly class OrderPlaced
 {
     public function __construct(
         public int $orderId,
-        /** By hand: always. From a shop: only for the warehouse whose orders are printed (ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID). */
+        /** By hand: always. From a shop: when its connection prints orders. */
         public bool $notifyPrinter,
     ) {
     }

@@ -1,27 +1,30 @@
-import {useMemo, useState} from 'react';
+import {useState} from 'react';
 import {
-  countByStatus,
   customerName,
   listOrders,
-  matchesOrder,
   orderPdfUrl,
   orderRemainingPdfUrl,
   orderXlsUrl,
   ORDER_STATUSES,
   OrderSource,
   type Order,
-  type OrderFilter,
 } from '@/entities/order';
 import {useCan} from '@/entities/session';
+import {listShops} from '@/entities/shop-connection';
 import {listWarehouses, type Warehouse} from '@/entities/warehouse';
 import {OrderStatusMenu} from '@/features/change-order-status';
 import {DeleteOrderConfirm} from '@/features/delete-order';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {useFormat, useLoad, useRememberedWarehouse} from '@/shared/lib';
+import {
+  useDebouncedText,
+  useFormat,
+  useListQuery,
+  useLoad,
+  useRememberedWarehouse,
+} from '@/shared/lib';
 import {
   Button,
-  ClearFilters,
   DataTable,
   EmptyState,
   ErrorState,
@@ -32,10 +35,15 @@ import {
   WarehouseSwitch,
   type Column,
   type RowAction,
+  type TableQuery,
 } from '@/shared/ui';
 import './order-table.css';
 
 export type OrderSection = 'products' | 'comments';
+
+/** The list columns whose values are counted (the status chips and the Status, Source and Comments filters). */
+const FACETS = ['status', 'source', 'pinned'];
+const SEVERAL = 'several';
 
 interface Props {
   /** Opens an order's detail (the page shows it), on a section. */
@@ -44,12 +52,12 @@ interface Props {
   refreshKey: number;
 }
 
-const NO_FILTER = {status: null, query: '', from: '', to: ''};
-
 /**
- * One warehouse's orders (the remembered one, else the first): status chips counting what the other filters keep,
- * a search by number or customer and a creation-date range, all over the loaded list; a row per order with its status
- * menu and its ⋯ menu (edit, getting ready, documents, delete by role). A row opens the order's detail.
+ * One warehouse's orders (the remembered one, else the first): status chips counting what the other filters keep and
+ * a search by number or customer in the toolbar; under the headers a filter per column (number and customer text,
+ * source, status and "Pinned only" lists with their counts, a creation-date range; a sheet on a phone), all filtered,
+ * sorted and paged on the server (the query in the address); a row per order with its status menu and its ⋯ menu
+ * (edit, getting ready, documents, delete by role). A row opens the order's detail.
  */
 export function OrderTable(props: Props) {
   const {t} = useTranslation();
@@ -91,33 +99,42 @@ function WarehouseOrders({
   const {dateTime} = useFormat();
   const canEdit = useCan('ROLE_CAN_UPDATE_ORDERS');
   const canDelete = useCan('ROLE_CAN_DELETE_ORDERS');
+  const list = useListQuery({sort: '-created_at'});
+  const key = JSON.stringify(list.query);
   const {data, loading, error, reload} = useLoad(
-    () => listOrders(warehouse.id),
-    [warehouse.id, refreshKey],
+    () => listOrders(warehouse.id, {...list.query, facets: FACETS}),
+    [warehouse.id, key, refreshKey],
   );
-  const [filter, setFilter] = useState<Required<OrderFilter>>(NO_FILTER);
+  // The phone's sheet: how many orders a draft keeps, one row asked.
+  const countFor = (query: TableQuery) =>
+    listOrders(warehouse.id, {...query, page: 1, perPage: 1}).then(
+      (page) => page.total,
+    );
   const [deleting, setDeleting] = useState<Order | null>(null);
-  const change = (next: Partial<OrderFilter>) =>
-    setFilter((now) => ({...now, ...next}));
-  const filtered =
-    filter.status !== null ||
-    filter.query !== '' ||
-    filter.from !== '' ||
-    filter.to !== '';
+  const [search, setSearch, flushSearch] = useDebouncedText(
+    list.query.q ?? '',
+    (q) => list.update({q: q === '' ? undefined : q}),
+  );
+  // The toolbar's chip is the one status ticked alone; two or more are the Status column's (and its chip above).
+  const statusFilter = list.query.filters?.status;
+  // With several ticked, no chip is pressed (not even All): a key no chip has.
+  const status = !Array.isArray(statusFilter)
+    ? null
+    : statusFilter.length === 1
+      ? statusFilter[0]!
+      : SEVERAL;
 
-  // The chips count what the search and the dates keep; the status chip then narrows it.
-  const unfiltered = useMemo(
-    () =>
-      (data ?? []).filter((order) =>
-        matchesOrder(order, {...filter, status: null}),
-      ),
-    [data, filter],
+  // The chips count what the search and the dates keep (the status facet ignores the status filter itself).
+  const facet = data?.facets?.status;
+  const counts = Object.fromEntries(
+    (facet ?? []).map((f) => [f.value, f.count]),
   );
-  const rows = useMemo(
-    () => unfiltered.filter((order) => matchesOrder(order, filter)),
-    [unfiltered, filter],
+  const allCount = facet?.reduce((sum, f) => sum + f.count, 0);
+  const shopOptions = useShopOptions(
+    data?.items,
+    data?.facets?.source,
+    list.query.filters?.source,
   );
-  const counts = countByStatus(unfiltered);
 
   const columns: Column<Order>[] = [
     {
@@ -133,24 +150,45 @@ function WarehouseOrders({
           {order.code ?? order.id}
         </button>
       ),
-      sortValue: (order) => order.code ?? '',
+      sortField: 'code',
+      filter: {type: 'text', field: 'code'},
     },
     {
       key: 'customer',
       header: t('orders.columns.customer'),
       render: (order) => <CustomerCell order={order} />,
-      sortValue: (order) => customerName(order.customer) ?? '',
+      sortField: 'customer',
+      filter: {type: 'text', field: 'customer'},
     },
     {
       key: 'source',
       header: t('orders.columns.source'),
-      render: (order) => <OrderSource source={order.source} />,
+      render: (order) => (
+        <OrderSource source={order.source} shop={order.shop} />
+      ),
+      filter: {
+        type: 'enum',
+        field: 'source',
+        options: [
+          {value: 'phone', label: t('orders.sources.phone')},
+          {value: 'web', label: t('orders.sources.web')},
+          ...shopOptions,
+        ],
+      },
     },
     {
       key: 'status',
       header: t('orders.columns.status'),
       render: (order) => <OrderStatusMenu order={order} onChanged={reload} />,
-      sortValue: (order) => order.status,
+      sortField: 'status',
+      filter: {
+        type: 'enum',
+        field: 'status',
+        options: ORDER_STATUSES.map((value) => ({
+          value: String(value),
+          label: t(`orders.statuses.${value}`),
+        })),
+      },
     },
     {
       key: 'created',
@@ -158,26 +196,23 @@ function WarehouseOrders({
       render: (order) => (
         <span className="text-nowrap">{dateTime(order.created_at)}</span>
       ),
-      sortValue: (order) => order.created_at ?? '',
+      sortField: 'created_at',
+      filter: {type: 'date', field: 'created_at'},
     },
     {
       key: 'comments',
-      header: t('orders.columns.comments'),
+      header: t('orders.notes.column'),
       render: (order) => (
-        <Button
-          size="sm"
-          variant="ghost"
-          icon="fa-comment"
-          aria-label={t('orders.commentsOf', {
-            code: order.code ?? order.id,
-            count: order.comments_count,
-          })}
-          onClick={() => onOpenDetail(order, 'comments')}
-        >
-          {order.comments_count}
-        </Button>
+        <NotesCell
+          order={order}
+          onOpen={() => onOpenDetail(order, 'comments')}
+        />
       ),
-      numeric: true,
+      filter: {
+        type: 'enum',
+        field: 'pinned',
+        options: [{value: '1', label: t('orders.filters.pinnedOnly')}],
+      },
     },
   ];
 
@@ -227,8 +262,6 @@ function WarehouseOrders({
   ];
 
   const forbidden = error instanceof ApiError && error.status === 403;
-  const nothingLeft =
-    data !== undefined && data.length > 0 && rows.length === 0;
 
   return (
     <div className="kf-order-table">
@@ -240,56 +273,39 @@ function WarehouseOrders({
         />
         <FilterChips
           label={t('orders.filters.status')}
-          value={filter.status === null ? null : String(filter.status)}
+          value={status}
           onChange={(key) =>
-            change({status: key === null ? null : Number(key)})
+            list.setFilter('status', key === null ? undefined : [key])
           }
-          allCount={data ? unfiltered.length : undefined}
-          options={ORDER_STATUSES.map((status) => ({
-            key: String(status),
-            label: t(`orders.statuses.${status}`),
-            count: data ? counts[status] : undefined,
+          allCount={allCount}
+          options={ORDER_STATUSES.map((value) => ({
+            key: String(value),
+            label: t(`orders.statuses.${value}`),
+            count: facet ? (counts[String(value)] ?? 0) : undefined,
           }))}
         />
         <div className="kf-order-table__search">
           <SearchBox
             label={t('orders.filters.search')}
-            value={filter.query}
-            onChange={(query) => change({query})}
+            value={search}
+            onChange={setSearch}
+            onBlur={flushSearch}
           />
         </div>
-        <DateField
-          label={t('orders.filters.from')}
-          value={filter.from}
-          max={filter.to || undefined}
-          onChange={(from) => change({from})}
-        />
-        <DateField
-          label={t('orders.filters.to')}
-          value={filter.to}
-          min={filter.from || undefined}
-          onChange={(to) => change({to})}
-        />
-        {filtered && <ClearFilters onClick={() => setFilter(NO_FILTER)} />}
       </Toolbar>
       {forbidden ? (
         <div className="alert alert-warning" role="alert">
           {t('errors.forbidden')}
         </div>
-      ) : nothingLeft ? (
-        <EmptyState
-          icon="fa-filter"
-          message={t('common.filteredEmpty')}
-          action={
-            <Button size="sm" onClick={() => setFilter(NO_FILTER)}>
-              {t('common.showAll')}
-            </Button>
-          }
-        />
       ) : (
         <DataTable
           columns={columns}
-          rows={data === undefined ? undefined : rows}
+          rows={data?.items}
+          query={list.query}
+          onQueryChange={list.update}
+          total={data?.total}
+          facets={data?.facets}
+          countFor={countFor}
           rowKey={(order) => order.id}
           rowLabel={(order) => order.code ?? String(order.id)}
           loading={loading && data === undefined}
@@ -341,30 +357,79 @@ function CustomerCell({order}: {order: Order}) {
   );
 }
 
-function DateField({
-  label,
-  value,
-  min,
-  max,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  min?: string;
-  max?: string;
-  onChange: (value: string) => void;
-}) {
+/** The Notes column: the pinned comment's first line under a pin (the whole note in its title), else the count. */
+function NotesCell({order, onOpen}: {order: Order; onOpen: () => void}) {
+  const {t} = useTranslation();
+  const code = order.code ?? order.id;
+  const pinned = order.pinned_comment?.content;
+  if (pinned) {
+    return (
+      <button
+        type="button"
+        className="kf-order-table__pinned"
+        title={pinned}
+        aria-label={t('orders.notes.pinnedOf', {
+          code,
+          text: pinned.replace(/\s+/g, ' ').trim(),
+        })}
+        onClick={onOpen}
+      >
+        <i className="fas fa-thumbtack" aria-hidden="true" />
+        <span className="kf-order-table__pinned-text">
+          {pinned.split('\n')[0]}
+        </span>
+      </button>
+    );
+  }
   return (
-    <label className="kf-order-table__date">
-      <span className="kf-order-table__date-label">{label}</span>
-      <input
-        type="date"
-        className="form-control"
-        value={value}
-        min={min}
-        max={max}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
+    <Button
+      size="sm"
+      variant="ghost"
+      icon="fa-comment"
+      aria-label={t('orders.commentsOf', {code, count: order.comments_count})}
+      onClick={onOpen}
+    >
+      {order.comments_count}
+    </Button>
   );
+}
+
+const SHOP_VALUE = /^shop:(\d+)$/;
+
+/**
+ * The Source filter's shops (`shop:<id>`, one per connection, by name; docs/pdr/prd-shops-settings.md, Decisions 9):
+ * every connection for an admin (who may read them), else the shops the source facet counts and the ones ticked,
+ * named after the orders on the page ("Shop #3" when none of its orders is on it).
+ */
+function useShopOptions(
+  orders: Order[] | undefined,
+  facet: {value: string}[] | undefined,
+  ticked: unknown,
+): {value: string; label: string}[] {
+  const {t} = useTranslation();
+  const isAdmin = useCan('ROLE_ADMIN');
+  const shops = useLoad(
+    () => (isAdmin ? listShops() : Promise.resolve([])),
+    [isAdmin],
+  );
+  const names = new Map<number, string>();
+  for (const order of orders ?? []) {
+    if (order.shop) names.set(order.shop.id, order.shop.name);
+  }
+  for (const shop of shops.data ?? []) names.set(shop.id, shop.name);
+  const ids = new Set<number>((shops.data ?? []).map((shop) => shop.id));
+  const values = [
+    ...(facet ?? []).map((f) => f.value),
+    ...(Array.isArray(ticked) ? (ticked as string[]) : []),
+  ];
+  for (const value of values) {
+    const match = SHOP_VALUE.exec(value);
+    if (match) ids.add(Number(match[1]));
+  }
+  return [...ids]
+    .map((id) => ({
+      value: `shop:${id}`,
+      label: names.get(id) ?? t('orders.shop.unknown', {id}),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 }

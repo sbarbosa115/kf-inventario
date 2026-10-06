@@ -70,9 +70,12 @@ export function SearchBox({
   onChange,
   label,
   placeholder,
+  onBlur,
 }: {
   value: string;
   onChange: (value: string) => void;
+  /** The field lost the focus (a debounced search hands its text on: useDebouncedText's flush). */
+  onBlur?: () => void;
   /** The accessible name and placeholder ("Search" by default; "Search this page" where it searches one page). */
   label?: string;
   placeholder?: string;
@@ -92,6 +95,7 @@ export function SearchBox({
         placeholder={placeholder ?? name}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onBlur={onBlur}
         onKeyDown={(event) => {
           if (event.key === 'Escape' && value !== '') {
             event.preventDefault();

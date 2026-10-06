@@ -587,6 +587,10 @@ never runs the suite; the coordinator runs it once at the barrier.
     (no `searchLabel` on `DataTable`). The UI hides actions the session's roles do not reach (`useCan`, reachable
     roles from `/api/v1/session`); the server's checks are unchanged. The admin reaches `ROLE_MANAGE_ORDERS` through the
     hierarchy (the regression doc said otherwise; corrected).
+22. **User decision (2026-10-06, after review):** every dialog opens in the centre of the screen, as the legacy
+    modals did, instead of a panel from the right: `SlideOver` keeps its name and API but is a centred panel (560 /
+    800 px, 8 px from the edges on phones, body scrolling inside, header and footer fixed); `Modal`/`ConfirmModal` are
+    centred vertically too (`modal-dialog-centered`).
 
 ## Risks
 

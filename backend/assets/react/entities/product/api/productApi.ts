@@ -1,4 +1,12 @@
-import {apiGet, apiPost, apiPut, type Schema} from '@/shared/api';
+import {
+  apiGet,
+  apiPost,
+  apiPut,
+  listQueryString,
+  type ListQuery,
+  type Page,
+  type Schema,
+} from '@/shared/api';
 
 export type Product = Schema<'ProductOutput'>;
 
@@ -34,12 +42,30 @@ export function updateProduct(
   return apiPut<Product>(`/products/${encodeURIComponent(uuid)}`, payload);
 }
 
-/** A warehouse's stock rows with that status (in stock by default), by product. */
+/** The figures of every row a stock query keeps (not only the page): units and value. */
+export type StockTotals = Schema<'StockTotalsOutput'>;
+
+/** A page of a warehouse's stock, with the totals of every row the filters keep. */
+export type StockPage = Page<StockItem> & {totals: StockTotals};
+
+/**
+ * A page of a warehouse's stock rows with that status (in stock by default): the list contract (q, filters code,
+ * title, detail, quantity, price, in_stock; sorts code, title, quantity, price).
+ */
 export function listStock(
+  warehouseId: number,
+  query: ListQuery = {},
+  status: number = STOCK_IN,
+): Promise<StockPage> {
+  const params = new URLSearchParams(listQueryString(query));
+  params.set('status', String(status));
+  return apiGet<StockPage>(`/warehouses/${warehouseId}/stock?${params}`);
+}
+
+/** Every stock row with that status, by code: for the pickers (order form, invoice form, getting ready, incoming). */
+export async function listAllStock(
   warehouseId: number,
   status: number = STOCK_IN,
 ): Promise<StockItem[]> {
-  return apiGet<StockItem[]>(
-    `/warehouses/${warehouseId}/stock?status=${status}`,
-  );
+  return (await listStock(warehouseId, {perPage: 0}, status)).items;
 }

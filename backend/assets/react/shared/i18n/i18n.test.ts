@@ -32,6 +32,10 @@ const PREFIXES = [
   'gettingReady',
   'invoices',
   'roles',
+  'filters',
+  'settings',
+  'shops',
+  'comments',
 ];
 
 describe('translator', () => {

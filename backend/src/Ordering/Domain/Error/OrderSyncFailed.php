@@ -5,13 +5,15 @@ namespace App\Ordering\Domain\Error;
 use App\Shared\Domain\Error\ExternalServiceFailed;
 
 /**
- * A WooCommerce shop could not be read while pulling its orders: nothing of that sync is kept, and trying again later
- * may work.
+ * "Check now" could read none of the shops (each connection's failure is in its health); trying again later may work.
  */
 final class OrderSyncFailed extends ExternalServiceFailed
 {
-    public function __construct(string $shop, ?\Throwable $previous = null)
+    /**
+     * @param string $shops the connections' names
+     */
+    public function __construct(string $shops, ?\Throwable $previous = null)
     {
-        parent::__construct('order_sync_failed', \sprintf('The WooCommerce shop %s could not be read. Try again later.', $shop), $previous);
+        parent::__construct('order_sync_failed', \sprintf('No shop could be read (%s). Try again later.', $shops), $previous);
     }
 }

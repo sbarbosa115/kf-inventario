@@ -47,11 +47,12 @@ page **`/admin/_kit`** shows each one in its states, in the current theme and la
 |---|---|
 | A page's title and its actions | `PageHeader` (`title` also names the tab; one `primary`; `secondary` go behind "More" on phones; `back`) |
 | Filters above a list | `Toolbar` with `WarehouseSwitch` (+ `useRememberedWarehouse`), `FilterChips` ("All" first, counts), `SearchBox`, `ClearFilters` |
+| A list filtered on the server | `DataTable` in server mode: `query` + `onQueryChange` from `useListQuery(defaults)` (the query in the address), `total`, `facets`, `countFor`; each column's `sortField` and `filter` (`text`, `enum` with `options`, `date`, `money`, `number`) make the filter row (≥ 600 px) or the "Filters · N" bottom sheet (< 600 px), the active-filter chips and the pager. The controls alone: `TextFilterInput`, `FilterDropdown`, `DateRangeFilter`, `RangeFilter`, `ActiveFilters`, `FilterSheet`, `Pager` |
 | A list | `DataTable`: `rowLabel`, at most one `primaryAction`, the rest in `rowActions` (one "⋯" `RowMenu`), `onRowClick`, `selectionBar`, `cardTitle` + `cardFacts` for the phone cards, `mono`/`numeric` columns |
 | Figures from the loaded list | `KpiStrip` (2–4), with `Money` / `Num` |
 | Money, numbers, dates | `useFormat()` (`money`, `num`, `date`, `dateTime`: en-US / es-CO, USD, Bogotá time), `<Money>`, `<Num>` — never `toFixed` or a hard-coded locale |
 | A status | `StatusBadge` (`tone`, `filled`, words always; the item maps its statuses to tones) |
-| A detail or a quick edit, keeping the list in view | `SlideOver` (`md` 480 / `lg` 720 px, full width on phones) |
+| A detail or a quick edit, over the dimmed list | `SlideOver`: centred (`md` 560 / `lg` 800 px, 8 px from the edges on phones), body scrolls inside |
 | Creating or editing a record | a page: `FormLayout` (`narrow`, `columns={2}`), `FormSection`s, `Field`s, `ActionBar` (`primary`, Cancel as `secondary`/ghost, `status` such as "3 things missing") |
 | Before a destructive or state-changing action | `ConfirmModal` (title asks, body says the consequence, `danger` only when it destroys) |
 | After a save or a failure | `useToast()`: `success(text, {action: {label, href}})` (5 s), `error(text)` (stays) — no Undo |
@@ -61,8 +62,8 @@ page **`/admin/_kit`** shows each one in its states, in the current theme and la
 | A password | `PasswordField` (show/hide, Caps Lock hint) |
 | Scanning | `CameraScanner` (start after a tap, torch, the same label counted once, vibration + `beep()`) above `ScanInput` (Enter reads, keeps the focus); the sound toggle is `useSound()` |
 
-**SlideOver or page?** A slide-over for reading a record or changing one or two things where the list matters
-(order detail, move stock, invoice detail). A page for creating or editing a record with sections of fields (product,
+**SlideOver or page?** A `SlideOver` (a centred panel, as the legacy modals were) for reading a record or changing one
+or two things without leaving the list (order detail, move stock, invoice detail). A page for creating or editing a record with sections of fields (product,
 order, customer, invoice, user forms), so it has its own address and survives a reload.
 
 ## Copy
@@ -96,6 +97,14 @@ identical). The Spanish is final (no native review); a proofreading pass runs at
 | Users / Roles / Sign in / Sign out | Usuarios / Roles / Iniciar sesión / Cerrar sesión |
 | Save · Cancel · Close · Delete · Edit · Create · Search · Show all · Clear filters · More · Actions · Undo last scan | Guardar · Cancelar · Cerrar · Eliminar · Editar · Crear · Buscar · Mostrar todo · Quitar filtros · Más · Acciones · Deshacer el último escaneo |
 | Nothing here yet. / Nothing matches these filters. / Loading / Saved / Try again | Aún no hay nada. / Nada coincide con estos filtros. / Cargando / Guardado / Reintentar |
+| Settings · General · Email · Analytics · Shop connections · Quick phrases | Configuración · General · Correo · Analítica · Conexiones con tiendas · Frases rápidas |
+| SMTP server · Sender · Printer address · Copy to (cc) · Send test email · Sent through {{host}} | Servidor SMTP · Remitente · Dirección de la impresora · Con copia (cc) · Enviar correo de prueba · Enviado por {{host}} |
+| Connection · Add connection · Test connection · Webhook URL · Signing secret · Rotate secret · Copy · Active · Inactive | Conexión · Agregar conexión · Probar conexión · URL del webhook · Secreto de firma · Rotar el secreto · Copiar · Activa · Inactiva |
+| Check now · Failed deliveries · Retry · Discard · Reason · Connection health · Last webhook · Last order imported · Last check · Last failure · The old webhook URL | Buscar ahora · Entregas fallidas · Reintentar · Descartar · Motivo · Estado de la conexión · Último webhook · Último pedido importado · Última revisión · Último error · La URL anterior del webhook |
+| What this app may update on the shop · Order status · Order notes | Qué puede actualizar esta aplicación en la tienda · Estado del pedido · Notas del pedido |
+| Filters · Filters · {{n}} · Show {{n}} results · Clear filters · Sort · Today · Last 7 days · Last 30 days · This month · From · To · Min · Max · Under {{amount}} · Over {{amount}} · {{from}} – {{to}} of {{total}} · Rows per page | Filtros · Filtros · {{n}} · Mostrar {{n}} resultados · Quitar filtros · Ordenar · Hoy · Últimos 7 días · Últimos 30 días · Este mes · Desde · Hasta · Mín. · Máx. · Menos de {{amount}} · Más de {{amount}} · {{from}} – {{to}} de {{total}} · Filas por página |
+| Notes · Pin · Unpin · Pinned · Send · Also send to {{shop}} as an order note · Shop note · Quick phrase · Approximate date (the order's) · Write a note… | Notas · Fijar · Desfijar · Fijada · Enviar · Enviar también a {{shop}} como nota del pedido · Nota de la tienda · Frase rápida · Fecha aproximada (la del pedido) · Escriba una nota… |
+| Source: Web / Phone / {{shop}} | Origen: Web / Teléfono / {{shop}} |
 
 ## The shell
 

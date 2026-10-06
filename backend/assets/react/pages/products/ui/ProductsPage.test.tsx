@@ -1,12 +1,16 @@
 import {render, screen} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {pageOf} from '@/shared/test/fakeList';
 import {ProductsPage} from './ProductsPage';
 
 function renderPage(warehouses: unknown[]) {
   fakeApi({
     'GET /warehouses': [200, warehouses],
-    'GET /warehouses/1/stock': [200, []],
+    'GET /warehouses/1/stock': [
+      200,
+      pageOf([], {totals: {units: 0, value: 0}, facets: {in_stock: []}}),
+    ],
   });
   render(
     <MemoryRouter>

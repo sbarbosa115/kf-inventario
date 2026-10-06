@@ -22,3 +22,24 @@ export function useViewport(): Viewport {
     () => ((query()?.matches ?? true) ? 'desktop' : 'compact'),
   );
 }
+
+/** Below this width lists are cards and filters live in a bottom sheet (docs/pdr/prd-shops-settings.md, Decisions 13). */
+export const PHONE_QUERY = '(max-width: 599.98px)';
+
+function phoneQuery(): MediaQueryList | null {
+  return typeof window.matchMedia === 'function'
+    ? window.matchMedia(PHONE_QUERY)
+    : null;
+}
+
+/** True under 600 px (follows the window): the filter row is not rendered there, the sheet is the UI. */
+export function usePhone(): boolean {
+  return useSyncExternalStore(
+    (listener) => {
+      const list = phoneQuery();
+      list?.addEventListener?.('change', listener);
+      return () => list?.removeEventListener?.('change', listener);
+    },
+    () => phoneQuery()?.matches ?? false,
+  );
+}

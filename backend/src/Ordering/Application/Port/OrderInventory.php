@@ -27,11 +27,6 @@ interface OrderInventory
     public function warehouse(int $id): Warehouse;
 
     /**
-     * The warehouse whose shop sends its WooCommerce webhooks from this address (one of its `urls`).
-     */
-    public function warehouseOfShop(string $source): ?Warehouse;
-
-    /**
      * The stock rows, in the order's warehouse, of the products the order names (any status).
      *
      * @return list<ProductWarehouse>

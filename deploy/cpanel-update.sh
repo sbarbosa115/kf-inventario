@@ -16,9 +16,28 @@
 #      old public/.htaccess had), upload_max_filesize and post_max_size as before.
 #   5. Run this script, then add the cron line it prints (the order emails are queued now).
 #   6. Everyone signs in again once (the sessions of the old version do not carry over). The WooCommerce webhook URL
-#      does not change.
+#      did not change then (it moves per shop in the shops-settings cutover below).
 #
 # First time on a new account: git clone <repo> ~/kf-inventory, then steps 2 to 5.
+#
+# Shops-settings cutover, once (docs/pdr/prd-shops-settings.md, "Cutover checklist"). The old webhook URL is removed:
+# from the deploy on it answers 410 and places nothing, so do steps 3 to 6 right after the deploy.
+#   1. Before deploying: add APP_ENCRYPTION_KEY to backend/.env.local (php -r 'echo bin2hex(random_bytes(32));');
+#      create Read/Write REST keys in each of the four shops (WooCommerce › Settings › Advanced › REST API); note
+#      which warehouse each shop's orders went to and which one was printed (ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID).
+#   2. Run this script (backup, the one migration). Replace the old cron line with the one it prints.
+#   3. Settings › Shop connections: create the four connections (URL, keys, the warehouse that shop's orders went to,
+#      "prints orders" for the printed one, "Order status" on to update the shop); "Test connection" each.
+#   4. In each shop: WooCommerce › Settings › Advanced › Webhooks › "Order created" → the connection's URL and
+#      secret, API v3, Status Active, Save (the connection's "last webhook" moves).
+#   5. Orders › "Check now": a connection's first pull reads the last 30 days of processing orders, so the orders
+#      placed between the deploy and step 4 are imported (the ones already in the app are skipped).
+#   6. Place a test order in each shop: it appears in Orders with the shop's name; the printer email arrives for the
+#      printing connection.
+#   7. Settings › General: the old webhook URL's hit counter stays at 0 (a hit = a shop still points at it: step 4).
+#   8. Remove WOO_COMMERCE_* and ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID from backend/.env.local: nothing reads them.
+#   9. Settings › Email (the SMTP server, or empty to keep MAILER_DSN; "Send test email"), Settings › Analytics (GA4,
+#      Clarity IDs) and Settings › Quick phrases.
 #
 # Settings it takes from the environment, all optional:
 #   PHP         path to the PHP 8.4 CLI  (detected)
@@ -68,6 +87,14 @@ step "Checking this account"
 [[ -f "$BACKEND/.env.local" ]] || fail "backend/.env.local is missing: copy deploy/env.local.example, fill it in, then chmod 600 it."
 grep -q '^APP_ENV=prod' "$BACKEND/.env.local" || fail "backend/.env.local must set APP_ENV=prod."
 grep -qE '^APP_SECRET=.{16,}' "$BACKEND/.env.local" || fail "backend/.env.local must set APP_SECRET (see deploy/env.local.example)."
+grep -qE '^APP_ENCRYPTION_KEY=[0-9a-fA-F]{64}$' "$BACKEND/.env.local" || fail "backend/.env.local must set APP_ENCRYPTION_KEY to 64 hex characters (see deploy/env.local.example)."
+# The keys committed in backend/.env and backend/.env.test are public: a secret sealed with one is no secret.
+for committed in .env .env.test; do
+    dev_key="$(sed -n 's/^APP_ENCRYPTION_KEY=//p' "$BACKEND/$committed" 2>/dev/null || true)"
+    if [[ -n "$dev_key" ]] && grep -qixF "APP_ENCRYPTION_KEY=$dev_key" "$BACKEND/.env.local"; then
+        fail "backend/.env.local uses the APP_ENCRYPTION_KEY committed in backend/$committed: generate your own (see deploy/env.local.example)."
+    fi
+done
 [[ -f "$APP_DIR/.env" ]] && warn "There is a .env at the repository root (the old layout's settings): it is no longer read. Move what it holds to backend/.env.local and delete it."
 for key in MAILER_DSN MAILER_FROM_ADDRESS MAILER_PRINTER_ADDRESS; do
     grep -qE "^$key=.+" "$BACKEND/.env.local" || warn "backend/.env.local has no $key: new orders will not be emailed to the printer."
@@ -81,8 +108,9 @@ note "PHP:      $PHP_BIN ($("$PHP_BIN" -r 'echo PHP_VERSION;'))"
 # one PHP while Apache runs the app with another, whose extensions may not match.
 check_extensions() {
     local binary=$1 label=$2 extension
-    # gd and zip: the PDFs (Dompdf) and the stock spreadsheets (PhpSpreadsheet).
-    for extension in pdo_mysql intl zip gd xmlreader mbstring curl; do
+    # gd and zip: the PDFs (Dompdf) and the stock spreadsheets (PhpSpreadsheet). sodium: the secrets kept in the
+    # database (Settings' SecretBox; ea-php84 ships it as a package).
+    for extension in pdo_mysql intl zip gd xmlreader mbstring curl sodium; do
         "$binary" -m | grep -qix "$extension" || fail "$label has no \"$extension\". Enable it in cPanel → Select PHP Version."
     done
 }
@@ -320,13 +348,21 @@ check_timezone() {
 check_timezone "$PHP_BIN" "The command-line PHP"
 [[ -n "${WEB_PHP_BIN:-}" && -x "${WEB_PHP_BIN:-}" ]] && check_timezone "$WEB_PHP_BIN" "$WEB_PHP (the one Apache uses)"
 
-step "Email queue"
+step "Email and shops queue"
 # A worker started by the cron before this deploy would keep running the old code until its time limit; this asks it
 # to stop after its current message, and the next cron run starts one on the new code.
 console messenger:stop-workers --env=prod --no-debug >/dev/null 2>&1 || true
-WORKER_LINE="flock -n $HOME/.kf-worker.lock $PHP_BIN $BACKEND/bin/console messenger:consume mail --time-limit=55 --memory-limit=128M --env=prod --no-debug >> $BACKEND/var/log/worker.log 2>&1"
-if ! crontab -l 2>/dev/null | grep -q 'messenger:consume mail'; then
-    warn "No cron line drains the email queue, so no order email reaches the printer. Add it in cPanel › Cron Jobs (every minute):"
+# One line, every minute (docs/pdr/prd-shops-settings.md, Decisions 11): the shops' catch-up pull when a connection is
+# due (~15 min after its last one; it exits at once otherwise), then the queues of the order emails and of the
+# write-back to the shops. flock keeps two runs from overlapping.
+CONSOLE="$PHP_BIN $BACKEND/bin/console"
+WORKER_LINE="flock -n $HOME/.kf-worker.lock sh -c '$CONSOLE app:shops:pull --if-due --env=prod --no-debug; $CONSOLE messenger:consume mail shops --time-limit=50 --memory-limit=128M --env=prod --no-debug' >> $BACKEND/var/log/worker.log 2>&1"
+if ! crontab -l 2>/dev/null | grep -q 'messenger:consume mail shops'; then
+    if crontab -l 2>/dev/null | grep -q 'messenger:consume mail'; then
+        warn "The cron line drains only the email queue: replace it (cPanel › Cron Jobs) with this one, which also pulls the shops and writes back to them (every minute):"
+    else
+        warn "No cron line drains the queues, so no order email reaches the printer and nothing is written back to the shops. Add it in cPanel › Cron Jobs (every minute):"
+    fi
     note "  $WORKER_LINE"
 fi
 

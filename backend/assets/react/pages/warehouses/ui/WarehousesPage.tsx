@@ -1,4 +1,4 @@
-import {useId, useState} from 'react';
+import {useState} from 'react';
 import {listWarehouses, type Warehouse} from '@/entities/warehouse';
 import {WarehouseName} from '@/features/rename-warehouse';
 import {useTranslation} from '@/shared/i18n';
@@ -25,7 +25,6 @@ function WarehouseCard({
   onRenamed: () => void;
 }) {
   const {t} = useTranslation();
-  const urlsId = useId();
   return (
     <article className="warehouse-card">
       <header className="warehouse-card__header">
@@ -49,23 +48,11 @@ function WarehouseCard({
           />
         )}
       </header>
-      <p className="warehouse-card__label" id={urlsId}>
-        {t('stock.warehouses.urls')}
-      </p>
-      {warehouse.urls.length === 0 ? (
-        <p className="warehouse-card__none">{t('stock.warehouses.noUrls')}</p>
-      ) : (
-        <ul className="warehouse-card__urls" aria-labelledby={urlsId}>
-          {warehouse.urls.map((url) => (
-            <li key={url}>{url}</li>
-          ))}
-        </ul>
-      )}
     </article>
   );
 }
 
-/** Warehouses: a card each, renamed in place, with the shops that send their orders there (any signed-in user). */
+/** Warehouses: a card each, renamed in place (any signed-in user). Shop orders reach a warehouse through its shop connection. */
 export function WarehousesPage() {
   const {t} = useTranslation();
   const {data, error, reload} = useLoad(listWarehouses, []);

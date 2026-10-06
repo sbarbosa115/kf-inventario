@@ -3,6 +3,7 @@
 namespace App\Shared\UI\Http\OpenApi;
 
 use App\Shared\UI\Http\ApiResponse;
+use App\Shared\UI\Http\Output\FacetCountOutput;
 use Nelmio\ApiDocBundle\Describer\ModelRegistryAwareInterface;
 use Nelmio\ApiDocBundle\Describer\ModelRegistryAwareTrait;
 use Nelmio\ApiDocBundle\Model\Model;
@@ -76,6 +77,15 @@ final class ApiResponseDescriber implements RouteDescriberInterface, ModelRegist
             self::arrayOf(Util::getCollectionItem($schema, OA\Property::class, ['property' => 'items']), $ref);
             foreach (['total', 'page', 'per_page'] as $name) {
                 Util::getCollectionItem($schema, OA\Property::class, ['property' => $name, 'type' => 'integer']);
+            }
+            // {field: FacetCountOutput[]}, only when ?facets= asked for them (Output\PageOutput).
+            $facet = $this->modelRegistry->register(new Model(Type::object(FacetCountOutput::class)));
+            /** @var OA\Property $facets */
+            $facets = Util::getCollectionItem($schema, OA\Property::class, ['property' => 'facets', 'type' => 'object']);
+            $facets->additionalProperties = new OA\AdditionalProperties(['type' => 'array', 'items' => new OA\Items(['ref' => $facet, '_context' => $facets->_context]), '_context' => $facets->_context]);
+            if (null !== $response->totals) {
+                $schema->required[] = 'totals';
+                Util::getCollectionItem($schema, OA\Property::class, ['property' => 'totals', 'ref' => $this->modelRegistry->register(new Model(Type::object($response->totals)))]);
             }
         } elseif ($response->list) {
             self::arrayOf($schema, $ref);

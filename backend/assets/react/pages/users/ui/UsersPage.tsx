@@ -1,38 +1,60 @@
-import {useMemo, useState} from 'react';
+import {useMemo} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {listUsers, RoleBadges, visibleRoles, type User} from '@/entities/user';
+import {listUsers, RoleBadges, type User} from '@/entities/user';
 import {ApiError} from '@/shared/api';
-import {useLoad} from '@/shared/lib';
+import {ASSIGNABLE_ROLES} from '@/shared/config';
+import {useListQuery, useLoad} from '@/shared/lib';
 import {useTranslation} from '@/shared/i18n';
 import {
   Button,
   DataTable,
-  ClearFilters,
   FilterChips,
   PageHeader,
   StatusBadge,
   Toolbar,
   type Column,
+  type TableQuery,
 } from '@/shared/ui';
 
 type StatusFilter = 'active' | 'inactive';
 
-/** Users: every account, its roles in plain words, and the way into the form that edits it (ROLE_MANAGE_USERS). */
+/** The list columns whose values are counted (the status chips, the Roles and Status filters). */
+const FACETS = ['enabled', 'roles'];
+
+/**
+ * Users: every account, its roles in plain words, and the way into the form that edits it (ROLE_MANAGE_USERS).
+ * Searched, filtered under the headers (name, username and email text, the roles and the status from lists with
+ * their counts; a sheet on a phone), sorted and paged on the server (the query in the address).
+ */
 export function UsersPage() {
   const {t} = useTranslation();
   const navigate = useNavigate();
-  const {data, loading, error, reload} = useLoad(listUsers, []);
-  const [status, setStatus] = useState<StatusFilter | null>(null);
+  const list = useListQuery({sort: 'name'});
+  const key = JSON.stringify(list.query);
+  const {data, loading, error, reload} = useLoad(
+    () => listUsers({...list.query, facets: FACETS}),
+    [key],
+  );
+  // The phone's sheet: how many users a draft keeps, one row asked.
+  const countFor = (query: TableQuery) =>
+    listUsers({...query, page: 1, perPage: 1}).then((page) => page.total);
+  const enabledFilter = list.query.filters?.enabled;
+  // A chip is pressed when its status is the one ticked; with both ticked, none is (not even All).
+  const status: StatusFilter | 'both' | null = !Array.isArray(enabledFilter)
+    ? null
+    : enabledFilter.length > 1
+      ? 'both'
+      : enabledFilter[0] === 'yes'
+        ? 'active'
+        : enabledFilter[0] === 'no'
+          ? 'inactive'
+          : null;
 
   const forbidden = error instanceof ApiError && error.status === 403;
-  const activeCount = data?.filter((user) => user.enabled).length ?? 0;
-  const rows = useMemo(
-    () =>
-      status === null
-        ? data
-        : data?.filter((user) => user.enabled === (status === 'active')),
-    [data, status],
-  );
+  // The chips count what the search keeps (the enabled facet ignores the chip itself).
+  const facet = data?.facets?.enabled ?? [];
+  const activeCount = facet.find((f) => f.value === 'yes')?.count ?? 0;
+  const allCount = facet.reduce((sum, f) => sum + f.count, 0);
 
   const columns = useMemo<Column<User>[]>(
     () => [
@@ -40,31 +62,36 @@ export function UsersPage() {
         key: 'name',
         header: t('users.columns.name'),
         render: (user) => <strong>{user.name}</strong>,
-        sortValue: (user) => user.name.toLowerCase(),
-        searchValue: (user) => `${user.name} ${user.username}`,
+        sortField: 'name',
+        filter: {type: 'text', field: 'name'},
       },
       {
         key: 'username',
         header: t('users.columns.username'),
         render: (user) => user.username,
-        sortValue: (user) => user.username.toLowerCase(),
+        sortField: 'username',
         mono: true,
+        filter: {type: 'text', field: 'username'},
       },
       {
         key: 'email',
         header: t('users.columns.email'),
         render: (user) => user.email,
-        sortValue: (user) => user.email ?? '',
-        searchValue: (user) => user.email ?? null,
+        sortField: 'email',
+        filter: {type: 'text', field: 'email'},
       },
       {
         key: 'roles',
         header: t('users.columns.roles'),
         render: (user) => <RoleBadges roles={user.roles} />,
-        searchValue: (user) =>
-          visibleRoles(user.roles)
-            .map((role) => `${role} ${t(`roles.names.${role}`)}`)
-            .join(' '),
+        filter: {
+          type: 'enum',
+          field: 'roles',
+          options: ASSIGNABLE_ROLES.map((role) => ({
+            value: role,
+            label: t(`roles.names.${role}`),
+          })),
+        },
       },
       {
         key: 'status',
@@ -74,7 +101,14 @@ export function UsersPage() {
             {user.enabled ? t('users.active') : t('users.inactive')}
           </StatusBadge>
         ),
-        sortValue: (user) => (user.enabled ? 0 : 1),
+        filter: {
+          type: 'enum',
+          field: 'enabled',
+          options: [
+            {value: 'yes', label: t('users.active')},
+            {value: 'no', label: t('users.inactive')},
+          ],
+        },
       },
     ],
     [t],
@@ -85,9 +119,7 @@ export function UsersPage() {
       <PageHeader
         title={t('users.title')}
         subtitle={
-          data === undefined
-            ? undefined
-            : t('users.count', {count: data.length})
+          data === undefined ? undefined : t('users.count', {count: allCount})
         }
         primary={
           <Button to="/admin/users/new" variant="primary" icon="fa-plus">
@@ -101,13 +133,20 @@ export function UsersPage() {
         </div>
       ) : (
         <>
-          {data !== undefined && data.length > 0 && (
+          {data !== undefined && (allCount > 0 || status !== null) && (
             <Toolbar label={t('users.filters.label')}>
               <FilterChips
                 label={t('users.filters.label')}
                 value={status}
-                onChange={(key) => setStatus(key as StatusFilter | null)}
-                allCount={data.length}
+                onChange={(key) =>
+                  list.setFilter(
+                    'enabled',
+                    key === null
+                      ? undefined
+                      : [key === 'active' ? 'yes' : 'no'],
+                  )
+                }
+                allCount={allCount}
                 options={[
                   {
                     key: 'active',
@@ -117,18 +156,20 @@ export function UsersPage() {
                   {
                     key: 'inactive',
                     label: t('users.filters.inactive'),
-                    count: data.length - activeCount,
+                    count: allCount - activeCount,
                   },
                 ]}
               />
-              {status !== null && (
-                <ClearFilters onClick={() => setStatus(null)} />
-              )}
             </Toolbar>
           )}
           <DataTable
             columns={columns}
-            rows={rows}
+            rows={data?.items}
+            query={list.query}
+            onQueryChange={list.update}
+            total={data?.total}
+            facets={data?.facets}
+            countFor={countFor}
             rowKey={(user) => user.id}
             rowLabel={(user) => user.name}
             loading={loading && data === undefined}

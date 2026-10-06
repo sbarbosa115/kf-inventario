@@ -2,6 +2,7 @@ import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {pageOf} from '@/shared/test/fakeList';
 import {ToastProvider} from '@/shared/ui';
 import {IncomingStockPage} from './IncomingStockPage';
 
@@ -39,7 +40,10 @@ describe('IncomingStockPage', () => {
   it('lists the incoming rows of the first warehouse, with their totals under the title', async () => {
     const api = fakeApi({
       'GET /warehouses': [200, [COLOMBIA, USA]],
-      'GET /warehouses/1/stock': [200, [row('KF-01', 5), row('KF-02', 3)]],
+      'GET /warehouses/1/stock': [
+        200,
+        pageOf([row('KF-01', 5), row('KF-02', 3)]),
+      ],
     });
     renderPage();
 
@@ -55,14 +59,14 @@ describe('IncomingStockPage', () => {
     expect(screen.getByRole('button', {name: 'Approve all (2)'})).toBeEnabled();
     expect(
       api.calls.find((c) => c.path === '/warehouses/1/stock')?.url.search,
-    ).toBe('?status=0');
+    ).toBe('?per_page=0&status=0');
   });
 
   it('loads the warehouse that is picked, and the one the address names', async () => {
     fakeApi({
       'GET /warehouses': [200, [COLOMBIA, USA]],
-      'GET /warehouses/1/stock': [200, [row('KF-01', 5)]],
-      'GET /warehouses/2/stock': [200, [row('KF-09', 7, USA)]],
+      'GET /warehouses/1/stock': [200, pageOf([row('KF-01', 5)])],
+      'GET /warehouses/2/stock': [200, pageOf([row('KF-09', 7, USA)])],
     });
     renderPage('/admin/products/incoming?warehouse=2');
 
@@ -80,7 +84,7 @@ describe('IncomingStockPage', () => {
       'GET /warehouses': [200, [COLOMBIA]],
       'GET /warehouses/1/stock': () => [
         200,
-        approved ? [] : [row('KF-01', 5), row('KF-02', 3)],
+        pageOf(approved ? [] : [row('KF-01', 5), row('KF-02', 3)]),
       ],
       'POST /warehouses/1/incoming/approve': () => {
         approved = true;

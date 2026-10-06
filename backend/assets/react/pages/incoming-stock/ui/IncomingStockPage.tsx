@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
-import {listStock, STOCK_INCOMING, type StockItem} from '@/entities/product';
+import {listAllStock, STOCK_INCOMING, type StockItem} from '@/entities/product';
 import {listWarehouses} from '@/entities/warehouse';
 import {ApproveIncomingButton} from '@/features/approve-incoming';
 import {ApiError} from '@/shared/api';
@@ -30,7 +30,7 @@ export function IncomingStockPage() {
     () =>
       warehouse === undefined
         ? Promise.resolve([] as StockItem[])
-        : listStock(warehouse.id, STOCK_INCOMING),
+        : listAllStock(warehouse.id, STOCK_INCOMING),
     [warehouse?.id],
   );
   const [leaving, setLeaving] = useState(false);

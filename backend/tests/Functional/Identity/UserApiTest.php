@@ -17,7 +17,7 @@ final class UserApiTest extends ApiTestCase
         $this->aUser(['ROLE_ADMIN'], 'abe', enabled: false);
         $this->signInAs(['ROLE_MANAGE_USERS', 'ROLE_USER'], 'boss');
 
-        $users = $this->getJson('/api/v1/users');
+        $users = $this->getJson('/api/v1/users')['items'];
 
         $this->assertStatus(200);
         self::assertSame(['Test abe', 'Test boss', 'Test zed'], array_column($users, 'name'), 'Users come in name order.');

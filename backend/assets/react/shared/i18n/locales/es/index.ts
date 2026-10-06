@@ -14,6 +14,12 @@ import orderForm from './orderForm.json';
 import gettingReady from './gettingReady.json';
 import invoices from './invoices.json';
 import roles from './roles.json';
+// shops-settings (docs/pdr/prd-shops-settings.md): filters (item 0, the kit), settings (item 0 the shell and General,
+// item 4 the other tabs), shops (item 6), comments (item 8).
+import filters from './filters.json';
+import settings from './settings.json';
+import shops from './shops.json';
+import comments from './comments.json';
 
 export default {
   common,
@@ -30,4 +36,8 @@ export default {
   gettingReady,
   invoices,
   roles,
+  filters,
+  settings,
+  shops,
+  comments,
 };

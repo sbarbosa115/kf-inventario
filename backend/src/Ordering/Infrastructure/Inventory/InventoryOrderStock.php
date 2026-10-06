@@ -47,11 +47,6 @@ final class InventoryOrderStock implements OrderInventory
         }
     }
 
-    public function warehouseOfShop(string $source): ?Warehouse
-    {
-        return $this->warehouses->byWebhookSource($source);
-    }
-
     public function stockOf(Order $order): array
     {
         $warehouse = $order->getWarehouse();

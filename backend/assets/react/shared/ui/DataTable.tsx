@@ -1,7 +1,18 @@
 import {useMemo, useState, type MouseEvent, type ReactNode} from 'react';
+import {activeFilters, type FilterValue, type ListQuery} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
+import {useDebouncedText, usePhone} from '@/shared/lib';
 import {EmptyState} from './EmptyState';
 import {ErrorState} from './ErrorState';
+import {ActiveFilters} from './filters/ActiveFilters';
+import {FilterRow} from './filters/FilterRow';
+import {
+  FilterSheet,
+  FiltersButton,
+  type SheetDraft,
+} from './filters/FilterSheet';
+import {Pager, PER_PAGE_OPTIONS} from './filters/Pager';
+import type {ColumnFilter, Facets, FilterColumn} from './filters/types';
 import {RowMenu, type RowAction} from './RowMenu';
 import {SearchBox} from './Toolbar';
 
@@ -18,7 +29,14 @@ export interface Column<Row> {
   numeric?: boolean;
   /** Codes, SKUs, order numbers: Geist Mono. */
   mono?: boolean;
+  /** Server mode: what the column sorts by on the server (`sort=field` / `-field`); without it, it does not sort. */
+  sortField?: string;
+  /** Server mode: the column's filter (a text, a list of values, a date or money range) in the filter row and sheet. */
+  filter?: ColumnFilter;
 }
+
+/** A server-paged list's query as the table drives it: the page, the sort, `q` and the filters. */
+export type TableQuery = ListQuery & {page: number; perPage: number};
 
 interface Props<Row> {
   columns: Column<Row>[];
@@ -58,13 +76,36 @@ interface Props<Row> {
   cardFacts?: string[];
   /** The header stays in view while the page scrolls. */
   stickyHeader?: boolean;
+  /**
+   * Server mode (docs/pdr/prd-shops-settings.md, "Screen proposals" 1): `rows` are one page the server filtered,
+   * sorted and paged; the table shows `query` and asks for changes through `onQueryChange` (header sort, filter row,
+   * the phone's sheet, the pager). Without it the table filters, sorts and pages `rows` in the browser.
+   */
+  query?: TableQuery;
+  onQueryChange?: (query: TableQuery) => void;
+  /** Server mode: how many rows the query keeps in all. */
+  total?: number;
+  /** Server mode: the counts of the enum columns' values (the filter dropdowns show them). */
+  facets?: Facets;
+  /** Server mode, phones: how many rows a draft of the sheet keeps ("Show N results"). */
+  countFor?: (query: TableQuery) => Promise<number>;
+  /** Server mode: the rows-per-page choices (25, 50, 100). */
+  perPageOptions?: number[];
+  /**
+   * Server mode: filters with no column of their own (in stock, walk-in, country): on the chips and in the phone's
+   * sheet, after the columns' filters; never in the filter row (the page offers them as toolbar chips, if at all).
+   */
+  extraFilters?: FilterColumn[];
 }
 
 const INTERACTIVE = 'a, button, input, select, textarea, label, [role="menu"]';
 
 /**
  * Every list's table: search, sort by a header, pages, row selection with its bar, a row menu, and its loading
- * (skeleton rows), error, empty and "filtered to nothing" states. Data is filtered and paged in the browser.
+ * (skeleton rows), error, empty and "filtered to nothing" states. Data is filtered and paged in the browser, or, in
+ * server mode (`query` + `onQueryChange`), by the API: then the columns' `filter`s make a filter row under the
+ * header (a "Filters · N" button and a bottom sheet under 600 px), the active filters show as chips, and a pager
+ * says "1 – 25 of 1,240".
  * Under 600 px the rows become cards in CSS; the elements carry explicit table roles so locators by role work at
  * every width.
  */
@@ -91,14 +132,36 @@ export function DataTable<Row>({
   cardTitle,
   cardFacts,
   stickyHeader = false,
+  query: serverQuery,
+  onQueryChange,
+  total,
+  facets,
+  countFor,
+  perPageOptions = PER_PAGE_OPTIONS,
+  extraFilters = [],
 }: Props<Row>) {
   const {t} = useTranslation();
+  const phone = usePhone();
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<{key: string; desc: boolean} | null>(null);
   const [page, setPage] = useState(1);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const serverMode = serverQuery !== undefined && onQueryChange !== undefined;
+  const server = serverMode
+    ? {query: serverQuery, change: onQueryChange}
+    : null;
+
+  // Server mode's own search box is `q`, handed on 300 ms after the last key.
+  const [serverSearch, setServerSearch, flushServerSearch] = useDebouncedText(
+    serverQuery?.q ?? '',
+    (q) =>
+      serverQuery &&
+      onQueryChange?.({...serverQuery, page: 1, q: q === '' ? undefined : q}),
+  );
 
   const visible = useMemo(() => {
     let list = rows ?? [];
+    if (serverMode) return list;
     const needle = query.trim().toLowerCase();
     if (needle !== '') {
       list = list.filter((row) =>
@@ -119,17 +182,122 @@ export function DataTable<Row>({
       });
     }
     return list;
-  }, [rows, columns, query, sort]);
+  }, [rows, columns, query, sort, serverMode]);
 
   const pages =
     pageSize > 0 ? Math.max(1, Math.ceil(visible.length / pageSize)) : 1;
   const current = Math.min(page, pages);
   const shown =
-    pageSize > 0
-      ? visible.slice((current - 1) * pageSize, current * pageSize)
-      : visible;
+    server || pageSize <= 0
+      ? visible
+      : visible.slice((current - 1) * pageSize, current * pageSize);
 
   if (error) return <ErrorState error={error} onRetry={onRetry} />;
+
+  // Server mode: the filterable columns, how many filter something, and the ways to change the query.
+  const filterColumns: FilterColumn[] = [
+    ...columns.flatMap((column) =>
+      column.filter ? [{label: column.header, filter: column.filter}] : [],
+    ),
+    ...extraFilters,
+  ];
+  const rowFilters = columns.some((column) => column.filter !== undefined);
+  const serverFilters = server ? activeFilters(server.query.filters) : {};
+  const activeCount = Object.keys(serverFilters).length;
+  const searching = (server?.query.q ?? '').trim() !== '';
+  const filtering = activeCount > 0 || searching;
+  const change = (patch: Partial<TableQuery>) =>
+    server?.change({...server.query, page: 1, ...patch});
+  const setFilter = (field: string, value: FilterValue | undefined) =>
+    change({filters: activeFilters({...serverFilters, [field]: value ?? ''})});
+  const clearServerFilters = () => change({filters: {}, q: undefined});
+  const sortOf = (column: Column<Row>) =>
+    server && column.sortField
+      ? server.query.sort === column.sortField
+        ? 'ascending'
+        : server.query.sort === `-${column.sortField}`
+          ? 'descending'
+          : undefined
+      : sort?.key === column.key
+        ? sort.desc
+          ? 'descending'
+          : 'ascending'
+        : undefined;
+  const sortable = (column: Column<Row>) =>
+    server ? column.sortField !== undefined : column.sortValue !== undefined;
+  const toggleSort = (column: Column<Row>) => {
+    if (server && column.sortField) {
+      change({
+        sort:
+          server.query.sort === column.sortField
+            ? `-${column.sortField}`
+            : column.sortField,
+      });
+    } else {
+      setSort((now) => ({
+        key: column.key,
+        desc: now?.key === column.key ? !now.desc : false,
+      }));
+    }
+  };
+  const sortOptions = server
+    ? columns.flatMap((column) =>
+        column.sortField
+          ? [
+              {
+                value: column.sortField,
+                label: t('filters.sortAsc', {label: column.header}),
+              },
+              {
+                value: `-${column.sortField}`,
+                label: t('filters.sortDesc', {label: column.header}),
+              },
+            ]
+          : [],
+      )
+    : [];
+  const filterTools =
+    server && filterColumns.length > 0 ? (
+      <div className="kf-data-table__filters">
+        {phone && (
+          <FiltersButton
+            count={activeCount}
+            onClick={() => setSheetOpen(true)}
+          />
+        )}
+        <ActiveFilters
+          columns={filterColumns}
+          filters={serverFilters}
+          searching={searching}
+          onRemove={(field) => setFilter(field, undefined)}
+          onClear={clearServerFilters}
+        />
+        {sheetOpen && (
+          <FilterSheet
+            columns={filterColumns}
+            filters={serverFilters}
+            sort={server.query.sort}
+            sortOptions={sortOptions}
+            facets={facets}
+            count={(draft: SheetDraft) =>
+              countFor
+                ? countFor({
+                    ...server.query,
+                    page: 1,
+                    filters: draft.filters,
+                    sort: draft.sort,
+                  })
+                : Promise.reject(new Error('No count'))
+            }
+            onApply={(draft) => {
+              setSheetOpen(false);
+              change({filters: draft.filters, sort: draft.sort});
+            }}
+            onClose={() => setSheetOpen(false)}
+          />
+        )}
+      </div>
+    ) : null;
 
   const selectable = selected !== undefined && onSelectedChange !== undefined;
   const hasActions = rowActions !== undefined || primaryAction !== undefined;
@@ -183,6 +351,31 @@ export function DataTable<Row>({
     );
   }
 
+  // Server mode, filtered to nothing: the header and its filter row stay (a filter can be changed where it was set),
+  // and the empty state takes the body. On a phone (no filter row) it replaces the table.
+  const filteredEmpty = server !== null && rows.length === 0 && filtering;
+  const emptyInTable = filteredEmpty && rowFilters && !phone;
+  const filteredEmptyState = (
+    <EmptyState
+      icon="fa-filter"
+      message={t('common.filteredEmpty')}
+      action={
+        <button
+          type="button"
+          className="kf-btn kf-btn--secondary kf-btn--sm"
+          onClick={clearServerFilters}
+        >
+          <span className="kf-btn__label">{t('common.showAll')}</span>
+        </button>
+      }
+    />
+  );
+  const span =
+    columns.length +
+    (selectable ? 1 : 0) +
+    (cardTitle ? 1 : 0) +
+    (hasActions ? 1 : 0);
+
   const clickRow = (row: Row) => (event: MouseEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest(INTERACTIVE)) return;
     onRowClick?.(row);
@@ -192,15 +385,24 @@ export function DataTable<Row>({
     <div className="kf-data-table">
       {searchable && (
         <div className="kf-data-table__search">
-          <SearchBox
-            value={query}
-            onChange={(value) => {
-              setQuery(value);
-              setPage(1);
-            }}
-          />
+          {server ? (
+            <SearchBox
+              value={serverSearch}
+              onChange={setServerSearch}
+              onBlur={flushServerSearch}
+            />
+          ) : (
+            <SearchBox
+              value={query}
+              onChange={(value) => {
+                setQuery(value);
+                setPage(1);
+              }}
+            />
+          )}
         </div>
       )}
+      {filterTools}
       {selectable && selectionBar && selectedRows.length > 0 && (
         <div className="kf-selection-bar">
           <span className="kf-selection-bar__count">
@@ -218,9 +420,11 @@ export function DataTable<Row>({
           </button>
         </div>
       )}
-      {rows.length === 0 ? (
+      {filteredEmpty && !emptyInTable ? (
+        filteredEmptyState
+      ) : rows.length === 0 && !emptyInTable ? (
         <EmptyState message={emptyMessage ?? t('common.empty')} />
-      ) : visible.length === 0 ? (
+      ) : visible.length === 0 && !emptyInTable ? (
         <EmptyState
           message={t('common.filteredEmpty')}
           action={
@@ -267,28 +471,17 @@ export function DataTable<Row>({
                     role="columnheader"
                     scope="col"
                     className={column.numeric ? 'kf-table__num' : undefined}
-                    aria-sort={
-                      sort?.key === column.key
-                        ? sort.desc
-                          ? 'descending'
-                          : 'ascending'
-                        : undefined
-                    }
+                    aria-sort={sortOf(column)}
                   >
-                    {column.sortValue ? (
+                    {sortable(column) ? (
                       <button
                         type="button"
                         className="kf-table__sort"
-                        onClick={() =>
-                          setSort((now) => ({
-                            key: column.key,
-                            desc: now?.key === column.key ? !now.desc : false,
-                          }))
-                        }
+                        onClick={() => toggleSort(column)}
                       >
                         {column.header}
                         <i
-                          className={`fas ${sort?.key === column.key ? (sort.desc ? 'fa-arrow-down' : 'fa-arrow-up') : 'fa-sort'} kf-table__sort-icon`}
+                          className={`fas ${sortOf(column) === 'descending' ? 'fa-arrow-down' : sortOf(column) === 'ascending' ? 'fa-arrow-up' : 'fa-sort'} kf-table__sort-icon`}
                           aria-hidden="true"
                         />
                       </button>
@@ -307,86 +500,123 @@ export function DataTable<Row>({
                   </th>
                 )}
               </tr>
+              {server && rowFilters && !phone && (
+                <FilterRow
+                  columns={columns.map((column) =>
+                    column.filter
+                      ? {label: column.header, filter: column.filter}
+                      : null,
+                  )}
+                  filters={serverFilters}
+                  facets={facets}
+                  onChange={(field, value) => setFilter(field, value)}
+                  leading={[
+                    ...(selectable ? ['kf-table__select'] : []),
+                    ...(cardTitle ? ['kf-table__card-title'] : []),
+                  ]}
+                  trailing={hasActions ? ['kf-table__actions'] : []}
+                />
+              )}
             </thead>
             <tbody role="rowgroup">
-              {shown.map((row) => {
-                const key = rowKey(row);
-                const isSelected = selected?.has(key) ?? false;
-                const actions = rowActions?.(row) ?? [];
-                return (
-                  <tr
-                    key={key}
-                    role="row"
-                    className={
-                      [rowClassName?.(row), isSelected ? 'is-selected' : null]
-                        .filter(Boolean)
-                        .join(' ') || undefined
-                    }
-                    onClick={onRowClick ? clickRow(row) : undefined}
-                  >
-                    {selectable && (
-                      <td role="cell" className="kf-table__select">
-                        <label className="kf-table__select-hit">
-                          <input
-                            type="checkbox"
-                            aria-label={t('common.selectRow')}
-                            checked={isSelected}
-                            onChange={(event) =>
-                              toggle([key], event.target.checked)
-                            }
-                          />
-                        </label>
-                      </td>
-                    )}
-                    {cardTitle && (
-                      <td role="cell" className="kf-table__card-title">
-                        {cardTitle(row)}
-                      </td>
-                    )}
-                    {columns.map((column) => (
-                      <td
-                        key={column.key}
-                        role="cell"
-                        data-label={column.header}
-                        className={
-                          [
-                            column.numeric ? 'kf-table__num' : null,
-                            column.mono ? 'kf-table__mono' : null,
-                            hiddenOnCard(column.key)
-                              ? 'kf-table__card-hidden'
-                              : null,
-                            column.key === cardLead
-                              ? 'kf-table__card-lead'
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(' ') || undefined
-                        }
-                      >
-                        {column.render(row)}
-                      </td>
-                    ))}
-                    {hasActions && (
-                      <td role="cell" className="kf-table__actions">
-                        {primaryAction?.(row)}
-                        {actions.length > 0 && (
-                          <RowMenu
-                            actions={actions}
-                            label={t('common.actionsFor', {
-                              name: rowLabel?.(row) ?? String(key),
-                            })}
-                          />
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
+              {emptyInTable ? (
+                <tr role="row" className="kf-table__empty-row">
+                  <td role="cell" colSpan={span} className="kf-table__empty">
+                    {filteredEmptyState}
+                  </td>
+                </tr>
+              ) : (
+                shown.map((row) => {
+                  const key = rowKey(row);
+                  const isSelected = selected?.has(key) ?? false;
+                  const actions = rowActions?.(row) ?? [];
+                  return (
+                    <tr
+                      key={key}
+                      role="row"
+                      className={
+                        [rowClassName?.(row), isSelected ? 'is-selected' : null]
+                          .filter(Boolean)
+                          .join(' ') || undefined
+                      }
+                      onClick={onRowClick ? clickRow(row) : undefined}
+                    >
+                      {selectable && (
+                        <td role="cell" className="kf-table__select">
+                          <label className="kf-table__select-hit">
+                            <input
+                              type="checkbox"
+                              aria-label={t('common.selectRow')}
+                              checked={isSelected}
+                              onChange={(event) =>
+                                toggle([key], event.target.checked)
+                              }
+                            />
+                          </label>
+                        </td>
+                      )}
+                      {cardTitle && (
+                        <td role="cell" className="kf-table__card-title">
+                          {cardTitle(row)}
+                        </td>
+                      )}
+                      {columns.map((column) => (
+                        <td
+                          key={column.key}
+                          role="cell"
+                          data-label={column.header}
+                          className={
+                            [
+                              column.numeric ? 'kf-table__num' : null,
+                              column.mono ? 'kf-table__mono' : null,
+                              hiddenOnCard(column.key)
+                                ? 'kf-table__card-hidden'
+                                : null,
+                              column.key === cardLead
+                                ? 'kf-table__card-lead'
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(' ') || undefined
+                          }
+                        >
+                          {column.render(row)}
+                        </td>
+                      ))}
+                      {hasActions && (
+                        <td role="cell" className="kf-table__actions">
+                          {primaryAction?.(row)}
+                          {actions.length > 0 && (
+                            <RowMenu
+                              actions={actions}
+                              label={t('common.actionsFor', {
+                                name: rowLabel?.(row) ?? String(key),
+                              })}
+                            />
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
       )}
-      {pages > 1 && (
+      {server &&
+        total !== undefined &&
+        (total > (perPageOptions[0] ?? 25) || server.query.page > 1) && (
+          <Pager
+            page={server.query.page}
+            perPage={server.query.perPage}
+            total={total}
+            onPage={(next) => server.change({...server.query, page: next})}
+            onPerPage={(perPage) => change({perPage})}
+            perPageOptions={perPageOptions}
+          />
+        )}
+      {!server && pages > 1 && (
         <nav className="kf-pager">
           <button
             type="button"

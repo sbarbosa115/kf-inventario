@@ -87,6 +87,7 @@ describe('AppShell on a desktop', () => {
       'Customers',
       'Invoices',
       'Users',
+      'Settings',
     ]) {
       expect(screen.queryByRole('link', {name})).not.toBeInTheDocument();
     }
@@ -108,6 +109,17 @@ describe('AppShell on a desktop', () => {
     expect(
       screen.queryByRole('link', {name: 'Invoices'}),
     ).not.toBeInTheDocument();
+    expectUniqueLinkNames();
+  });
+
+  it('shows Settings in the Admin group to an admin only (SET-01)', async () => {
+    await renderAs(ADMIN);
+
+    const nav = screen.getByRole('navigation', {name: 'Main menu'});
+    expect(within(nav).getByRole('link', {name: 'Settings'})).toHaveAttribute(
+      'href',
+      '/admin/settings',
+    );
     expectUniqueLinkNames();
   });
 

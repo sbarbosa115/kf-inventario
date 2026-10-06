@@ -7,6 +7,11 @@ export interface CaughtEmail {
   id: string;
   subject: string;
   to: string[];
+  cc: string[];
+  /** `Name <address>`. */
+  from: string;
+  /** The attachments' file names. */
+  attachments: string[];
   text: string;
   html: string;
   /** Every http(s) address in the text part, in order. */
@@ -59,24 +64,36 @@ export async function emailTo(
   ).json()) as {
     Text: string;
     HTML: string;
+    From: {Name: string; Address: string};
+    Cc: {Address: string}[] | null;
+    Attachments: {FileName: string}[] | null;
   };
   return {
     id: summary.ID,
     subject: summary.Subject,
     to: summary.To.map((t) => t.Address),
+    cc: (full.Cc ?? []).map((c) => c.Address),
+    from: `${full.From.Name} <${full.From.Address}>`,
+    attachments: (full.Attachments ?? []).map((a) => a.FileName),
     text: full.Text,
     html: full.HTML,
     links: full.Text.match(/https?:\/\/[^\s<>)"']+/g) ?? [],
   };
 }
 
-/** How many emails an address has received (to assert that nothing was sent). */
+/**
+ * How many emails an address has received, those with a subject only when one is given (to assert that nothing was
+ * sent: other lanes of the run send to the same address).
+ */
 export async function emailCount(
   api: APIRequestContext,
   address: string,
+  subject?: RegExp,
 ): Promise<number> {
   const response = await api.get(`${MAILPIT}/api/v1/search`, {
-    params: {query: `to:${address}`, limit: '200'},
+    params: {query: `to:${address}`, limit: '500'},
   });
-  return ((await response.json()) as {messages: unknown[]}).messages.length;
+  return (
+    (await response.json()) as {messages: MailpitSummary[]}
+  ).messages.filter((m) => !subject || subject.test(m.Subject)).length;
 }

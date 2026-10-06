@@ -24,11 +24,12 @@ services:
   php:
     <<: *php
 
-  # Sends the order emails: drains the Messenger "mail" queue (a table in the database), as the cron line does on
-  # cPanel (deploy/cpanel-update.sh). Run "messenger:stop-workers" after changing PHP code; it restarts itself.
+  # Sends the order emails and writes back to the shops: drains the Messenger "mail" and "shops" queues (a table in the
+  # database), as the cron line does on cPanel (deploy/cpanel-update.sh). Run "messenger:stop-workers" after changing
+  # PHP code; it restarts itself.
   worker:
     <<: *php
-    command: ["php", "bin/console", "messenger:consume", "mail", "--time-limit=3600", "--memory-limit=256M", "-v"]
+    command: ["php", "bin/console", "messenger:consume", "mail", "shops", "--time-limit=3600", "--memory-limit=256M", "-v"]
     restart: unless-stopped
     cpus: ${WORKER_CPUS:-1}
 

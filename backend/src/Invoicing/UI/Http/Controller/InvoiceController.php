@@ -12,8 +12,12 @@ use App\Invoicing\UI\Http\InvoicePresenter;
 use App\Invoicing\UI\Http\Output\InvoiceOutput;
 use App\Invoicing\UI\Http\Output\NextInvoiceCodeOutput;
 use App\Shared\Application\Command\CommandBus;
+use App\Shared\Application\Query\ListField;
+use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\ListQueryParser;
+use App\Shared\UI\Http\Output\PageOutput;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,18 +34,42 @@ final class InvoiceController extends AbstractController
         private readonly Invoices $invoices,
         private readonly InputMapper $inputs,
         private readonly InvoicePresenter $presenter,
+        private readonly ListQueryParser $lists,
     ) {
     }
 
+    /** The invoices list's contract (docs/pdr/prd-shops-settings.md, "List query contract"). */
+    public static function listSchema(): ListSchema
+    {
+        return new ListSchema(
+            fields: [
+                'code' => ListField::text(),
+                'customer' => ListField::text(),
+                'payment_method' => ListField::enumMatching('/^.{1,64}$/u'),
+                'created_at' => ListField::date(),
+                'total' => ListField::number(),
+                'walk_in' => ListField::enum(['yes', 'no']),
+            ],
+            sorts: ['code', 'customer', 'created_at', 'total'],
+            defaultSort: '-created_at',
+        );
+    }
+
     /**
-     * Every invoice, newest first.
+     * A page of invoices, newest first: the list contract (q over code, customer name and email; filters code,
+     * customer, payment_method[], created_at, total, walk_in[] yes/no (yes: no customer); sorts code, customer,
+     * created_at, total; facets of payment_method and walk_in).
      */
     #[Route('/api/v1/invoices', name: 'api_invoices_list', methods: ['GET'])]
     #[IsGranted('ROLE_CAN_READ_INVOICES')]
-    #[ApiResponse(InvoiceOutput::class, list: true)]
-    public function list(): JsonResponse
+    #[ApiResponse(InvoiceOutput::class, page: true)]
+    public function list(Request $request): JsonResponse
     {
-        return $this->json(array_map($this->presenter->invoice(...), $this->invoices->all()));
+        $query = $this->lists->parse($request, self::listSchema());
+
+        $page = $this->invoices->page($query);
+
+        return $this->json(PageOutput::of($page, $query, $this->presenter->invoice(...)));
     }
 
     /**

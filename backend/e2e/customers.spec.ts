@@ -1,6 +1,6 @@
 import {ADMIN, INVENTORY, consoleErrors, expect, test} from './support/test';
 
-// 4 Customers (CUS-01 – 10). The cases run in order: the customer CUS-02 creates is the one CUS-03 edits and CUS-04 deletes.
+// 4 Customers (CUS-01 – 09). The cases run in order: the customer CUS-02 creates is the one CUS-03 edits and CUS-04 deletes.
 test.describe.configure({mode: 'serial'});
 
 const NEW_CUSTOMER = {
@@ -16,7 +16,7 @@ const NEW_CUSTOMER = {
 };
 
 test.describe('4 Customers', () => {
-  test('CUS-01 · the list shows the customers, and the old address lands on it', async ({
+  test('CUS-01 · The list shows the customers, and the old address lands on it', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -36,7 +36,7 @@ test.describe('4 Customers', () => {
     expect(errors).toEqual([]);
   });
 
-  test('CUS-02 · a customer is created with a country, state and city that did not exist', async ({
+  test('CUS-02 · A customer is created with a country, state and city that did not exist', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -69,18 +69,22 @@ test.describe('4 Customers', () => {
         .getByRole('status')
         .filter({hasText: 'The customer was created successfully.'}),
     ).toBeVisible();
-    await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill(NEW_CUSTOMER.email);
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
     ).toBeVisible();
   });
 
-  test('CUS-03 · editing a customer shows what was saved, including the new place names', async ({
+  test('CUS-03 · Editing shows what was saved, and addresses are added and removed', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/customers');
-    await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill(NEW_CUSTOMER.email);
     await page
       .getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)})
       .getByRole('button', {name: /Actions for/})
@@ -116,18 +120,20 @@ test.describe('4 Customers', () => {
         .getByRole('status')
         .filter({hasText: 'The customer was updated successfully.'}),
     ).toBeVisible();
-    await page.getByRole('searchbox').fill('3009998877');
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill('3009998877');
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
     ).toBeVisible();
   });
 
-  test('CUS-04 · deleting asks first, and the customer is gone after', async ({
-    signedInAs,
-  }) => {
+  test('CUS-04 · Deleting asks first', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/customers');
-    await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill(NEW_CUSTOMER.email);
     const row = page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)});
 
     await row.getByRole('button', {name: /Actions for/}).click();
@@ -149,13 +155,15 @@ test.describe('4 Customers', () => {
     await expect(
       page.getByRole('status').filter({hasText: 'The customer was deleted.'}),
     ).toBeVisible();
-    await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill(NEW_CUSTOMER.email);
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
     ).toHaveCount(0);
   });
 
-  test('CUS-05 · the form names what is missing, and a customer that no longer exists says so', async ({
+  test('CUS-05 · The form names what is missing, and a customer that no longer exists says so', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -176,7 +184,7 @@ test.describe('4 Customers', () => {
     ).toBeVisible();
   });
 
-  test('CUS-06 · a person without the Customers role is refused', async ({
+  test('CUS-06 · A person without the Customers role is refused', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVENTORY);
@@ -191,14 +199,14 @@ test.describe('4 Customers', () => {
     expect(answer.status()).toBe(403);
   });
 
-  test('CUS-07 · the header counts the page, the search says it covers this page, and a row opens the form', async ({
+  test('CUS-07 · The header counts the page, the search covers every customer, and a row opens the form', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/customers');
 
     await expect(page.getByText(/^1–\d+ of [\d,]+$/)).toBeVisible();
-    const search = page.getByRole('searchbox', {name: 'Search this page'});
+    const search = page.getByRole('searchbox', {name: 'Search customers'});
     await search.fill('jose.perez@example.com');
     const row = page.getByRole('row', {name: /jose\.perez@example\.com/});
     await expect(row).toBeVisible();
@@ -214,7 +222,7 @@ test.describe('4 Customers', () => {
     ).toBeVisible();
   });
 
-  test('CUS-08 · the form has Contact and Addresses sections, address cards, and Cancel leaves without saving', async ({
+  test('CUS-08 · The form has Contact and Addresses sections, address cards, and Cancel leaves without saving', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -239,7 +247,7 @@ test.describe('4 Customers', () => {
     await page.getByLabel('Name', {exact: true}).fill('Never saved');
     await page.getByRole('link', {name: 'Cancel'}).click();
     await expect(page).toHaveURL(/\/admin\/customers$/);
-    await page.getByRole('searchbox', {name: 'Search this page'}).fill('Never');
+    await page.getByRole('searchbox', {name: 'Search customers'}).fill('Never');
     await expect(page.getByRole('row', {name: /Never saved/})).toHaveCount(0);
   });
 });
@@ -251,12 +259,15 @@ test.describe('4 Customers, on a phone (390 px)', () => {
     hasTouch: true,
   });
 
-  test('CUS-09 · the list is cards, nothing scrolls sideways, and the form stacks in one column', async ({
+  test('CUS-09 · On a phone the list is cards and the form is one column', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
     const errors = consoleErrors(page);
     await page.goto('/admin/customers');
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill('jose.perez@example.com');
 
     const row = page.getByRole('row', {name: /jose\.perez@example\.com/});
     await expect(row).toBeVisible();

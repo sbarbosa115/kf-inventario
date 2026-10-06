@@ -58,6 +58,13 @@ doctrine:
         dir: '%kernel.project_dir%/src/Audit/Domain/Model'
         prefix: 'App\Audit\Domain\Model'
         alias: Audit
+      # Added by shops-settings (docs/pdr/prd-shops-settings.md): app_setting and quick_phrase, new tables only.
+      Settings:
+        is_bundle: false
+        type: attribute
+        dir: '%kernel.project_dir%/src/Settings/Domain/Model'
+        prefix: 'App\Settings\Domain\Model'
+        alias: Settings
     filters:
       softdeleteable:
         class: Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter

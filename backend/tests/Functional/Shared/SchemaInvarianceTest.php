@@ -41,11 +41,37 @@ final class SchemaInvarianceTest extends KernelTestCase
         $classes = array_map(static fn ($m): string => $m->getName(), $em->getMetadataFactory()->getAllMetadata());
         sort($classes);
 
-        self::assertCount(16, $classes, 'The production schema has 16 entity tables (plus the migrations table).');
+        self::assertCount(23, $classes, 'The production schema has 16 entity tables (plus the migrations table); shops-settings adds 7.');
         foreach ($classes as $class) {
             self::assertMatchesRegularExpression('/^App\\\\[A-Za-z]+\\\\Domain\\\\Model\\\\[A-Za-z]+$/', $class);
         }
     }
+
+    /**
+     * The only tables added after the restructure are the seven of shops-settings (docs/pdr/prd-shops-settings.md,
+     * "Data model"): a new table is the user's decision, so any other one fails here.
+     */
+    public function testNewTablesAreExactlyTheFeatureOnes(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $tables = array_map(static fn ($m): string => trim($m->getTableName(), '`'), $em->getMetadataFactory()->getAllMetadata());
+        $added = array_values(array_diff($tables, self::LEGACY_TABLES));
+        sort($added);
+
+        self::assertSame(
+            ['app_setting', 'order_comment_meta', 'quick_phrase', 'shop_connection', 'shop_delivery', 'shop_order_link', 'shop_outbox'],
+            $added,
+            'Mapped tables outside the 16 production ones must be exactly the seven shops-settings added.',
+        );
+        self::assertSame([], array_values(array_diff(self::LEGACY_TABLES, $tables)), 'Every production table stays mapped.');
+    }
+
+    /** The 16 tables of the production schema (docs/db/schema-from-migrations.sql), mapped by the restructure. */
+    private const LEGACY_TABLES = [
+        'city', 'comment', 'country', 'customer', 'customer_address', 'invoice', 'invoice_item', 'log', 'order',
+        'order_product', 'order_status', 'product', 'product_warehouse', 'state', 'user', 'warehouse',
+    ];
 
     /**
      * @return list<string>

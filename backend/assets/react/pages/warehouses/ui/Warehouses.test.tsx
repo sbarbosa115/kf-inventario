@@ -28,7 +28,7 @@ const card = async (name: string) =>
   )!;
 
 describe('WarehousesPage', () => {
-  it('shows a card per warehouse with the shop addresses its orders come from', async () => {
+  it('shows a card per warehouse, without the old shop addresses (orders now arrive by shop connection)', async () => {
     fakeApi({'GET /warehouses': [200, [COLOMBIA, USA]]});
     renderPage();
 
@@ -37,15 +37,11 @@ describe('WarehousesPage', () => {
     ).toBeInTheDocument();
     expect(await screen.findAllByRole('article')).toHaveLength(2);
     const colombia = await card('Colombia');
+    expect(within(colombia).getByText('Colombia')).toBeInTheDocument();
     expect(
-      within(colombia).getByText('https://shop-co.test'),
-    ).toBeInTheDocument();
-    expect(
-      within(colombia).getByText('https://shop-two.test'),
-    ).toBeInTheDocument();
-    expect(
-      within(await card('Usa')).getByText('No shop sends its orders here.'),
-    ).toBeInTheDocument();
+      within(colombia).queryByText('https://shop-co.test'),
+      'warehouse.urls route nothing any more',
+    ).toBeNull();
     expect(screen.queryByRole('table'), 'cards, not a table').toBeNull();
     expect(screen.queryByRole('dialog'), 'no modal').toBeNull();
   });

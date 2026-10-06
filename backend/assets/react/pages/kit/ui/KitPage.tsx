@@ -1,13 +1,19 @@
 import {useState, type ReactNode} from 'react';
 import {useTranslation} from '@/shared/i18n';
+import type {DateRangeValue, FilterValue, NumberRangeValue} from '@/shared/api';
 import {
   ActionBar,
+  ActiveFilters,
   Button,
   CameraScanner,
   ConfirmModal,
   DataTable,
+  DateRangeFilter,
   EmptyState,
   FilterChips,
+  FilterDropdown,
+  FilterSheet,
+  FiltersButton,
   FormLayout,
   FormSection,
   KpiStrip,
@@ -15,18 +21,24 @@ import {
   Money,
   Num,
   PageHeader,
+  Pager,
   PasswordField,
+  RangeFilter,
   ScanInput,
   SearchBox,
   Skeleton,
   SlideOver,
   StatusBadge,
+  TextFilterInput,
   ThemeSwitch,
   Toolbar,
   useToast,
   WarehouseSwitch,
   type Column,
+  type FilterColumn,
+  type TableQuery,
 } from '@/shared/ui';
+import {samplePage, type SampleOrder} from '../lib/sampleOrders';
 import './kit-page.css';
 
 // The dev-only specimen page (routes.tsx mounts it outside production): every kit component in its states, in the
@@ -79,6 +91,177 @@ const TOKENS = [
   'info',
   'sidebar',
 ];
+
+const STATUS_OPTIONS = [
+  {value: '1', label: 'Created'},
+  {value: '2', label: 'Processed'},
+  {value: '3', label: 'Completed'},
+  {value: '4', label: 'Partial'},
+  {value: '5', label: 'Sent'},
+  {value: '6', label: 'Delivered'},
+];
+
+const ORDER_COLUMNS: Column<SampleOrder>[] = [
+  {
+    key: 'code',
+    header: 'Order',
+    render: (r) => r.code,
+    mono: true,
+    sortField: 'code',
+    filter: {type: 'text', field: 'code'},
+  },
+  {
+    key: 'customer',
+    header: 'Customer',
+    render: (r) => r.customer,
+    sortField: 'customer',
+    filter: {type: 'text', field: 'customer'},
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    render: (r) => STATUS_OPTIONS.find((o) => o.value === r.status)?.label,
+    filter: {type: 'enum', field: 'status', options: STATUS_OPTIONS},
+  },
+  {
+    key: 'created',
+    header: 'Created',
+    render: (r) => r.created,
+    sortField: 'created',
+    filter: {type: 'date', field: 'created'},
+  },
+  {
+    key: 'total',
+    header: 'Total',
+    render: (r) => <Money amount={r.total} />,
+    numeric: true,
+    sortField: 'total',
+    filter: {type: 'money', field: 'total'},
+  },
+];
+
+const FILTER_COLUMNS: FilterColumn[] = ORDER_COLUMNS.flatMap((c) =>
+  c.filter ? [{label: c.header, filter: c.filter}] : [],
+);
+
+/** Every filter control on its own, then a server-mode table that uses them (DS-15, DS-16). */
+function FilterKit() {
+  const [text, setText] = useState('');
+  const [statuses, setStatuses] = useState<string[]>(['1']);
+  const [dates, setDates] = useState<DateRangeValue>({});
+  const [money, setMoney] = useState<NumberRangeValue>({
+    min: '100',
+    max: '500',
+  });
+  const [quantity, setQuantity] = useState<NumberRangeValue>({});
+  const [sheet, setSheet] = useState(false);
+  const [page, setPage] = useState(3);
+  const [query, setQuery] = useState<TableQuery>({
+    page: 1,
+    perPage: 10,
+    sort: '-created',
+  });
+  const answer = samplePage(query);
+  const filters: Record<string, FilterValue> = {
+    code: text,
+    status: statuses,
+    created: dates,
+    total: money,
+  };
+
+  return (
+    <>
+      <div className="kit-page__filters">
+        <TextFilterInput label="Order" value={text} onChange={setText} />
+        <FilterDropdown
+          label="Status"
+          options={STATUS_OPTIONS}
+          counts={{'1': 12, '2': 3, '3': 0, '4': 7, '5': 21, '6': 40}}
+          value={statuses}
+          onChange={setStatuses}
+        />
+        <DateRangeFilter label="Created" value={dates} onChange={setDates} />
+        <RangeFilter
+          label="Total"
+          kind="money"
+          value={money}
+          onChange={setMoney}
+        />
+        <RangeFilter
+          label="Quantity"
+          kind="number"
+          value={quantity}
+          onChange={setQuantity}
+        />
+        <FiltersButton count={4} onClick={() => setSheet(true)} />
+      </div>
+      <ActiveFilters
+        columns={FILTER_COLUMNS}
+        filters={filters}
+        onRemove={(field) => {
+          if (field === 'code') setText('');
+          if (field === 'status') setStatuses([]);
+          if (field === 'created') setDates({});
+          if (field === 'total') setMoney({});
+        }}
+        onClear={() => {
+          setText('');
+          setStatuses([]);
+          setDates({});
+          setMoney({});
+        }}
+      />
+      <Pager
+        page={page}
+        perPage={25}
+        total={1240}
+        onPage={setPage}
+        onPerPage={() => undefined}
+      />
+      {sheet && (
+        <FilterSheet
+          columns={FILTER_COLUMNS}
+          filters={filters}
+          sort="-created"
+          sortOptions={[
+            {value: '-created', label: 'Created, descending'},
+            {value: 'code', label: 'Order, ascending'},
+          ]}
+          count={async (draft) =>
+            samplePage({page: 1, perPage: 1, filters: draft.filters}).total
+          }
+          onApply={(draft) => {
+            setSheet(false);
+            setText(
+              typeof draft.filters.code === 'string' ? draft.filters.code : '',
+            );
+            setStatuses(
+              Array.isArray(draft.filters.status) ? draft.filters.status : [],
+            );
+            setDates((draft.filters.created ?? {}) as DateRangeValue);
+            setMoney((draft.filters.total ?? {}) as NumberRangeValue);
+          }}
+          onClose={() => setSheet(false)}
+        />
+      )}
+      <h3 className="h6 mt-4">A table filtered on the server</h3>
+      <DataTable
+        columns={ORDER_COLUMNS}
+        rows={answer.items}
+        rowKey={(r) => r.id}
+        rowLabel={(r) => r.code}
+        query={query}
+        onQueryChange={setQuery}
+        total={answer.total}
+        facets={answer.facets}
+        countFor={async (draft) => samplePage({...draft, perPage: 1}).total}
+        perPageOptions={[10, 25, 50]}
+        cardTitle={(r) => `${r.code} · ${r.customer}`}
+        cardFacts={['status', 'created', 'total']}
+      />
+    </>
+  );
+}
 
 function Section({title, children}: {title: string; children: ReactNode}) {
   return (
@@ -305,6 +488,10 @@ export function KitPage() {
         <h3 className="h6 mt-4">Skeletons</h3>
         <Skeleton variant="kpi" lines={3} />
         <Skeleton variant="text" lines={3} />
+      </Section>
+
+      <Section title="Table filters">
+        <FilterKit />
       </Section>
 
       <Section title="Dialogs and notifications">

@@ -8,8 +8,7 @@
     "label": "Filtros de pedidos",
     "status": "Estado",
     "search": "Número de pedido o cliente",
-    "from": "Creado desde",
-    "to": "Creado hasta"
+    "pinnedOnly": "Solo fijados"
   },
   "columns": {
     "code": "Pedido",
@@ -57,9 +56,19 @@
     "done": "El pedido {{code}} se eliminó."
   },
   "sync": {
-    "button": "Sincronizar pedidos de las tiendas",
-    "running": "Sincronizando pedidos de las tiendas…",
-    "done": "{{imported}} pedidos importados, {{skipped}} omitidos."
+    "button": "Buscar ahora",
+    "running": "Revisando las tiendas…",
+    "imported_one": "{{count}} pedido importado",
+    "imported_other": "{{count}} pedidos importados",
+    "fromShops_one": "de {{count}} tienda",
+    "fromShops_other": "de {{count}} tiendas",
+    "skipped_one": "{{count}} omitido",
+    "skipped_other": "{{count}} omitidos",
+    "summary": "{{imported}} {{from}}, {{skipped}}",
+    "done": "{{summary}}.",
+    "partly_one": "{{summary}}; no se pudo leer {{names}}.",
+    "partly_other": "{{summary}}; no se pudieron leer {{names}}.",
+    "nothing": "No hay ninguna conexión con tiendas activa: no había nada que revisar."
   },
   "detail": {
     "title": "Pedido {{code}}",
@@ -73,7 +82,8 @@
     "address": "Dirección",
     "noAddress": "No hay una dirección registrada.",
     "products": "Productos",
-    "comments": "Comentarios"
+    "comments": "Comentarios",
+    "pinned": "Fijada"
   },
   "products": {
     "code": "Código",
@@ -81,19 +91,17 @@
     "quantity": "Cant. pedida",
     "empty": "Este pedido no tiene productos."
   },
-  "comments": {
-    "empty": "Este pedido aún no tiene comentarios.",
-    "label": "Comentario {{number}}",
-    "add": "Agregar un comentario",
-    "save": "Guardar el comentario {{number}}",
-    "remove": "Quitar el comentario {{number}}",
-    "blank": "Escriba el comentario o quítelo.",
-    "saved": "Los comentarios se guardaron."
-  },
   "errors": {
     "order_not_found": "Este pedido ya no existe. Recargue la lista.",
     "order_sync_unavailable": "La sincronización de pedidos de las tiendas aún no está disponible.",
     "order_sync_failed": "No se pudo conectar con las tiendas, así que no se importó ningún pedido. Intente de nuevo en un momento.",
     "validation_failed": "Se rechazó el cambio. Recargue el pedido e intente de nuevo."
+  },
+  "notes": {
+    "column": "Notas",
+    "pinnedOf": "Nota fijada del pedido {{code}}: {{text}}"
+  },
+  "shop": {
+    "unknown": "Tienda #{{id}}"
   }
 }

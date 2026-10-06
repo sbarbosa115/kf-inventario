@@ -12,6 +12,8 @@ use App\Inventory\Domain\Model\ProductWarehouse;
 use App\Inventory\Domain\Repository\ProductRepository;
 use App\Inventory\Domain\Repository\StockRepository;
 use App\Inventory\Domain\Repository\WarehouseRepository;
+use App\Shared\Application\Query\ListPage;
+use App\Shared\Application\Query\ListQuery;
 
 /**
  * A warehouse's stock: what the lists read, and the one stock rule other contexts call (an order shipped takes its
@@ -23,19 +25,33 @@ final class Stock
         private readonly StockRepository $stock,
         private readonly WarehouseRepository $warehouses,
         private readonly ProductRepository $products,
+        private readonly StockList $list,
     ) {
     }
 
     /**
-     * The warehouse's rows with that status (1 in stock, 0 incoming), with their product, by product.
+     * A page of the warehouse's rows with that status (1 in stock, 0 incoming): filtered, sorted and counted in the
+     * database.
      *
-     * @return list<ProductWarehouse>
+     * @return ListPage<ProductWarehouse>
      *
      * @throws WarehouseNotFound
      */
-    public function ofWarehouse(int $warehouseId, int $status = ProductWarehouse::STATUS_CONFIRMED): array
+    public function page(int $warehouseId, int $status, ListQuery $query): ListPage
     {
-        return $this->stock->ofWarehouse($this->warehouses->get($warehouseId), $status);
+        return $this->list->page($this->warehouses->get($warehouseId), $status, $query);
+    }
+
+    /**
+     * The units and value of every row the query's filters keep (the Products KPIs).
+     *
+     * @return array{units: int, value: float}
+     *
+     * @throws WarehouseNotFound
+     */
+    public function totals(int $warehouseId, int $status, ListQuery $query): array
+    {
+        return $this->list->totals($this->warehouses->get($warehouseId), $status, $query);
     }
 
     /**

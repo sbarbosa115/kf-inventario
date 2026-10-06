@@ -15,7 +15,7 @@ final class CustomerApiTest extends ApiTestCase
 {
     use SignsIn;
 
-    public function testAPageIsOneHundredCustomersById(): void
+    public function testTheListIsPagedNewestFirstWithTheListContract(): void
     {
         $this->signInAs(['ROLE_MANAGE_CUSTOMERS', 'ROLE_USER']);
         $before = (int) $this->em()->createQuery('SELECT COUNT(c.id) FROM '.Customer::class.' c')->getSingleScalarResult();
@@ -27,20 +27,23 @@ final class CustomerApiTest extends ApiTestCase
         $em->clear();
         $total = $before + 101;
 
-        $second = $this->getJson('/api/v1/customers?page=2&per_page=100');
+        $first = $this->getJson('/api/v1/customers?page=1&per_page=100');
 
         $this->assertStatus(200);
-        self::assertSame($total, $second['total']);
-        self::assertSame(2, $second['page']);
-        self::assertSame(100, $second['per_page']);
+        self::assertSame($total, $first['total']);
+        self::assertSame(1, $first['page']);
+        self::assertSame(100, $first['per_page']);
+        self::assertCount(100, $first['items']);
+        self::assertSame('Pager 100', $first['items'][0]['first_name'], 'Newest first (docs/pdr/prd-shops-settings.md: default sort -id).');
+        $second = $this->getJson('/api/v1/customers?page=2&per_page=100');
         self::assertCount($total - 100, $second['items'], 'Page 2 holds what is left after the first 100.');
-        self::assertSame('Pager 100', $second['items'][$total - 101]['first_name'], 'Customers come by id.');
 
         $default = $this->getJson('/api/v1/customers');
-        self::assertCount(100, $default['items'], 'A page is 100 customers when nothing else is asked.');
-        $this->getJson('/api/v1/customers?page=0&per_page=100000');
-        self::assertSame(100, $this->body()['per_page'], 'A page never holds more than 100.');
-        self::assertSame(1, $this->body()['page']);
+        self::assertCount(25, $default['items'], 'A page is 25 customers when nothing else is asked.');
+        $this->getJson('/api/v1/customers?per_page=101');
+        $this->assertStatus(422, 'A page never holds more than 100.');
+        $this->getJson('/api/v1/customers?q=pager10%40kf');
+        self::assertSame(['Pager 10'], array_column($this->body()['items'], 'first_name'), 'q searches the email.');
     }
 
     public function testACustomerComesWithItsAddressesAndWhereTheyAre(): void

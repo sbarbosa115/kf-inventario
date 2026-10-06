@@ -24,5 +24,6 @@
   "orders": "Orders",
   "invoices": "Invoices",
   "customers": "Customers",
-  "users": "Users"
+  "users": "Users",
+  "settings": "Settings"
 }

@@ -1,12 +1,19 @@
 export {
   createProduct,
   getProduct,
+  listAllStock,
   listStock,
   STOCK_IN,
   STOCK_INCOMING,
   updateProduct,
 } from './api/productApi';
-export type {Product, ProductPayload, StockItem} from './api/productApi';
+export type {
+  Product,
+  ProductPayload,
+  StockItem,
+  StockPage,
+  StockTotals,
+} from './api/productApi';
 export {
   emptyProductForm,
   productFormToPayload,

@@ -24,5 +24,6 @@
   "orders": "Pedidos",
   "invoices": "Facturas",
   "customers": "Clientes",
-  "users": "Usuarios"
+  "users": "Usuarios",
+  "settings": "Configuración"
 }

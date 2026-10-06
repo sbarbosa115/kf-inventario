@@ -2,7 +2,6 @@
 
 namespace App\Tests\Functional\Ordering;
 
-use App\Inventory\Domain\Model\Warehouse;
 use App\Ordering\Domain\Model\Order;
 use App\Tests\Support\ApiTestCase;
 use App\Tests\Support\SignsIn;
@@ -16,6 +15,7 @@ use PhpOffice\PhpSpreadsheet\Reader\Xls;
 final class OrderDocumentsTest extends ApiTestCase
 {
     use OrderingFixtures;
+    use ShopConnections;
     use SignsIn;
 
     public function testTheOrderPdfs(): void
@@ -108,18 +108,17 @@ final class OrderDocumentsTest extends ApiTestCase
      */
     public function testAnOrderWhoseAddressHasNoCityHasItsPdfs(): void
     {
-        $warehouse = $this->aWarehouse('Colombia', ['https://colombia.test']);
-        // Warehouse 1 (ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID): the webhook also renders the printer's PDF.
-        $this->em()->getConnection()->executeStatement('UPDATE warehouse SET id = 1 WHERE id = ?', [$warehouse->getId()]);
-        $this->em()->clear();
-        $warehouse = $this->em()->find(Warehouse::class, 1) ?? throw new \LogicException('No warehouse 1');
+        $warehouse = $this->aWarehouse('Colombia');
         $this->aProduct('KF-01', $warehouse);
-        $this->client->request('POST', '/admin/order/1H39j0jpQPsWL958v9R4', server: ['CONTENT_TYPE' => 'application/json', 'HTTP_X-WC-Webhook-Source' => 'https://colombia.test'], content: json_encode([
+        // A printing connection: the webhook also renders the printer's PDF.
+        $connection = $this->aConnection($warehouse, ['email_printer' => true]);
+        $this->deliver(self::tokenOf($connection), [
             'id' => 5901,
+            'status' => 'processing',
             'billing' => ['first_name' => 'Ana', 'last_name' => 'Gomez', 'email' => 'ana.nocity@example.com', 'phone' => '555-0100', 'address_1' => '1 Billing St', 'postcode' => '33101', 'city' => 'Miami', 'state' => 'FL', 'country' => 'US'],
             'shipping' => [],
             'line_items' => [['sku' => 'KF-01', 'quantity' => 1]],
-        ], \JSON_THROW_ON_ERROR));
+        ], (string) $connection['webhook_secret']);
         $this->assertStatus(200, 'The webhook answers {status: true}, not a 500.');
         self::assertEmailCount(1, message: 'The printer gets it, PDF attached.');
         $this->em()->clear();

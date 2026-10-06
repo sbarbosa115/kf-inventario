@@ -28,28 +28,3 @@
   gap: var(--kf-space-2);
   min-width: 0;
 }
-
-.warehouse-card__label {
-  margin: var(--kf-space-2) 0 0;
-  color: var(--kf-text-muted);
-  font-size: var(--kf-text-label);
-  font-weight: 500;
-}
-
-.warehouse-card__urls {
-  display: grid;
-  gap: var(--kf-space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--kf-text-muted);
-  font-family: var(--kf-font-mono);
-  font-size: var(--kf-text-sm);
-  overflow-wrap: anywhere;
-}
-
-.warehouse-card__none {
-  margin: 0;
-  color: var(--kf-text-muted);
-  font-size: var(--kf-text-sm);
-}

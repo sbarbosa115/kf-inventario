@@ -1,8 +1,15 @@
-import {fireEvent, render, screen, within} from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {SessionProvider} from '@/entities/session';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {fakeList} from '@/shared/test/fakeList';
 import {InvoicesPage} from './InvoicesPage';
 
 const ME = {
@@ -35,7 +42,7 @@ const invoice = (
   customer_nit: null,
   customer_address: null,
   comment: null,
-  payment_method: null,
+  payment_method: null as string | null,
   items: [ITEM],
   subtotal: '20.00',
   tax_rate: '6.00',
@@ -51,7 +58,10 @@ const ANA = {
   email: 'ana@kf.test',
   phone: '3001',
 };
-const INV_2 = invoice(2, '20260002', ANA, '21.20');
+const INV_2 = {
+  ...invoice(2, '20260002', ANA, '21.20'),
+  payment_method: 'credit_card',
+};
 const INV_1 = invoice(1, '20260001', null, '5.00');
 const INV_0 = {
   ...invoice(3, '20250003', ANA, '9.00'),
@@ -71,16 +81,45 @@ function renderPage() {
   );
 }
 
+type Row = ReturnType<typeof invoice>;
+
+/** The invoices list's contract, in memory. */
+const invoices = (rows: Row[]) =>
+  fakeList(rows, {
+    fields: {
+      code: (i) => i.code,
+      created_at: (i) => i.created_at,
+      total: (i) => i.total,
+      payment_method: (i) => i.payment_method,
+      walk_in: (i) => (i.customer === null ? 'yes' : 'no'),
+    },
+    search: [
+      (i) => i.code,
+      (i) => {
+        const c = i.customer as typeof ANA | null;
+        return c ? `${c.first_name} ${c.last_name}` : '';
+      },
+      (i) => (i.customer as typeof ANA | null)?.email,
+    ],
+  });
+
 type Routes = Parameters<typeof fakeApi>[0];
 const routes = (extra: Routes = {}): Routes => ({
   'GET /auth/me': [200, ME],
-  'GET /invoices': [200, [INV_2, INV_1]],
+  'GET /invoices': invoices([INV_2, INV_1]),
   ...extra,
 });
 
 /** A row's code shows twice (the cell and the card title): the first is the cell's. */
 const codeCell = async (code: string) => (await screen.findAllByText(code))[0]!;
 const shown = (code: string) => screen.queryAllByText(code).length > 0;
+const filterRow = () =>
+  within(within(screen.getAllByRole('rowgroup')[0]!).getAllByRole('row')[1]!);
+/** A column's filter button in the row under the header. */
+const filterButton = (name: string | RegExp) =>
+  filterRow().getByRole('button', {name});
+const listCalls = (api: ReturnType<typeof fakeApi>) =>
+  api.calls.filter((c) => c.path === '/invoices');
 
 describe('InvoicesPage', () => {
   it('lists the invoices with their customer, the total as money and the date, and offers a new one', async () => {
@@ -181,26 +220,27 @@ describe('InvoicesPage', () => {
     });
     await userEvent.type(search, 'gomez');
 
+    await waitFor(() => expect(shown('20260001')).toBe(false));
     expect(shown('20260002')).toBe(true);
-    expect(shown('20260001')).toBe(false);
 
     await userEvent.clear(search);
     await userEvent.type(search, 'walk-in');
 
+    await waitFor(() => expect(shown('20260002')).toBe(false));
     expect(shown('20260001')).toBe(true);
-    expect(shown('20260002')).toBe(false);
   });
 
   it('keeps the invoices of a date range, and Clear filters brings them all back', async () => {
-    fakeApi(routes({'GET /invoices': [200, [INV_2, INV_1, INV_0]]}));
+    fakeApi(routes({'GET /invoices': invoices([INV_2, INV_1, INV_0])}));
     renderPage();
     await codeCell('20250003');
 
+    await userEvent.click(filterButton('Date'));
     fireEvent.change(screen.getByLabelText('From'), {
       target: {value: '2026-01-01'},
     });
 
-    expect(shown('20250003')).toBe(false);
+    await waitFor(() => expect(shown('20250003')).toBe(false));
     expect(shown('20260002')).toBe(true);
 
     fireEvent.change(screen.getByLabelText('To'), {
@@ -213,12 +253,12 @@ describe('InvoicesPage', () => {
 
     await userEvent.click(screen.getByRole('button', {name: 'Clear filters'}));
 
-    expect(shown('20250003')).toBe(true);
+    await waitFor(() => expect(shown('20250003')).toBe(true));
     expect(shown('20260002')).toBe(true);
   });
 
   it('says what the section is for when there are no invoices', async () => {
-    fakeApi(routes({'GET /invoices': [200, []]}));
+    fakeApi(routes({'GET /invoices': invoices([])}));
     renderPage();
 
     expect(
@@ -237,5 +277,80 @@ describe('InvoicesPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'You do not have permission to do this.',
     );
+  });
+
+  it('filters under the headers: number and customer as text, the payment from a list, the total as a range, the date', async () => {
+    const api = fakeApi(routes());
+    renderPage();
+    await codeCell('20260001');
+
+    expect(
+      filterRow().getByRole('searchbox', {name: 'Filter by Invoice'}),
+    ).toBeInTheDocument();
+    expect(
+      filterRow().getByRole('searchbox', {name: 'Filter by Customer'}),
+    ).toBeInTheDocument();
+    expect(filterButton('Date')).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(
+      listCalls(api)[0]?.url.searchParams.get('facets'),
+      'the payment methods and walk-in are counted',
+    ).toBe('payment_method,walk_in');
+
+    await userEvent.click(filterButton('Payment'));
+    const panel = screen.getByRole('dialog', {name: 'Payment'});
+    expect(
+      within(panel)
+        .getAllByRole('checkbox')
+        .map((box) => box.closest('label')?.textContent),
+    ).toEqual(['Credit - counted0', 'Credit card - Paypal1']);
+    await userEvent.click(
+      within(panel).getByRole('checkbox', {name: /Credit card/}),
+    );
+    await waitFor(() => expect(shown('20260001')).toBe(false));
+    expect(
+      listCalls(api)
+        .at(-1)
+        ?.url.searchParams.getAll('filter[payment_method][]'),
+    ).toEqual(['credit_card']);
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Remove the filter Payment: Credit card - Paypal',
+      }),
+    );
+    await waitFor(() => expect(shown('20260001')).toBe(true));
+
+    await userEvent.click(filterButton('Total'));
+    await userEvent.type(screen.getByLabelText('Min'), '10{Enter}');
+    await waitFor(() => expect(shown('20260001')).toBe(false));
+    expect(
+      listCalls(api).at(-1)?.url.searchParams.get('filter[total][min]'),
+    ).toBe('10');
+    expect(
+      screen.getByText('Total: From $10.00', {
+        selector: '.kf-active-filters__text',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the walk-in invoices from the toolbar list, and says so on a chip', async () => {
+    const api = fakeApi(routes());
+    renderPage();
+    await codeCell('20260002');
+
+    await userEvent.click(screen.getByRole('button', {name: 'Walk-in'}));
+    await userEvent.click(
+      screen.getByRole('checkbox', {name: /Walk-in customer/}),
+    );
+
+    await waitFor(() => expect(shown('20260002')).toBe(false));
+    expect(
+      listCalls(api).at(-1)?.url.searchParams.getAll('filter[walk_in][]'),
+    ).toEqual(['yes']);
+    expect(
+      screen.getByText('Walk-in: Walk-in customer', {
+        selector: '.kf-active-filters__text',
+      }),
+    ).toBeInTheDocument();
   });
 });

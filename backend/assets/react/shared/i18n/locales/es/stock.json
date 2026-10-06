@@ -95,8 +95,6 @@
     "renameHint": "Cambiar el nombre de {{warehouse}}",
     "nameLabel": "Nuevo nombre para {{warehouse}}",
     "renameKeys": "Enter guarda, Escape cancela.",
-    "urls": "Los pedidos de las tiendas llegan desde",
-    "noUrls": "Ninguna tienda envía sus pedidos aquí.",
     "empty": "Aún no hay bodegas.",
     "required": "Escriba un nombre para la bodega.",
     "tooLong": "Este valor es demasiado largo. Debe tener 255 caracteres o menos.",

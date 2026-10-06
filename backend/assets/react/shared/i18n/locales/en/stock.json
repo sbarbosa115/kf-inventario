@@ -95,8 +95,6 @@
     "renameHint": "Rename {{warehouse}}",
     "nameLabel": "New name for {{warehouse}}",
     "renameKeys": "Enter saves, Escape cancels.",
-    "urls": "Shop orders arrive from",
-    "noUrls": "No shop sends its orders here.",
     "empty": "There are no warehouses yet.",
     "required": "Type a name for the warehouse.",
     "tooLong": "This value is too long. It should have 255 characters or less.",

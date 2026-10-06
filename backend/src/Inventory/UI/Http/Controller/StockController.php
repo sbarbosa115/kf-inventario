@@ -15,10 +15,15 @@ use App\Inventory\UI\Http\Input\StockLineInput;
 use App\Inventory\UI\Http\Input\StockLinesInput;
 use App\Inventory\UI\Http\Output\ApprovedOutput;
 use App\Inventory\UI\Http\Output\StockOutput;
+use App\Inventory\UI\Http\Output\StockTotalsOutput;
 use App\Inventory\UI\Http\Output\WarehouseRefOutput;
 use App\Shared\Application\Command\CommandBus;
+use App\Shared\Application\Query\ListField;
+use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\ListQueryParser;
+use App\Shared\UI\Http\Output\PageOutput;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -35,20 +40,46 @@ final class StockController extends AbstractController
         private readonly CommandBus $bus,
         private readonly InputMapper $inputs,
         private readonly Stock $stock,
+        private readonly ListQueryParser $lists,
     ) {
     }
 
+    /** The stock list's contract (docs/pdr/prd-shops-settings.md, "List query contract"); per_page=0 for the pickers. */
+    public static function listSchema(): ListSchema
+    {
+        return new ListSchema(
+            fields: [
+                'code' => ListField::text(),
+                'title' => ListField::text(),
+                'detail' => ListField::text(),
+                'quantity' => ListField::number(),
+                'price' => ListField::number(),
+                'in_stock' => ListField::enum(['yes', 'no']),
+            ],
+            sorts: ['code', 'title', 'quantity', 'price'],
+            defaultSort: 'code',
+            allowAll: true,
+        );
+    }
+
     /**
-     * The warehouse's stock rows with `status` (1 in stock, default; 0 incoming), by product. 404 warehouse_not_found.
+     * A page of the warehouse's stock rows with `status` (1 in stock, default; 0 incoming): the list contract (q over
+     * code, title and detail; filters code, title, detail, quantity, price, in_stock; sorts code, title, quantity,
+     * price; facet of in_stock; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row
+     * the filters keep, whatever the page. 404 warehouse_not_found.
      */
     #[Route('/api/v1/warehouses/{id}/stock', name: 'api_stock_list', methods: ['GET'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_MANAGE_INVENTORY')]
-    #[ApiResponse(StockOutput::class, list: true)]
+    #[ApiResponse(StockOutput::class, page: true, totals: StockTotalsOutput::class)]
     public function list(int $id, Request $request): JsonResponse
     {
         $status = $request->query->getInt('status', ProductWarehouse::STATUS_CONFIRMED);
+        $query = $this->lists->parse($request, self::listSchema());
 
-        return $this->json(array_map(self::output(...), $this->stock->ofWarehouse($id, $status)));
+        $page = $this->stock->page($id, $status, $query);
+        $totals = $this->stock->totals($id, $status, $query);
+
+        return $this->json(PageOutput::of($page, $query, self::output(...), new StockTotalsOutput($totals['units'], $totals['value'])));
     }
 
     /**

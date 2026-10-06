@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import Select from 'react-select';
 import type {Customer, CustomerFormValues} from '@/entities/customer';
 import type {Country} from '@/entities/location';
-import {listStock, type StockItem} from '@/entities/product';
+import {listAllStock, type StockItem} from '@/entities/product';
 import type {Warehouse} from '@/entities/warehouse';
 import {AddressForm} from '@/widgets/address-form';
 import {ApiError, failureMessage} from '@/shared/api';
@@ -104,7 +104,7 @@ export function OrderForm({
     () =>
       values.warehouse_id === null
         ? Promise.resolve<StockItem[]>([])
-        : listStock(values.warehouse_id),
+        : listAllStock(values.warehouse_id),
     [values.warehouse_id],
   );
   const productOptions: ProductOption[] = (stock.data ?? []).map((item) => ({

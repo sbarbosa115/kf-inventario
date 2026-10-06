@@ -8,9 +8,7 @@ import {
 } from './support/test';
 
 test.describe('1 Authentication and shell', () => {
-  test('AUTH-01 · signing in opens the product list with the person in the top bar', async ({
-    page,
-  }) => {
+  test('AUTH-01 · Signing in opens the product list', async ({page}) => {
     const errors = consoleErrors(page);
     await page.goto('/admin/login');
 
@@ -25,9 +23,7 @@ test.describe('1 Authentication and shell', () => {
     expect(errors).toEqual([]);
   });
 
-  test('AUTH-02 · a wrong password is refused with one message that does not say which field was wrong', async ({
-    page,
-  }) => {
+  test('AUTH-02 · A wrong password is refused', async ({page}) => {
     await page.goto('/admin/login');
 
     await page.getByLabel('Username').fill(ADMIN);
@@ -40,7 +36,7 @@ test.describe('1 Authentication and shell', () => {
     await expect(page).toHaveURL(/\/admin\/login$/);
   });
 
-  test('AUTH-03 · a page opened signed out asks to sign in, then comes back to it', async ({
+  test('AUTH-03 · A page opened signed out comes back after signing in', async ({
     page,
   }) => {
     await page.goto('/admin/warehouses');
@@ -69,7 +65,7 @@ test.describe('1 Authentication and shell', () => {
     await expect(page).toHaveURL(/\/admin\/login$/);
   });
 
-  test('AUTH-05 · a legacy page opened signed out goes to the sign-in page', async ({
+  test('AUTH-05 · A legacy bookmark opened signed out goes to the sign-in page', async ({
     page,
   }) => {
     await page.goto('/admin/product/');
@@ -77,9 +73,45 @@ test.describe('1 Authentication and shell', () => {
     await expect(page).toHaveURL(/\/admin\/login$/);
   });
 
-  test('NAV-01 · an admin sees every section the legacy sidebar showed them', async ({
-    signedInAs,
+  test('AUTH-06 · Remember me keeps you signed in after closing the browser', async ({
+    browser,
+    baseURL,
   }) => {
+    for (const remember of [true, false]) {
+      const context = await browser.newContext({baseURL});
+      const page = await context.newPage();
+      await page.goto('/admin/login');
+      await page.getByLabel('Username').fill(ADMIN);
+      await page.getByLabel('Password', {exact: true}).fill(PASSWORD);
+      if (remember) {
+        await page.getByLabel('Remember me').check();
+      }
+      await page.getByRole('button', {name: 'Sign in'}).click();
+      await expect(page).toHaveURL(/\/admin\/products$/);
+
+      // Closing the browser drops the cookies that last only for the session; a cookie with a date survives it.
+      const kept = (await context.cookies()).filter(
+        (cookie) => cookie.expires > 0,
+      );
+      await context.close();
+      const reopened = await browser.newContext({baseURL});
+      await reopened.addCookies(kept);
+      const again = await reopened.newPage();
+      await again.goto('/admin/products');
+
+      if (remember) {
+        await expect(
+          again.getByRole('heading', {level: 1, name: 'Products'}),
+        ).toBeVisible();
+        await expect(again).toHaveURL(/\/admin\/products$/);
+      } else {
+        await expect(again).toHaveURL(/\/admin\/login$/);
+      }
+      await reopened.close();
+    }
+  });
+
+  test('NAV-01 · The admin sees every section', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
     const errors = consoleErrors(page);
     await page.goto('/admin/products');
@@ -99,7 +131,7 @@ test.describe('1 Authentication and shell', () => {
     expect(errors).toEqual([]);
   });
 
-  test('NAV-02 · an inventory clerk sees the warehouse entries only', async ({
+  test('NAV-02 · The inventory clerk sees the warehouse entries only', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVENTORY);
@@ -119,7 +151,7 @@ test.describe('1 Authentication and shell', () => {
     }
   });
 
-  test('NAV-03 · an unknown address shows "Page not found" inside the app', async ({
+  test('NAV-03 · An unknown address shows "Page not found"', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);

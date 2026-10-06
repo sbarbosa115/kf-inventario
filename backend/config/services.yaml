@@ -6,14 +6,8 @@
 parameters:
   locale: 'en'
   test: 'en'
-  # The printer email of a new order (Ordering): who else gets a copy, and the warehouse whose WooCommerce orders send
-  # it (the webhook: only that warehouse's shop orders are printed).
+  # The printer email of a new order (Ordering): who else gets a copy.
   ordering.order_email.cc: ['sales@klassicfab.com']
-  ordering.webhook_email_warehouse_id: '%env(int:ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID)%'
-  woo_commerce:
-    url: '%env(WOO_COMMERCE_URL)%'
-    api_key: '%env(WOO_COMMERCE_API_KEY)%'
-    api_secret: '%env(WOO_COMMERCE_API_SECRET)%'
   mailer:
     from_address: '%env(MAILER_FROM_ADDRESS)%'
     from_name: '%env(MAILER_FROM_NAME)%'
@@ -53,22 +47,15 @@ services:
       # Needs NelmioApiDocBundle, which only dev and test install: registered below for those.
       - '../src/Shared/UI/Http/OpenApi/'
 
-  # The webhook prints the orders of one warehouse only.
-  App\Ordering\Application\Command\ImportShopOrderHandler:
+  # Settings › Email, with the env as the fallback of each value (docs/pdr/prd-shops-settings.md, Decisions 3). The
+  # order email reads it through Ordering's OrderEmailSettings port.
+  App\Settings\Application\Query\EmailSettings:
     arguments:
-      $printedWarehouseId: '%ordering.webhook_email_warehouse_id%'
-
-  # The "Sync Orders" pull places shop orders as the webhook does: the same printer rule.
-  App\Ordering\Application\Command\SyncRemoteOrdersHandler:
-    arguments:
-      $printedWarehouseId: '%ordering.webhook_email_warehouse_id%'
-
-  App\Ordering\Infrastructure\Mail\OrderCreatedMailer:
-    arguments:
-      $fromAddress: '%env(MAILER_FROM_ADDRESS)%'
-      $fromName: '%env(MAILER_FROM_NAME)%'
-      $printerAddress: '%env(MAILER_PRINTER_ADDRESS)%'
-      $cc: '%ordering.order_email.cc%'
+      $envDsn: '%env(MAILER_DSN)%'
+      $envFromAddress: '%env(MAILER_FROM_ADDRESS)%'
+      $envFromName: '%env(MAILER_FROM_NAME)%'
+      $envPrinterAddress: '%env(MAILER_PRINTER_ADDRESS)%'
+      $envCc: '%ordering.order_email.cc%'
 
   gedmo.listener.softdeleteable:
     class: Gedmo\SoftDeleteable\SoftDeleteableListener

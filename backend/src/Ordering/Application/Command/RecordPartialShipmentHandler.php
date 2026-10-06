@@ -7,10 +7,12 @@ use App\Ordering\Domain\Error\OrderedProductNotFound;
 use App\Ordering\Domain\Error\OrderNotFound;
 use App\Ordering\Domain\Error\OrderWarehouseNotFound;
 use App\Ordering\Domain\Error\PartialExceedsOrder;
+use App\Ordering\Domain\Event\OrderStatusChanged;
 use App\Ordering\Domain\Model\Order;
 use App\Ordering\Domain\Model\OrderProduct;
 use App\Ordering\Domain\Repository\OrderRepository;
 use App\Shared\Application\Command\CommandHandler;
+use App\Shared\Application\Event\EventBus;
 use App\Shared\Domain\Error\DomainError;
 
 /**
@@ -20,6 +22,7 @@ use App\Shared\Domain\Error\DomainError;
  *
  * Fixed on purpose (decision 9): a shipment that would exceed what was ordered, or one on an order already sent or
  * delivered, is refused (409) before anything is saved; the legacy code saved it and then answered a 500.
+ * OrderStatusChanged after the commit, either way: the write-back to the order's shop (Sent → completed).
  */
 final class RecordPartialShipmentHandler implements CommandHandler
 {
@@ -27,6 +30,7 @@ final class RecordPartialShipmentHandler implements CommandHandler
         private readonly OrderRepository $orders,
         private readonly OrderInventory $inventory,
         private readonly OrderWriter $writer,
+        private readonly EventBus $events,
     ) {
     }
 
@@ -45,6 +49,7 @@ final class RecordPartialShipmentHandler implements CommandHandler
         if ($this->warehouseHoldsTheWholeOrder($order) && self::shipsTheWholeOrder($order, $command->lines)) {
             $order->setStatus(Order::STATUS_SENT);
             $this->inventory->takeOut(self::linesOf($order), $warehouse);
+            $this->events->publish(new OrderStatusChanged($command->orderId, Order::STATUS_SENT));
 
             return;
         }
@@ -60,6 +65,7 @@ final class RecordPartialShipmentHandler implements CommandHandler
         }
         $this->orders->add($partial);
         $this->inventory->takeOut(self::linesOf($partial), $warehouse);
+        $this->events->publish(new OrderStatusChanged($command->orderId, Order::STATUS_PARTIAL));
     }
 
     /**

@@ -1,4 +1,12 @@
-import {apiGet, apiPost, apiPut, type Schema} from '@/shared/api';
+import {
+  apiGet,
+  apiPost,
+  apiPut,
+  listQueryString,
+  type ListQuery,
+  type Page,
+  type Schema,
+} from '@/shared/api';
 
 export type User = Schema<'UserOutput'>;
 
@@ -12,8 +20,12 @@ export interface UserPayload {
   enabled: boolean;
 }
 
-export function listUsers(): Promise<User[]> {
-  return apiGet<User[]>('/users');
+/**
+ * A page of users, by name: the list contract (q, filters name, username, email, roles[], enabled[]; sorts name,
+ * username, email).
+ */
+export function listUsers(query: ListQuery = {}): Promise<Page<User>> {
+  return apiGet<Page<User>>(`/users${listQueryString(query)}`);
 }
 
 export function getUser(id: number | string): Promise<User> {

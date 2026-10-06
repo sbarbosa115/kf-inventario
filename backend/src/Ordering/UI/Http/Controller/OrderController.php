@@ -12,11 +12,13 @@ use App\Ordering\Application\Command\OrderCustomer;
 use App\Ordering\Application\Command\OrderDetails;
 use App\Ordering\Application\Command\OrderLine;
 use App\Ordering\Application\Command\PlaceOrder;
-use App\Ordering\Application\Command\SyncedOrders;
+use App\Ordering\Application\Command\PulledShopOrders;
+use App\Ordering\Application\Command\PullShopOrdersRunner;
 use App\Ordering\Application\Command\SyncOrderComments;
-use App\Ordering\Application\Command\SyncRemoteOrders;
 use App\Ordering\Application\Command\UpdateOrder;
 use App\Ordering\Application\Query\Orders;
+use App\Ordering\Domain\Error\OrderSyncFailed;
+use App\Ordering\Domain\Model\Order;
 use App\Ordering\UI\Http\Input\OrderCommentInput;
 use App\Ordering\UI\Http\Input\OrderCommentsInput;
 use App\Ordering\UI\Http\Input\OrderInput;
@@ -26,11 +28,17 @@ use App\Ordering\UI\Http\OrderPresenter;
 use App\Ordering\UI\Http\Output\OrderCommentOutput;
 use App\Ordering\UI\Http\Output\OrderDetailOutput;
 use App\Ordering\UI\Http\Output\OrderOutput;
-use App\Ordering\UI\Http\Output\SyncResultOutput;
+use App\Ordering\UI\Http\Output\ShopsSyncResultOutput;
+use App\Ordering\UI\Http\Output\ShopSyncConnectionOutput;
 use App\Shared\Application\Command\CommandBus;
+use App\Shared\Application\Query\ListField;
+use App\Shared\Application\Query\ListPage;
+use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\ApiValidationException;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\ListQueryParser;
+use App\Shared\UI\Http\Output\PageOutput;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,23 +56,51 @@ final class OrderController extends AbstractController
         private readonly Orders $orders,
         private readonly InputMapper $inputs,
         private readonly OrderPresenter $presenter,
+        private readonly ListQueryParser $lists,
+        private readonly PullShopOrdersRunner $pulls,
     ) {
     }
 
     /**
-     * `warehouse_id`: that warehouse's orders, newest first (the list filters and pages them in the browser).
+     * The orders list's contract (docs/pdr/prd-shops-settings.md, "List query contract"). `source`: phone, web (not
+     * from a connection) or shop:<connection id>; `pinned`: 1 (has a pinned comment).
+     */
+    public static function listSchema(): ListSchema
+    {
+        return new ListSchema(
+            fields: [
+                'code' => ListField::text(),
+                'customer' => ListField::text(),
+                'status' => ListField::enum(array_map('strval', range(Order::STATUS_CREATED, Order::STATUS_DELIVERED))),
+                'source' => ListField::enumMatching('/^(phone|web|shop:\d{1,9})$/'),
+                'created_at' => ListField::date(),
+                'pinned' => ListField::enum(['1']),
+            ],
+            sorts: ['code', 'customer', 'status', 'created_at'],
+            defaultSort: '-created_at',
+        );
+    }
+
+    /**
+     * `warehouse_id` (required): a page of that warehouse's orders, newest first — the list contract (q over code,
+     * customer name and email; filters code, customer (name or email), status[] 1–6, source[] phone|web|shop:<id>
+     * (web: a web order no connection brought), created_at, pinned[] 1; sorts code, customer, status, created_at;
+     * facets of status, source and pinned).
      */
     #[Route('/api/v1/orders', name: 'api_orders_list', methods: ['GET'])]
     #[IsGranted('ROLE_CAN_READ_ORDERS')]
-    #[ApiResponse(OrderOutput::class, list: true)]
+    #[ApiResponse(OrderOutput::class, page: true)]
     public function list(Request $request): JsonResponse
     {
         $warehouseId = $request->query->getInt('warehouse_id');
         if ($warehouseId < 1) {
             throw ApiValidationException::single('warehouse_id', 'This value should be positive.');
         }
+        $query = $this->lists->parse($request, self::listSchema());
 
-        return $this->json(array_map($this->presenter->order(...), $this->orders->ofWarehouse($warehouseId)));
+        $page = $this->orders->page($warehouseId, $query);
+
+        return $this->json(PageOutput::of(new ListPage($this->presenter->orders($page->items), $page->total, $page->facets), $query, static fn (OrderOutput $o) => $o));
     }
 
     /**
@@ -161,22 +197,29 @@ final class OrderController extends AbstractController
     }
 
     /**
-     * Pulls the orders the WooCommerce shops have waiting (REST API) and places the ones the app does not have yet,
-     * as the webhook would: `imported` placed, `skipped` already imported (deleted ones included) or not placeable
-     * (logged). A warehouse whose shop the app holds no keys for is not pulled. 502 order_sync_failed when a shop
-     * cannot be read (nothing is kept).
+     * "Check now": the catch-up pull of every active shop connection, due or not, each in its own transaction
+     * (docs/pdr/prd-shops-settings.md, Decisions 11). 202 with what each connection brought in — `imported` placed,
+     * `skipped` already in the app or kept in the failed-deliveries inbox — and `error` for a shop that could not be
+     * read (recorded in its health; the others go on). 502 order_sync_failed only when every connection failed.
+     * Without an active connection nothing is pulled.
      */
     #[Route('/api/v1/orders/sync', name: 'api_orders_sync', methods: ['POST'])]
     #[IsGranted('ROLE_CAN_SYNC_ORDERS')]
-    #[ApiResponse(SyncResultOutput::class, status: 202)]
+    #[ApiResponse(ShopsSyncResultOutput::class, status: 202)]
     public function sync(): JsonResponse
     {
-        $synced = $this->commands->dispatch(new SyncRemoteOrders());
-        if (!$synced instanceof SyncedOrders) {
-            throw new \LogicException('SyncRemoteOrdersHandler answers what it did.');
+        $pulled = $this->pulls->run(false);
+        $failed = array_values(array_filter($pulled, static fn (PulledShopOrders $p): bool => $p->failed()));
+        if ([] !== $pulled && \count($failed) === \count($pulled)) {
+            throw new OrderSyncFailed(implode(', ', array_map(static fn (PulledShopOrders $p): string => $p->name, $failed)));
         }
 
-        return $this->json(new SyncResultOutput($synced->imported, $synced->skipped), 202);
+        return $this->json(new ShopsSyncResultOutput(
+            imported: array_sum(array_map(static fn (PulledShopOrders $p): int => $p->imported, $pulled)),
+            skipped: array_sum(array_map(static fn (PulledShopOrders $p): int => $p->skipped, $pulled)),
+            failed: \count($failed),
+            connections: array_map(static fn (PulledShopOrders $p) => new ShopSyncConnectionOutput($p->connectionId, $p->name, $p->imported, $p->skipped, $p->error), $pulled),
+        ), 202);
     }
 
     private static function details(OrderInput $input): OrderDetails

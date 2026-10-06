@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 final class SpaController extends AbstractController
 {
-    #[Route('/{path}', name: 'spa', requirements: ['path' => '(?!api/|api$|_|admin/order/1H39j0jpQPsWL958v9R4$).*'], methods: ['GET'], priority: -100)]
+    #[Route('/{path}', name: 'spa', requirements: ['path' => '(?!api/|api$|_|admin/order/1H39j0jpQPsWL958v9R4$|webhooks/).*'], methods: ['GET'], priority: -100)]
     public function __invoke(): Response
     {
         return $this->render('spa.html.twig');

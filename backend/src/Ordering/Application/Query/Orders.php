@@ -5,24 +5,28 @@ namespace App\Ordering\Application\Query;
 use App\Ordering\Domain\Error\OrderNotFound;
 use App\Ordering\Domain\Model\Order;
 use App\Ordering\Domain\Repository\OrderRepository;
+use App\Shared\Application\Query\ListPage;
+use App\Shared\Application\Query\ListQuery;
 
 /**
  * What the orders screens read.
  */
 final class Orders
 {
-    public function __construct(private readonly OrderRepository $orders)
-    {
+    public function __construct(
+        private readonly OrderRepository $orders,
+        private readonly OrderList $list,
+    ) {
     }
 
     /**
-     * A warehouse's orders, newest first (the list filters and pages them in the browser, as before).
+     * A page of a warehouse's orders: filtered, sorted and counted in the database.
      *
-     * @return list<Order>
+     * @return ListPage<Order>
      */
-    public function ofWarehouse(int $warehouseId): array
+    public function page(int $warehouseId, ListQuery $query): ListPage
     {
-        return $this->orders->ofWarehouse($warehouseId);
+        return $this->list->page($warehouseId, $query);
     }
 
     /**

@@ -6,7 +6,7 @@
     "ext-ctype": "*",
     "ext-iconv": "*",
     "ext-json": "*",
-    "automattic/woocommerce": "^3.0",
+    "ext-sodium": "*",
     "doctrine/doctrine-bundle": "^3.0",
     "doctrine/doctrine-migrations-bundle": "^3.3 || ^4.0",
     "doctrine/orm": "^3.2",

@@ -18,7 +18,7 @@ import {
   type LineValues,
 } from '@/entities/invoice';
 import type {Country} from '@/entities/location';
-import {listStock, type StockItem} from '@/entities/product';
+import {listAllStock, type StockItem} from '@/entities/product';
 import type {Warehouse} from '@/entities/warehouse';
 import {AddAllProductsButton} from '@/features/add-all-products';
 import {AddressForm} from '@/widgets/address-form';
@@ -83,7 +83,8 @@ export function InvoiceForm({
   const [busy, setBusy] = useState(false);
 
   const stock = useLoad(
-    () => (warehouseId === null ? Promise.resolve([]) : listStock(warehouseId)),
+    () =>
+      warehouseId === null ? Promise.resolve([]) : listAllStock(warehouseId),
     [warehouseId],
   );
   const products: StockItem[] | undefined = stock.data;

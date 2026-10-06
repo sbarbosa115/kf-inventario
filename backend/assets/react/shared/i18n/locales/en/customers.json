@@ -4,13 +4,14 @@
   "edit": "Edit",
   "delete": "Delete",
   "empty": "There are no customers yet. Create the first one.",
-  "search": "Search this page",
+  "search": "Search customers",
   "range": "{{from}}–{{to}} of {{total}}",
   "columns": {
     "name": "Name",
     "email": "Email",
     "phone": "Phone",
-    "city": "City"
+    "city": "City",
+    "country": "Country"
   },
   "pages": "Pages",
   "created": "The customer was created successfully.",

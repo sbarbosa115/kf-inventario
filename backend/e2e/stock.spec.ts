@@ -8,7 +8,7 @@ import {
   test,
 } from './support/test';
 
-// 2 Products (INV-09 – 16, INV-23 – 30) and 3 Warehouses (WH-01 – 05): upload, scan, incoming, warehouses.
+// 2 Products (INV-09 – 16, INV-23 – 30) and 3 Warehouses (WH-01 – 04): upload, scan, incoming, warehouses.
 // The cases run in order on the fixtures (warehouses Colombia, Usa, España; KF-01 – 03 with 100 in Colombia): the stock
 // INV-13 adds to Usa is what INV-14 takes out of it. Each test's browser starts with nothing remembered, so the scan
 // screen opens on Colombia, in Add mode, with the "What changed" note.
@@ -38,7 +38,7 @@ const card = (page: Page, name: string) =>
     .filter({has: page.getByRole('heading', {name, exact: true})});
 
 test.describe('2 Products: upload, scan, incoming', () => {
-  test('INV-09 · the upload screen shows its three steps and links to the template and to every product', async ({
+  test('INV-09 · The upload screen shows its three steps and links to the template and to every product', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -66,7 +66,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     expect(errors).toEqual([]);
   });
 
-  test('INV-10 · Upload names what is missing and refuses a file that is not a spreadsheet in place', async ({
+  test('INV-10 · Upload names what is missing and refuses a file that is not a spreadsheet', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -96,12 +96,23 @@ test.describe('2 Products: upload, scan, incoming', () => {
     expect(sent, 'nothing is sent').toBe(0);
   });
 
-  test('INV-11 · a spreadsheet from the template is stored in the chosen warehouse', async ({
+  test('INV-11 · A spreadsheet from the template is stored in the chosen warehouse', async ({
     signedInAs,
+    baseURL,
   }) => {
     const page = await signedInAs(ADMIN);
+    // Its own product's sheet: a sheet sets each product's title and price (as before), and the invoice cases in
+    // another lane price KF-01 – 03.
+    const created = await page.request.post('/api/v1/products', {
+      headers: {Origin: new URL(baseURL as string).origin},
+      data: {code: 'SMOKE-INV-11', title: 'Smoke shelf', status: 1, price: 12},
+    });
+    expect(created.status()).toBe(201);
+    const {uuid} = (await created.json()) as {uuid: string};
     await page.goto('/admin/products/upload');
-    const sheet = await page.request.get('/api/v1/products/template.xls?all=1');
+    const sheet = await page.request.get(
+      `/api/v1/products/template.xls?uuid[]=${uuid}`,
+    );
 
     await page.getByLabel('Stock sheet', {exact: true}).setInputFiles({
       name: 'products.xls',
@@ -113,14 +124,43 @@ test.describe('2 Products: upload, scan, incoming', () => {
 
     const summary = page
       .getByRole('status')
-      .filter({hasText: /rows? stored in España/});
+      .filter({hasText: '1 row stored in España'});
     await expect(summary).toBeVisible();
+    const open = summary.getByRole('link', {
+      name: 'Open the products of España',
+    });
+    await expect(open).toHaveAttribute('href', '/admin/products?warehouse=3');
+    await open.click();
+    await expect(page).toHaveURL(/\/admin\/products\?warehouse=3$/);
+    await expect(page.getByRole('radio', {name: 'España'})).toBeChecked();
     await expect(
-      summary.getByRole('link', {name: 'Open the products of España'}),
-    ).toHaveAttribute('href', '/admin/products?warehouse=3');
+      page.getByRole('row').filter({
+        has: page.getByRole('cell', {name: 'SMOKE-INV-11', exact: true}),
+      }),
+    ).toBeVisible();
+
+    // A sheet with other columns (an order's Excel sheet: date, code, quantity) is refused in words.
+    const orders = (await (
+      await page.request.get(
+        '/api/v1/orders?warehouse_id=1&filter[code]=W00002',
+      )
+    ).json()) as {items: {id: number}[]};
+    const other = await page.request.get(
+      `/api/v1/orders/${orders.items[0]!.id}/xls`,
+    );
+    await page.goto('/admin/products/upload');
+    await page.getByLabel('Stock sheet', {exact: true}).setInputFiles({
+      name: 'order.xls',
+      mimeType: 'application/vnd.ms-excel',
+      buffer: await other.body(),
+    });
+    await page.getByRole('button', {name: 'Upload', exact: true}).click();
+    await expect(page.getByRole('alert')).toHaveText(
+      'The spreadsheet could not be read. Use the template and try again.',
+    );
   });
 
-  test('INV-12 · the scan screen lists a code on Enter, counts a repeated one and says when one is not a product', async ({
+  test('INV-12 · The scan screen lists a code on Enter, counts a repeated one and says when one is not a product', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -147,7 +187,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     expect(errors.filter((e) => !e.includes('status of 404'))).toEqual([]);
   });
 
-  test('INV-13 · with Usa and Add chosen, the codes read are added in one tap', async ({
+  test('INV-13 · With Usa and Add chosen, the codes read are added in one tap', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -165,12 +205,16 @@ test.describe('2 Products: upload, scan, incoming', () => {
     ).toBeVisible();
     await expect(page.getByText(/Nothing scanned yet/)).toBeVisible();
     await expect(scanBox(page)).toBeFocused();
-    const stock = await page.request.get('/api/v1/warehouses/2/stock');
-    const rows = (await stock.json()) as {code: string; quantity: number}[];
+    const stock = await page.request.get(
+      '/api/v1/warehouses/2/stock?per_page=0',
+    );
+    const rows = (
+      (await stock.json()) as {items: {code: string; quantity: number}[]}
+    ).items;
     expect(rows.find((row) => row.code === 'KF-01')?.quantity).toBe(2);
   });
 
-  test('INV-14 · removing asks first; more than the warehouse has is refused and keeps the list', async ({
+  test('INV-14 · Removing asks first; more than the warehouse has is refused and keeps the list', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -195,12 +239,16 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await expect(
       page.getByRole('status').filter({hasText: 'Removed 1 unit from Usa.'}),
     ).toBeVisible();
-    const stock = await page.request.get('/api/v1/warehouses/2/stock');
-    const rows = (await stock.json()) as {code: string; quantity: number}[];
+    const stock = await page.request.get(
+      '/api/v1/warehouses/2/stock?per_page=0',
+    );
+    const rows = (
+      (await stock.json()) as {items: {code: string; quantity: number}[]}
+    ).items;
     expect(rows.find((row) => row.code === 'KF-01')?.quantity).toBe(1);
   });
 
-  test('INV-15 · incoming products wait in a list until "Approve all" puts them in stock', async ({
+  test('INV-15 · Incoming products wait until "Approve all" puts them in stock', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -230,12 +278,16 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await expect(
       page.getByRole('button', {name: 'Approve all (0)'}),
     ).toBeDisabled();
-    const stock = await page.request.get('/api/v1/warehouses/3/stock');
-    const rows = (await stock.json()) as {code: string; quantity: number}[];
+    const stock = await page.request.get(
+      '/api/v1/warehouses/3/stock?per_page=0',
+    );
+    const rows = (
+      (await stock.json()) as {items: {code: string; quantity: number}[]}
+    ).items;
     expect(rows.find((r) => r.code === 'KF-02')?.quantity).toBe(4);
   });
 
-  test('INV-16 · a person without the inventory role is told so on the stock screens', async ({
+  test('INV-16 · A person without the inventory role is told so on the stock screens', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVOICES);
@@ -258,7 +310,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     );
   });
 
-  test('INV-23 · the scan screen remembers the warehouse and the mode', async ({
+  test('INV-23 · The scan screen remembers the warehouse and the mode', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVENTORY);
@@ -277,7 +329,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     ).toBeDisabled();
   });
 
-  test('INV-24 · Undo last scan takes back the last read, by button and by Ctrl+Z', async ({
+  test('INV-24 · Undo last scan takes back the last read', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -295,7 +347,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await expect(page.getByLabel('Quantity of KF-01')).toHaveValue('1');
   });
 
-  test('INV-25 · the footer sums the products and units to send, leaving out codes that are not products', async ({
+  test('INV-25 · The footer sums what will be sent, leaving out codes that are not products', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -315,7 +367,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await expect(page.getByText('2 products · 4 units')).toBeVisible();
   });
 
-  test('INV-26 · on an address that is not https the camera says why, and typing still works', async ({
+  test('INV-26 · On a plain-http address the camera says why, and typing still works', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -333,7 +385,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await expect(page.getByLabel('Quantity of KF-03')).toHaveValue('1');
   });
 
-  test('INV-27 · the note on what changed is shown until it is dismissed', async ({
+  test('INV-27 · The note on what changed is shown until it is dismissed', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVENTORY);
@@ -350,7 +402,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await expect(page.getByText(/What changed/)).toHaveCount(0);
   });
 
-  test('INV-28 · the chosen sheet shows its name, size and type, and can be taken back', async ({
+  test('INV-28 · The drop zone shows the chosen sheet, by file picker, drag and keyboard', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -367,9 +419,46 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await expect(page.getByText(/KB · XLS$/)).toBeVisible();
     await page.getByRole('button', {name: 'Remove products.xls'}).click();
     await expect(page.getByText('products.xls', {exact: true})).toHaveCount(0);
+
+    // Dragged from the computer: the zone is outlined while the file is over it, then shows it; a PDF is refused.
+    const zone = page.locator('label', {
+      hasText: 'Drop the stock sheet here, or choose a file',
+    });
+    const drop = async (name: string, type: string) => {
+      const transfer = await page.evaluateHandle(
+        (file) => {
+          const data = new DataTransfer();
+          data.items.add(
+            new File(['x'.repeat(2048)], file.name, {type: file.type}),
+          );
+          return data;
+        },
+        {name, type},
+      );
+      await zone.dispatchEvent('dragover', {dataTransfer: transfer});
+      await expect(zone).toHaveClass(/is-dragging/);
+      await zone.dispatchEvent('drop', {dataTransfer: transfer});
+    };
+    await drop(
+      'stock.xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    await expect(page.getByText('stock.xlsx', {exact: true})).toBeVisible();
+    await expect(page.getByText(/KB · XLSX$/)).toBeVisible();
+    await drop('notes.pdf', 'application/pdf');
+    await expect(page.getByRole('alert')).toHaveText(
+      'notes.pdf is not an Excel sheet. Choose an .xls or .xlsx file.',
+    );
+    await expect(page.getByText('notes.pdf', {exact: true})).toHaveCount(0);
+
+    // The keyboard: the file field takes the focus, and Enter opens the file picker.
+    await page.getByLabel('Stock sheet', {exact: true}).focus();
+    const picker = page.waitForEvent('filechooser');
+    await page.keyboard.press('Enter');
+    expect((await picker).isMultiple()).toBe(false);
   });
 
-  test('INV-29 · Approve all names the products, units and warehouse first, and Cancel approves nothing', async ({
+  test('INV-29 · Approve all says what it will do, and Cancel approves nothing', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -392,9 +481,12 @@ test.describe('2 Products: upload, scan, incoming', () => {
     await dialog.getByRole('button', {name: 'Cancel'}).click();
     await expect(page.getByRole('row', {name: /KF-03/})).toBeVisible();
     const incoming = await page.request.get(
-      '/api/v1/warehouses/3/stock?status=0',
+      '/api/v1/warehouses/3/stock?status=0&per_page=0',
     );
-    expect(await incoming.json(), 'nothing was approved').toHaveLength(1);
+    expect(
+      ((await incoming.json()) as {items: unknown[]}).items,
+      'nothing was approved',
+    ).toHaveLength(1);
 
     // Leave nothing waiting for the next run's cases.
     await page.getByRole('button', {name: 'Approve all (1)'}).click();
@@ -409,9 +501,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
       hasTouch: true,
     });
 
-    test('INV-30 · the scan, upload, incoming and warehouses screens fit a phone', async ({
-      signedInAs,
-    }) => {
+    test('INV-30 · The warehouse screens on a phone', async ({signedInAs}) => {
       const page = await signedInAs(ADMIN);
       for (const address of [
         '/admin/products/barcode',
@@ -437,7 +527,7 @@ test.describe('2 Products: upload, scan, incoming', () => {
 });
 
 test.describe('3 Warehouses', () => {
-  test('WH-01 · every warehouse has a card, and the old address lands on them', async ({
+  test('WH-01 · Every warehouse has a card, and the old addresses land on them', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -457,7 +547,7 @@ test.describe('3 Warehouses', () => {
     expect(errors).toEqual([]);
   });
 
-  test('WH-02 · a warehouse is renamed in place, and a blank name is refused', async ({
+  test('WH-02 · A warehouse is renamed in place, and a blank name is refused', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -490,7 +580,7 @@ test.describe('3 Warehouses', () => {
     await expect(card(page, 'Usa')).toBeVisible();
   });
 
-  test('WH-03 · any signed-in person can open the warehouses by address', async ({
+  test('WH-03 · Any signed-in person can open the warehouses by address', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVOICES);
@@ -503,7 +593,7 @@ test.describe('3 Warehouses', () => {
     await expect(card(page, 'Colombia')).toBeVisible();
   });
 
-  test('WH-04 · Rename in the card menu opens the name, and Escape cancels without saving', async ({
+  test("WH-04 · Rename from the card's menu, and Escape cancels", async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
@@ -521,18 +611,5 @@ test.describe('3 Warehouses', () => {
     const list = await page.request.get('/api/v1/warehouses');
     const names = ((await list.json()) as {name: string}[]).map((w) => w.name);
     expect(names, 'nothing was saved').toContain('España');
-  });
-
-  test('WH-05 · each card shows the shop addresses whose orders arrive there', async ({
-    signedInAs,
-  }) => {
-    const page = await signedInAs(ADMIN);
-    await page.goto('/admin/warehouses');
-
-    await expect(card(page, 'Colombia')).toContainText(
-      'Shop orders arrive from',
-    );
-    await expect(card(page, 'Colombia')).toContainText('https://colombia.test');
-    await expect(card(page, 'España')).toContainText('https://espana.test');
   });
 });

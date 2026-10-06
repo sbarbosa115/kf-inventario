@@ -1,72 +1,89 @@
 import {useMemo, useState} from 'react';
 import {
   customerName,
-  invoiceDay,
   invoicePdfUrl,
   listInvoices,
+  PAYMENT_METHODS,
   type Invoice,
 } from '@/entities/invoice';
 import {useCan} from '@/entities/session';
 import {InvoiceDetail} from '@/widgets/invoice-detail';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {useFormat, useLoad} from '@/shared/lib';
+import {
+  useDebouncedText,
+  useFormat,
+  useListQuery,
+  useLoad,
+  usePhone,
+} from '@/shared/lib';
 import {
   Button,
-  ClearFilters,
   DataTable,
-  EmptyState,
+  FilterDropdown,
   Money,
   PageHeader,
   SearchBox,
   Toolbar,
   type Column,
+  type FilterColumn,
   type RowAction,
+  type TableQuery,
 } from '@/shared/ui';
+import {invoiceSearch} from '../lib/invoiceSearch';
 import './invoices.css';
 
-const NO_FILTER = {query: '', from: '', to: ''};
+/** The list columns whose values are counted (the Payment and Walk-in filters). */
+const FACETS = ['payment_method', 'walk_in'];
 
 /**
- * Invoices (/admin/invoices): every invoice, newest first, filtered in the browser by customer or number and by a
- * date range. A row opens the invoice in a slide-over; its menu has the detail and the PDF.
+ * Invoices (/admin/invoices): newest first, searched by customer or number, filtered under the headers (number and
+ * customer text, the payment method from a list, the total as a money range, a date range; a sheet on a phone) and
+ * by walk-in from the toolbar, on the server (the query in the address). A row opens the invoice in a slide-over;
+ * its menu has the detail and the PDF.
  */
 export function InvoicesPage() {
   const {t} = useTranslation();
   const {date} = useFormat();
+  const phone = usePhone();
   const canCreate = useCan('ROLE_CAN_CREATE_INVOICES');
-  const {data, loading, error, reload} = useLoad(listInvoices, []);
-  const [detail, setDetail] = useState<Invoice | null>(null);
-  const [filter, setFilter] = useState(NO_FILTER);
-
+  const list = useListQuery({sort: '-created_at'});
   const walkIn = t('invoices.posClient');
+  const key = JSON.stringify([list.query, walkIn]);
+  const {data, loading, error, reload} = useLoad(
+    () => listInvoices({...invoiceSearch(list.query, walkIn), facets: FACETS}),
+    [key],
+  );
+  // The phone's sheet: how many invoices a draft keeps, one row asked.
+  const countFor = (query: TableQuery) =>
+    listInvoices({
+      ...invoiceSearch(query, walkIn),
+      page: 1,
+      perPage: 1,
+    }).then((page) => page.total);
+  const [detail, setDetail] = useState<Invoice | null>(null);
+  const [search, setSearch, flushSearch] = useDebouncedText(
+    list.query.q ?? '',
+    (q) => list.update({q: q === '' ? undefined : q}),
+  );
+  // Walk-in has no column: a list in the toolbar on a desktop, a section of the sheet on a phone, a chip when set.
+  const walkInOptions = useMemo(
+    () => [
+      {value: 'yes', label: t('invoices.posClient')},
+      {value: 'no', label: t('invoices.filters.withCustomer')},
+    ],
+    [t],
+  );
+  const walkInFilter: FilterColumn = {
+    label: t('invoices.filters.walkIn'),
+    filter: {type: 'enum', field: 'walk_in', options: walkInOptions},
+  };
+  const walkInValue = list.query.filters?.walk_in;
+  const walkInCounts = Object.fromEntries(
+    (data?.facets?.walk_in ?? []).map((f) => [f.value, f.count]),
+  );
+
   const nameOf = (invoice: Invoice) => customerName(invoice.customer) ?? walkIn;
-
-  const rows = useMemo(() => {
-    const needle = filter.query.trim().toLowerCase();
-    return data?.filter((invoice) => {
-      const day = invoiceDay(invoice.created_at);
-      if (filter.from !== '' && day < filter.from) return false;
-      if (filter.to !== '' && day > filter.to) return false;
-      if (needle === '') return true;
-      const text = [
-        invoice.code,
-        customerName(invoice.customer) ?? walkIn,
-        invoice.customer?.email,
-        invoice.total,
-      ];
-      return text.some((part) =>
-        String(part ?? '')
-          .toLowerCase()
-          .includes(needle),
-      );
-    });
-  }, [data, filter, walkIn]);
-
-  const filtered =
-    filter.query !== '' || filter.from !== '' || filter.to !== '';
-  const nothingLeft =
-    data !== undefined && data.length > 0 && rows?.length === 0;
   const forbidden = error instanceof ApiError && error.status === 403;
 
   const columns: Column<Invoice>[] = [
@@ -74,8 +91,9 @@ export function InvoicesPage() {
       key: 'code',
       header: t('invoices.columns.code'),
       render: (invoice) => invoice.code,
-      sortValue: (invoice) => invoice.code ?? '',
+      sortField: 'code',
       mono: true,
+      filter: {type: 'text', field: 'code'},
     },
     {
       key: 'customer',
@@ -88,20 +106,41 @@ export function InvoicesPage() {
           )}
         </span>
       ),
-      sortValue: (invoice) => nameOf(invoice).toLowerCase(),
+      sortField: 'customer',
+      filter: {type: 'text', field: 'customer'},
+    },
+    {
+      key: 'payment',
+      header: t('invoices.columns.payment'),
+      render: (invoice) =>
+        invoice.payment_method
+          ? t(`invoices.form.payment.${invoice.payment_method}`, {
+              defaultValue: invoice.payment_method,
+            })
+          : null,
+      filter: {
+        type: 'enum',
+        field: 'payment_method',
+        options: PAYMENT_METHODS.map((method) => ({
+          value: method,
+          label: t(`invoices.form.payment.${method}`),
+        })),
+      },
     },
     {
       key: 'total',
       header: t('invoices.columns.total'),
       render: (invoice) => <Money amount={invoice.total} />,
-      sortValue: (invoice) => Number(invoice.total ?? 0),
+      sortField: 'total',
       numeric: true,
+      filter: {type: 'money', field: 'total'},
     },
     {
       key: 'date',
       header: t('invoices.columns.date'),
       render: (invoice) => date(invoice.created_at),
-      sortValue: (invoice) => invoice.created_at ?? '',
+      sortField: 'created_at',
+      filter: {type: 'date', field: 'created_at'},
     },
   ];
 
@@ -126,7 +165,7 @@ export function InvoicesPage() {
         subtitle={
           data === undefined
             ? undefined
-            : t('invoices.count', {count: data.length})
+            : t('invoices.count', {count: data.total})
         }
         primary={
           canCreate && (
@@ -140,42 +179,37 @@ export function InvoicesPage() {
         <div className="kf-invoices__search">
           <SearchBox
             label={t('invoices.filters.search')}
-            value={filter.query}
-            onChange={(query) => setFilter((now) => ({...now, query}))}
+            value={search}
+            onChange={setSearch}
+            onBlur={flushSearch}
           />
         </div>
-        <DateField
-          label={t('invoices.filters.from')}
-          value={filter.from}
-          max={filter.to || undefined}
-          onChange={(from) => setFilter((now) => ({...now, from}))}
-        />
-        <DateField
-          label={t('invoices.filters.to')}
-          value={filter.to}
-          min={filter.from || undefined}
-          onChange={(to) => setFilter((now) => ({...now, to}))}
-        />
-        {filtered && <ClearFilters onClick={() => setFilter(NO_FILTER)} />}
+        {!phone && (
+          <div className="kf-invoices__walk-in">
+            <FilterDropdown
+              label={walkInFilter.label}
+              options={walkInOptions}
+              counts={data?.facets ? walkInCounts : undefined}
+              value={Array.isArray(walkInValue) ? walkInValue : []}
+              onChange={(value) => list.setFilter('walk_in', value)}
+            />
+          </div>
+        )}
       </Toolbar>
       {forbidden ? (
         <div className="alert alert-warning" role="alert">
           {t('errors.forbidden')}
         </div>
-      ) : nothingLeft ? (
-        <EmptyState
-          icon="fa-filter"
-          message={t('common.filteredEmpty')}
-          action={
-            <Button size="sm" onClick={() => setFilter(NO_FILTER)}>
-              {t('common.showAll')}
-            </Button>
-          }
-        />
       ) : (
         <DataTable
           columns={columns}
-          rows={rows}
+          rows={data?.items}
+          query={list.query}
+          onQueryChange={list.update}
+          total={data?.total}
+          facets={data?.facets}
+          extraFilters={[walkInFilter]}
+          countFor={countFor}
           rowKey={(invoice) => invoice.id}
           rowLabel={(invoice) => invoice.code ?? String(invoice.id)}
           loading={loading && data === undefined}
@@ -183,7 +217,6 @@ export function InvoicesPage() {
           onRetry={reload}
           emptyMessage={t('invoices.empty')}
           searchable={false}
-          pageSize={20}
           rowActions={actions}
           onRowClick={setDetail}
           cardTitle={(invoice) => (
@@ -192,7 +225,7 @@ export function InvoicesPage() {
               {nameOf(invoice)}
             </>
           )}
-          cardFacts={['total', 'date']}
+          cardFacts={['payment', 'total', 'date']}
         />
       )}
       {detail && (
@@ -204,33 +237,5 @@ export function InvoicesPage() {
         />
       )}
     </>
-  );
-}
-
-function DateField({
-  label,
-  value,
-  min,
-  max,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  min?: string;
-  max?: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="kf-invoices__date">
-      <span className="kf-invoices__date-label">{label}</span>
-      <input
-        type="date"
-        className="form-control"
-        value={value}
-        min={min}
-        max={max}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
   );
 }
