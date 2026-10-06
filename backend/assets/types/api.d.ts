@@ -1193,6 +1193,11 @@ export interface components {
         ShopRefOutput: {
             id: number;
             name: string;
+            /**
+             * The connection is active and takes order notes: a comment can be sent to the shop.
+             * @default false
+             */
+            takes_notes: boolean;
         };
         OrderCommentOutput: {
             id: number;

@@ -34,7 +34,7 @@ const SHOP_NOTE = comment(12, 'Please leave it at the door', {
   created_at: '2026-10-02T09:30:00-05:00',
   author: null,
   origin: 'shop',
-  shop: {id: 2, name: 'Fake shop'},
+  shop: {id: 2, name: 'Fake shop', takes_notes: true},
 });
 const PHRASE = comment(13, 'Called the customer', {
   created_at: '2026-10-03T11:00:00-05:00',

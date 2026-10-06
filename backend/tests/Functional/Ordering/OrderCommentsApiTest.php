@@ -78,7 +78,7 @@ final class OrderCommentsApiTest extends ApiTestCase
         $shopNote = $comments[2];
         self::assertSame('Please gift wrap', $shopNote['content']);
         self::assertSame('shop', $shopNote['origin']);
-        self::assertSame(['id' => $connection->id(), 'name' => 'Kfvintage'], $shopNote['shop']);
+        self::assertSame(['id' => $connection->id(), 'name' => 'Kfvintage', 'takes_notes' => false], $shopNote['shop']);
         self::assertNull($shopNote['author'], 'A shop note has no author in the app.');
         self::assertFalse($shopNote['pinned']);
         self::assertFalse($shopNote['sent_to_shop']);

@@ -2546,6 +2546,11 @@
                     },
                     "name": {
                         "type": "string"
+                    },
+                    "takes_notes": {
+                        "title": "The connection is active and takes order notes: a comment can be sent to the shop.",
+                        "type": "boolean",
+                        "default": false
                     }
                 },
                 "type": "object"

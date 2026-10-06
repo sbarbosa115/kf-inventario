@@ -114,7 +114,7 @@ final class OrdersListApiTest extends ApiTestCase
         self::assertSame(25, $body['per_page']);
         self::assertArrayNotHasKey('facets', $body, 'Facets only when asked for.');
         $linked = $body['items'][0];
-        self::assertSame(['id' => $this->shop->id(), 'name' => 'Kfvintage'], $linked['shop']);
+        self::assertSame(['id' => $this->shop->id(), 'name' => 'Kfvintage', 'takes_notes' => false], $linked['shop']);
         self::assertSame('Call before delivery', $linked['pinned_comment']['content'] ?? null);
         self::assertSame(2, $linked['comments_count'], 'Every comment of the order is counted, not only the pinned one.');
         self::assertSame('Ana', $linked['customer']['first_name']);

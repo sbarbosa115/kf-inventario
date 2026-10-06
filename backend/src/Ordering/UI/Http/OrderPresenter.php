@@ -23,6 +23,7 @@ use App\Ordering\Domain\Model\Comment;
 use App\Ordering\Domain\Model\Order;
 use App\Ordering\Domain\Model\OrderCommentMeta;
 use App\Ordering\Domain\Model\OrderProduct;
+use App\Ordering\Domain\Model\ShopCapability;
 use App\Ordering\Domain\Repository\CommentMetaRepository;
 use App\Ordering\UI\Http\Output\CommentAuthorOutput;
 use App\Ordering\UI\Http\Output\OrderCommentOutput;
@@ -150,7 +151,7 @@ final class OrderPresenter
             approximate: null === $comment->getCreatedAt(),
             author: self::author($comment->getUser()),
             origin: $meta?->origin() ?? OrderCommentMeta::ORIGIN_APP,
-            shop: null === $connection ? null : new ShopRefOutput((int) $connection->id(), $connection->name()),
+            shop: null === $connection ? null : new ShopRefOutput((int) $connection->id(), $connection->name(), $connection->isActive() && $connection->can(ShopCapability::OrderNote)),
             pinned: $meta?->isPinned() ?? false,
             pinnedAt: $meta?->pinnedAt()?->format(\DATE_ATOM),
             pinnedBy: self::author($meta?->pinnedBy()),
@@ -160,7 +161,7 @@ final class OrderPresenter
 
     private static function shop(?ShopRef $shop): ?ShopRefOutput
     {
-        return null === $shop ? null : new ShopRefOutput($shop->id, $shop->name);
+        return null === $shop ? null : new ShopRefOutput($shop->id, $shop->name, $shop->takesNotes);
     }
 
     private static function pinned(Order $order, ?OrderCommentMeta $meta): ?PinnedCommentOutput

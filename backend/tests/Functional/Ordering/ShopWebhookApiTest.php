@@ -48,9 +48,9 @@ final class ShopWebhookApiTest extends ApiTestCase
 
         $this->signInAs(['ROLE_USER', 'ROLE_CAN_READ_ORDERS'], 'office');
         $detail = $this->getJson('/api/v1/orders/'.$order->getId());
-        self::assertSame(['id' => $connection['id'], 'name' => 'Kfvintage'], $detail['shop'], 'The order names its shop.');
+        self::assertSame(['id' => $connection['id'], 'name' => 'Kfvintage', 'takes_notes' => false], $detail['shop'], 'The order names its shop.');
         $list = $this->getJson('/api/v1/orders?warehouse_id='.$usa->getId());
-        self::assertSame(['id' => $connection['id'], 'name' => 'Kfvintage'], $list['items'][0]['shop']);
+        self::assertSame(['id' => $connection['id'], 'name' => 'Kfvintage', 'takes_notes' => false], $list['items'][0]['shop']);
 
         $comments = $this->em()->getRepository(Comment::class)->findBy(['order' => $order->getId()]);
         self::assertCount(1, $comments, 'The customer\'s checkout note becomes a shop comment.');

@@ -144,7 +144,7 @@ final class OrderApiTest extends ApiTestCase
 
         $list = $this->getJson('/api/v1/orders?warehouse_id='.$warehouse->getId())['items'];
         $byCode = array_column($list, null, 'code');
-        self::assertSame(['id' => $connection->id(), 'name' => 'Kfvintage'], $byCode['SHOP-1']['shop']);
+        self::assertSame(['id' => $connection->id(), 'name' => 'Kfvintage', 'takes_notes' => false], $byCode['SHOP-1']['shop'], 'No order_note capability: the screen offers no "send to the shop".');
         self::assertSame('Ring twice', $byCode['SHOP-1']['pinned_comment']['content'] ?? null);
         self::assertNull($byCode['PHONE-1']['shop']);
         $detail = $this->getJson('/api/v1/orders/'.$id);

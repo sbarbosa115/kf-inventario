@@ -37,8 +37,9 @@ export function AddComment({
   onAdded,
 }: {
   orderId: number;
-  /** The shop the order came from; null for an order typed here. */
-  shop: {id: number; name: string} | null;
+  /** The shop the order came from; null for an order typed here. `takes_notes` false: the connection is off or
+   * does not take order notes, so there is nothing to offer. */
+  shop: {id: number; name: string; takes_notes?: boolean} | null;
   onAdded: (comment: OrderComment) => void;
 }) {
   const {t} = useTranslation();
@@ -51,7 +52,7 @@ export function AddComment({
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const content = text.trim();
-  const offerShop = shop !== null && !shopRefused;
+  const offerShop = shop !== null && shop.takes_notes !== false && !shopRefused;
 
   const send = async () => {
     if (content === '' || busy) return;

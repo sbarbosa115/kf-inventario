@@ -22,7 +22,7 @@ function renderBox({
   shop = null,
   answer = [201, SAVED] as [number, unknown],
 }: {
-  shop?: {id: number; name: string} | null;
+  shop?: {id: number; name: string; takes_notes?: boolean} | null;
   answer?: [number, unknown];
 } = {}) {
   const api = fakeApi({'POST /orders/4/comments': answer});
@@ -86,7 +86,9 @@ describe('AddComment', () => {
   });
 
   it('offers to send the note to the shop only for an order from a shop, and sends it there when ticked', async () => {
-    const {box, posts} = renderBox({shop: {id: 2, name: 'Fake shop'}});
+    const {box, posts} = renderBox({
+      shop: {id: 2, name: 'Fake shop', takes_notes: true},
+    });
 
     const toShop = screen.getByRole('checkbox', {
       name: 'Also send to Fake shop as an order note',
@@ -105,6 +107,12 @@ describe('AddComment', () => {
 
   it('has no shop checkbox for an order typed here', () => {
     renderBox();
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('has no shop checkbox when the order’s shop takes no notes (switched off or inactive)', () => {
+    renderBox({shop: {id: 2, name: 'Fake shop', takes_notes: false}});
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
