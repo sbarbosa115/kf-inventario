@@ -64,6 +64,8 @@ function Server({
         ],
       }}
       countFor={async () => 3}
+      cardTitle={(r) => r.code}
+      rowActions={() => [{label: 'Edit', onSelect: () => undefined}]}
     />
   );
 }
@@ -114,7 +116,15 @@ describe('DataTable in server mode', () => {
     render(<Server rows={ROWS} total={2} asked={asked} />);
 
     const thead = screen.getAllByRole('rowgroup')[0]!;
-    expect(within(thead).getAllByRole('row')).toHaveLength(2);
+    const [header, filters] = within(thead).getAllByRole('row');
+    expect(
+      [...filters!.children].map((cell) => cell.className),
+      'the filter row has a cell under each header cell, the hidden ones too',
+    ).toEqual(
+      [...header!.children].map(
+        (cell) => cell.className.replace(/kf-table__num/, '').trim() || '',
+      ),
+    );
     await userEvent.click(screen.getByRole('button', {name: 'Status'}));
     await userEvent.click(screen.getByRole('checkbox', {name: /Created/}));
     expect(screen.getByRole('dialog', {name: 'Status · 1'})).toHaveTextContent(

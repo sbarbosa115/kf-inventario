@@ -485,8 +485,11 @@ export function DataTable<Row>({
                   filters={serverFilters}
                   facets={facets}
                   onChange={(field, value) => setFilter(field, value)}
-                  leading={(selectable ? 1 : 0) + (cardTitle ? 1 : 0)}
-                  trailing={hasActions ? 1 : 0}
+                  leading={[
+                    ...(selectable ? ['kf-table__select'] : []),
+                    ...(cardTitle ? ['kf-table__card-title'] : []),
+                  ]}
+                  trailing={hasActions ? ['kf-table__actions'] : []}
                 />
               )}
             </thead>

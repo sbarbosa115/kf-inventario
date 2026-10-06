@@ -12,22 +12,22 @@ export function FilterRow({
   filters,
   facets,
   onChange,
-  leading = 0,
-  trailing = 0,
+  leading = [],
+  trailing = [],
 }: {
   columns: (FilterColumn | null)[];
   filters: Filters;
   facets?: Facets;
   onChange: (field: string, value: FilterValue) => void;
-  /** Empty cells before the columns (selection, card title). */
-  leading?: number;
+  /** Empty cells before the columns, by the class of the header cell they sit under (selection, card title). */
+  leading?: string[];
   /** Empty cells after them (actions). */
-  trailing?: number;
+  trailing?: string[];
 }) {
   return (
     <tr role="row" className="kf-table__filters">
-      {Array.from({length: leading}, (_, i) => (
-        <td key={`lead-${i}`} role="cell" />
+      {leading.map((className) => (
+        <td key={className} role="cell" className={className} />
       ))}
       {columns.map((column, index) => (
         <td key={column?.filter.field ?? `none-${index}`} role="cell">
@@ -42,8 +42,8 @@ export function FilterRow({
           )}
         </td>
       ))}
-      {Array.from({length: trailing}, (_, i) => (
-        <td key={`trail-${i}`} role="cell" />
+      {trailing.map((className) => (
+        <td key={className} role="cell" className={className} />
       ))}
     </tr>
   );
