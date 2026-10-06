@@ -106,13 +106,16 @@ function WarehouseStock({
   );
 
   const inStockFilter = list.query.filters?.in_stock;
-  const chip: StockFilter | null = Array.isArray(inStockFilter)
-    ? inStockFilter[0] === 'yes'
-      ? 'in'
-      : inStockFilter[0] === 'no'
-        ? 'out'
-        : null
-    : null;
+  // A chip is pressed when its choice is the one ticked; with both ticked (the sheet), none is (not even All).
+  const chip: StockFilter | 'both' | null = !Array.isArray(inStockFilter)
+    ? null
+    : inStockFilter.length > 1
+      ? 'both'
+      : inStockFilter[0] === 'yes'
+        ? 'in'
+        : inStockFilter[0] === 'no'
+          ? 'out'
+          : null;
   const facet = summary.data?.facets?.in_stock ?? [];
   const countOf = (value: string) =>
     facet.find((f) => f.value === value)?.count ?? 0;

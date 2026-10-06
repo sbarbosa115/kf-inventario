@@ -29,6 +29,8 @@ const users = (rows: Row[]) =>
   fakeList(rows, {
     fields: {
       name: (u) => u.name,
+      username: (u) => u.username,
+      email: (u) => u.email,
       enabled: (u) => (u.enabled ? 'yes' : 'no'),
       roles: (u) => u.roles,
     },
@@ -130,7 +132,7 @@ describe('UsersPage', () => {
     const api = fakeApi({'GET /users': users([ANA, BEN])});
     renderPage();
 
-    await userEvent.type(await screen.findByRole('searchbox'), 'ben');
+    await userEvent.type(await screen.findByRole('searchbox', {name: 'Search'}), 'ben');
 
     await waitFor(() =>
       expect(screen.queryByText('Ana Gomez')).not.toBeInTheDocument(),
@@ -164,7 +166,7 @@ describe('UsersPage', () => {
     fakeApi({'GET /users': users([ANA, BEN])});
     renderPage();
 
-    await userEvent.type(await screen.findByRole('searchbox'), 'zzz');
+    await userEvent.type(await screen.findByRole('searchbox', {name: 'Search'}), 'zzz');
     expect(
       await screen.findByText('Nothing matches these filters.'),
     ).toBeInTheDocument();
@@ -191,5 +193,51 @@ describe('UsersPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'You do not have permission to do this.',
     );
+  });
+
+  it('filters under the headers: name, username and email as text, the roles and the status from lists with counts', async () => {
+    const api = fakeApi({'GET /users': users([ANA, BEN])});
+    renderPage();
+    await screen.findByText('Ana Gomez');
+    const filters = within(
+      within(screen.getAllByRole('rowgroup')[0]!).getAllByRole('row')[1]!,
+    );
+
+    for (const name of ['Name', 'Username', 'Email']) {
+      expect(
+        filters.getByRole('searchbox', {name: `Filter by ${name}`}),
+      ).toBeInTheDocument();
+    }
+    expect(api.calls[0]?.url.searchParams.get('facets')).toBe('enabled,roles');
+
+    await userEvent.click(filters.getByRole('button', {name: 'Roles'}));
+    const panel = screen.getByRole('dialog', {name: 'Roles'});
+    const options = within(panel)
+      .getAllByRole('checkbox')
+      .map((box) => box.closest('label')?.textContent);
+    expect(options, 'the nine assignable roles, by plain name').toHaveLength(9);
+    expect(options).toEqual(
+      expect.arrayContaining(['Admin1', 'Inventory1', 'Invoices: update1', 'Orders0']),
+    );
+    expect(options.join(' ')).not.toContain('ROLE_');
+    await userEvent.click(within(panel).getByRole('checkbox', {name: /^Admin/}));
+
+    await waitFor(() =>
+      expect(screen.queryByText('Ben Ruiz')).not.toBeInTheDocument(),
+    );
+    expect(api.calls.at(-1)?.url.searchParams.getAll('filter[roles][]')).toEqual([
+      'ROLE_ADMIN',
+    ]);
+    expect(
+      screen.getByText('Roles: Admin', {selector: '.kf-active-filters__text'}),
+    ).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+
+    await userEvent.click(filters.getByRole('button', {name: 'Status'}));
+    expect(
+      within(screen.getByRole('dialog', {name: 'Status'}))
+        .getAllByRole('checkbox')
+        .map((box) => box.closest('label')?.textContent),
+    ).toEqual(['Active1', 'Inactive0']);
   });
 });
