@@ -24,11 +24,15 @@ final class FakeShopGateway implements ShopGateway
     /** @var list<array{shop: string, call: string, order: string, value: string}> what the app wrote to the shops */
     private static array $writes = [];
 
+    /** @var list<array{shop: string, since: \DateTimeImmutable|null, status: string}> every order list the app asked for */
+    private static array $reads = [];
+
     public static function reset(): void
     {
         self::$shops = [];
         self::$failing = [];
         self::$writes = [];
+        self::$reads = [];
     }
 
     /**
@@ -63,6 +67,14 @@ final class FakeShopGateway implements ShopGateway
         return self::$writes;
     }
 
+    /**
+     * @return list<array{shop: string, since: \DateTimeImmutable|null, status: string}>
+     */
+    public static function reads(): array
+    {
+        return self::$reads;
+    }
+
     public function storeInfo(ShopCredentials $shop): StoreInfo
     {
         $known = $this->answer($shop);
@@ -72,9 +84,12 @@ final class FakeShopGateway implements ShopGateway
 
     public function ordersModifiedSince(ShopCredentials $shop, ?\DateTimeImmutable $since, string $status = 'processing'): array
     {
+        self::$reads[] = ['shop' => $shop->siteUrl, 'since' => $since, 'status' => $status];
+
         return array_values(array_filter(
             $this->answer($shop)['orders'],
-            static fn (array $order): bool => ($order['status'] ?? 'processing') === $status
+            // `any`, as WooCommerce reads it: every status.
+            static fn (array $order): bool => ('any' === $status || ($order['status'] ?? 'processing') === $status)
                 && (null === $since || !isset($order['date_modified_gmt']) || new \DateTimeImmutable((string) $order['date_modified_gmt'], new \DateTimeZone('UTC')) > $since),
         ));
     }

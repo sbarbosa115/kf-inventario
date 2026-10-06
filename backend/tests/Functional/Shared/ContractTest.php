@@ -154,9 +154,6 @@ final class ContractTest extends ApiTestCase
      */
     private static function notBuilt(): array
     {
-        return [
-            'GET /api/v1/shops/1/outbox',
-            'POST /api/v1/shops/1/outbox/1/retry',
-        ];
+        return [];
     }
 }

@@ -12,11 +12,12 @@ use App\Ordering\Application\Command\OrderCustomer;
 use App\Ordering\Application\Command\OrderDetails;
 use App\Ordering\Application\Command\OrderLine;
 use App\Ordering\Application\Command\PlaceOrder;
-use App\Ordering\Application\Command\SyncedOrders;
+use App\Ordering\Application\Command\PulledShopOrders;
+use App\Ordering\Application\Command\PullShopOrdersRunner;
 use App\Ordering\Application\Command\SyncOrderComments;
-use App\Ordering\Application\Command\SyncRemoteOrders;
 use App\Ordering\Application\Command\UpdateOrder;
 use App\Ordering\Application\Query\Orders;
+use App\Ordering\Domain\Error\OrderSyncFailed;
 use App\Ordering\Domain\Model\Order;
 use App\Ordering\UI\Http\Input\OrderCommentInput;
 use App\Ordering\UI\Http\Input\OrderCommentsInput;
@@ -28,7 +29,7 @@ use App\Ordering\UI\Http\Output\OrderCommentOutput;
 use App\Ordering\UI\Http\Output\OrderDetailOutput;
 use App\Ordering\UI\Http\Output\OrderOutput;
 use App\Ordering\UI\Http\Output\ShopsSyncResultOutput;
-use App\Ordering\UI\Http\Output\SyncResultOutput;
+use App\Ordering\UI\Http\Output\ShopSyncConnectionOutput;
 use App\Shared\Application\Command\CommandBus;
 use App\Shared\Application\Query\ListField;
 use App\Shared\Application\Query\ListPage;
@@ -56,6 +57,7 @@ final class OrderController extends AbstractController
         private readonly InputMapper $inputs,
         private readonly OrderPresenter $presenter,
         private readonly ListQueryParser $lists,
+        private readonly PullShopOrdersRunner $pulls,
     ) {
     }
 
@@ -195,24 +197,29 @@ final class OrderController extends AbstractController
     }
 
     /**
-     * Pulls the orders the WooCommerce shops have waiting (REST API) and places the ones the app does not have yet,
-     * as the webhook would: `imported` placed, `skipped` already imported (deleted ones included) or not placeable
-     * (logged). A warehouse whose shop the app holds no keys for is not pulled. 502 order_sync_failed when a shop
-     * cannot be read (nothing is kept).
+     * "Check now": the catch-up pull of every active shop connection, due or not, each in its own transaction
+     * (docs/pdr/prd-shops-settings.md, Decisions 11). 202 with what each connection brought in — `imported` placed,
+     * `skipped` already in the app or kept in the failed-deliveries inbox — and `error` for a shop that could not be
+     * read (recorded in its health; the others go on). 502 order_sync_failed only when every connection failed.
+     * Without an active connection nothing is pulled.
      */
     #[Route('/api/v1/orders/sync', name: 'api_orders_sync', methods: ['POST'])]
     #[IsGranted('ROLE_CAN_SYNC_ORDERS')]
-    #[ApiResponse(SyncResultOutput::class, status: 202)]
-    // What "Check now" answers once item 5b pulls every connection (a oneOf until then).
     #[ApiResponse(ShopsSyncResultOutput::class, status: 202)]
     public function sync(): JsonResponse
     {
-        $synced = $this->commands->dispatch(new SyncRemoteOrders());
-        if (!$synced instanceof SyncedOrders) {
-            throw new \LogicException('SyncRemoteOrdersHandler answers what it did.');
+        $pulled = $this->pulls->run(false);
+        $failed = array_values(array_filter($pulled, static fn (PulledShopOrders $p): bool => $p->failed()));
+        if ([] !== $pulled && \count($failed) === \count($pulled)) {
+            throw new OrderSyncFailed(implode(', ', array_map(static fn (PulledShopOrders $p): string => $p->name, $failed)));
         }
 
-        return $this->json(new SyncResultOutput($synced->imported, $synced->skipped), 202);
+        return $this->json(new ShopsSyncResultOutput(
+            imported: array_sum(array_map(static fn (PulledShopOrders $p): int => $p->imported, $pulled)),
+            skipped: array_sum(array_map(static fn (PulledShopOrders $p): int => $p->skipped, $pulled)),
+            failed: \count($failed),
+            connections: array_map(static fn (PulledShopOrders $p) => new ShopSyncConnectionOutput($p->connectionId, $p->name, $p->imported, $p->skipped, $p->error), $pulled),
+        ), 202);
     }
 
     private static function details(OrderInput $input): OrderDetails

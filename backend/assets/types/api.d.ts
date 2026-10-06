@@ -547,10 +547,11 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Pulls the orders the WooCommerce shops have waiting (REST API) and places the ones the app does not have yet,
-         *     as the webhook would: `imported` placed, `skipped` already imported (deleted ones included) or not placeable
-         *     (logged). A warehouse whose shop the app holds no keys for is not pulled. 502 order_sync_failed when a shop
-         *     cannot be read (nothing is kept).
+         * "Check now": the catch-up pull of every active shop connection, due or not, each in its own transaction
+         *     (docs/pdr/prd-shops-settings.md, Decisions 11). 202 with what each connection brought in — `imported` placed,
+         *     `skipped` already in the app or kept in the failed-deliveries inbox — and `error` for a shop that could not be
+         *     read (recorded in its health; the others go on). 502 order_sync_failed only when every connection failed.
+         * @description Without an active connection nothing is pulled.
          */
         post: operations["post_api_orders_sync"];
         delete?: never;
@@ -799,7 +800,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The connection's writes in a status (`?status=failed`). */
+        /**
+         * The connection's writes in a status, newest first: `?status=` pending, sent or failed (the default: what the
+         *     health counts). 404 shop_not_found; 422 for another status.
+         */
         get: operations["get_api_shops_outbox"];
         put?: never;
         post?: never;
@@ -818,7 +822,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Queues a failed write again → pending. */
+        /**
+         * Queues a write again, due now → the row as it is afterwards (pending; sent or failed once the queue has run
+         *     it). A row already sent is answered as it is. 404 shop_not_found / outbox_not_found (also another
+         *     connection's row).
+         */
         post: operations["post_api_shops_outbox_retry"];
         delete?: never;
         options?: never;
@@ -1265,11 +1273,6 @@ export interface components {
             /** The shop connection the order came from (shop_order_link); null for orders typed here or imported before connections */
             shop?: components["schemas"]["ShopRefOutput"] | null;
             pinned_comment?: components["schemas"]["PinnedCommentOutput"] | null;
-        };
-        SyncResultOutput: {
-            imported: number;
-            /** Already imported (deleted ones included), or not placeable (unknown SKU, no lines) */
-            skipped: number;
         };
         ShopSyncConnectionOutput: {
             id: number;
@@ -2358,13 +2361,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description One of these. */
+            /** @description OK. */
             202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SyncResultOutput"] | components["schemas"]["ShopsSyncResultOutput"];
+                    "application/json": components["schemas"]["ShopsSyncResultOutput"];
                 };
             };
         };

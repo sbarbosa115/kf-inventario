@@ -26,7 +26,7 @@ use App\Shared\Domain\Clock;
  * A comment from the timeline: a `comment` row signed by its author and dated now, plus its metadata row (origin
  * `app`, or `phrase` for an active quick phrase). "Also send to the shop" is checked first — the order must come
  * from an active connection whose order_note capability is on — and writes an `order_note` outbox row that the
- * `shops` queue pushes (item 5b); the comment never waits for the shop.
+ * `shops` queue pushes (PushShopUpdate) as a private note; the comment never waits for the shop.
  */
 final class AddOrderCommentHandler implements CommandHandler
 {
@@ -38,8 +38,7 @@ final class AddOrderCommentHandler implements CommandHandler
         private readonly ShopOutboxRepository $outbox,
         private readonly QuickPhrases $phrases,
         private readonly Clock $clock,
-        // The `shops` queue's adapter is item 5b's (PushShopUpdate); until it exists the row waits, pending, for it.
-        private readonly ?ShopOutboxQueue $queue = null,
+        private readonly ShopOutboxQueue $queue,
     ) {
     }
 
@@ -78,7 +77,7 @@ final class AddOrderCommentHandler implements CommandHandler
         $entry = new ShopOutbox($shop, $order, ShopCapability::OrderNote, ['comment_id' => $commentId, 'note' => $command->content], $now);
         $this->outbox->add($entry);
         $this->orders->identify($order);
-        $this->queue?->enqueue((int) $entry->id());
+        $this->queue->enqueue((int) $entry->id());
 
         return $commentId;
     }
