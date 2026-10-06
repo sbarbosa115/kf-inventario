@@ -201,7 +201,9 @@ The security audit of the restructure (`docs/security/audits/2026-10-05-restruct
 - `master` committed an `APP_SECRET` in `.env.dist`: give production a fresh one in `backend/.env.local` at cutover.
 - The invoice roles are reached by no other role (as in production): an admin sees Invoices only when given them.
 - The redesign (`docs/pdr/prd-redesign.md`): PDFs, spreadsheets and emails stay English and keep their look; the
-  Spanish texts are ours (no native review); the KF mark is a trace of a 180 px PNG until a vector file arrives;
+  Spanish texts are ours (one proofreading pass, no native review); the KF mark is a trace of a 180 px PNG until a vector file arrives;
   "Sync shop orders" still pulls one of the four WooCommerce shops; the camera works only over HTTPS (or `localhost`),
-  so it is not available on the dev stack opened from a phone by IP; the customers search covers the current page
-  only (the API pages without searching).
+  so it is not available on the dev stack opened from a phone by IP, and it was not tried on real phones (the user's
+  decision; the tests use a fake detector); the customers search covers the current page only (the API pages
+  without searching). An order is Sent only when one shipment covers all of it, as before: the shipment that
+  completes a partial order leaves it Partial.
