@@ -320,7 +320,9 @@ function Entry({
             <time
               className="kf-timeline__when"
               dateTime={comment.created_at}
-              title={comment.approximate ? t('comments.approximate') : undefined}
+              title={
+                comment.approximate ? t('comments.approximate') : undefined
+              }
             >
               {comment.approximate ? '≈ ' : ''}
               {dateTime(comment.created_at)}
@@ -369,10 +371,7 @@ function Entry({
           </span>
         )}
       </div>
-      <RowMenu
-        label={t('comments.actions', {number})}
-        actions={actions}
-      />
+      <RowMenu label={t('comments.actions', {number})} actions={actions} />
     </li>
   );
 }

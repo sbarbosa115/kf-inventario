@@ -145,9 +145,7 @@ test.describe('5 Orders: comment timeline', () => {
     await page.keyboard.type(`${text} first line`);
     await page.keyboard.press('Shift+Enter');
     await page.keyboard.type('second line');
-    await expect(box(detail)).toHaveValue(
-      `${text} first line\nsecond line`,
-    );
+    await expect(box(detail)).toHaveValue(`${text} first line\nsecond line`);
     await page.keyboard.press('Enter');
 
     const added = entry(detail, 'W00005', text);
@@ -195,9 +193,7 @@ test.describe('5 Orders: comment timeline', () => {
 
     await pin(second);
     await expect(card).toContainText(second);
-    await expect(card, 'one pinned comment per order').not.toContainText(
-      first,
-    );
+    await expect(card, 'one pinned comment per order').not.toContainText(first);
     await expect(
       row.getByRole('button', {name: `Pinned note of order W00006: ${second}`}),
     ).toBeVisible();

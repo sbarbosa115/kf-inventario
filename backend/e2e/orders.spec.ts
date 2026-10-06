@@ -223,9 +223,7 @@ test.describe('5 Orders', () => {
     await expect(timeline.getByRole('listitem').nth(1)).toContainText(
       'Smoke comment',
     );
-    await timeline
-      .getByRole('button', {name: 'Actions for comment 2'})
-      .click();
+    await timeline.getByRole('button', {name: 'Actions for comment 2'}).click();
     await page.getByRole('menuitem', {name: 'Remove'}).click();
     await page
       .getByRole('dialog', {name: 'Remove this comment?'})

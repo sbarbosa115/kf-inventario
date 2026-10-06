@@ -157,7 +157,8 @@
   position: sticky;
   bottom: calc(-1 * var(--kf-space-5));
   z-index: 1;
-  margin: var(--kf-space-3) calc(-1 * var(--kf-space-5)) calc(-1 * var(--kf-space-5));
+  margin: var(--kf-space-3) calc(-1 * var(--kf-space-5))
+    calc(-1 * var(--kf-space-5));
   padding: var(--kf-space-3) var(--kf-space-5);
   border-top: 1px solid var(--kf-border);
   background-color: var(--kf-surface-raised);

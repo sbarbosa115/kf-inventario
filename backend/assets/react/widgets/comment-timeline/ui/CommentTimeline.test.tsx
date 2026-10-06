@@ -154,8 +154,7 @@ describe('CommentTimeline', () => {
     await waitFor(() => expect(pinnedCard()).not.toBeInTheDocument());
     expect(
       api.calls.some(
-        (c) =>
-          c.method === 'DELETE' && c.path === '/orders/4/comments/13/pin',
+        (c) => c.method === 'DELETE' && c.path === '/orders/4/comments/13/pin',
       ),
     ).toBe(true);
     expect(onChanged, 'the list’s Notes column follows').toHaveBeenCalled();

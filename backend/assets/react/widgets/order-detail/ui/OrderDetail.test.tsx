@@ -248,7 +248,9 @@ describe('OrderDetail', () => {
     const detail = await panel();
 
     await userEvent.click(
-      await within(detail).findByRole('button', {name: 'Timeline of W00004: 2'}),
+      await within(detail).findByRole('button', {
+        name: 'Timeline of W00004: 2',
+      }),
     );
 
     await waitFor(() => expect(gets).toBe(2));
@@ -290,9 +292,7 @@ describe('OrderDetail', () => {
     });
     const detail = await panel();
 
-    expect(
-      await within(detail).findByText('No customer'),
-    ).toBeInTheDocument();
+    expect(await within(detail).findByText('No customer')).toBeInTheDocument();
   });
 
   it('closes with a neutral ×', async () => {

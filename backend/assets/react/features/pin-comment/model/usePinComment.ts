@@ -15,7 +15,9 @@ export function usePinComment(orderId: number) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
 
-  const toggle = async (comment: OrderComment): Promise<OrderComment | null> => {
+  const toggle = async (
+    comment: OrderComment,
+  ): Promise<OrderComment | null> => {
     setBusy(true);
     try {
       const saved = comment.pinned
