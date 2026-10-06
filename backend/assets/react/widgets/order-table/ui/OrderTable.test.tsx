@@ -41,7 +41,11 @@ const order = (
     phone: '3001',
   },
   comments_count: 2,
-  pinned_comment: null as {id: number; content: string} | null,
+  pinned_comment: null as {
+    id: number;
+    content: string;
+    created_at?: string | null;
+  } | null,
   ...extra,
 });
 
@@ -164,7 +168,7 @@ const openRowMenu = async (code: string) =>
   );
 
 describe('OrderTable', () => {
-  it('lists the first warehouse’s orders, the order number first, then customer, source, status, date and comments', async () => {
+  it('lists the first warehouse’s orders, the order number first, then customer, source, status, date and notes', async () => {
     const {api} = renderTable();
 
     const row = await rowOf('W00001');
@@ -177,7 +181,7 @@ describe('OrderTable', () => {
       'Source',
       'Status',
       'Created',
-      'Comments',
+      'Notes',
       'Actions',
     ]);
     expect(within(row).getByRole('button', {name: 'W00001'})).toHaveClass(
@@ -437,6 +441,51 @@ describe('OrderTable', () => {
     );
   });
 
+  it('shows the pinned note’s first line in the Notes column, whole in its title, else the count', async () => {
+    const {onOpenDetail} = renderTable({
+      orders: {
+        1: [
+          CREATED,
+          {
+            ...DELIVERED,
+            pinned_comment: {
+              id: 3,
+              content: 'Call before delivering\nThe gate code is 1234',
+              created_at: '2026-10-05T10:15:00-05:00',
+            },
+          },
+        ],
+      },
+    });
+
+    const pinned = within(await rowOf('W00006')).getByRole('button', {
+      name: 'Pinned note of order W00006: Call before delivering The gate code is 1234',
+    });
+    expect(pinned, 'only the first line shows').toHaveTextContent(
+      /^Call before delivering$/,
+    );
+    expect(pinned, 'the whole note on hover').toHaveAttribute(
+      'title',
+      'Call before delivering\nThe gate code is 1234',
+    );
+    expect(
+      pinned.querySelector('.fa-thumbtack'),
+      'under a pin icon',
+    ).not.toBeNull();
+    await userEvent.click(pinned);
+    expect(onOpenDetail).toHaveBeenLastCalledWith(
+      expect.objectContaining({id: 6}),
+      'comments',
+    );
+
+    expect(
+      within(await rowOf('W00001')).getByRole('button', {
+        name: 'Comments of order W00001: 2',
+      }),
+      'without a pinned note: the count, as before',
+    ).toHaveTextContent('2');
+  });
+
   it('keeps table roles and labels on every cell, so the phone cards read as rows with labelled facts', async () => {
     renderTable();
     const row = await rowOf('W00001');
@@ -459,7 +508,7 @@ describe('OrderTable', () => {
       ['Source', false],
       ['Status', false],
       ['Created', false],
-      ['Comments', false],
+      ['Notes', false],
     ]);
   });
 
@@ -492,7 +541,7 @@ describe('OrderTable', () => {
     );
   });
 
-  it('puts a filter under each header: number and customer as text, source, status and comments as lists, the date as a range', async () => {
+  it('puts a filter under each header: number and customer as text, source, status and notes as lists, the date as a range', async () => {
     const {api} = renderTable();
     await rowOf('W00001');
 
@@ -502,7 +551,7 @@ describe('OrderTable', () => {
     expect(
       within(filterRow()).getByRole('searchbox', {name: 'Filter by Customer'}),
     ).toBeInTheDocument();
-    for (const name of ['Source', 'Status', 'Created', 'Comments']) {
+    for (const name of ['Source', 'Status', 'Created', 'Notes']) {
       expect(filterButton(name)).toHaveAttribute('aria-haspopup', 'dialog');
     }
     expect(
@@ -548,7 +597,7 @@ describe('OrderTable', () => {
     ).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('finds orders by the source and by the customer column, and keeps only pinned ones from Comments', async () => {
+  it('finds orders by the source and by the customer column, and keeps only pinned ones from Notes', async () => {
     const {api} = renderTable({
       orders: {
         1: [
@@ -578,7 +627,7 @@ describe('OrderTable', () => {
       listCalls(api).at(-1)?.url.searchParams.get('filter[customer]'),
     ).toBe('ruiz');
 
-    await userEvent.click(filterButton('Comments'));
+    await userEvent.click(filterButton('Notes'));
     await userEvent.click(screen.getByRole('checkbox', {name: /Pinned only/}));
     expect(
       listCalls(api).at(-1)?.url.searchParams.getAll('filter[pinned][]'),

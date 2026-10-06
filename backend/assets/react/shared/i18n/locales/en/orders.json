@@ -72,7 +72,8 @@
     "address": "Address",
     "noAddress": "No address on file.",
     "products": "Products",
-    "comments": "Comments"
+    "comments": "Comments",
+    "pinned": "Pinned"
   },
   "products": {
     "code": "Code",
@@ -80,19 +81,14 @@
     "quantity": "Ordered",
     "empty": "This order has no products."
   },
-  "comments": {
-    "empty": "This order has no comments yet.",
-    "label": "Comment {{number}}",
-    "add": "Add a comment",
-    "save": "Save comment {{number}}",
-    "remove": "Remove comment {{number}}",
-    "blank": "Write the comment, or remove it.",
-    "saved": "The comments were saved."
-  },
   "errors": {
     "order_not_found": "This order no longer exists. Reload the list.",
     "order_sync_unavailable": "Pulling orders from the shops is not available yet.",
     "order_sync_failed": "The shops could not be reached, so no order was imported. Try again in a moment.",
     "validation_failed": "The change was refused. Reload the order and try again."
+  },
+  "notes": {
+    "column": "Notes",
+    "pinnedOf": "Pinned note of order {{code}}: {{text}}"
   }
 }

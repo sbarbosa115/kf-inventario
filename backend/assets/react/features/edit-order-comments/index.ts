@@ -1,1 +1,1 @@
-export {OrderComments} from './ui/OrderComments';
+export {editOrderComment, removeOrderComment} from './api/orderCommentsApi';

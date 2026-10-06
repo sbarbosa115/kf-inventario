@@ -1,1 +1,46 @@
-{}
+{
+  "timeline": "Comentarios del pedido {{code}}",
+  "empty": "Aún no hay comentarios. Escriba el primero abajo.",
+  "unknownAuthor": "Autor desconocido",
+  "shopAuthor": "Tienda · {{shop}}",
+  "shopNote": "Nota de la tienda",
+  "phrase": "Frase rápida",
+  "approximate": "Fecha aproximada (la del pedido): escrito antes de que los comentarios tuvieran fecha",
+  "sentToShop": "Enviado a la tienda",
+  "pinned": "Fijada",
+  "pinnedBy": "Fijada por {{name}}",
+  "pin": "Fijar",
+  "unpin": "Desfijar",
+  "pinnedDone": "El comentario quedó fijado en el pedido.",
+  "unpinnedDone": "El comentario ya no está fijado.",
+  "actions": "Acciones del comentario {{number}}",
+  "edit": "Editar",
+  "editLabel": "Editar el comentario {{number}}",
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "saved": "El comentario se guardó.",
+  "blank": "Escriba primero el comentario.",
+  "remove": "Quitar",
+  "removeTitle": "¿Quitar este comentario?",
+  "removeBody": "Sale de los comentarios del pedido. No se puede deshacer.",
+  "removed": "El comentario se quitó.",
+  "box": {
+    "label": "Escriba una nota…",
+    "placeholder": "Escriba una nota…",
+    "hint": "Enter envía · Mayús+Enter empieza una línea nueva",
+    "send": "Enviar",
+    "alsoToShop": "Enviar también a {{shop}} como nota del pedido"
+  },
+  "phrases": {
+    "label": "Frases rápidas",
+    "add": "Agregar «{{text}}» como comentario",
+    "added": "Se agregó «{{text}}»."
+  },
+  "errors": {
+    "shop_note_unavailable": "Este pedido no puede enviar notas a su tienda ahora (la conexión está apagada o no envía notas). El comentario no se guardó: envíelo sin la tienda.",
+    "quick_phrase_not_found": "Esa frase rápida ya no existe. Vuelva a abrir el pedido.",
+    "comment_not_found": "Ese comentario ya no existe. Vuelva a abrir el pedido.",
+    "order_not_found": "Este pedido ya no existe. Vuelva a cargar la lista.",
+    "validation_failed": "Escriba primero el comentario."
+  }
+}

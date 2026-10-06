@@ -1,1 +1,164 @@
-/* The order's comment timeline (widgets/comment-timeline): shops-settings' item 8 fills it. Tokens only. */
+/* The order's comment timeline (widgets/comment-timeline, shops-settings item 8): the pinned card, the entries with
+   their avatar, and the write box kept at the bottom of the panel while its body scrolls. Tokens only. */
+.kf-timeline__pinned {
+  margin-bottom: var(--kf-space-4);
+  padding: var(--kf-space-3) var(--kf-space-4);
+  border: 1px solid var(--kf-accent);
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-accent-soft);
+}
+
+.kf-timeline__pinned-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kf-space-2);
+}
+
+.kf-timeline__pinned-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kf-space-2);
+  font-size: var(--kf-text-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kf-timeline__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kf-timeline__entry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--kf-space-3);
+  align-items: start;
+  padding: var(--kf-space-3) var(--kf-space-2);
+  border-radius: var(--kf-radius-control);
+}
+
+.kf-timeline__entry + .kf-timeline__entry {
+  border-top: 1px solid var(--kf-border);
+}
+
+.kf-timeline__entry--fresh {
+  animation: kf-timeline-flash calc(var(--kf-duration) * 8) var(--kf-ease);
+}
+
+@keyframes kf-timeline-flash {
+  from {
+    background-color: var(--kf-accent-soft);
+  }
+
+  to {
+    background-color: transparent;
+  }
+}
+
+.kf-timeline__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--kf-radius-pill);
+  background-color: var(--kf-neutral-soft);
+  color: var(--kf-neutral-text);
+  font-size: var(--kf-text-label);
+  font-weight: 600;
+}
+
+.kf-timeline__avatar--shop {
+  background-color: var(--kf-info-soft);
+  color: var(--kf-info-text);
+}
+
+.kf-timeline__body {
+  min-width: 0;
+}
+
+.kf-timeline__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--kf-space-1) var(--kf-space-2);
+  font-size: var(--kf-text-sm);
+}
+
+.kf-timeline__author {
+  font-weight: 600;
+}
+
+.kf-timeline__when,
+.kf-timeline__muted {
+  color: var(--kf-text-muted);
+}
+
+.kf-timeline__when[title] {
+  cursor: help;
+  text-decoration: underline dotted;
+}
+
+.kf-timeline__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kf-space-1);
+  padding: 0 var(--kf-space-2);
+  border-radius: var(--kf-radius-pill);
+  background-color: var(--kf-neutral-soft);
+  color: var(--kf-neutral-text);
+  font-size: var(--kf-text-label);
+}
+
+.kf-timeline__tag--pinned {
+  background-color: var(--kf-accent-soft);
+  color: var(--kf-text);
+}
+
+.kf-timeline__text {
+  margin: var(--kf-space-1) 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.kf-timeline__muted {
+  margin: var(--kf-space-1) 0 0;
+  font-size: var(--kf-text-sm);
+}
+
+.kf-timeline__sent {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kf-space-1);
+  margin-top: var(--kf-space-1);
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+}
+
+.kf-timeline__edit {
+  margin-top: var(--kf-space-2);
+}
+
+.kf-timeline__edit-actions {
+  display: flex;
+  gap: var(--kf-space-2);
+  margin-top: var(--kf-space-2);
+}
+
+.kf-timeline__empty {
+  margin-bottom: var(--kf-space-3);
+}
+
+/* Kept at the bottom of the panel while the body scrolls (the panel's body has --kf-space-5 of padding). */
+.kf-timeline__box {
+  position: sticky;
+  bottom: calc(-1 * var(--kf-space-5));
+  z-index: 1;
+  margin: var(--kf-space-3) calc(-1 * var(--kf-space-5)) calc(-1 * var(--kf-space-5));
+  padding: var(--kf-space-3) var(--kf-space-5);
+  border-top: 1px solid var(--kf-border);
+  background-color: var(--kf-surface-raised);
+}

@@ -52,3 +52,26 @@
 .kf-order-detail__muted {
   color: var(--kf-text-muted);
 }
+
+/* The pinned comment at the top of the order: one line, a tap goes to the comments. */
+.kf-order-detail__pinned {
+  display: flex;
+  align-items: center;
+  gap: var(--kf-space-2);
+  width: 100%;
+  min-height: var(--kf-target);
+  padding: var(--kf-space-2) var(--kf-space-3);
+  border: 1px solid var(--kf-accent);
+  border-radius: var(--kf-radius-control);
+  background-color: var(--kf-accent-soft);
+  color: var(--kf-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.kf-order-detail__pinned-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
