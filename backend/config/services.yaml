@@ -1,0 +1,99 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+  locale: 'en'
+  test: 'en'
+  # The printer email of a new order (Ordering): who else gets a copy.
+  ordering.order_email.cc: ['sales@klassicfab.com']
+  mailer:
+    from_address: '%env(MAILER_FROM_ADDRESS)%'
+    from_name: '%env(MAILER_FROM_NAME)%'
+    printer_address: '%env(MAILER_PRINTER_ADDRESS)%'
+    cc:
+      - 'sales@klassicfab.com'
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  # A write use case's handler is registered on the command bus by implementing the marker: the Application layer
+  # never names Messenger (deptrac.yaml).
+  _instanceof:
+    App\Shared\Application\Command\CommandHandler:
+      tags: [{name: messenger.message_handler, bus: command.bus}]
+    # Handled after the command that published them has committed (App\Shared\Application\Event\EventBus).
+    App\Shared\Application\Event\EventHandler:
+      tags: [{name: messenger.message_handler, bus: command.bus}]
+
+  App\:
+    resource: '../src/'
+    exclude:
+      - '../src/DependencyInjection/'
+      - '../src/Kernel.php'
+      # Data, not services: domain models, errors and events, and API input/output DTOs.
+      - '../src/*/Domain/Model/'
+      - '../src/*/Domain/Error/'
+      - '../src/*/Domain/Event/'
+      - '../src/*/UI/Http/Input/'
+      - '../src/*/UI/Http/Output/'
+      # Exceptions and the attribute an endpoint declares its response with.
+      - '../src/Shared/UI/Http/ApiException.php'
+      - '../src/Shared/UI/Http/ApiValidationException.php'
+      - '../src/Shared/UI/Http/ApiResponse.php'
+      # Needs NelmioApiDocBundle, which only dev and test install: registered below for those.
+      - '../src/Shared/UI/Http/OpenApi/'
+
+  # Settings › Email, with the env as the fallback of each value (docs/pdr/prd-shops-settings.md, Decisions 3). The
+  # order email reads it through Ordering's OrderEmailSettings port.
+  App\Settings\Application\Query\EmailSettings:
+    arguments:
+      $envDsn: '%env(MAILER_DSN)%'
+      $envFromAddress: '%env(MAILER_FROM_ADDRESS)%'
+      $envFromName: '%env(MAILER_FROM_NAME)%'
+      $envPrinterAddress: '%env(MAILER_PRINTER_ADDRESS)%'
+      $envCc: '%ordering.order_email.cc%'
+
+  gedmo.listener.softdeleteable:
+    class: Gedmo\SoftDeleteable\SoftDeleteableListener
+    tags:
+      - {name: doctrine.event_listener, event: loadClassMetadata}
+      - {name: doctrine.event_listener, event: onFlush}
+      - {name: doctrine.event_listener, event: postFlush}
+
+  # The order's status history (moved from App\EventListener\OrderListener): the same two tags, one listener each, so
+  # every insert or update of an order writes exactly one order_status row.
+  order.listener.post.persist:
+    class: 'App\Ordering\Infrastructure\Persistence\OrderStatusHistoryListener'
+    arguments: ['@doctrine.orm.entity_manager']
+    tags:
+      - {
+          name: doctrine.event_listener,
+          entity: App\Ordering\Domain\Model\Order,
+          event: postPersist,
+          priority: 1,
+        }
+
+  order.listener.post.update:
+    class: 'App\Ordering\Infrastructure\Persistence\OrderStatusHistoryListener'
+    arguments: ['@doctrine.orm.entity_manager']
+    tags:
+      - {
+          name: doctrine.event_listener,
+          entity: App\Ordering\Domain\Model\Order,
+          event: postUpdate,
+          priority: 1,
+        }
+
+when@dev:
+  services:
+    App\Shared\UI\Http\OpenApi\ApiResponseDescriber:
+      tags: [{name: nelmio_api_doc.route_describer, priority: -300}]
+
+when@test:
+  services:
+    App\Shared\UI\Http\OpenApi\ApiResponseDescriber:
+      tags: [{name: nelmio_api_doc.route_describer, priority: -300}]

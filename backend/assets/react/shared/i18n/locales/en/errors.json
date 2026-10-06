@@ -1,0 +1,10 @@
+{
+  "forbidden": "You do not have permission to do this.",
+  "not_found": "This record no longer exists.",
+  "validation_failed": "Check the highlighted fields.",
+  "notFoundPage": {
+    "title": "Page not found",
+    "body": "The address does not match any page.",
+    "home": "Go to the product list"
+  }
+}

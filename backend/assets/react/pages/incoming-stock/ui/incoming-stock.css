@@ -1,0 +1,5 @@
+/* Incoming: approved rows fade out before the list reloads. */
+.incoming-row--leaving {
+  opacity: 0;
+  transition: opacity var(--kf-duration) var(--kf-ease);
+}

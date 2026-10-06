@@ -1,0 +1,103 @@
+{
+  "warehouse": {
+    "none": "There are no warehouses yet. Add one first."
+  },
+  "count": {
+    "products_one": "{{count}} product",
+    "products_other": "{{count}} products",
+    "units_one": "{{count}} unit",
+    "units_other": "{{count}} units"
+  },
+  "errors": {
+    "insufficient_stock": "There is not enough stock of {{code}}: {{available}} available.",
+    "stock_not_found": "There is no stock of one of these products in this warehouse.",
+    "warehouse_not_found": "This warehouse no longer exists.",
+    "product_not_found": "One of these products does not exist.",
+    "forbidden": "You do not have permission to do this."
+  },
+  "upload": {
+    "title": "Upload a stock sheet",
+    "steps": "How to upload a stock sheet",
+    "step1": "Download the template",
+    "step1Text": "Start from the empty template, or from the sheet of every product to change the quantities of the ones you have.",
+    "downloadTemplate": "Download the template",
+    "downloadAll": "Download every product",
+    "step2": "Fill in the quantities",
+    "step2Text": "Write how many arrived in each row's Quantity column. A row with a new code creates the product: code, title, detail, quantity and price.",
+    "step3": "Choose the warehouse and the file",
+    "file": "Stock sheet",
+    "drop": "Drop the stock sheet here, or choose a file",
+    "dropHint": "Excel, .xls or .xlsx",
+    "kilobytes": "{{size}} KB",
+    "removeFile": "Remove {{name}}",
+    "wrongType": "{{name}} is not an Excel sheet. Choose an .xls or .xlsx file.",
+    "fileRequired": "Choose the stock sheet to upload.",
+    "submit": "Upload",
+    "stored_one": "{{count}} row stored in {{warehouse}}",
+    "stored_other": "{{count}} rows stored in {{warehouse}}",
+    "storedNext": "The quantities are in the warehouse's stock now.",
+    "openProducts": "Open the products of {{warehouse}}",
+    "unsupported_media": "The file is not an Excel spreadsheet (xls or xlsx).",
+    "invalid_spreadsheet": "The spreadsheet could not be read. Use the template and try again."
+  },
+  "scan": {
+    "title": "Scan stock",
+    "subtitle": "Choose the warehouse and what the scans do, then scan.",
+    "intro": "What changed: the warehouse and Add or Remove are chosen first and remembered. Adding saves in one tap; removing asks first.",
+    "step1": "Warehouse and what the scans do",
+    "step2": "Scan",
+    "mode": "What the scans do",
+    "modeAdd": "Add stock",
+    "modeRemove": "Remove stock",
+    "sound": "Scan sound",
+    "list": "Scanned",
+    "empty": "Nothing scanned yet. Scan a barcode or type it above.",
+    "checking": "Checking…",
+    "notAProduct": "Not a product",
+    "notChecked": "Could not be checked",
+    "quantityOf": "Quantity of {{code}}",
+    "less": "One less {{code}}",
+    "more": "One more {{code}}",
+    "removeLine": "Remove {{code}}",
+    "undo": "Undo last scan",
+    "badQuantity": "Every quantity must be a whole number of 1 or more.",
+    "leftOut_one": "{{count}} code that is not a product is left out.",
+    "leftOut_other": "{{count}} codes that are not products are left out.",
+    "addTo": "Add to {{warehouse}}",
+    "removeFrom": "Remove from {{warehouse}}",
+    "confirmRemoveTitle": "Remove from {{warehouse}}?",
+    "confirmRemoveBody": "{{units}} of {{products}} will be taken out of {{warehouse}}'s stock.",
+    "confirmRemove": "Remove {{units}}",
+    "added": "Added {{units}} to {{warehouse}}.",
+    "removed": "Removed {{units}} from {{warehouse}}."
+  },
+  "incoming": {
+    "title": "Incoming",
+    "subtitle": "in {{warehouse}} · {{products}} · {{units}}",
+    "approveAll": "Approve all ({{count}})",
+    "confirmTitle": "Approve everything incoming?",
+    "confirmBody": "Approve {{products}}, {{units}}, into {{warehouse}}'s stock?",
+    "confirm": "Approve {{products}}",
+    "approved_one": "{{count}} incoming product was approved.",
+    "approved_other": "{{count}} incoming products were approved.",
+    "emptyTitle": "Nothing waiting",
+    "empty": "Products moved here from another warehouse show up here.",
+    "columns": {
+      "code": "Code",
+      "title": "Product",
+      "quantity": "Quantity"
+    }
+  },
+  "warehouses": {
+    "title": "Warehouses",
+    "list": "Every warehouse",
+    "rename": "Rename",
+    "renameHint": "Rename {{warehouse}}",
+    "nameLabel": "New name for {{warehouse}}",
+    "renameKeys": "Enter saves, Escape cancels.",
+    "empty": "There are no warehouses yet.",
+    "required": "Type a name for the warehouse.",
+    "tooLong": "This value is too long. It should have 255 characters or less.",
+    "renamed": "{{from}} is now {{to}}."
+  }
+}

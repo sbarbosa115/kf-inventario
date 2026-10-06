@@ -1,0 +1,67 @@
+/* The orders list: the order number as the way into the detail, and the customer with the email under it. */
+.kf-order-table__code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--kf-link);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kf-order-table__code:hover {
+  text-decoration: underline;
+}
+
+.kf-order-table__customer {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kf-order-table__muted {
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-label);
+}
+
+.kf-order-table__search {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+@media (max-width: 599px) {
+  .kf-order-table__customer {
+    align-items: flex-end;
+  }
+}
+
+/* The Notes column (shops-settings item 8): the pinned comment's first line under a pin, cut to the column. */
+.kf-order-table__pinned {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kf-space-2);
+  max-width: 16rem;
+  min-height: var(--kf-target);
+  padding: 0 var(--kf-space-2);
+  border: 0;
+  border-radius: var(--kf-radius-control);
+  background: transparent;
+  color: var(--kf-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.kf-order-table__pinned:hover {
+  background-color: var(--kf-surface-sunken);
+}
+
+.kf-order-table__pinned .fa-thumbtack {
+  color: var(--kf-accent);
+}
+
+.kf-order-table__pinned-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

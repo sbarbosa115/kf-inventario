@@ -1,0 +1,99 @@
+security:
+  password_hashers:
+    App\Identity\Domain\Model\User: bcrypt
+
+  providers:
+    database_users:
+      entity: {class: App\Identity\Domain\Model\User, property: username}
+
+  role_hierarchy:
+    ROLE_SUPER_ADMIN:
+      - ROLE_ADMIN
+    ROLE_INVENTORY: [ROLE_USER]
+    ROLE_ADMIN:
+      - ROLE_UPDATE_ORDERS
+      - ROLE_MANAGE_CUSTOMERS
+      - ROLE_MANAGE_INVENTORY
+      - ROLE_MANAGE_ORDERS
+      - ROLE_MANAGE_USERS
+      - ROLE_MANAGE_WAREHOUSES
+      - ROLE_USER
+    ROLE_MANAGE_INVENTORY:
+      - ROLE_CAN_EDIT_INVENTORY
+      - ROLE_CAN_READ_INVENTORY
+      - ROLE_CAN_DELETE_INVENTORY
+      - ROLE_USER
+    ROLE_MANAGE_ORDERS:
+      - ROLE_CAN_CREATE_ORDERS
+      - ROLE_CAN_READ_ORDERS
+      - ROLE_CAN_UPDATE_ORDERS
+      - ROLE_CAN_PREPARING_ORDERS
+      - ROLE_CAN_DELETE_ORDERS
+      - ROLE_CAN_SYNC_ORDERS
+      - ROLE_USER
+    ROLE_UPDATE_ORDERS:
+      - ROLE_CAN_CREATE_ORDERS
+      - ROLE_CAN_READ_ORDERS
+      - ROLE_CAN_UPDATE_ORDERS
+      - ROLE_USER
+    ROLE_MANAGE_USERS:
+      - ROLE_CAN_CREATE_USERS
+      - ROLE_CAN_READ_USERS
+      - ROLE_CAN_UPDATE_USERS
+      - ROLE_CAN_DELETE_USERS
+      - ROLE_USER
+    ROLE_MANAGE_WAREHOUSES:
+      - ROLE_CAN_CREATE_WAREHOUSES
+      - ROLE_CAN_READ_WAREHOUSES
+      - ROLE_CAN_EDIT_WAREHOUSES
+      - ROLE_CAN_DELETE_WAREHOUSES
+      - ROLE_USER
+
+  firewalls:
+    dev:
+      pattern: ^/(_profiler|_wdt|build)/
+      security: false
+    main:
+      lazy: true
+      provider: database_users
+      # The React app signs in with JSON (POST /api/v1/auth/login) and keeps a session cookie; the legacy Twig pages
+      # share that session while they are being replaced.
+      json_login:
+        check_path: api_auth_login
+        username_path: username
+        password_path: password
+        success_handler: App\Identity\UI\Http\Security\LoginSuccessHandler
+        failure_handler: App\Identity\UI\Http\Security\LoginFailureHandler
+      logout:
+        path: api_auth_logout
+      remember_me:
+        secret: '%kernel.secret%'
+        lifetime: 604800 # 1 week in seconds
+        # The whole site: the API lives under /api, the pages under /admin.
+        path: /
+        remember_me_parameter: remember_me
+      entry_point: App\Shared\UI\Http\Security\JsonEntryPoint
+
+  # The roles above are the production roles, unchanged; each endpoint asks for the role its legacy page asked for.
+  access_control:
+    - {path: ^/api/v1/auth/login$, roles: PUBLIC_ACCESS}
+    # WooCommerce's old webhook URL: a tombstone (410 webhook_moved, the hit counted) for a shop never re-pointed.
+    - {path: ^/admin/order/1H39j0jpQPsWL958v9R4$, roles: PUBLIC_ACCESS}
+    # Each shop connection's webhook (shops-settings): the token names the connection, a signature is required.
+    - {path: ^/webhooks/shops/, roles: PUBLIC_ACCESS}
+    - {path: ^/api/, roles: ROLE_USER}
+    # The legacy Twig pages, until each is replaced (they redirect to the React sign-in page).
+    - {
+        path: ^/admin/(product|order|customer|invoice|user|warehouse|test-email)(/|$),
+        roles: ROLE_USER,
+      }
+    # The React app's shell and its build: the app asks /api/v1/auth/me and shows the sign-in page when needed.
+    - {path: ^/, roles: PUBLIC_ACCESS}
+
+when@test:
+  security:
+    password_hashers:
+      # Cheap hashing in tests (the production hasher stays bcrypt).
+      App\Identity\Domain\Model\User:
+        algorithm: bcrypt
+        cost: 4

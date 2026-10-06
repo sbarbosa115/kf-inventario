@@ -1,0 +1,274 @@
+/* Settings (/admin/settings/*): the tabs, the General tab's cards. Item 0's; items 4 and 6 add their tabs' rules in
+   their own files. Tokens only. */
+.kf-settings__tabs {
+  display: flex;
+  gap: var(--kf-space-1);
+  margin-bottom: var(--kf-space-4);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--kf-border);
+  scrollbar-width: thin;
+}
+
+.kf-settings__tab {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 var(--kf-space-3);
+  border-bottom: 2px solid transparent;
+  color: var(--kf-text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.kf-settings__tab:hover {
+  color: var(--kf-text);
+  text-decoration: none;
+}
+
+.kf-settings__tab.is-active {
+  border-bottom-color: var(--kf-accent);
+  color: var(--kf-text);
+}
+
+.kf-settings__tab:focus-visible {
+  outline: 2px solid var(--kf-focus);
+  outline-offset: -2px;
+}
+
+@media (pointer: coarse) {
+  .kf-settings__tab {
+    min-height: var(--kf-target);
+  }
+}
+
+.kf-settings__general {
+  display: grid;
+  gap: var(--kf-space-4);
+  max-width: var(--kf-form-max);
+}
+
+.kf-settings__card {
+  padding: var(--kf-space-4);
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-surface);
+}
+
+.kf-settings__card-title {
+  margin: 0 0 var(--kf-space-3);
+  font-size: var(--kf-text-lg);
+  font-weight: 600;
+}
+
+.kf-settings__facts {
+  display: grid;
+  gap: var(--kf-space-3);
+  margin: 0;
+}
+
+.kf-settings__facts dt {
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-label);
+  font-weight: 500;
+}
+
+.kf-settings__facts dd {
+  margin: 0;
+}
+
+.kf-settings__legacy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--kf-space-3);
+}
+
+.kf-settings__legacy p {
+  margin: 0;
+}
+
+.kf-settings__muted {
+  color: var(--kf-text-muted);
+}
+
+/* Item 4: the Email, Analytics and Quick phrases tabs. */
+.kf-settings__label {
+  display: block;
+  margin-bottom: var(--kf-space-1);
+  font-weight: 500;
+}
+
+.kf-settings__source-note {
+  margin: 0 0 var(--kf-space-3);
+}
+
+.kf-settings__password-hint {
+  display: block;
+  margin: calc(-1 * var(--kf-space-2)) 0 var(--kf-space-3);
+}
+
+.kf-settings__cc {
+  margin: 0 0 var(--kf-space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.kf-settings__cc-chip {
+  cursor: default;
+}
+
+.kf-settings__cc-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--kf-radius-pill);
+  background: transparent;
+  color: var(--kf-text-muted);
+  cursor: pointer;
+}
+
+.kf-settings__cc-remove:hover {
+  color: var(--kf-text);
+}
+
+.kf-settings__cc-remove:focus-visible {
+  outline: 2px solid var(--kf-focus);
+}
+
+@media (pointer: coarse) {
+  .kf-settings__cc-remove {
+    min-width: var(--kf-target);
+    min-height: var(--kf-target);
+  }
+}
+
+.kf-settings__cc-add {
+  display: flex;
+  gap: var(--kf-space-2);
+}
+
+.kf-settings__cc-add .form-control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The add button keeps its touch width: the field beside it shrinks, not the button. */
+.kf-settings__cc-add .kf-btn {
+  flex: none;
+}
+
+.kf-phrases {
+  display: grid;
+  gap: var(--kf-space-4);
+  max-width: var(--kf-form-max);
+}
+
+.kf-phrases > p {
+  margin: 0;
+}
+
+.kf-phrases__add {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kf-space-2);
+}
+
+.kf-phrases__add-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.kf-phrases__add .kf-btn {
+  margin-top: 2rem;
+}
+
+.kf-phrases__list {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-surface);
+  list-style: none;
+}
+
+.kf-phrases__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kf-space-2);
+  padding: var(--kf-space-2) var(--kf-space-3);
+  border-bottom: 1px solid var(--kf-border);
+}
+
+.kf-phrases__row:last-child {
+  border-bottom: 0;
+}
+
+.kf-phrases__row.is-inactive .kf-phrases__text {
+  color: var(--kf-text-muted);
+  text-decoration: line-through;
+}
+
+.kf-phrases__text {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.kf-phrases__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kf-space-1);
+}
+
+.kf-phrases__switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kf-space-2);
+  min-height: 44px;
+  margin: 0 var(--kf-space-2) 0 0;
+  cursor: pointer;
+}
+
+.kf-phrases__switch input {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.kf-phrases__edit {
+  flex: 1 1 100%;
+}
+
+.kf-phrases__edit .form-group {
+  margin-bottom: var(--kf-space-2);
+}
+
+.kf-phrases__edit-actions {
+  display: flex;
+  gap: var(--kf-space-2);
+}
+
+.kf-phrases__preview {
+  padding: var(--kf-space-3);
+  border: 1px dashed var(--kf-border-strong);
+  border-radius: var(--kf-radius-card);
+}
+
+.kf-phrases__preview-title {
+  margin: 0 0 var(--kf-space-2);
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-label);
+  font-weight: 600;
+}
+
+.kf-phrases__chip {
+  cursor: default;
+}

@@ -1,0 +1,39 @@
+{
+  "title": "Getting ready · {{code}}",
+  "titleLoading": "Getting ready",
+  "description": "Scan each product as it goes into the box, with the camera or the barcode box.",
+  "scanner": "Scanner",
+  "list": "Products of the order",
+  "progress": "Shipped {{shipped}} of {{ordered}} · this shipment {{current}}",
+  "progressOf": "Progress of {{code}}",
+  "inStock": "In stock {{stock}}",
+  "states": {
+    "complete": "Complete",
+    "shipped": "Shipped",
+    "short": "Short of stock"
+  },
+  "less": "One less {{code}}",
+  "more": "One more {{code}}",
+  "thisShipmentOf": "This shipment of {{code}}",
+  "refusals": {
+    "not_in_order": "{{code}} is not on this order.",
+    "limit": "Nothing more of {{code}} is left to ship.",
+    "no_inventory": "The warehouse holds no more {{code}}."
+  },
+  "nothingYet": "Scan the products to ship.",
+  "closed": "This order was already sent: it takes no more shipments.",
+  "ship_one": "Ship {{count}} product",
+  "ship_other": "Ship {{count}} products",
+  "noProducts": "This order has no products.",
+  "savedPartial": "Shipment saved: order {{code}} is partial.",
+  "savedSent": "Shipment saved: order {{code}} is sent.",
+  "notFound": "This order no longer exists.",
+  "backToList": "Back to the orders",
+  "errors": {
+    "insufficient_stock": "The warehouse does not hold enough of {{code}} ({{available}} available).",
+    "partial_exceeds_order": "This shipment holds more than what is left of the order, or the order was already sent. Reload the page.",
+    "stock_not_found": "The warehouse has none of one of these products.",
+    "order_not_found": "This order no longer exists.",
+    "validation_failed": "Add at least one product to the shipment."
+  }
+}

@@ -1,0 +1,77 @@
+parameters:
+  # Adds a fallback DATABASE_URL if the env var is not set.
+  # This allows you to run cache:warmup even if your
+  # environment variables are not available yet.
+  # You should not need to change this value.
+  env(DATABASE_URL): ''
+
+doctrine:
+  dbal:
+    # configure these for your database server
+    driver: 'pdo_mysql'
+    charset: utf8mb4
+    default_table_options:
+      charset: utf8
+      collate: utf8_unicode_ci
+
+    url: '%env(resolve:DATABASE_URL)%'
+  orm:
+    naming_strategy: doctrine.orm.naming_strategy.underscore
+    auto_mapping: false
+    mappings:
+      # One mapping per bounded context, each in src/<Context>/Domain/Model. The tables keep the names, columns
+      # and keys production has (docs/pdr/prd-restructure.md, "Database invariance"): every entity names its
+      # table, and the naming strategy above must not change.
+      Identity:
+        is_bundle: false
+        type: attribute
+        dir: '%kernel.project_dir%/src/Identity/Domain/Model'
+        prefix: 'App\Identity\Domain\Model'
+        alias: Identity
+      Inventory:
+        is_bundle: false
+        type: attribute
+        dir: '%kernel.project_dir%/src/Inventory/Domain/Model'
+        prefix: 'App\Inventory\Domain\Model'
+        alias: Inventory
+      Customers:
+        is_bundle: false
+        type: attribute
+        dir: '%kernel.project_dir%/src/Customers/Domain/Model'
+        prefix: 'App\Customers\Domain\Model'
+        alias: Customers
+      Ordering:
+        is_bundle: false
+        type: attribute
+        dir: '%kernel.project_dir%/src/Ordering/Domain/Model'
+        prefix: 'App\Ordering\Domain\Model'
+        alias: Ordering
+      Invoicing:
+        is_bundle: false
+        type: attribute
+        dir: '%kernel.project_dir%/src/Invoicing/Domain/Model'
+        prefix: 'App\Invoicing\Domain\Model'
+        alias: Invoicing
+      Audit:
+        is_bundle: false
+        type: attribute
+        dir: '%kernel.project_dir%/src/Audit/Domain/Model'
+        prefix: 'App\Audit\Domain\Model'
+        alias: Audit
+      # Added by shops-settings (docs/pdr/prd-shops-settings.md): app_setting and quick_phrase, new tables only.
+      Settings:
+        is_bundle: false
+        type: attribute
+        dir: '%kernel.project_dir%/src/Settings/Domain/Model'
+        prefix: 'App\Settings\Domain\Model'
+        alias: Settings
+    filters:
+      softdeleteable:
+        class: Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter
+        enabled: true
+
+when@test:
+  doctrine:
+    dbal:
+      # The suite runs against app_test, built from the migrations (composer test:prepare).
+      dbname_suffix: '_test%env(default::TEST_TOKEN)%'

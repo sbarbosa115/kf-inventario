@@ -1,0 +1,436 @@
+/* The filter kit (docs/pdr/prd-shops-settings.md, "Screen proposals" 1): the filter row, its buttons and panels, the
+   active-filter chips, the phone's bottom sheet and the pager. Tokens only. */
+
+/* ---- The filter row ------------------------------------------------------------------------------------- */
+.kf-table .kf-table__filters td {
+  height: auto;
+  padding: var(--kf-space-1) var(--kf-space-2);
+  border-top: 1px solid var(--kf-border);
+  background-color: var(--kf-surface-sunken);
+}
+
+.kf-filter-text {
+  min-width: 96px;
+  height: 32px;
+  padding: 0 var(--kf-space-2);
+  font-size: var(--kf-text-sm);
+}
+
+.kf-filter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kf-space-2);
+  width: 100%;
+  min-width: 96px;
+  min-height: 32px;
+  padding: 0 var(--kf-space-2);
+  border: 1px solid var(--kf-border-strong);
+  border-radius: var(--kf-radius-control);
+  background-color: var(--kf-surface);
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.kf-filter-button:hover {
+  background-color: var(--kf-surface-sunken);
+}
+
+.kf-filter-button:focus-visible {
+  outline: 2px solid var(--kf-focus);
+  outline-offset: 1px;
+}
+
+.kf-filter-button.is-active {
+  border-color: var(--kf-accent);
+  background-color: var(--kf-accent-soft);
+  color: var(--kf-text);
+  font-weight: 500;
+}
+
+.kf-filter-button__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kf-filter-button .fas {
+  font-size: 0.75em;
+  opacity: 0.7;
+}
+
+@media (pointer: coarse) {
+  .kf-filter-text,
+  .kf-filter-button {
+    min-height: var(--kf-target);
+  }
+}
+
+/* ---- The panel a filter button opens -------------------------------------------------------------------- */
+.kf-filter-popover {
+  position: fixed;
+  z-index: var(--kf-z-popover);
+  min-width: 240px;
+  max-width: min(360px, calc(100vw - 16px));
+  max-height: min(420px, 70vh);
+  overflow-y: auto;
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-surface-raised);
+  box-shadow: var(--kf-shadow-float);
+  color: var(--kf-text);
+}
+
+.kf-filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kf-space-3);
+  padding: var(--kf-space-3);
+}
+
+.kf-filter-panel__footer {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--kf-border);
+  padding-top: var(--kf-space-2);
+}
+
+.kf-filter-checklist {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.kf-filter-checklist__option {
+  display: flex;
+  align-items: center;
+  gap: var(--kf-space-2);
+  min-height: 36px;
+  margin: 0;
+  padding: 0 var(--kf-space-2);
+  border-radius: var(--kf-radius-control);
+  font-size: var(--kf-text-sm);
+  cursor: pointer;
+}
+
+.kf-filter-checklist__option:hover {
+  background-color: var(--kf-surface-sunken);
+}
+
+.kf-filter-checklist__label {
+  flex: 1 1 auto;
+}
+
+.kf-filter-checklist__count {
+  color: var(--kf-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.kf-filter-empty {
+  margin: 0;
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+}
+
+.kf-filter-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kf-space-2);
+}
+
+.kf-filter-dates__fields,
+.kf-filter-range__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kf-space-2);
+}
+
+.kf-filter-dates,
+.kf-filter-range {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kf-space-3);
+}
+
+.kf-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kf-space-1);
+  margin: 0;
+}
+
+.kf-filter-field__label {
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-label);
+  font-weight: 500;
+}
+
+@media (pointer: coarse) {
+  .kf-filter-checklist__option,
+  .kf-filter-field .form-control {
+    min-height: var(--kf-target);
+  }
+}
+
+/* ---- The active filters above the table ----------------------------------------------------------------- */
+.kf-data-table__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kf-space-2);
+  margin-bottom: var(--kf-space-3);
+}
+
+.kf-data-table__filters:empty {
+  display: none;
+}
+
+.kf-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kf-space-2);
+}
+
+.kf-active-filters__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kf-space-1);
+  min-height: 32px;
+  padding: 0 var(--kf-space-1) 0 var(--kf-space-3);
+  border: 1px solid var(--kf-accent);
+  border-radius: var(--kf-radius-pill);
+  background-color: var(--kf-accent-soft);
+  color: var(--kf-text);
+  font-size: var(--kf-text-sm);
+}
+
+.kf-active-filters__text {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kf-active-filters__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--kf-radius-pill);
+  background: transparent;
+  color: var(--kf-text-muted);
+  cursor: pointer;
+}
+
+.kf-active-filters__remove:hover {
+  background-color: var(--kf-surface);
+  color: var(--kf-text);
+}
+
+@media (pointer: coarse) {
+  .kf-active-filters__chip {
+    min-height: var(--kf-target);
+  }
+
+  .kf-active-filters__remove {
+    width: var(--kf-target);
+    height: var(--kf-target);
+  }
+}
+
+.kf-filters-button.is-active {
+  border-color: var(--kf-accent);
+  background-color: var(--kf-accent-soft);
+}
+
+/* ---- The pager -------------------------------------------------------------------------------------------- */
+.kf-pager {
+  flex-wrap: wrap;
+}
+
+.kf-pager__size {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kf-space-2);
+  margin: 0;
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+}
+
+.kf-pager__size select {
+  width: auto;
+}
+
+@media (pointer: coarse) {
+  .kf-pager .kf-btn,
+  .kf-pager__size select {
+    min-height: var(--kf-target);
+  }
+}
+
+/* ---- The phone's bottom sheet ------------------------------------------------------------------------------ */
+.kf-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: var(--kf-z-dialog);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.kf-sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: var(--kf-backdrop);
+  animation: kf-fade var(--kf-duration) var(--kf-ease);
+}
+
+.kf-sheet__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 88dvh;
+  border-radius: var(--kf-radius-card) var(--kf-radius-card) 0 0;
+  background-color: var(--kf-surface-raised);
+  box-shadow: var(--kf-shadow-float);
+  color: var(--kf-text);
+  animation: kf-sheet-in var(--kf-duration) var(--kf-ease);
+}
+
+.kf-sheet__panel:focus {
+  outline: none;
+}
+
+@keyframes kf-sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+.kf-sheet__handle {
+  width: 40px;
+  height: 4px;
+  margin: var(--kf-space-2) auto 0;
+  border-radius: var(--kf-radius-pill);
+  background-color: var(--kf-border-strong);
+}
+
+.kf-sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--kf-space-2) var(--kf-space-4);
+  border-bottom: 1px solid var(--kf-border);
+}
+
+.kf-sheet__title {
+  margin: 0;
+  font-size: var(--kf-text-lg);
+  font-weight: 600;
+}
+
+.kf-sheet__body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--kf-space-2) var(--kf-space-4);
+}
+
+.kf-sheet__sort {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kf-space-1);
+  margin: var(--kf-space-2) 0 var(--kf-space-3);
+}
+
+.kf-sheet__sort select {
+  min-height: var(--kf-target);
+}
+
+.kf-sheet__section {
+  border-top: 1px solid var(--kf-border);
+}
+
+.kf-sheet__section-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--kf-space-2);
+  width: 100%;
+  min-height: var(--kf-target);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--kf-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kf-sheet__section-label {
+  font-weight: 600;
+}
+
+.kf-sheet__section-summary {
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kf-sheet__section-toggle .fas {
+  margin-left: auto;
+  color: var(--kf-text-muted);
+}
+
+.kf-sheet__section-summary + .fas {
+  margin-left: 0;
+}
+
+.kf-sheet__section-body {
+  padding-bottom: var(--kf-space-3);
+}
+
+.kf-sheet__section-body .kf-filter-checklist__option,
+.kf-sheet__section-body .form-control,
+.kf-sheet__section-body .kf-chip {
+  min-height: var(--kf-target);
+}
+
+.kf-sheet__footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: var(--kf-space-2);
+  padding: var(--kf-space-3) var(--kf-space-4)
+    calc(var(--kf-space-3) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--kf-border);
+  background-color: var(--kf-surface-raised);
+}
+
+.kf-sheet__apply {
+  flex: 1 1 auto;
+}
+
+/* A server-mode table filtered to nothing keeps its header and filter row; the empty state is its one body row. */
+.kf-table tbody tr.kf-table__empty-row,
+.kf-table tbody tr.kf-table__empty-row:hover {
+  background-color: transparent;
+  cursor: default;
+}
+
+.kf-table td.kf-table__empty {
+  padding: 0;
+  white-space: normal;
+}

@@ -1,0 +1,66 @@
+/* A warehouse's name, renamed in place on its card. */
+.warehouse-name {
+  flex: 1 1 auto;
+  margin: 0;
+  min-width: 0;
+  font-size: var(--kf-text-lg);
+  font-weight: 600;
+}
+
+.warehouse-name__button {
+  max-width: 100%;
+  min-height: 2rem;
+  padding: 0 var(--kf-space-1);
+  margin-left: calc(-1 * var(--kf-space-1));
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--kf-text);
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+@media (pointer: coarse) {
+  .warehouse-name__button {
+    min-width: var(--kf-target);
+    min-height: var(--kf-target);
+  }
+}
+
+.warehouse-name__button:hover {
+  background-color: var(--kf-surface-sunken);
+}
+
+.warehouse-rename {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--kf-space-2);
+  min-width: 0;
+}
+
+.warehouse-rename__box {
+  font-size: var(--kf-text-lg);
+  font-weight: 600;
+}
+
+.warehouse-rename__error {
+  margin: 0;
+  color: var(--kf-danger-text);
+  font-size: var(--kf-text-sm);
+  font-weight: 500;
+}
+
+.warehouse-rename__hint {
+  margin: 0;
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-label);
+}
+
+.warehouse-rename__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--kf-space-2);
+}

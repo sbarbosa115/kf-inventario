@@ -1,0 +1,80 @@
+/* The order's slide-over: facts and actions under the title, then the customer, products and comments sections. */
+.kf-order-detail__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kf-space-3);
+  margin-top: var(--kf-space-2);
+}
+
+.kf-order-detail__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kf-space-2) var(--kf-space-5);
+  margin: 0;
+}
+
+.kf-order-detail__fact {
+  min-width: 0;
+}
+
+.kf-order-detail__fact dt {
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-label);
+  font-weight: 500;
+}
+
+.kf-order-detail__fact dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.kf-order-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kf-space-2);
+}
+
+.kf-order-detail__section + .kf-order-detail__section {
+  margin-top: var(--kf-space-6);
+}
+
+.kf-order-detail__section-title {
+  margin-bottom: var(--kf-space-3);
+  font-size: var(--kf-text-body);
+  font-weight: 600;
+}
+
+.kf-order-detail__name {
+  margin-bottom: var(--kf-space-2);
+  font-weight: 600;
+}
+
+.kf-order-detail__muted {
+  color: var(--kf-text-muted);
+}
+
+/* The pinned comment at the top of the order: one line, a tap goes to the comments. */
+.kf-order-detail__pinned {
+  display: flex;
+  align-items: center;
+  gap: var(--kf-space-2);
+  width: 100%;
+  min-height: var(--kf-target);
+  padding: var(--kf-space-2) var(--kf-space-3);
+  border: 1px solid var(--kf-accent);
+  border-radius: var(--kf-radius-control);
+  background-color: var(--kf-accent-soft);
+  color: var(--kf-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.kf-order-detail__pinned-text {
+  /* No intrinsic width: a long note never widens the panel's header. */
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

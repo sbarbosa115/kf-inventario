@@ -1,0 +1,39 @@
+# One entry per bounded context: src/<Context>/UI/Http/Controller.
+identity_controllers:
+  resource:
+    path: ../src/Identity/UI/Http/Controller/
+    namespace: App\Identity\UI\Http\Controller
+  type: attribute
+inventory_controllers:
+  resource:
+    path: ../src/Inventory/UI/Http/Controller/
+    namespace: App\Inventory\UI\Http\Controller
+  type: attribute
+customers_controllers:
+  resource:
+    path: ../src/Customers/UI/Http/Controller/
+    namespace: App\Customers\UI\Http\Controller
+  type: attribute
+ordering_controllers:
+  resource:
+    path: ../src/Ordering/UI/Http/Controller/
+    namespace: App\Ordering\UI\Http\Controller
+  type: attribute
+settings_controllers:
+  resource:
+    path: ../src/Settings/UI/Http/Controller/
+    namespace: App\Settings\UI\Http\Controller
+  type: attribute
+invoicing_controllers:
+  resource:
+    path: ../src/Invoicing/UI/Http/Controller/
+    namespace: App\Invoicing\UI\Http\Controller
+  type: attribute
+
+# The React app: every path that is not an API route, a legacy route or a file gets the SPA shell. Last, so it never
+# shadows a route.
+spa_controllers:
+  resource:
+    path: ../src/Shared/UI/Http/Spa/
+    namespace: App\Shared\UI\Http\Spa
+  type: attribute

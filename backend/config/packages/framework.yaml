@@ -1,0 +1,22 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+  secret: '%env(APP_SECRET)%'
+  # Who is signed in. Files in var/, not PHP's shared temp folder a cPanel host may clean on its own schedule; the
+  # cookie is Secure on HTTPS, not readable by scripts, and SameSite=Lax so another site's requests do not carry it
+  # (the API's writes also check the Origin: Shared\UI\Http\Security\SameOriginWrites). It ends with the browser, as
+  # before; "Remember me" keeps someone signed in for a week (security.yaml).
+  session:
+    handler_id: 'session.handler.native_file'
+    save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
+    cookie_lifetime: 0
+    cookie_secure: auto
+    cookie_httponly: true
+    cookie_samesite: lax
+  php_errors:
+    log: true
+
+when@test:
+  framework:
+    test: true
+    session:
+      storage_factory_id: session.storage.factory.mock_file

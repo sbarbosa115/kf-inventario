@@ -1,0 +1,57 @@
+/* The invoice's slide-over: who and when on top, the lines, and the totals block under them. */
+.kf-invoice-detail__facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kf-space-2);
+  margin: 0 0 var(--kf-space-5);
+}
+
+.kf-invoice-detail__fact dt {
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-label);
+  font-weight: 500;
+}
+
+.kf-invoice-detail__fact dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.kf-invoice-detail__muted {
+  color: var(--kf-text-muted);
+}
+
+.kf-invoice-detail__totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kf-space-1);
+  margin: var(--kf-space-4) 0 0 auto;
+  max-width: 18rem;
+}
+
+.kf-invoice-detail__total {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--kf-space-4);
+}
+
+.kf-invoice-detail__total dt {
+  color: var(--kf-text-muted);
+  font-weight: 400;
+}
+
+.kf-invoice-detail__total dd {
+  margin: 0;
+}
+
+.kf-invoice-detail__total--large {
+  padding-top: var(--kf-space-2);
+  border-top: 1px solid var(--kf-border);
+  font-size: var(--kf-text-lg);
+  font-weight: 600;
+}
+
+.kf-invoice-detail__total--large dt {
+  color: var(--kf-text);
+  font-weight: 600;
+}

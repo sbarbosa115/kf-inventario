@@ -1,0 +1,32 @@
+{
+  "names": {
+    "ROLE_ADMIN": "Admin",
+    "ROLE_MANAGE_INVENTORY": "Inventory",
+    "ROLE_MANAGE_ORDERS": "Orders",
+    "ROLE_UPDATE_ORDERS": "Orders: update",
+    "ROLE_UPDATE_INVOICES": "Invoices: update",
+    "ROLE_CAN_READ_INVOICES": "Invoices: read",
+    "ROLE_CAN_CREATE_INVOICES": "Invoices: create",
+    "ROLE_MANAGE_USERS": "Users",
+    "ROLE_MANAGE_WAREHOUSES": "Warehouses",
+    "ROLE_MANAGE_CUSTOMERS": "Customers"
+  },
+  "descriptions": {
+    "ROLE_ADMIN": "Everything in this section except invoices.",
+    "ROLE_MANAGE_INVENTORY": "Products, stock, the barcode reader, incoming stock and uploads.",
+    "ROLE_MANAGE_WAREHOUSES": "The Warehouses screen: rename the warehouses.",
+    "ROLE_MANAGE_ORDERS": "Delete orders, sync the shops’ orders and get orders ready to ship.",
+    "ROLE_UPDATE_ORDERS": "The Orders screen: see, create and edit orders and change their status.",
+    "ROLE_UPDATE_INVOICES": "The Invoices screen.",
+    "ROLE_CAN_READ_INVOICES": "See invoices and open their PDF.",
+    "ROLE_CAN_CREATE_INVOICES": "Create new invoices.",
+    "ROLE_MANAGE_USERS": "Create and edit users and choose their roles."
+  },
+  "groups": {
+    "warehouse": "Warehouse",
+    "sales": "Sales",
+    "invoices": "Invoices",
+    "admin": "Admin"
+  },
+  "adminNote": "Admin includes everything except invoices."
+}

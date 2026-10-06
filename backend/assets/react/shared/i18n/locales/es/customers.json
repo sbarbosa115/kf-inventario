@@ -1,0 +1,38 @@
+{
+  "title": "Clientes",
+  "create": "Crear cliente",
+  "edit": "Editar",
+  "delete": "Eliminar",
+  "empty": "Aún no hay clientes. Cree el primero.",
+  "search": "Buscar clientes",
+  "range": "{{from}}–{{to}} de {{total}}",
+  "columns": {
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "city": "Ciudad",
+    "country": "País"
+  },
+  "pages": "Páginas",
+  "created": "El cliente se creó correctamente.",
+  "updated": "El cliente se actualizó correctamente.",
+  "deleted": "El cliente se eliminó.",
+  "notFound": "Este cliente ya no existe.",
+  "backToList": "Volver a los clientes",
+  "deleteTitle": "Eliminar cliente",
+  "confirmDelete": "¿Eliminar a {{name}}? Sus pedidos también se eliminarán.",
+  "form": {
+    "newTitle": "Nuevo cliente",
+    "editTitle": "Editar cliente",
+    "contact": "Contacto",
+    "contactHint": "Cómo comunicarse con este cliente.",
+    "addresses": "Direcciones",
+    "addressesHint": "Dónde se facturan y se envían sus pedidos.",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "required": "Este campo no puede estar vacío.",
+    "invalidEmail": "Este valor no es un correo electrónico válido."
+  }
+}

@@ -1,0 +1,191 @@
+/* Upload a stock sheet: three numbered steps, a drop zone around the file input, the result as a summary card. */
+.upload {
+  display: grid;
+  gap: var(--kf-space-4);
+  min-width: 0;
+  max-width: var(--kf-form-max);
+}
+
+.upload-steps {
+  display: grid;
+  gap: var(--kf-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upload-step {
+  display: flex;
+  gap: var(--kf-space-3);
+  min-width: 0;
+  padding: var(--kf-space-4);
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-surface);
+}
+
+.upload-step__number {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--kf-radius-pill);
+  background-color: var(--kf-accent-soft);
+  color: var(--kf-accent-hover);
+  font-weight: 700;
+}
+
+.upload-step__body {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--kf-space-3);
+  min-width: 0;
+}
+
+.upload-step__body > .kf-warehouse-switch {
+  justify-self: start;
+}
+
+.upload-step__title {
+  margin: 0;
+  padding-top: var(--kf-space-1);
+  font-size: var(--kf-text-lg);
+  font-weight: 600;
+}
+
+.upload-step__text {
+  margin: 0;
+  color: var(--kf-text-muted);
+}
+
+.upload-step__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kf-space-2);
+}
+
+.upload-drop {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--kf-space-1);
+  margin: 0;
+  padding: var(--kf-space-5) var(--kf-space-3);
+  border: 2px dashed var(--kf-border-strong);
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-surface-sunken);
+  text-align: center;
+  cursor: pointer;
+  transition: background-color var(--kf-duration-fast) var(--kf-ease);
+}
+
+.upload-drop:hover,
+.upload-drop.is-dragging {
+  border-color: var(--kf-accent);
+  background-color: var(--kf-accent-soft);
+}
+
+.upload-drop:focus-within {
+  outline: 2px solid var(--kf-focus);
+  outline-offset: 2px;
+}
+
+.upload-drop.is-invalid {
+  border-color: var(--kf-danger);
+}
+
+.upload-drop__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  opacity: 0;
+}
+
+.upload-drop__icon {
+  color: var(--kf-accent-hover);
+  font-size: 1.75rem;
+}
+
+.upload-drop__text {
+  font-weight: 600;
+}
+
+.upload-drop__hint {
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+}
+
+.upload-drop__error {
+  margin: 0;
+  color: var(--kf-danger-text);
+  font-size: var(--kf-text-sm);
+  font-weight: 500;
+}
+
+.upload-file {
+  display: flex;
+  align-items: center;
+  gap: var(--kf-space-3);
+  min-width: 0;
+  padding: var(--kf-space-2) var(--kf-space-3);
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-control);
+}
+
+.upload-file__icon {
+  color: var(--kf-accent-hover);
+}
+
+.upload-file__what {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.upload-file__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.upload-file__facts {
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.upload-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kf-space-3);
+  padding: var(--kf-space-4);
+  border: 1px solid var(--kf-border);
+  border-left: 3px solid var(--kf-accent);
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-surface);
+}
+
+.upload-result__icon {
+  color: var(--kf-accent-hover);
+  font-size: 1.5rem;
+}
+
+.upload-result__text {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.upload-result__title {
+  margin: 0;
+  font-size: var(--kf-text-lg);
+  font-weight: 600;
+}
+
+.upload-result__next {
+  margin: 0;
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+}

@@ -1,0 +1,84 @@
+{
+  "title": "Invoices",
+  "create": "Create invoice",
+  "created": "Invoice created.",
+  "empty": "There are no invoices yet.",
+  "count_one": "{{count}} invoice",
+  "count_other": "{{count}} invoices",
+  "posClient": "Walk-in customer",
+  "filters": {
+    "label": "Invoice filters",
+    "search": "Customer or invoice number",
+    "walkIn": "Walk-in",
+    "withCustomer": "With a customer"
+  },
+  "columns": {
+    "code": "Invoice",
+    "customer": "Customer",
+    "total": "Total",
+    "date": "Date",
+    "payment": "Payment"
+  },
+  "actions": {
+    "detail": "Detail",
+    "pdf": "Open PDF"
+  },
+  "detail": {
+    "title": "Invoice {{code}}",
+    "viewPdf": "Open PDF",
+    "gone": "This invoice no longer exists.",
+    "productCode": "Code",
+    "description": "Description",
+    "quantity": "Qty",
+    "unitPrice": "Unit price",
+    "lineTotal": "Line total"
+  },
+  "form": {
+    "customer": "Customer",
+    "customerHint": "Pick a customer, or type a new one. Leave it empty for a walk-in customer.",
+    "invoice": "Invoice",
+    "pickCustomer": "Customer",
+    "searchCustomer": "Search customer",
+    "noOptions": "No options",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "phone": "Phone",
+    "code": "Invoice number",
+    "paymentMethod": "Payment method",
+    "payment": {
+      "credit_counted": "Credit - counted",
+      "credit_card": "Credit card - Paypal"
+    },
+    "taxRate": "Sales tax",
+    "comment": "Comments",
+    "lines": "Lines",
+    "warehouse": "Warehouse",
+    "addAll": "Add all products from {{warehouse}}",
+    "addLine": "Add line",
+    "columns": {
+      "product": "Product",
+      "description": "Description",
+      "quantity": "Qty",
+      "unitPrice": "Unit price",
+      "lineTotal": "Line total"
+    },
+    "line": "Line {{number}}",
+    "product": "Product {{number}}",
+    "productPlaceholder": "Product",
+    "description": "Description {{number}}",
+    "descriptionPlaceholder": "Description",
+    "quantity": "Quantity {{number}}",
+    "unitPrice": "Unit price {{number}}",
+    "remove": "Remove line {{number}}",
+    "subtotal": "Subtotal",
+    "tax": "Sales tax {{rate}}%",
+    "total": "Total",
+    "submit": "Create invoice",
+    "required": "This value should not be blank.",
+    "noItems": "Please add at least one invoice item.",
+    "badItems": "Every item needs a whole quantity and a price like 12.50.",
+    "codeTaken": "An invoice with this code already exists.",
+    "stockFailed": "Could not load the products of this warehouse. Descriptions can still be typed."
+  }
+}

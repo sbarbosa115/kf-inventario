@@ -1,0 +1,29 @@
+{
+  "skip": "Saltar al contenido",
+  "main": "Menú principal",
+  "tabs": "Accesos directos",
+  "menu": "Menú",
+  "closeMenu": "Cerrar el menú",
+  "more": "Más",
+  "collapse": "Contraer el menú",
+  "expand": "Expandir el menú",
+  "toggle": "Mostrar u ocultar el menú",
+  "scanShortcut": "Abrir el lector",
+  "account": "Cuenta",
+  "logout": "Cerrar sesión",
+  "sections": {
+    "warehouse": "Bodega",
+    "sales": "Ventas",
+    "admin": "Administración"
+  },
+  "productList": "Productos",
+  "productsUpload": "Cargar una hoja de existencias",
+  "barcode": "Escanear",
+  "incoming": "Entrantes",
+  "warehouses": "Bodegas",
+  "orders": "Pedidos",
+  "invoices": "Facturas",
+  "customers": "Clientes",
+  "users": "Usuarios",
+  "settings": "Configuración"
+}

@@ -1,0 +1,7 @@
+# Services of the test environment only (MicroKernelTrait loads services_<env>.yaml after services.yaml).
+services:
+  # The shops' REST API (shops-settings: ShopGateway): tests never call a real shop, they talk to a fake
+  # (tests/Functional/Ordering/FakeShopGateway.php) — "Test connection", the pull, the write-back.
+  App\Ordering\Application\Port\ShopGateway:
+    class: App\Tests\Functional\Ordering\FakeShopGateway
+    public: true

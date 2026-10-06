@@ -1,0 +1,107 @@
+{
+  "title": "Pedidos",
+  "create": "Crear pedido",
+  "noWarehouses": "Aún no hay bodegas. Agregue una antes de gestionar pedidos.",
+  "empty": "Esta bodega aún no tiene pedidos. Cree uno o sincronice los pedidos de las tiendas.",
+  "noCustomer": "Sin cliente",
+  "filters": {
+    "label": "Filtros de pedidos",
+    "status": "Estado",
+    "search": "Número de pedido o cliente",
+    "pinnedOnly": "Solo fijados"
+  },
+  "columns": {
+    "code": "Pedido",
+    "customer": "Cliente",
+    "source": "Origen",
+    "status": "Estado",
+    "created": "Creado",
+    "comments": "Comentarios"
+  },
+  "statuses": {
+    "1": "Creado",
+    "2": "Procesado",
+    "3": "Completado",
+    "4": "Parcial",
+    "5": "Enviado",
+    "6": "Entregado"
+  },
+  "sources": {
+    "web": "Web",
+    "phone": "Teléfono",
+    "unknown": "Desconocido"
+  },
+  "openDetail": "Abrir el pedido {{code}}",
+  "commentsOf": "Comentarios del pedido {{code}}: {{count}}",
+  "actions": {
+    "edit": "Editar",
+    "gettingReady": "Alistamiento",
+    "pdf": "PDF del pedido",
+    "remainingPdf": "PDF de productos pendientes",
+    "xls": "Hoja de Excel",
+    "documents": "Documentos",
+    "delete": "Eliminar"
+  },
+  "status": {
+    "menu": "Estado del pedido {{code}}",
+    "confirmTitle": "¿Marcar {{code}} como {{status}}?",
+    "confirmBody": "El pedido pasa de {{from}} a {{status}}. Sus existencias no cambian.",
+    "confirm": "Marcar como {{status}}",
+    "changed": "El pedido {{code}} ahora está en estado {{status}}."
+  },
+  "delete": {
+    "title": "¿Eliminar el pedido {{code}}?",
+    "body": "Sus productos y comentarios se eliminan con él. Esto no se puede deshacer.",
+    "confirm": "Eliminar pedido",
+    "done": "El pedido {{code}} se eliminó."
+  },
+  "sync": {
+    "button": "Buscar ahora",
+    "running": "Revisando las tiendas…",
+    "imported_one": "{{count}} pedido importado",
+    "imported_other": "{{count}} pedidos importados",
+    "fromShops_one": "de {{count}} tienda",
+    "fromShops_other": "de {{count}} tiendas",
+    "skipped_one": "{{count}} omitido",
+    "skipped_other": "{{count}} omitidos",
+    "summary": "{{imported}} {{from}}, {{skipped}}",
+    "done": "{{summary}}.",
+    "partly_one": "{{summary}}; no se pudo leer {{names}}.",
+    "partly_other": "{{summary}}; no se pudieron leer {{names}}.",
+    "nothing": "No hay ninguna conexión con tiendas activa: no había nada que revisar."
+  },
+  "detail": {
+    "title": "Pedido {{code}}",
+    "facts": "Datos del pedido",
+    "source": "Origen",
+    "warehouse": "Bodega",
+    "created": "Creado",
+    "customer": "Cliente",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "address": "Dirección",
+    "noAddress": "No hay una dirección registrada.",
+    "products": "Productos",
+    "comments": "Comentarios",
+    "pinned": "Fijada"
+  },
+  "products": {
+    "code": "Código",
+    "title": "Producto",
+    "quantity": "Cant. pedida",
+    "empty": "Este pedido no tiene productos."
+  },
+  "errors": {
+    "order_not_found": "Este pedido ya no existe. Recargue la lista.",
+    "order_sync_unavailable": "La sincronización de pedidos de las tiendas aún no está disponible.",
+    "order_sync_failed": "No se pudo conectar con las tiendas, así que no se importó ningún pedido. Intente de nuevo en un momento.",
+    "validation_failed": "Se rechazó el cambio. Recargue el pedido e intente de nuevo."
+  },
+  "notes": {
+    "column": "Notas",
+    "pinnedOf": "Nota fijada del pedido {{code}}: {{text}}"
+  },
+  "shop": {
+    "unknown": "Tienda #{{id}}"
+  }
+}
