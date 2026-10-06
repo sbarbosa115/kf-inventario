@@ -86,7 +86,9 @@ describe('SettingsPage', () => {
     });
     expect(dialog).toHaveTextContent('Shops still posting there will get 410');
     await userEvent.click(
-      within(dialog).getByRole('button', {name: 'Turn off the old webhook URL'}),
+      within(dialog).getByRole('button', {
+        name: 'Turn off the old webhook URL',
+      }),
     );
 
     expect(

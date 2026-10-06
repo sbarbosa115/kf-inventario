@@ -1,10 +1,6 @@
 import {useState, type ReactNode} from 'react';
 import {useTranslation} from '@/shared/i18n';
-import type {
-  DateRangeValue,
-  FilterValue,
-  NumberRangeValue,
-} from '@/shared/api';
+import type {DateRangeValue, FilterValue, NumberRangeValue} from '@/shared/api';
 import {
   ActionBar,
   ActiveFilters,
@@ -153,7 +149,10 @@ function FilterKit() {
   const [text, setText] = useState('');
   const [statuses, setStatuses] = useState<string[]>(['1']);
   const [dates, setDates] = useState<DateRangeValue>({});
-  const [money, setMoney] = useState<NumberRangeValue>({min: '100', max: '500'});
+  const [money, setMoney] = useState<NumberRangeValue>({
+    min: '100',
+    max: '500',
+  });
   const [quantity, setQuantity] = useState<NumberRangeValue>({});
   const [sheet, setSheet] = useState(false);
   const [page, setPage] = useState(3);
@@ -182,7 +181,12 @@ function FilterKit() {
           onChange={setStatuses}
         />
         <DateRangeFilter label="Created" value={dates} onChange={setDates} />
-        <RangeFilter label="Total" kind="money" value={money} onChange={setMoney} />
+        <RangeFilter
+          label="Total"
+          kind="money"
+          value={money}
+          onChange={setMoney}
+        />
         <RangeFilter
           label="Quantity"
           kind="number"
@@ -207,7 +211,13 @@ function FilterKit() {
           setMoney({});
         }}
       />
-      <Pager page={page} perPage={25} total={1240} onPage={setPage} onPerPage={() => undefined} />
+      <Pager
+        page={page}
+        perPage={25}
+        total={1240}
+        onPage={setPage}
+        onPerPage={() => undefined}
+      />
       {sheet && (
         <FilterSheet
           columns={FILTER_COLUMNS}
@@ -222,8 +232,12 @@ function FilterKit() {
           }
           onApply={(draft) => {
             setSheet(false);
-            setText(typeof draft.filters.code === 'string' ? draft.filters.code : '');
-            setStatuses(Array.isArray(draft.filters.status) ? draft.filters.status : []);
+            setText(
+              typeof draft.filters.code === 'string' ? draft.filters.code : '',
+            );
+            setStatuses(
+              Array.isArray(draft.filters.status) ? draft.filters.status : [],
+            );
             setDates((draft.filters.created ?? {}) as DateRangeValue);
             setMoney((draft.filters.total ?? {}) as NumberRangeValue);
           }}

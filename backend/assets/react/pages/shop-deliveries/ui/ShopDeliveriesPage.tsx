@@ -9,7 +9,10 @@ export function ShopDeliveriesPage() {
   const {t} = useTranslation();
   return (
     <>
-      <PageHeader title={t('settings.tabs.shops')} back="/admin/settings/shops" />
+      <PageHeader
+        title={t('settings.tabs.shops')}
+        back="/admin/settings/shops"
+      />
       <EmptyState icon="fa-person-digging" message={t('settings.pending')} />
     </>
   );

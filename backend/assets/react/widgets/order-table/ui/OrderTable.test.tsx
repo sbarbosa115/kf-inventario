@@ -106,10 +106,10 @@ function renderTable({
     ],
     'GET /warehouses': [200, WAREHOUSES],
     'GET /orders': (body, url) =>
-      fakeList(orders[Number(url.searchParams.get('warehouse_id'))] ?? [], ORDER_LIST)(
-        body,
-        url,
-      ),
+      fakeList(
+        orders[Number(url.searchParams.get('warehouse_id'))] ?? [],
+        ORDER_LIST,
+      )(body, url),
     ...routes,
   });
   const onOpenDetail = vi.fn();

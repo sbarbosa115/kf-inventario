@@ -83,7 +83,8 @@ export function InvoiceForm({
   const [busy, setBusy] = useState(false);
 
   const stock = useLoad(
-    () => (warehouseId === null ? Promise.resolve([]) : listAllStock(warehouseId)),
+    () =>
+      warehouseId === null ? Promise.resolve([]) : listAllStock(warehouseId),
     [warehouseId],
   );
   const products: StockItem[] | undefined = stock.data;

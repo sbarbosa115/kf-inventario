@@ -21,7 +21,10 @@ describe('the analytics loader', () => {
   });
 
   it('loads GA4 and Clarity once each, the ids only as URL parameters', () => {
-    const ids = {ga4_measurement_id: 'G-ABC1234', clarity_project_id: 'abcdef12'};
+    const ids = {
+      ga4_measurement_id: 'G-ABC1234',
+      clarity_project_id: 'abcdef12',
+    };
     loadAnalytics(ids);
     loadAnalytics(ids);
 

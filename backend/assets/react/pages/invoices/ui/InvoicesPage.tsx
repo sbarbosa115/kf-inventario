@@ -9,12 +9,7 @@ import {useCan} from '@/entities/session';
 import {InvoiceDetail} from '@/widgets/invoice-detail';
 import {ApiError, type DateRangeValue} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {
-  useDebouncedText,
-  useFormat,
-  useListQuery,
-  useLoad,
-} from '@/shared/lib';
+import {useDebouncedText, useFormat, useListQuery, useLoad} from '@/shared/lib';
 import {
   Button,
   ClearFilters,

@@ -57,7 +57,12 @@ function Server({
         setQuery(next);
       }}
       total={total}
-      facets={{status: [{value: '1', count: 7}, {value: '2', count: 3}]}}
+      facets={{
+        status: [
+          {value: '1', count: 7},
+          {value: '2', count: 3},
+        ],
+      }}
       countFor={async () => 3}
     />
   );
@@ -86,7 +91,9 @@ describe('DataTable in server mode', () => {
     const asked: TableQuery[] = [];
     render(<Server rows={ROWS} total={2} asked={asked} />);
 
-    expect(screen.getAllByRole('row').filter((r) => r.closest('tbody'))).toHaveLength(2);
+    expect(
+      screen.getAllByRole('row').filter((r) => r.closest('tbody')),
+    ).toHaveLength(2);
     await userEvent.click(screen.getByRole('button', {name: /^Order/}));
     expect(asked.at(-1)).toMatchObject({sort: 'code', page: 1});
     expect(screen.getByRole('columnheader', {name: /^Order/})).toHaveAttribute(
@@ -138,7 +145,9 @@ describe('DataTable in server mode', () => {
     await userEvent.click(screen.getByRole('button', {name: 'Filters · 1'}));
     const sheet = screen.getByRole('dialog', {name: 'Filters'});
     await userEvent.click(within(sheet).getByRole('button', {name: /^Status/}));
-    await userEvent.click(within(sheet).getByRole('checkbox', {name: /Processed/}));
+    await userEvent.click(
+      within(sheet).getByRole('checkbox', {name: /Processed/}),
+    );
     await userEvent.click(
       await within(sheet).findByRole('button', {name: 'Show 3 results'}),
     );
@@ -179,7 +188,9 @@ describe('DataTable in server mode', () => {
       />,
     );
 
-    expect(screen.getByText('Nothing matches these filters.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Nothing matches these filters.'),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', {name: 'Show all'}));
     await waitFor(() =>
       expect(asked.at(-1)).toMatchObject({filters: {}, q: undefined, page: 1}),

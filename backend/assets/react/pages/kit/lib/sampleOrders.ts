@@ -13,14 +13,17 @@ export interface SampleOrder {
 
 const NAMES = ['Ana Gomez', 'Ben Ruiz', 'Carla Diaz', 'Dora Leon', 'Eli Mora'];
 
-export const SAMPLE_ORDERS: SampleOrder[] = Array.from({length: 64}, (_, i) => ({
-  id: i + 1,
-  code: `W${String(i + 1).padStart(5, '0')}`,
-  customer: NAMES[i % NAMES.length]!,
-  status: String((i % 6) + 1),
-  created: `2026-${String(9 + Math.floor(i / 32)).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')}`,
-  total: ((i * 37) % 900).toFixed(2),
-}));
+export const SAMPLE_ORDERS: SampleOrder[] = Array.from(
+  {length: 64},
+  (_, i) => ({
+    id: i + 1,
+    code: `W${String(i + 1).padStart(5, '0')}`,
+    customer: NAMES[i % NAMES.length]!,
+    status: String((i % 6) + 1),
+    created: `2026-${String(9 + Math.floor(i / 32)).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')}`,
+    total: ((i * 37) % 900).toFixed(2),
+  }),
+);
 
 const matches = (row: SampleOrder, query: ListQuery, skip?: string) =>
   Object.entries(query.filters ?? {}).every(([field, value]) => {
@@ -32,7 +35,9 @@ const matches = (row: SampleOrder, query: ListQuery, skip?: string) =>
     if (Array.isArray(value)) return value.includes(cell);
     const range = value as Record<string, string | undefined>;
     if ('from' in range || 'to' in range) {
-      return (!range.from || cell >= range.from) && (!range.to || cell <= range.to);
+      return (
+        (!range.from || cell >= range.from) && (!range.to || cell <= range.to)
+      );
     }
     return (
       (!range.min || Number(cell) >= Number(range.min)) &&
@@ -40,7 +45,9 @@ const matches = (row: SampleOrder, query: ListQuery, skip?: string) =>
     );
   }) &&
   (!query.q ||
-    `${row.code} ${row.customer}`.toLowerCase().includes(query.q.toLowerCase()));
+    `${row.code} ${row.customer}`
+      .toLowerCase()
+      .includes(query.q.toLowerCase()));
 
 /** One page of the samples, its total and the status facet, as a list endpoint answers. */
 export function samplePage(query: ListQuery & {page: number; perPage: number}) {

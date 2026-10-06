@@ -4,12 +4,7 @@ import {listCustomers, PAGE_SIZE, type Customer} from '@/entities/customer';
 import {customerName, DeleteCustomerDialog} from '@/features/delete-customer';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {
-  useDebouncedText,
-  useFormat,
-  useListQuery,
-  useLoad,
-} from '@/shared/lib';
+import {useDebouncedText, useFormat, useListQuery, useLoad} from '@/shared/lib';
 import {
   Button,
   DataTable,

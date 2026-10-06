@@ -168,8 +168,9 @@ test.describe('2 Products: upload, scan, incoming', () => {
     const stock = await page.request.get(
       '/api/v1/warehouses/2/stock?per_page=0',
     );
-    const rows = ((await stock.json()) as {items: {code: string; quantity: number}[]})
-      .items;
+    const rows = (
+      (await stock.json()) as {items: {code: string; quantity: number}[]}
+    ).items;
     expect(rows.find((row) => row.code === 'KF-01')?.quantity).toBe(2);
   });
 
@@ -201,8 +202,9 @@ test.describe('2 Products: upload, scan, incoming', () => {
     const stock = await page.request.get(
       '/api/v1/warehouses/2/stock?per_page=0',
     );
-    const rows = ((await stock.json()) as {items: {code: string; quantity: number}[]})
-      .items;
+    const rows = (
+      (await stock.json()) as {items: {code: string; quantity: number}[]}
+    ).items;
     expect(rows.find((row) => row.code === 'KF-01')?.quantity).toBe(1);
   });
 
@@ -239,8 +241,9 @@ test.describe('2 Products: upload, scan, incoming', () => {
     const stock = await page.request.get(
       '/api/v1/warehouses/3/stock?per_page=0',
     );
-    const rows = ((await stock.json()) as {items: {code: string; quantity: number}[]})
-      .items;
+    const rows = (
+      (await stock.json()) as {items: {code: string; quantity: number}[]}
+    ).items;
     expect(rows.find((r) => r.code === 'KF-02')?.quantity).toBe(4);
   });
 

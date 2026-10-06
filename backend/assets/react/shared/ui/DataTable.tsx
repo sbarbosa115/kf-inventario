@@ -6,7 +6,11 @@ import {EmptyState} from './EmptyState';
 import {ErrorState} from './ErrorState';
 import {ActiveFilters} from './filters/ActiveFilters';
 import {FilterRow} from './filters/FilterRow';
-import {FilterSheet, FiltersButton, type SheetDraft} from './filters/FilterSheet';
+import {
+  FilterSheet,
+  FiltersButton,
+  type SheetDraft,
+} from './filters/FilterSheet';
 import {Pager, PER_PAGE_OPTIONS} from './filters/Pager';
 import type {ColumnFilter, Facets, FilterColumn} from './filters/types';
 import {RowMenu, type RowAction} from './RowMenu';
@@ -190,8 +194,7 @@ export function DataTable<Row>({
   );
   const serverFilters = server ? activeFilters(server.query.filters) : {};
   const activeCount = Object.keys(serverFilters).length;
-  const filtering =
-    activeCount > 0 || (server?.query.q ?? '').trim() !== '';
+  const filtering = activeCount > 0 || (server?.query.q ?? '').trim() !== '';
   const change = (patch: Partial<TableQuery>) =>
     server?.change({...server.query, page: 1, ...patch});
   const setFilter = (field: string, value: FilterValue | undefined) =>
@@ -230,8 +233,14 @@ export function DataTable<Row>({
     ? columns.flatMap((column) =>
         column.sortField
           ? [
-              {value: column.sortField, label: t('filters.sortAsc', {label: column.header})},
-              {value: `-${column.sortField}`, label: t('filters.sortDesc', {label: column.header})},
+              {
+                value: column.sortField,
+                label: t('filters.sortAsc', {label: column.header}),
+              },
+              {
+                value: `-${column.sortField}`,
+                label: t('filters.sortDesc', {label: column.header}),
+              },
             ]
           : [],
       )
@@ -240,7 +249,10 @@ export function DataTable<Row>({
     server && filterColumns.length > 0 ? (
       <div className="kf-data-table__filters">
         {phone && (
-          <FiltersButton count={activeCount} onClick={() => setSheetOpen(true)} />
+          <FiltersButton
+            count={activeCount}
+            onClick={() => setSheetOpen(true)}
+          />
         )}
         <ActiveFilters
           columns={filterColumns}
@@ -257,7 +269,12 @@ export function DataTable<Row>({
             facets={facets}
             count={(draft: SheetDraft) =>
               countFor
-                ? countFor({...server.query, page: 1, filters: draft.filters, sort: draft.sort})
+                ? countFor({
+                    ...server.query,
+                    page: 1,
+                    filters: draft.filters,
+                    sort: draft.sort,
+                  })
                 : Promise.reject(new Error('No count'))
             }
             onApply={(draft) => {
@@ -547,16 +564,18 @@ export function DataTable<Row>({
           </table>
         </div>
       )}
-      {server && total !== undefined && (total > (perPageOptions[0] ?? 25) || server.query.page > 1) && (
-        <Pager
-          page={server.query.page}
-          perPage={server.query.perPage}
-          total={total}
-          onPage={(next) => server.change({...server.query, page: next})}
-          onPerPage={(perPage) => change({perPage})}
-          perPageOptions={perPageOptions}
-        />
-      )}
+      {server &&
+        total !== undefined &&
+        (total > (perPageOptions[0] ?? 25) || server.query.page > 1) && (
+          <Pager
+            page={server.query.page}
+            perPage={server.query.perPage}
+            total={total}
+            onPage={(next) => server.change({...server.query, page: next})}
+            onPerPage={(perPage) => change({perPage})}
+            perPageOptions={perPageOptions}
+          />
+        )}
       {!server && pages > 1 && (
         <nav className="kf-pager">
           <button

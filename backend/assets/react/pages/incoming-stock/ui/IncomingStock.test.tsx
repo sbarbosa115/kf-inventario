@@ -40,7 +40,10 @@ describe('IncomingStockPage', () => {
   it('lists the incoming rows of the first warehouse, with their totals under the title', async () => {
     const api = fakeApi({
       'GET /warehouses': [200, [COLOMBIA, USA]],
-      'GET /warehouses/1/stock': [200, pageOf([row('KF-01', 5), row('KF-02', 3)])],
+      'GET /warehouses/1/stock': [
+        200,
+        pageOf([row('KF-01', 5), row('KF-02', 3)]),
+      ],
     });
     renderPage();
 

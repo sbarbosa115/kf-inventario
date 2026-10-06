@@ -17,7 +17,9 @@ export interface AddCommentPayload {
 }
 
 /** The order's comments, oldest first. */
-export async function listOrderComments(orderId: number): Promise<OrderComment[]> {
+export async function listOrderComments(
+  orderId: number,
+): Promise<OrderComment[]> {
   return (
     await apiGet<{comments: OrderComment[]}>(`/orders/${orderId}/comments`)
   ).comments;

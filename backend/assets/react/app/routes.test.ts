@@ -12,7 +12,9 @@ describe('prefetchRoute', () => {
     expect(prefetchRoute('/')).toBe('products');
     expect(prefetchRoute('/admin/settings')).toBe('settings');
     expect(prefetchRoute('/admin/settings/email')).toBe('settings');
-    expect(prefetchRoute('/admin/settings/shops/new')).toBe('shopConnectionForm');
+    expect(prefetchRoute('/admin/settings/shops/new')).toBe(
+      'shopConnectionForm',
+    );
     expect(prefetchRoute('/admin/settings/shops/3')).toBe('shopConnectionForm');
     expect(prefetchRoute('/admin/settings/shops/3/deliveries')).toBe(
       'shopDeliveries',

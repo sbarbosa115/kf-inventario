@@ -2,9 +2,11 @@ import {invoiceSearch} from './invoiceSearch';
 
 describe('the invoices search', () => {
   it('asks for the walk-in invoices when the walk-in label is typed', () => {
-    expect(
-      invoiceSearch({q: 'walk-in', page: 2}, 'Walk-in customer'),
-    ).toEqual({q: undefined, page: 2, filters: {walk_in: ['yes']}});
+    expect(invoiceSearch({q: 'walk-in', page: 2}, 'Walk-in customer')).toEqual({
+      q: undefined,
+      page: 2,
+      filters: {walk_in: ['yes']},
+    });
   });
 
   it('is q for anything else, and for fewer than four letters', () => {

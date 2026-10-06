@@ -89,9 +89,7 @@ export function UsersPage() {
       <PageHeader
         title={t('users.title')}
         subtitle={
-          data === undefined
-            ? undefined
-            : t('users.count', {count: allCount})
+          data === undefined ? undefined : t('users.count', {count: allCount})
         }
         primary={
           <Button to="/admin/users/new" variant="primary" icon="fa-plus">
@@ -113,7 +111,9 @@ export function UsersPage() {
                 onChange={(key) =>
                   list.setFilter(
                     'enabled',
-                    key === null ? undefined : [key === 'active' ? 'yes' : 'no'],
+                    key === null
+                      ? undefined
+                      : [key === 'active' ? 'yes' : 'no'],
                   )
                 }
                 allCount={allCount}

@@ -34,7 +34,8 @@ export interface QuickPhrasePayload {
   active: boolean;
 }
 
-export const getPublicSettings = () => apiGet<PublicSettings>('/settings/public');
+export const getPublicSettings = () =>
+  apiGet<PublicSettings>('/settings/public');
 
 export const getEmailSettings = () => apiGet<EmailSettings>('/settings/email');
 

@@ -18,10 +18,7 @@ const comment = (id: number, content: string): OrderComment => ({
   sent_to_shop: false,
 });
 
-const SAVED = rowsFrom([
-  comment(1, 'first'),
-  comment(2, 'second'),
-]);
+const SAVED = rowsFrom([comment(1, 'first'), comment(2, 'second')]);
 
 describe('the comment rows of an order', () => {
   it('starts from the saved comments, each with its text', () => {
