@@ -284,6 +284,24 @@ describe('OrderDetail', () => {
     expect(scroll, 'the comments come into view').toHaveBeenCalled();
   });
 
+  it('names the shop an order came from in its header', async () => {
+    renderDetail({
+      routes: {
+        'GET /orders/4': [
+          200,
+          {
+            ...ORDER,
+            source: 1,
+            shop: {id: 2, name: 'Kfvintage', takes_notes: true},
+          },
+        ],
+      },
+    });
+    const detail = await panel();
+
+    expect(await within(detail).findByText('Kfvintage')).toBeInTheDocument();
+  });
+
   it('says so when the order has no customer', async () => {
     renderDetail({
       routes: {

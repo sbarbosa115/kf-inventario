@@ -138,7 +138,7 @@ function OrderHeader({
           <OrderStatusMenu order={order} onChanged={onStatusChanged} />
         </Fact>
         <Fact label={t('orders.detail.source')}>
-          <OrderSource source={order.source} />
+          <OrderSource source={order.source} shop={order.shop} />
         </Fact>
         {order.warehouse && (
           <Fact label={t('orders.detail.warehouse')}>
