@@ -1,16 +1,32 @@
-/* The address widget's selects sit in Bootstrap's grid; their look is the kit's (shared/ui/styles/react-select.css). */
+/* The address widget: one card per address. The selects' look is the kit's (shared/ui/styles/react-select.css). */
 
-.address-form__row {
-  border: 0;
-  padding: 0;
-  margin: 0;
+.address-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--kf-space-3);
+}
+
+.address-form__card {
+  align-self: stretch;
   min-width: 0;
+  margin: 0;
+  padding: var(--kf-space-4) var(--kf-space-4) var(--kf-space-1);
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-card);
+  background: var(--kf-surface);
 }
 
-.address-form__row > hr:first-child {
-  margin-top: 0.5rem;
+.address-form__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kf-space-2);
+  margin-bottom: var(--kf-space-3);
 }
 
-.address-form__buttons {
-  white-space: nowrap;
+.address-form__title {
+  color: var(--kf-text);
+  font-size: var(--kf-text-sm);
+  font-weight: 600;
 }

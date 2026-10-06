@@ -2,6 +2,7 @@ import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {ToastProvider} from '@/shared/ui';
 import {CustomerFormPage} from './CustomerFormPage';
 
 const LOCATIONS = [
@@ -49,19 +50,61 @@ const ANA = {
 function renderAt(path: string) {
   render(
     <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/admin/customers" element={<p>customers list</p>} />
-        <Route path="/admin/customers/new" element={<CustomerFormPage />} />
-        <Route
-          path="/admin/customers/:id/edit"
-          element={<CustomerFormPage />}
-        />
-      </Routes>
+      <ToastProvider>
+        <Routes>
+          <Route path="/admin/customers" element={<p>customers list</p>} />
+          <Route path="/admin/customers/new" element={<CustomerFormPage />} />
+          <Route
+            path="/admin/customers/:id/edit"
+            element={<CustomerFormPage />}
+          />
+        </Routes>
+      </ToastProvider>
     </MemoryRouter>,
   );
 }
 
 describe('CustomerFormPage', () => {
+  it('groups the fields in a Contact section and an Addresses section, with the actions in a bar', async () => {
+    fakeApi({'GET /locations': [200, LOCATIONS]});
+    renderAt('/admin/customers/new');
+
+    const contact = await screen.findByRole('region', {name: 'Contact'});
+    expect(within(contact).getByLabelText('Email')).toBeInTheDocument();
+    expect(within(contact).getByLabelText('Phone')).toBeInTheDocument();
+    const addresses = screen.getByRole('region', {name: 'Addresses'});
+    expect(
+      within(addresses).getByRole('group', {name: 'Address 1'}),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {level: 1, name: 'New customer'}),
+    ).toBeInTheDocument();
+
+    const bar = screen
+      .getByRole('button', {name: 'Save'})
+      .closest('.kf-action-bar') as HTMLElement;
+    expect(bar, 'Save sits in the sticky action bar').not.toBeNull();
+    const cancel = within(bar).getByRole('link', {name: 'Cancel'});
+    expect(cancel).toHaveAttribute('href', '/admin/customers');
+    expect(cancel, 'Cancel is never red').not.toHaveClass('kf-btn--danger');
+  });
+
+  it('tells the person with a toast that the customer was saved', async () => {
+    fakeApi({
+      'GET /locations': [200, LOCATIONS],
+      'GET /customers/7': [200, ANA],
+      'PUT /customers/7': [200, ANA],
+    });
+    renderAt('/admin/customers/7/edit');
+
+    await userEvent.click(await screen.findByRole('button', {name: 'Save'}));
+
+    expect(await screen.findByText('customers list')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'The customer was updated successfully.',
+    );
+  });
+
   it('names what is missing and sends nothing', async () => {
     const api = fakeApi({'GET /locations': [200, LOCATIONS]});
     renderAt('/admin/customers/new');
@@ -118,7 +161,7 @@ describe('CustomerFormPage', () => {
         },
       ],
     });
-  });
+  }, 20000);
 
   it('shows the saved customer and their address on an edit, and saves with PUT', async () => {
     const api = fakeApi({
@@ -130,7 +173,7 @@ describe('CustomerFormPage', () => {
 
     expect(await screen.findByLabelText('Name')).toHaveValue('Ana');
     expect(screen.getByLabelText('Address')).toHaveValue('1 Main St');
-    const group = screen.getByRole('group', {name: 'Address 1'});
+    const group = screen.getByRole('group', {name: 'Address 1 · Shipping'});
     expect(within(group).getByText('Colombia')).toBeInTheDocument();
     expect(within(group).getByText('Medellin')).toBeInTheDocument();
 

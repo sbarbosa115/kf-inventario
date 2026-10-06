@@ -2,18 +2,38 @@ import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {ToastProvider} from '@/shared/ui';
 import {CustomersPage} from './CustomersPage';
 
-const customer = (id: number, first: string, last: string) => ({
+const customer = (id: number, first: string, last: string, city?: string) => ({
   id,
   first_name: first,
   last_name: last,
   email: `${first.toLowerCase()}@kf.test`,
   phone: `300${id}`,
-  addresses: [],
+  addresses: city
+    ? [
+        {
+          id: id * 10,
+          address: '1 Main St',
+          zip_code: '050021',
+          address_type: null,
+          city: {
+            id: id * 100,
+            name: city,
+            state: {
+              id: 10,
+              name: 'Antioquia',
+              code: 'ANT',
+              country: {id: 1, name: 'Colombia', code: 'CO'},
+            },
+          },
+        },
+      ]
+    : [],
 });
 
-const ANA = customer(1, 'Ana', 'Gomez');
+const ANA = customer(1, 'Ana', 'Gomez', 'Medellin');
 const BEN = customer(2, 'Ben', 'Ruiz');
 
 const page = (items: unknown[], total = items.length, n = 1) => ({
@@ -23,76 +43,140 @@ const page = (items: unknown[], total = items.length, n = 1) => ({
   per_page: 100,
 });
 
-function renderPage(url = '/admin/customers', state?: unknown) {
+function renderPage(url = '/admin/customers') {
   render(
     <MemoryRouter
       initialEntries={[
         {
           pathname: url.split('?')[0],
           search: url.includes('?') ? `?${url.split('?')[1]}` : '',
-          state,
         },
       ]}
     >
-      <Routes>
-        <Route path="/admin/customers" element={<CustomersPage />} />
-        <Route path="/admin/customers/new" element={<p>new customer form</p>} />
-        <Route
-          path="/admin/customers/:id/edit"
-          element={<p>edit customer form</p>}
-        />
-      </Routes>
+      <ToastProvider>
+        <Routes>
+          <Route path="/admin/customers" element={<CustomersPage />} />
+          <Route
+            path="/admin/customers/new"
+            element={<p>new customer form</p>}
+          />
+          <Route
+            path="/admin/customers/:id/edit"
+            element={<p>edit customer form</p>}
+          />
+        </Routes>
+      </ToastProvider>
     </MemoryRouter>,
   );
 }
 
 describe('CustomersPage', () => {
-  it('lists the customers of the page with a way to edit each and to create another', async () => {
+  it('lists the customers with name, email, phone and the city of the first address', async () => {
     const api = fakeApi({'GET /customers': [200, page([ANA, BEN])]});
     renderPage();
 
-    const row = (await screen.findByText('Ana Gomez')).closest('tr')!;
-    expect(within(row).getByText('ana@kf.test')).toBeInTheDocument();
+    const row = await screen.findByRole('row', {name: /ana@kf\.test/});
+    expect(within(row).getAllByText('Ana Gomez').length).toBeGreaterThan(0);
     expect(within(row).getByText('3001')).toBeInTheDocument();
+    expect(within(row).getByText('Medellin')).toBeInTheDocument();
     expect(
-      within(row).getByRole('link', {name: /Edit this customer/}),
-    ).toHaveAttribute('href', '/admin/customers/1/edit');
-    expect(screen.getByRole('link', {name: 'Create Customer'})).toHaveAttribute(
+      screen.getAllByRole('columnheader').map((header) => header.textContent),
+    ).toEqual(expect.arrayContaining(['Email', 'Phone', 'City']));
+    expect(screen.getByRole('link', {name: 'Create customer'})).toHaveAttribute(
       'href',
       '/admin/customers/new',
     );
     expect(api.calls[0]?.url.search).toBe('?page=1&per_page=100');
   });
 
-  it('asks the server for the page in the address and links to the other pages', async () => {
+  it('keeps edit and delete in the row menu, not as visible buttons', async () => {
+    fakeApi({'GET /customers': [200, page([ANA])]});
+    renderPage();
+
+    const row = await screen.findByRole('row', {name: /ana@kf\.test/});
+    expect(within(row).queryByRole('link', {name: 'Edit'})).toBeNull();
+    await userEvent.click(
+      within(row).getByRole('button', {name: 'Actions for Ana Gomez'}),
+    );
+
+    expect(screen.getByRole('menuitem', {name: 'Edit'})).toHaveAttribute(
+      'href',
+      '/admin/customers/1/edit',
+    );
+    expect(screen.getByRole('menuitem', {name: 'Delete'})).toBeInTheDocument();
+  });
+
+  it('opens the edit form when a row is clicked', async () => {
+    fakeApi({'GET /customers': [200, page([ANA])]});
+    renderPage();
+
+    const row = await screen.findByRole('row', {name: /ana@kf\.test/});
+    await userEvent.click(within(row).getByText('3001'));
+
+    expect(await screen.findByText('edit customer form')).toBeInTheDocument();
+  });
+
+  it('says which customers of how many the page shows, in the header', async () => {
+    fakeApi({'GET /customers': [200, page([ANA, BEN], 1240, 1)]});
+    renderPage();
+
+    await screen.findByRole('row', {name: /ana@kf\.test/});
+    expect(screen.getByText('1–2 of 1,240')).toBeInTheDocument();
+  });
+
+  it('counts the range from the page asked for', async () => {
+    const items = Array.from({length: 100}, (_, i) =>
+      customer(i + 1, `C${i}`, 'X'),
+    );
+    fakeApi({'GET /customers': [200, page(items, 1240, 2)]});
+    renderPage('/admin/customers?page=2');
+
+    await screen.findAllByText('C0 X');
+    expect(screen.getByText('101–200 of 1,240')).toBeInTheDocument();
+  });
+
+  it('gives every row and cell its table role, for the card layout on a phone', async () => {
+    fakeApi({'GET /customers': [200, page([ANA])]});
+    renderPage();
+
+    const row = await screen.findByRole('row', {name: /ana@kf\.test/});
+    const email = within(row).getByRole('cell', {name: 'ana@kf.test'});
+    expect(email).toHaveAttribute('data-label', 'Email');
+    expect(
+      row.querySelector('.kf-table__card-title'),
+      'the card shows the name as its title',
+    ).toHaveTextContent('Ana Gomez');
+    expect(
+      row.querySelector('[data-label="Name"]'),
+      'the name is not repeated among the card facts',
+    ).toHaveClass('kf-table__card-hidden');
+  });
+
+  it('pages on the server with a compact pager', async () => {
     const api = fakeApi({
       'GET /customers': [200, page([BEN], 101, 2)],
     });
     renderPage('/admin/customers?page=2');
 
-    await screen.findByText('Ben Ruiz');
+    await screen.findAllByText('Ben Ruiz');
     expect(api.calls[0]?.url.search).toBe('?page=2&per_page=100');
-    expect(screen.getByText('Page 2 of 2 (101 customers)')).toBeInTheDocument();
+    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
     expect(screen.getByRole('link', {name: 'Previous'})).toHaveAttribute(
       'href',
       '/admin/customers?page=1',
     );
-    expect(screen.getByRole('link', {name: 'Page 1'})).toHaveAttribute(
-      'href',
-      '/admin/customers?page=1',
-    );
-    expect(screen.queryByRole('link', {name: 'Next'})).not.toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Next'})).toBeDisabled();
   });
 
-  it('shows no page links when everything fits in one page', async () => {
+  it('shows no pager when everything fits in one page', async () => {
     fakeApi({'GET /customers': [200, page([ANA])]});
     renderPage();
 
-    await screen.findByText('Ana Gomez');
+    await screen.findAllByText('Ana Gomez');
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
   });
 
-  it('asks before deleting, deletes the customer and reloads the list', async () => {
+  it('asks before deleting, deletes the customer, reloads the list and says so', async () => {
     let rows = [ANA, BEN];
     const api = fakeApi({
       'GET /customers': () => [200, page(rows)],
@@ -104,11 +188,14 @@ describe('CustomersPage', () => {
     renderPage();
 
     await userEvent.click(
-      await screen.findByRole('button', {name: /Delete Customer: Ana Gomez/}),
+      await screen.findByRole('button', {name: 'Actions for Ana Gomez'}),
     );
+    await userEvent.click(screen.getByRole('menuitem', {name: 'Delete'}));
     const dialog = screen.getByRole('dialog');
     expect(
-      within(dialog).getByText('Are you sure to delete this Customer?'),
+      within(dialog).getByText(
+        'Delete Ana Gomez? Their orders will be removed too.',
+      ),
     ).toBeInTheDocument();
     expect(api.calls.some((call) => call.method === 'DELETE')).toBe(false);
     await userEvent.click(within(dialog).getByRole('button', {name: 'Delete'}));
@@ -116,8 +203,8 @@ describe('CustomersPage', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(
       'The customer was deleted.',
     );
-    expect(screen.queryByText('Ana Gomez')).not.toBeInTheDocument();
-    expect(screen.getByText('Ben Ruiz')).toBeInTheDocument();
+    expect(screen.queryAllByText('Ana Gomez')).toHaveLength(0);
+    expect(screen.getAllByText('Ben Ruiz').length).toBeGreaterThan(0);
     expect(api.calls.filter((call) => call.method === 'DELETE')).toHaveLength(
       1,
     );
@@ -128,12 +215,13 @@ describe('CustomersPage', () => {
     renderPage();
 
     await userEvent.click(
-      await screen.findByRole('button', {name: /Delete Customer: Ana Gomez/}),
+      await screen.findByRole('button', {name: 'Actions for Ana Gomez'}),
     );
+    await userEvent.click(screen.getByRole('menuitem', {name: 'Delete'}));
     await userEvent.click(screen.getByRole('button', {name: 'Cancel'}));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByText('Ana Gomez')).toBeInTheDocument();
+    expect(screen.getAllByText('Ana Gomez').length).toBeGreaterThan(0);
     expect(api.calls.some((call) => call.method === 'DELETE')).toBe(false);
   });
 
@@ -145,9 +233,12 @@ describe('CustomersPage', () => {
     renderPage();
 
     await userEvent.click(
-      await screen.findByRole('button', {name: /Delete Customer: Ana Gomez/}),
+      await screen.findByRole('button', {name: 'Actions for Ana Gomez'}),
     );
-    await userEvent.click(screen.getByRole('button', {name: 'Delete'}));
+    await userEvent.click(screen.getByRole('menuitem', {name: 'Delete'}));
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', {name: 'Delete'}),
+    );
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Something went wrong on our side',
@@ -165,18 +256,36 @@ describe('CustomersPage', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('link', {name: 'Create Customer'}),
+      screen.getByRole('link', {name: 'Create customer'}),
     ).toBeInTheDocument();
   });
 
-  it('finds a customer by name, email or phone in the page', async () => {
+  it('labels the search as covering this page only, and finds by name, email, phone or city', async () => {
     fakeApi({'GET /customers': [200, page([ANA, BEN])]});
     renderPage();
 
-    await userEvent.type(await screen.findByRole('searchbox'), 'ruiz');
+    const box = await screen.findByRole('searchbox', {
+      name: 'Search this page',
+    });
+    await userEvent.type(box, 'ruiz');
+    expect(screen.getAllByText('Ben Ruiz').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Ana Gomez')).toHaveLength(0);
 
-    expect(screen.getByText('Ben Ruiz')).toBeInTheDocument();
-    expect(screen.queryByText('Ana Gomez')).not.toBeInTheDocument();
+    await userEvent.clear(box);
+    await userEvent.type(box, 'medellin');
+    expect(screen.getAllByText('Ana Gomez').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Ben Ruiz')).toHaveLength(0);
+  });
+
+  it('offers to show everything again when the search finds nothing', async () => {
+    fakeApi({'GET /customers': [200, page([ANA])]});
+    renderPage();
+
+    await userEvent.type(await screen.findByRole('searchbox'), 'zzz');
+    expect(screen.getByText('Nothing matches these filters.')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', {name: 'Show all'}));
+
+    expect(screen.getAllByText('Ana Gomez').length).toBeGreaterThan(0);
   });
 
   it('says so when the person may not see the customers', async () => {
@@ -187,15 +296,6 @@ describe('CustomersPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'You do not have permission to do this.',
-    );
-  });
-
-  it('confirms a save the form just made', async () => {
-    fakeApi({'GET /customers': [200, page([ANA])]});
-    renderPage('/admin/customers', {saved: 'updated'});
-
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'The customer was updated successfully.',
     );
   });
 });

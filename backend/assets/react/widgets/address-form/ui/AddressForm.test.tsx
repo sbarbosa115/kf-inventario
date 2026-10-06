@@ -149,26 +149,76 @@ describe('AddressForm', () => {
   it('adds another address and removes it again, but never the first', async () => {
     render(<Harness />);
     expect(
-      screen.queryByRole('button', {name: 'Remove Address'}),
+      screen.queryByRole('button', {name: 'Remove address'}),
     ).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', {name: 'Add Address'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Add address'}));
     expect(value()).toHaveLength(2);
     const second = screen.getByRole('group', {name: 'Address 2'});
     await userEvent.type(within(second).getByLabelText('Address'), 'Second');
 
     await userEvent.click(
-      within(second).getByRole('button', {name: 'Remove Address'}),
+      within(second).getByRole('button', {name: 'Remove address'}),
     );
 
     expect(value()).toHaveLength(1);
     expect(screen.queryByRole('group', {name: 'Address 2'})).toBeNull();
   });
 
+  it('shows each address as a card named by its number and its type', () => {
+    render(
+      <Harness
+        initial={[
+          {...emptyAddress(), address_type: 1},
+          {...emptyAddress(), address_type: 2},
+          emptyAddress(),
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getByRole('group', {name: 'Address 1 · Billing'}),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('group', {name: 'Address 2 · Shipping'}),
+    ).toBeInTheDocument();
+    // An address without a type is only numbered.
+    expect(screen.getByRole('group', {name: 'Address 3'})).toBeInTheDocument();
+  });
+
+  it('puts the country, state and city of a card in one row, and "Add address" under the cards', () => {
+    render(<Harness initial={[emptyAddress(), emptyAddress()]} />);
+
+    const card = screen.getByRole('group', {name: 'Address 1'});
+    const row = within(card).getByLabelText('Country').closest('.form-row')!;
+    expect(within(row as HTMLElement).getByLabelText('State')).toBeTruthy();
+    expect(within(row as HTMLElement).getByLabelText('City')).toBeTruthy();
+    expect(
+      screen.getAllByRole('button', {name: 'Add address'}),
+      'one button for the whole widget, not one per card',
+    ).toHaveLength(1);
+    const last = screen.getByRole('group', {name: 'Address 2'});
+    expect(
+      last.compareDocumentPosition(
+        screen.getByRole('button', {name: 'Add address'}),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+      'the button comes after the last card',
+    ).toBeTruthy();
+  });
+
+  it('styles the selects with the kit (kf-select classes)', async () => {
+    render(<Harness />);
+
+    await userEvent.click(screen.getByLabelText('Country'));
+
+    expect(document.querySelector('.kf-select__control')).not.toBeNull();
+    expect(document.querySelector('.kf-select__menu')).not.toBeNull();
+  });
+
   it('offers to add the first address when there is none', async () => {
     render(<Harness initial={[]} />);
 
-    await userEvent.click(screen.getByRole('button', {name: /Add Address/}));
+    await userEvent.click(screen.getByRole('button', {name: /Add address/}));
 
     expect(value()).toHaveLength(1);
   });
