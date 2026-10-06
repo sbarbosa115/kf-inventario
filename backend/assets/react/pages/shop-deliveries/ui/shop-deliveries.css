@@ -1,0 +1,69 @@
+/* A connection's failed deliveries (pages/shop-deliveries): the lines, the reason, the body panel. Tokens only. */
+.kf-deliveries__lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--kf-text-sm);
+}
+
+.kf-deliveries__reason {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--kf-space-1);
+  font-size: var(--kf-text-sm);
+}
+
+.kf-deliveries__status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kf-space-2);
+}
+
+.kf-deliveries__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--kf-space-3);
+  margin: 0 0 var(--kf-space-4);
+}
+
+.kf-deliveries__facts dt {
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-label);
+  font-weight: 500;
+}
+
+.kf-deliveries__facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.kf-deliveries__body-title {
+  margin: 0 0 var(--kf-space-2);
+  font-size: var(--kf-text-body);
+  font-weight: 600;
+}
+
+.kf-deliveries__body {
+  max-height: 50vh;
+  margin: 0;
+  padding: var(--kf-space-3);
+  overflow: auto;
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-control);
+  background-color: var(--kf-surface-sunken);
+  color: var(--kf-text);
+  font-size: var(--kf-text-sm);
+  white-space: pre;
+}
+
+.kf-deliveries__body:focus-visible {
+  outline: 2px solid var(--kf-focus);
+  outline-offset: 2px;
+}
+
+.kf-deliveries__muted {
+  margin: 0;
+  color: var(--kf-text-muted);
+}

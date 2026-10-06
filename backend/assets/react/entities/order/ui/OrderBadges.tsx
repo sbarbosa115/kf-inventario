@@ -19,14 +19,23 @@ const SOURCE_ICONS = {
   unknown: 'fa-question',
 } as const;
 
-/** Where an order came from: an icon and its word. */
-export function OrderSource({source}: {source: number}) {
+/**
+ * Where an order came from: an icon and its word, or the shop connection's name (with the globe) for an order a
+ * connection brought (docs/pdr/prd-shops-settings.md, Decisions 9).
+ */
+export function OrderSource({
+  source,
+  shop,
+}: {
+  source: number;
+  shop?: {name: string} | null;
+}) {
   const {t} = useTranslation();
-  const key = sourceKey(source);
+  const key = shop ? 'web' : sourceKey(source);
   return (
     <span className="text-nowrap">
       <i className={`fas ${SOURCE_ICONS[key]}`} aria-hidden="true" />{' '}
-      {t(`orders.sources.${key}`)}
+      {shop ? shop.name : t(`orders.sources.${key}`)}
     </span>
   );
 }

@@ -1,20 +1,23 @@
 import {useCallback, useState} from 'react';
 import type {Order} from '@/entities/order';
 import {useCan} from '@/entities/session';
-import {SyncOrdersButton} from '@/features/sync-orders';
+import {CheckNowButton} from '@/features/check-shop-orders';
 import {useTranslation} from '@/shared/i18n';
 import {Button, PageHeader} from '@/shared/ui';
 import {OrderDetail, type OrderDetailSection} from '@/widgets/order-detail';
 import {OrderTable} from '@/widgets/order-table';
+import {ShopHealth} from '@/widgets/shop-health';
 
 /**
- * Orders (ROLE_CAN_READ_ORDERS): a warehouse's orders, Create order and Sync shop orders by role, and one order's
- * detail in a slide-over beside the list. What changes in the detail (status, comments) reloads the list at once.
+ * Orders (ROLE_CAN_READ_ORDERS): a warehouse's orders, Create order and "Check now" (the shops) by role, the shops'
+ * warning line for admins, and one order's detail in a slide-over beside the list. What changes in the detail
+ * (status, comments) reloads the list at once; a check reloads the list and the warning line.
  */
 export function OrdersPage() {
   const {t} = useTranslation();
   const canCreate = useCan('ROLE_CAN_CREATE_ORDERS');
   const canSync = useCan('ROLE_CAN_SYNC_ORDERS');
+  const canSeeShops = useCan('ROLE_ADMIN');
   const [detail, setDetail] = useState<{
     order: Order;
     section: OrderDetailSection;
@@ -39,8 +42,9 @@ export function OrdersPage() {
             </Button>
           )
         }
-        secondary={canSync && <SyncOrdersButton onSynced={refresh} />}
+        secondary={canSync && <CheckNowButton onChecked={refresh} />}
       />
+      {canSeeShops && <ShopHealth refreshKey={refreshKey} />}
       <OrderTable onOpenDetail={open} refreshKey={refreshKey} />
       {detail && (
         <OrderDetail

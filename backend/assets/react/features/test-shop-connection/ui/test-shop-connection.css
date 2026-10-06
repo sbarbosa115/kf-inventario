@@ -1,0 +1,40 @@
+/* "Test connection"'s result card (features/test-shop-connection). Tokens only. */
+.kf-test-result {
+  display: grid;
+  gap: var(--kf-space-1);
+  padding: var(--kf-space-3) var(--kf-space-4);
+  border: 1px solid var(--kf-border);
+  border-left-width: 4px;
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-surface);
+}
+
+.kf-test-result p {
+  margin: 0;
+}
+
+.kf-test-result.is-ok {
+  border-left-color: var(--kf-accent);
+}
+
+.kf-test-result.is-ok .kf-test-result__headline .fas {
+  color: var(--kf-accent);
+}
+
+.kf-test-result.is-failed {
+  border-left-color: var(--kf-danger);
+}
+
+.kf-test-result.is-failed .kf-test-result__headline .fas,
+.kf-test-result__error {
+  color: var(--kf-danger-text);
+}
+
+.kf-test-result__error {
+  overflow-wrap: anywhere;
+}
+
+.kf-test-result__muted {
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+}

@@ -100,12 +100,21 @@ describe('SettingsPage', () => {
     );
   });
 
-  it('shows the tabs other items build as not ready yet', () => {
-    fakeApi({});
+  it('shows the shop connections on their tab', async () => {
+    fakeApi({
+      'GET /shops': [200, []],
+      'GET /settings/webhooks': [
+        200,
+        {legacy_enabled: true, legacy_hits_since: 0, legacy_last_hit_at: null},
+      ],
+    });
     renderAt('/admin/settings/shops');
 
     expect(
-      screen.getByText('This section is not ready yet.'),
+      await screen.findByText('No shop connection yet'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', {name: 'Shop connections'}),
+    ).toHaveAttribute('aria-current', 'page');
   });
 });

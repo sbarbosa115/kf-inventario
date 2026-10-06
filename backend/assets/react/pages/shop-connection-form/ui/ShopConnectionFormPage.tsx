@@ -1,19 +1,68 @@
+import {Link, useLocation, useParams} from 'react-router-dom';
+import {getShop} from '@/entities/shop-connection';
+import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {EmptyState, PageHeader} from '@/shared/ui';
+import {useLoad} from '@/shared/lib';
+import {ErrorState, PageHeader, Skeleton} from '@/shared/ui';
+import {FailedUpdates} from './FailedUpdates';
+import {ShopConnectionForm} from './ShopConnectionForm';
+import './shop-connection-form.css';
 
 /**
- * A shop connection's form (/admin/settings/shops/new, /admin/settings/shops/:id). Shops-settings' item 6 builds it;
- * the route exists from item 0 so that item 6 does not touch the router.
+ * A shop connection (ROLE_ADMIN): Add connection (/admin/settings/shops/new) and Edit connection
+ * (/admin/settings/shops/:id), one form for both; the edit page also lists the updates that did not reach the shop.
  */
 export function ShopConnectionFormPage() {
   const {t} = useTranslation();
+  const {id} = useParams();
+  return id === undefined ? (
+    <>
+      <PageHeader
+        title={t('shops.form.newTitle')}
+        back="/admin/settings/shops"
+      />
+      <ShopConnectionForm />
+    </>
+  ) : (
+    <EditConnection id={Number(id)} />
+  );
+}
+
+function EditConnection({id}: {id: number}) {
+  const {t} = useTranslation();
+  const location = useLocation();
+  const {data, error, reload} = useLoad(() => getShop(id), [id]);
+  const missing = error instanceof ApiError && error.status === 404;
+  // The secret the create answered, handed over by the form that created the connection (shown once, at once).
+  const secret =
+    (location.state as {secret?: string | null} | null)?.secret ?? null;
+
   return (
     <>
       <PageHeader
-        title={t('settings.tabs.shops')}
+        title={t('shops.form.editTitle')}
+        subtitle={data?.name}
         back="/admin/settings/shops"
       />
-      <EmptyState icon="fa-person-digging" message={t('settings.pending')} />
+      {missing ? (
+        <div className="alert alert-warning" role="alert">
+          <p>{t('shops.errors.shop_not_found')}</p>
+          <Link to="/admin/settings/shops">{t('shops.form.back')}</Link>
+        </div>
+      ) : error ? (
+        <ErrorState error={error} onRetry={reload} />
+      ) : data === undefined ? (
+        <Skeleton variant="form" />
+      ) : (
+        <>
+          <ShopConnectionForm
+            key={data.id}
+            shop={data}
+            initialSecret={secret}
+          />
+          {data.health.failed_pushes > 0 && <FailedUpdates shopId={data.id} />}
+        </>
+      )}
     </>
   );
 }

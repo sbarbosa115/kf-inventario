@@ -56,9 +56,19 @@
     "done": "Order {{code}} was deleted."
   },
   "sync": {
-    "button": "Sync shop orders",
-    "running": "Syncing shop orders…",
-    "done": "{{imported}} orders imported, {{skipped}} skipped."
+    "button": "Check now",
+    "running": "Checking the shops…",
+    "imported_one": "{{count}} order imported",
+    "imported_other": "{{count}} orders imported",
+    "fromShops_one": "from {{count}} shop",
+    "fromShops_other": "from {{count}} shops",
+    "skipped_one": "{{count}} skipped",
+    "skipped_other": "{{count}} skipped",
+    "summary": "{{imported}} {{from}}, {{skipped}}",
+    "done": "{{summary}}.",
+    "partly_one": "{{summary}}; {{names}} could not be read.",
+    "partly_other": "{{summary}}; {{names}} could not be read.",
+    "nothing": "No shop connection is active, so there was nothing to check."
   },
   "detail": {
     "title": "Order {{code}}",
@@ -94,5 +104,8 @@
     "order_sync_unavailable": "Pulling orders from the shops is not available yet.",
     "order_sync_failed": "The shops could not be reached, so no order was imported. Try again in a moment.",
     "validation_failed": "The change was refused. Reload the order and try again."
+  },
+  "shop": {
+    "unknown": "Shop #{{id}}"
   }
 }
