@@ -1001,11 +1001,12 @@ error.
 
 ## 9. WooCommerce webhook (HOOK)
 
-The shops post each new order to `/admin/order/1H39j0jpQPsWL958v9R4` (public, never moved). To run a case by hand,
-post a sample order with curl (the fixtures' warehouse 1, Colombia, receives `https://colombia.test`):
+Each shop posts its new orders to its connection's own URL (HOOK-03 – 05). The old single URL,
+`/admin/order/1H39j0jpQPsWL958v9R4`, was removed (the user, 2026-10-06; `docs/pdr/prd-shops-settings.md`, Decision
+24): it stays public as a tombstone that answers 410 and counts the hit. To post to it by hand:
 
 ```bash
-curl -s -X POST http://localhost:8080/admin/order/1H39j0jpQPsWL958v9R4 \
+curl -s -i -X POST http://localhost:8080/admin/order/1H39j0jpQPsWL958v9R4 \
   -H 'Content-Type: application/json' -H 'X-WC-Webhook-Source: https://colombia.test' \
   -d '{"id": 5501, "billing": {"first_name": "Hook", "last_name": "Buyer", "email": "hook.buyer@example.com",
        "phone": "555-0199", "address_1": "1 Billing St", "postcode": "33101", "city": "Miami", "state": "FL",
@@ -1013,24 +1014,23 @@ curl -s -X POST http://localhost:8080/admin/order/1H39j0jpQPsWL958v9R4 \
        "state": "NY", "country": "US"}, "line_items": [{"sku": "KF-01", "quantity": 2}, {"sku": "KF-02", "quantity": 1}]}'
 ```
 
-**HOOK-01 · A shop order lands in its warehouse and the printer gets it**
+**HOOK-01 · The old webhook URL answers 410 to everything and places nothing**
 Smoke: `e2e/webhook.spec.ts`.
-Post the sample order above. The answer is `{"status":true}`. Orders › warehouse Colombia: order `5501` is there,
-source Web, status Created, customer Hook Buyer with two addresses (billing Miami, shipping New York) and the lines
-KF-01 × 2, KF-02 × 1. Within a minute Mailpit has "Order #5501 was created" to the printer address, cc
-`sales@klassicfab.com`, with `order-<id>.pdf` attached. The same order posted with `X-WC-Webhook-Source:
-https://usa.test` (warehouse 2) is placed in Usa and sends no email. Posting it **again** to `https://colombia.test`
-still answers `{"status":true}` but places nothing and sends no second email (the order code is already in that
-warehouse, deleted orders included, as for "Sync Orders"); `docker compose logs php` shows "WooCommerce order [5501]
-from [https://colombia.test] is already in warehouse 1: not placed again."
+Post the sample order above: `HTTP/1.1 410` with `{"status":false,"error":"webhook_moved"}`. The same with
+`X-WC-Webhook-Source: http://nginx/_fake-shop` (the Fake shop connection's site), with a valid
+`X-WC-Webhook-Signature`, and for a plain `GET` (no sign-in). No warehouse lists order `5501`, no email reaches
+Mailpit, and the failed-deliveries inbox gains no row; `docker compose logs php` shows "WooCommerce delivery from
+[https://colombia.test] refused: the old webhook URL is gone (410)".
 
-**HOOK-02 · An unknown shop is answered ok and nothing happens**
+**HOOK-02 · A hit on the old URL is counted and shown in Settings and on Orders**
 Smoke: `e2e/webhook.spec.ts`.
-Post the sample order with `X-WC-Webhook-Source: https://unknown-shop.test` (and a new `id`). The answer is still
-`{"status":true}`; no warehouse lists the order, no email arrives, and `docker compose logs php` shows
-"Warehouse [https://unknown-shop.test] was not found".
+After HOOK-01, `GET /api/v1/settings/webhooks` (admin) answers `legacy_hits` one higher per post and
+`legacy_last_hit_at` now. Settings › General › "The old webhook URL" (badge Retired) reads "N deliveries reached it
+since the deploy, the last on …: a shop still points at it."; Settings › Shop connections and Orders show the warning
+"The old webhook URL received N deliveries since the deploy: a shop still points at it." (→ Settings › General). On a
+fresh stack (no hit) General reads "Nothing reached it since the deploy." and there is no warning.
 
-### Per-connection webhooks and the legacy switch (shops-settings item 5a)
+### Per-connection webhooks (shops-settings item 5a)
 
 Each connection has its own URL, `/webhooks/shops/{token}`, and every delivery must carry
 `X-WC-Webhook-Signature` = base64(HMAC-SHA256(raw body, the connection's secret)). The fixtures' "Fake shop"
@@ -1075,15 +1075,7 @@ customer and lines in `summary`, and the body in the detail. Create product `KF-
 Colombia, linked to the shop. Discard (`…/discard`) on another failed row sets `discarded` and the health's
 `failed_deliveries` drops by one.
 
-**HOOK-06 · The legacy URL during the cutover: on as before, off 410 and counted**
-Smoke: `e2e/webhook.spec.ts` (the API part); the Orders warning is SHOP-07's (item 6).
-With Settings › General's switch on, HOOK-01 still passes and every post to the old URL adds one to
-`GET /api/v1/settings/webhooks`'s `legacy_hits_since`; an order the old URL cannot place (an unknown shop, an unknown
-SKU) is kept in the inbox as kind `legacy`, and a shop whose address is a connection's site URL is imported through
-that connection (its warehouse, its printer switch, linked). Turn the switch off (`PUT /api/v1/settings/webhooks`
-`{"legacy_enabled": false}`): the counter starts from 0, the HOOK-01 post answers 410
-`{"status":false,"error":"webhook_moved"}`, places nothing, and the counter and `legacy_last_hit_at` move. Turn it
-back on afterwards.
+**HOOK-06 · Removed** with the legacy webhook (2026-10-06): the old URL's cases are HOOK-01 – 02.
 
 ## 10. Design system (DS)
 
@@ -1190,13 +1182,15 @@ Shop connections, Quick phrases.
 Smoke: `e2e/settings.spec.ts`.
 Signed in as the admin: the sidebar's Admin group has Settings (a sliders icon); it opens `/admin/settings`, "Settings"
 with the five tabs, General current: the time zone, "Email leaves from" (the server's MAILER_DSN, `mailpit`, on the dev
-stack) and "The old webhook URL" with On and "Turn off the old webhook URL". Signed in as `inventory`: no Settings entry,
+stack) and "The old webhook URL", retired. Signed in as `inventory`: no Settings entry,
 and `/admin/settings` shows "Page not found"; `/api/v1/settings/email` answers 403.
 
-**SET-02 · General says where email leaves from, and the legacy switch**
+**SET-02 · General says where email leaves from, and that the old webhook URL is retired**
 Smoke: `e2e/settings.spec.ts`.
 Settings › General on a stack with no SMTP server saved: "Email leaves from" reads "The server's MAILER_DSN (no SMTP
-server in Settings)" with the env host (`mailpit`); "The old webhook URL" shows On and "Turn off the old webhook URL".
+server in Settings)" with the env host (`mailpit`); "The old webhook URL" shows the badge Retired, "It answers 410 and
+places nothing: each shop posts to its own connection's URL (Shop connections)." and its hits since the deploy
+(HOOK-02). There is no switch and no button.
 
 **SET-03 · Email: the server is saved, the password field is blank afterwards**
 Smoke: `e2e/settings.spec.ts`.
@@ -1299,7 +1293,7 @@ Smoke: `e2e/shops.spec.ts`.
 As admin, with Fake shop holding failed deliveries: Orders shows a warning above the table "Fake shop: N orders could not
 be placed · Fix in Settings" (several problems fold into "N shop problems need attention." with Show/Hide); the link
 opens that connection's failed deliveries. Updates that did not reach a shop, a failure newer than the last success,
-and the old webhook URL reached after it was turned off (→ Settings › General) each make a line; inactive connections
+and the old webhook URL reached since the deploy (→ Settings › General, HOOK-02) each make a line; inactive connections
 none. People without ROLE_ADMIN never see it.
 
 **SHOP-08 · Check now answers per connection**

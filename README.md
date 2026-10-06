@@ -143,7 +143,7 @@ its own); the rows below marked "ss-N" are shops-settings' items (501 `not_imple
 | `PUT` | `/api/v1/settings/email` | `ROLE_ADMIN` | ss-3: `{host, port, user, password?, encryption, from_address, from_name, printer_address, cc[]}` → `EmailSettingsOutput`. The server is stored as one DSN sealed with `APP_ENCRYPTION_KEY`; a blank password keeps the saved one **for the same host only**; every field empty clears it (env fallback); 422 on a bad address or a host that is more than a host name. Every email then leaves through it (`SettingsMailTransport` decorates `mailer.transports`), read at send time |
 | `POST` | `/api/v1/settings/email/test` | `ROLE_ADMIN` | ss-3: `{to}` → 202 `{queued: true, host}`, sent at once through the effective server (not the queue); 502 `smtp_failed` with the server's message in `detail.reason`; 429 `test_email_too_soon` (one per 10 s per user) |
 | `GET`/`PUT` | `/api/v1/settings/analytics` | `ROLE_ADMIN` | ss-3: `{ga4_measurement_id, clarity_project_id}`; `^G-[A-Z0-9]{4,12}$` / `^[a-z0-9]{6,20}$` (422 otherwise), empty turns that tool off |
-| `GET`/`PUT` | `/api/v1/settings/webhooks` | `ROLE_ADMIN` | ss-0: `{legacy_enabled, legacy_hits_since, legacy_last_hit_at}`; turning it off restarts the counter |
+| `GET` | `/api/v1/settings/webhooks` | `ROLE_ADMIN` | ss-0: `{legacy_hits, legacy_last_hit_at}`: what reached the old webhook URL (the 410 tombstone) since the deploy; read-only |
 | `GET` | `/api/v1/settings/quick-phrases` | `ROLE_USER` | ss-3: `QuickPhraseOutput[] {id, text, position, active}`, the active ones by position; `?all=1` every one (admins only; anyone else still gets the active ones) |
 | `POST`/`PUT`/`DELETE` | `/api/v1/settings/quick-phrases[/{id}]`, `PUT …/order` | `ROLE_ADMIN` | ss-3: `{text, active}` → 201 (at the end) / 200 / 204; `PUT …/order {ids[]}`: those first, the others after → every phrase; 404 `quick_phrase_not_found`. Settings changes are logged (`log`, entity `settings`) by key, never by value. Key rotation: `bin/console app:settings:rekey --old-key=<previous APP_ENCRYPTION_KEY>` re-seals every stored secret (settings and shop connections), all or nothing |
 | `GET` | `/api/v1/shops[/{id}]` | `ROLE_ADMIN` | ss-5a: `ShopConnectionOutput[]` by name / one (404 `shop_not_found`): site URL, warehouse, printer switch, capabilities, `webhook_url`, `has_keys` (never the keys), `health` with the failed deliveries and pushes; `webhook_secret` null |
@@ -160,7 +160,7 @@ its own); the rows below marked "ss-N" are shops-settings' items (501 `not_imple
 | `POST` | `/api/v1/orders/{id}/comments` | `ROLE_USER` | ss-7: `{content, send_to_shop?, phrase_id?}` → 201 `OrderCommentOutput` (signed by you, dated now; `origin` `phrase` for an active phrase, else `app`); `send_to_shop` writes an `order_note` row in `shop_outbox` for the `shops` queue, 422 `shop_note_unavailable` when the order is not from a connection or it is inactive or has `order_note` off (nothing written); 404 `order_not_found`/`quick_phrase_not_found`; 422 blank `content` |
 | `POST`/`DELETE` | `/api/v1/orders/{id}/comments/{cId}/pin` | `ROLE_USER` | ss-7: pins / unpins → `OrderCommentOutput`; one pinned comment per order (pinning another unpins the previous); the list's and detail's `pinned_comment`; 404 `comment_not_found` (also another order's comment) |
 | `POST`/`GET` | `/webhooks/shops/{token}` | public | ss-5a: a connection's webhook. `X-WC-Webhook-Signature` (base64 HMAC-SHA256 of the raw body with the connection's secret) required. 200 `{status: true}` when placed in the connection's warehouse (linked, printed when the connection prints, the checkout note as a shop comment), a duplicate (nothing stored) or kept in the inbox (unknown SKU, inactive connection…); 401 `{status: false}` + inbox row `bad_signature` (no body) + health; 404 for an unknown token (nothing stored); 413 over 1 MB; GET and WooCommerce's `webhook_id=` ping → 200 |
-| `POST`/`GET` | `/admin/order/1H39j0jpQPsWL958v9R4` | public | 4: the WooCommerce webhook (URL and route name unchanged): warehouse by `X-WC-Webhook-Source` in `warehouse.urls`, printer email only for `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`; always `{status: true}`, failures logged; an order whose shop id is already an order code in that warehouse (deleted ones too, as for the sync) is logged and not placed again; with `WOO_COMMERCE_WEBHOOK_SECRET` set, a delivery without the shop's `X-WC-Webhook-Signature` is logged and not placed (empty by default: no check, as before). ss-5a: every hit counts in `/settings/webhooks`; a source that is a connection's site URL is imported through that connection (its warehouse, printer switch, link); what cannot be placed is also kept in the inbox (kind `legacy`). Switched off in Settings › General: 410 `{status: false, error: "webhook_moved"}`, nothing placed |
+| `POST`/`GET` | `/admin/order/1H39j0jpQPsWL958v9R4` | public | The old WooCommerce webhook, removed (the user, 2026-10-06): a tombstone that always answers 410 `{status: false, error: "webhook_moved"}`, places nothing, keeps no body and counts the hit (`/settings/webhooks`, the warning on Orders and in Shop connections). The shops post to their connection's URL. Inbox rows of kind `legacy` written before the removal are still listed |
 
 ## Data model decisions
 
@@ -195,15 +195,16 @@ once. The cron line (every minute) runs `app:shops:pull --if-due` (the shops' ca
 `mail` and `shops` queues, under one `flock`; the script prints it and says when the old mail-only line must be
 replaced.
 
-For the shops-settings feature (cutover from the legacy WooCommerce webhook to per-connection webhooks): before
-deploying, generate `APP_ENCRYPTION_KEY`; deploy (the migration creates the shop tables); then in Settings ›
-Shop connections create the four connections (name, shop URL, REST keys); re-point each shop's webhook to its
-connection's URL; verify with a test order; turn off the legacy URL in Settings › General. The full cutover checklist
-is in `docs/pdr/prd-shops-settings.md` (the `Cutover checklist` section).
+For the shops-settings feature (the legacy WooCommerce webhook is replaced by per-connection webhooks): before
+deploying, generate `APP_ENCRYPTION_KEY`; deploy (the migration creates the shop tables). From then on the old URL
+(`/admin/order/1H39j0jpQPsWL958v9R4`) answers 410 and places nothing, so right after the deploy create the four
+connections in Settings › Shop connections (name, shop URL, REST keys, warehouse, printer switch), re-point each
+shop's webhook to its connection's URL and secret, and press "Check now": a connection's first pull reads the last 30
+days of `processing` orders, which recovers the orders placed in the gap. Watch the old URL's hit counter (Settings ›
+General) stay at 0. The full checklist is in `docs/pdr/prd-shops-settings.md` (`Cutover checklist`) and in
+`deploy/cpanel-update.sh`'s header.
 
-The legacy webhook (`/admin/order/1H39j0jpQPsWL958v9R4`) is public and works as before (its secret path and
-`X-WC-Webhook-Source` header admit an order), but per-connection webhooks (under `/webhooks/shops/{token}`) are
-preferred and require an HMAC-SHA256 signature. The legacy URL answers 410 once it is turned off in Settings › General.
+Shop webhooks are `/webhooks/shops/{token}`, public, and require the connection's HMAC-SHA256 signature.
 
 ## What behaves differently from the Twig app
 
@@ -216,8 +217,8 @@ Everything else does what the legacy pages did (roles included). On purpose, eac
   id leaves them unchanged; a WooCommerce order delivered twice is placed once; WooCommerce orders reuse the
   countries, states and cities that exist.
 - New: Sync Orders pulls the shop's waiting orders (it was a dead button); the order email goes through a queue
-  (delivered within a minute by the cron line, retried); the webhook can check WooCommerce's signature
-  (`WOO_COMMERCE_WEBHOOK_SECRET`); security headers; spreadsheet cells that start with `=` are written as text.
+  (delivered within a minute by the cron line, retried); each shop has its own signed webhook URL (the old single URL
+  answers 410); security headers; spreadsheet cells that start with `=` are written as text.
 - Everyone signs in again once after the cutover; old page addresses redirect to the new ones.
 
 ## Known gaps
@@ -240,12 +241,11 @@ Everything else does what the legacy pages did (roles included). On purpose, eac
   decision 11): any account, an invoices-only one included, can record a partial shipment (stock out, order
   completed), replace an order's comments and rename a warehouse. Audit finding 1 (High): accepted by the user on
   2026-10-05, same as legacy.
-- **Per-connection webhooks require an HMAC-SHA256 signature** (the connection's secret, constant-time comparison).
-  The legacy webhook allows its secret path and the `X-WC-Webhook-Source` header as before; setting `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`
-  during cutover determines which warehouse's orders are printed (audit finding 2, migrated). While its switch is on,
-  an unsigned legacy delivery naming a connection's site is imported through that connection, and one that cannot be
-  placed is kept with its body: set `WOO_COMMERCE_WEBHOOK_SECRET` until the switch is off, and turn it off as soon as
-  the shops are re-pointed (shops-settings audit, finding 2, open).
+- **Between the deploy and re-pointing a shop, its webhook deliveries get 410** (the old URL was removed, not kept
+  during a cutover: the user, 2026-10-06; this closes shops-settings audit finding 2, an unsigned delivery to the old
+  URL was imported). WooCommerce retries and then disables that webhook; the orders are not lost: "Check now" (or the
+  cron pull) reads the last 30 days of `processing` orders on a connection's first pull. `warehouse.urls` is no longer
+  read (the column stays).
 - A connection's webhook token is in the server's access log and, on a request that errors, in `var/log` (only its
   secret, never logged, makes a delivery valid); the token cannot be rotated, only the secret (shops-settings audit,
   findings 3 and 7). Pinning or unpinning a comment answers it to any signed-in user, as the order form's comment

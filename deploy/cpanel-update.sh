@@ -20,22 +20,24 @@
 #
 # First time on a new account: git clone <repo> ~/kf-inventory, then steps 2 to 5.
 #
-# Shops-settings cutover, once (docs/pdr/prd-shops-settings.md, "Cutover checklist"):
+# Shops-settings cutover, once (docs/pdr/prd-shops-settings.md, "Cutover checklist"). The old webhook URL is removed:
+# from the deploy on it answers 410 and places nothing, so do steps 3 to 6 right after the deploy.
 #   1. Before deploying: add APP_ENCRYPTION_KEY to backend/.env.local (php -r 'echo bin2hex(random_bytes(32));');
-#      create Read/Write REST keys in each of the four shops (WooCommerce › Settings › Advanced › REST API).
-#   2. Run this script (backup, the one migration). Replace the old cron line with the one it prints. The old
-#      webhook URL keeps working: its switch is on.
-#   3. Settings › Email: the SMTP server (or empty to keep MAILER_DSN), sender, printer, cc; "Send test email".
-#   4. Settings › Shop connections: create the four connections (URL, keys, the warehouse whose URLs held that shop,
-#      "prints orders" for the one that was ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID, "Order status" on to update the shop);
-#      "Test connection" each.
-#   5. In each shop: WooCommerce › Settings › Advanced › Webhooks › "Order created" → the connection's URL and
-#      secret, API v3, Save (the connection's "last webhook" moves).
-#   6. Place a test order in each shop (or "Check now"): it appears in Orders with the shop's name; the printer
-#      email arrives for the printing connection.
-#   7. Settings › General: turn the old webhook URL off; watch its hit counter for a day (a hit = a shop missed).
-#   8. Then remove WOO_COMMERCE_* and ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID from backend/.env.local.
-#   9. Settings › Analytics (GA4, Clarity IDs) and Settings › Quick phrases.
+#      create Read/Write REST keys in each of the four shops (WooCommerce › Settings › Advanced › REST API); note
+#      which warehouse each shop's orders went to and which one was printed (ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID).
+#   2. Run this script (backup, the one migration). Replace the old cron line with the one it prints.
+#   3. Settings › Shop connections: create the four connections (URL, keys, the warehouse that shop's orders went to,
+#      "prints orders" for the printed one, "Order status" on to update the shop); "Test connection" each.
+#   4. In each shop: WooCommerce › Settings › Advanced › Webhooks › "Order created" → the connection's URL and
+#      secret, API v3, Status Active, Save (the connection's "last webhook" moves).
+#   5. Orders › "Check now": a connection's first pull reads the last 30 days of processing orders, so the orders
+#      placed between the deploy and step 4 are imported (the ones already in the app are skipped).
+#   6. Place a test order in each shop: it appears in Orders with the shop's name; the printer email arrives for the
+#      printing connection.
+#   7. Settings › General: the old webhook URL's hit counter stays at 0 (a hit = a shop still points at it: step 4).
+#   8. Remove WOO_COMMERCE_* and ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID from backend/.env.local: nothing reads them.
+#   9. Settings › Email (the SMTP server, or empty to keep MAILER_DSN; "Send test email"), Settings › Analytics (GA4,
+#      Clarity IDs) and Settings › Quick phrases.
 #
 # Settings it takes from the environment, all optional:
 #   PHP         path to the PHP 8.4 CLI  (detected)

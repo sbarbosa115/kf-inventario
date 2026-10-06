@@ -34,8 +34,10 @@ you add (`.claude/gate.d/compose-cpus` checks it).
 - **The API is `snake_case`** (the serializer's name converter). PHP stays camelCase; do not add
   `#[SerializedName]`. The legacy pages build their own serializers and keep their camelCase JSON.
 - **WooCommerce webhooks are per connection:** `/webhooks/shops/{token}` (public; the token names the connection, the
-  `X-WC-Webhook-Signature` is required). The legacy URL `/admin/order/1H39j0jpQPsWL958v9R4` works as before while
-  Settings › General's switch is on (the default), and answers 410 `webhook_moved` once it is off; its route never moves.
+  `X-WC-Webhook-Signature` is required). The legacy URL `/admin/order/1H39j0jpQPsWL958v9R4` was removed (the user,
+  2026-10-06): it is a public tombstone that always answers 410 `{status: false, error: "webhook_moved"}`, places and
+  stores nothing and counts the hit (Settings › General, the Orders warning). Keep its route and its `PUBLIC_ACCESS`
+  line; never import through it again.
 - **The order email** takes its sender, printer address and cc from Settings › Email first, the env as the fallback
   (`MAILER_FROM_*`, `MAILER_PRINTER_ADDRESS`, `ordering.order_email.cc` = `sales@klassicfab.com`); subject "Order
   #<code> was created", the order PDF attached. Shop orders send it when their connection prints orders
