@@ -9,11 +9,11 @@
 
 | | Cases |
 |---|---|
-| Cases in the suite | 134 |
-| Run by the smoke suite | 96 |
-| Left for the manual run | 38 |
-| Manual: pass | <!-- N (M after a fix made during the run) --> |
-| Manual: fail | <!-- N: IDs --> |
+| Cases in the suite | 174 (the baseline, `runs/2026-10-06-baseline.md`; 134 before it) |
+| Run by the smoke suite | 174 |
+| Left for the manual run | 0: the suite is smoke-only since the baseline |
+| Manual: pass | — |
+| Manual: fail | — |
 
 ## Smoke suite
 
@@ -28,6 +28,7 @@ the last row is green.
 | 3 | 2026-10-06 11:17 | `7098916` | Green: 119 passed, 0 failed | — |
 | 4 | 2026-10-06 13:12 | `8151dc9` | Not green: 155 passed, 1 failed, 2 skipped | FLT-08; skipped: FLT-09, FLT-10 |
 | 5 | 2026-10-06 13:23 | `cc7cc33` | Green: 158 passed, 0 failed | — |
+| 6 | 2026-10-06 16:23 | `d7f4fde` | Green: 174 passed, 0 failed | — |
 <!-- smoke.py adds a row per run of the whole suite -->
 
 ### Smoke findings
@@ -47,52 +48,16 @@ the last row is green.
    failed (serial describe).
 3. FLT-08 (attempt 4): the test was wrong. It counted the rows right after the address changed, before the filtered
    page arrived (14 instead of 2). It now waits for the chips and a quiet network before counting.
+4. Attempt 6 is the smoke-only baseline (174 cases): what the development runs before it met, and the fixes, are in
+   `2026-10-06-baseline.md`, "Smoke findings".
 
 ## Manual run
 
-Replace "Not run" with Pass, Fail, "Pass after fix" (with the commit) or Blocked (with why). Group consecutive
-passes into ranges (`AREA-01 – 05`) once done.
-
-| ID | Result | Case / notes |
-|---|---|---|
-| AUTH-06 | Not run | Remember me keeps you signed in after closing the browser |
-| NAV-04 | Not run | The rail shows icons with tooltips |
-| INV-03 | Not run | The selected products download as the stock spreadsheet — by hand: see the case |
-| INV-04 | Not run | Move to Warehouse moves the chosen quantities; they arrive as incoming — by hand: see the case |
-| INV-05 | Not run | A move the warehouse can no longer cover is refused, and nothing moves |
-| INV-19 | Not run | The selection bar moves or downloads what is ticked, and Move opens beside the list — by hand: see the case |
-| INV-22 | Not run | On a phone the list is cards and the form is one column — by hand: see the case |
-| INV-11 | Not run | A spreadsheet from the template is stored in the chosen warehouse — by hand: see the case |
-| INV-26 | Not run | The camera on the scan screen — by hand: see the case |
-| INV-28 | Not run | The drop zone shows the chosen sheet — by hand: see the case |
-| INV-30 | Not run | The warehouse screens on a phone — by hand: see the case |
-| CUS-10 | Not run | Spanish and dark, by hand |
-| ORD-07 | Not run | The order's documents download — by hand: see the case |
-| ORD-09 | Not run | Sync shop orders says what it did — by hand: see the case |
-| ORD-26 | Not run | On a phone the orders are cards — by hand: see the case |
-| ORD-27 | Not run | The orders screens in Spanish, light and dark |
-| ORD-28 | Not run | Keyboard only |
-| ORD-19 | Not run | Sync Orders without shop keys places nothing, and needs the sync role — by hand: see the case |
-| ORD-20 | Not run | Sync Orders pulls a shop's waiting orders once, into the warehouse of that shop |
-| ORD-32 | Not run | The form and getting ready on a phone (390 px) — by hand: see the case |
-| ORD-33 | Not run | The order form's two columns, and the required marks |
-| ORD-34 | Not run | Spanish, dark, and keyboard only |
-| INVC-03 | Not run | An invoice is created with a customer, a product and tax, its PDF opens and the list shows it — by hand: see the case |
-| INVC-10 | Not run | The invoice form reads like the document |
-| INVC-11 | Not run | Spanish and the dark theme on both invoice screens |
-| USR-02 | Not run | A new user is created and appears in the list — by hand: see the case |
-| USR-03 | Not run | Editing without typing a password keeps the password — by hand: see the case |
-| USR-09 | Not run | Saving toasts, and the form is usable on a phone and in dark — by hand: see the case |
-| MAIL-01 | Not run | An order placed by hand is emailed to the printer — by hand: see the case |
-| DS-03 | Not run | The phone layout — by hand: every screen looks right at 390 px (no cut text, 44 px targets, the action bar above the tab bar) |
-| DS-04 | Not run | A visible focus everywhere — by hand: the ring itself, everywhere |
-| DS-07 | Not run | Light, dark, or the system's — by hand: no white flash when the page reloads in dark, and every screen readable in both |
-| DS-09 | Not run | No raw key in Spanish, light and dark |
-| DS-10 | Not run | The camera is asked for only after the tap |
-| DS-11 | Not run | A camera read lands once, with a tone and a vibration |
-| DS-12 | Not run | Lighthouse accessibility |
-| DS-13 | Not run | Signing in: show the password, Caps Lock, the error in place — by hand: with Caps Lock on, "Caps Lock is on" appears under the password |
-| DS-15 | Not run | Every filter control in the kit, light and dark, 44 px on a phone — by hand: the look |
+None. The user decided on 2026-10-06 to drop the manual cases ("let's remove all of them manual tests for now, let's
+re create a new smoke tests for playwright that take the current state of the application as base"): the suite was
+rewritten as a smoke-only baseline (`runs/2026-10-06-baseline.md`), every case a Playwright test, and what needs the
+outside world is listed in the README, "Not covered by the smoke suite". The 44 cases this file listed for a person
+became smoke tests or were dropped there (the baseline says which).
 
 ## Findings
 
