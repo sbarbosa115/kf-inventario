@@ -54,7 +54,8 @@ final class CustomerController extends AbstractController
 
     /**
      * A page of customers, newest first: the list contract (q over first/last name, email, phone and city; filters
-     * name, email, phone, city, country[] (country ids, any address); sorts name, email, city).
+     * name, email, phone, city (the first address's), country[] (country ids, any address); sorts name, email, city;
+     * facet of country).
      */
     #[Route('/api/v1/customers', name: 'api_customers_page', methods: ['GET'])]
     #[IsGranted('ROLE_MANAGE_CUSTOMERS')]

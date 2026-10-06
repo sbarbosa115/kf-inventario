@@ -57,7 +57,8 @@ final class InvoiceController extends AbstractController
 
     /**
      * A page of invoices, newest first: the list contract (q over code, customer name and email; filters code,
-     * customer, payment_method[], created_at, total, walk_in[] yes/no; sorts code, customer, created_at, total).
+     * customer, payment_method[], created_at, total, walk_in[] yes/no (yes: no customer); sorts code, customer,
+     * created_at, total; facets of payment_method and walk_in).
      */
     #[Route('/api/v1/invoices', name: 'api_invoices_list', methods: ['GET'])]
     #[IsGranted('ROLE_CAN_READ_INVOICES')]

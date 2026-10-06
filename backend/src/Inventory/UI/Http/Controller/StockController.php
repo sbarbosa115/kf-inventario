@@ -65,8 +65,8 @@ final class StockController extends AbstractController
     /**
      * A page of the warehouse's stock rows with `status` (1 in stock, default; 0 incoming): the list contract (q over
      * code, title and detail; filters code, title, detail, quantity, price, in_stock; sorts code, title, quantity,
-     * price; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row the filters keep.
-     * 404 warehouse_not_found.
+     * price; facet of in_stock; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row
+     * the filters keep, whatever the page. 404 warehouse_not_found.
      */
     #[Route('/api/v1/warehouses/{id}/stock', name: 'api_stock_list', methods: ['GET'], requirements: ['id' => '\d+'])]
     #[IsGranted('ROLE_MANAGE_INVENTORY')]

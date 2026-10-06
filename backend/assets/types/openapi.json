@@ -76,7 +76,7 @@
         },
         "/api/v1/users": {
             "get": {
-                "summary": "A page of users, by name: the list contract (q over name, username and email; filters name, username, email,\nroles[] \u2014 the nine assignable \u2014, enabled[] yes/no; sorts name, username, email).",
+                "summary": "A page of users, by name: the list contract (q over name, username and email; filters name, username, email,\nroles[] \u2014 the nine assignable, any of them \u2014, enabled[] yes/no; sorts name, username, email; facets of roles and\nenabled).",
                 "operationId": "get_api_users_list",
                 "responses": {
                     "200": {
@@ -330,8 +330,7 @@
         },
         "/api/v1/warehouses/{id}/stock": {
             "get": {
-                "summary": "A page of the warehouse's stock rows with `status` (1 in stock, default; 0 incoming): the list contract (q over\ncode, title and detail; filters code, title, detail, quantity, price, in_stock; sorts code, title, quantity,\nprice; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row the filters keep.",
-                "description": "404 warehouse_not_found.",
+                "summary": "A page of the warehouse's stock rows with `status` (1 in stock, default; 0 incoming): the list contract (q over\ncode, title and detail; filters code, title, detail, quantity, price, in_stock; sorts code, title, quantity,\nprice; facet of in_stock; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row\nthe filters keep, whatever the page. 404 warehouse_not_found.",
                 "operationId": "get_api_stock_list",
                 "parameters": [
                     {
@@ -550,7 +549,7 @@
         },
         "/api/v1/customers": {
             "get": {
-                "summary": "A page of customers, newest first: the list contract (q over first/last name, email, phone and city; filters\nname, email, phone, city, country[] (country ids, any address); sorts name, email, city).",
+                "summary": "A page of customers, newest first: the list contract (q over first/last name, email, phone and city; filters\nname, email, phone, city (the first address's), country[] (country ids, any address); sorts name, email, city;\nfacet of country).",
                 "operationId": "get_api_customers_page",
                 "responses": {
                     "200": {
@@ -913,7 +912,7 @@
         },
         "/api/v1/orders": {
             "get": {
-                "summary": "`warehouse_id` (required): a page of that warehouse's orders, newest first \u2014 the list contract (q over code,\ncustomer name and email; filters code, customer, status[] 1\u20136, source[] phone|web|shop:<id>, created_at,\npinned[] 1; sorts code, customer, status, created_at; facets of status and source).",
+                "summary": "`warehouse_id` (required): a page of that warehouse's orders, newest first \u2014 the list contract (q over code,\ncustomer name and email; filters code, customer (name or email), status[] 1\u20136, source[] phone|web|shop:<id>\n(web: a web order no connection brought), created_at, pinned[] 1; sorts code, customer, status, created_at;\nfacets of status, source and pinned).",
                 "operationId": "get_api_orders_list",
                 "responses": {
                     "200": {
@@ -1898,7 +1897,7 @@
         },
         "/api/v1/invoices": {
             "get": {
-                "summary": "A page of invoices, newest first: the list contract (q over code, customer name and email; filters code,\ncustomer, payment_method[], created_at, total, walk_in[] yes/no; sorts code, customer, created_at, total).",
+                "summary": "A page of invoices, newest first: the list contract (q over code, customer name and email; filters code,\ncustomer, payment_method[], created_at, total, walk_in[] yes/no (yes: no customer); sorts code, customer,\ncreated_at, total; facets of payment_method and walk_in).",
                 "operationId": "get_api_invoices_list",
                 "responses": {
                     "200": {

@@ -54,7 +54,8 @@ final class UserController extends AbstractController
 
     /**
      * A page of users, by name: the list contract (q over name, username and email; filters name, username, email,
-     * roles[] — the nine assignable —, enabled[] yes/no; sorts name, username, email).
+     * roles[] — the nine assignable, any of them —, enabled[] yes/no; sorts name, username, email; facets of roles and
+     * enabled).
      */
     #[Route('/api/v1/users', name: 'api_users_list', methods: ['GET'])]
     #[IsGranted('ROLE_MANAGE_USERS')]

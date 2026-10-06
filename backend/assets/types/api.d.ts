@@ -84,7 +84,8 @@ export interface paths {
         };
         /**
          * A page of users, by name: the list contract (q over name, username and email; filters name, username, email,
-         *     roles[] — the nine assignable —, enabled[] yes/no; sorts name, username, email).
+         *     roles[] — the nine assignable, any of them —, enabled[] yes/no; sorts name, username, email; facets of roles and
+         *     enabled).
          */
         get: operations["get_api_users_list"];
         put?: never;
@@ -217,8 +218,8 @@ export interface paths {
         /**
          * A page of the warehouse's stock rows with `status` (1 in stock, default; 0 incoming): the list contract (q over
          *     code, title and detail; filters code, title, detail, quantity, price, in_stock; sorts code, title, quantity,
-         *     price; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row the filters keep.
-         * @description 404 warehouse_not_found.
+         *     price; facet of in_stock; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row
+         *     the filters keep, whatever the page. 404 warehouse_not_found.
          */
         get: operations["get_api_stock_list"];
         put?: never;
@@ -346,7 +347,8 @@ export interface paths {
         };
         /**
          * A page of customers, newest first: the list contract (q over first/last name, email, phone and city; filters
-         *     name, email, phone, city, country[] (country ids, any address); sorts name, email, city).
+         *     name, email, phone, city (the first address's), country[] (country ids, any address); sorts name, email, city;
+         *     facet of country).
          */
         get: operations["get_api_customers_page"];
         put?: never;
@@ -470,8 +472,9 @@ export interface paths {
         };
         /**
          * `warehouse_id` (required): a page of that warehouse's orders, newest first — the list contract (q over code,
-         *     customer name and email; filters code, customer, status[] 1–6, source[] phone|web|shop:<id>, created_at,
-         *     pinned[] 1; sorts code, customer, status, created_at; facets of status and source).
+         *     customer name and email; filters code, customer (name or email), status[] 1–6, source[] phone|web|shop:<id>
+         *     (web: a web order no connection brought), created_at, pinned[] 1; sorts code, customer, status, created_at;
+         *     facets of status, source and pinned).
          */
         get: operations["get_api_orders_list"];
         put?: never;
@@ -943,7 +946,8 @@ export interface paths {
         };
         /**
          * A page of invoices, newest first: the list contract (q over code, customer name and email; filters code,
-         *     customer, payment_method[], created_at, total, walk_in[] yes/no; sorts code, customer, created_at, total).
+         *     customer, payment_method[], created_at, total, walk_in[] yes/no (yes: no customer); sorts code, customer,
+         *     created_at, total; facets of payment_method and walk_in).
          */
         get: operations["get_api_invoices_list"];
         put?: never;

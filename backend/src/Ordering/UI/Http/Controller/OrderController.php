@@ -81,8 +81,9 @@ final class OrderController extends AbstractController
 
     /**
      * `warehouse_id` (required): a page of that warehouse's orders, newest first — the list contract (q over code,
-     * customer name and email; filters code, customer, status[] 1–6, source[] phone|web|shop:<id>, created_at,
-     * pinned[] 1; sorts code, customer, status, created_at; facets of status and source).
+     * customer name and email; filters code, customer (name or email), status[] 1–6, source[] phone|web|shop:<id>
+     * (web: a web order no connection brought), created_at, pinned[] 1; sorts code, customer, status, created_at;
+     * facets of status, source and pinned).
      */
     #[Route('/api/v1/orders', name: 'api_orders_list', methods: ['GET'])]
     #[IsGranted('ROLE_CAN_READ_ORDERS')]
