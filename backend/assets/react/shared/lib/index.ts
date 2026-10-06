@@ -1,3 +1,10 @@
+export {
+  loadAnalytics,
+  resetAnalytics,
+  trackPageView,
+  useAnalytics,
+} from './analytics';
+export type {AnalyticsIds} from './analytics';
 export {CURRENCY, formatter, TIME_ZONE, useFormat} from './format';
 export type {Format} from './format';
 export {beep, setSoundOn, soundOn, useSound} from './sound';

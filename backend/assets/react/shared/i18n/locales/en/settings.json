@@ -30,6 +30,8 @@
     "confirmOffTitle": "Turn off the old webhook URL?",
     "confirmOffBody": "Shops still posting there will get 410 and their orders will not be placed. Do this after every shop points at its connection.",
     "turnedOff": "The old webhook URL is off.",
-    "turnedOn": "The old webhook URL is on again."
+    "turnedOn": "The old webhook URL is on again.",
+    "on": "On",
+    "off": "Off"
   }
 }

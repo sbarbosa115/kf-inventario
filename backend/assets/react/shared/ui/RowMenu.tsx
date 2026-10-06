@@ -69,7 +69,7 @@ export function RowMenu({
     if (refocus) button.current?.focus();
   }, []);
 
-  // Where the menu goes: under its button (above it when there is no room), inside the window.
+  // Where the menu goes when the page moves under it: under its button (above it when there is no room).
   const place = useCallback((): {top: number; left: number} | null => {
     if (!button.current || !menu.current) return null;
     const rect = button.current.getBoundingClientRect();
@@ -88,10 +88,21 @@ export function RowMenu({
   }, [align]);
 
   useLayoutEffect(() => {
-    if (!open) return;
-    const at = place();
-    if (at) setPosition(at);
-  }, [open, place]);
+    if (!open || !button.current || !menu.current) return;
+    const rect = button.current.getBoundingClientRect();
+    const width = menu.current.offsetWidth;
+    const height = menu.current.offsetHeight;
+    const left =
+      align === 'end'
+        ? Math.max(8, rect.right - width)
+        : Math.min(rect.left, window.innerWidth - width - 8);
+    const below = rect.bottom + 4;
+    const top =
+      below + height > window.innerHeight && rect.top - height - 4 > 0
+        ? rect.top - height - 4
+        : below;
+    setPosition({top, left});
+  }, [open, align]);
 
   // The first item takes the focus once the menu has its place: while it is still `visibility: hidden` (being
   // measured) a browser ignores `focus()`.

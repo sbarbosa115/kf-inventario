@@ -5,6 +5,7 @@ import {LogoutPage} from '@/pages/logout';
 import {NotFoundPage} from '@/pages/not-found';
 import {Skeleton} from '@/shared/ui';
 import {AppShell} from '@/widgets/app-shell';
+import {RequireRole} from './providers/RequireRole';
 import {RequireSession} from './providers/RequireSession';
 
 // Every page behind the sign-in is loaded when first opened, one chunk per screen. PAGES is also what
@@ -25,6 +26,9 @@ const PAGES = {
   customerForm: () => import('@/pages/customer-form'),
   users: () => import('@/pages/users'),
   userForm: () => import('@/pages/user-form'),
+  settings: () => import('@/pages/settings'),
+  shopConnectionForm: () => import('@/pages/shop-connection-form'),
+  shopDeliveries: () => import('@/pages/shop-deliveries'),
 };
 
 const ProductsPage = lazy(() =>
@@ -75,6 +79,16 @@ const UserFormPage = lazy(() =>
   PAGES.userForm().then((m) => ({default: m.UserFormPage})),
 );
 
+const SettingsPage = lazy(() =>
+  PAGES.settings().then((m) => ({default: m.SettingsPage})),
+);
+const ShopConnectionFormPage = lazy(() =>
+  PAGES.shopConnectionForm().then((m) => ({default: m.ShopConnectionFormPage})),
+);
+const ShopDeliveriesPage = lazy(() =>
+  PAGES.shopDeliveries().then((m) => ({default: m.ShopDeliveriesPage})),
+);
+
 /** Which page chunk an address opens, most specific first. */
 const PREFETCH: [RegExp, keyof typeof PAGES][] = [
   [/^\/admin\/products\/(new|[^/]+\/edit)$/, 'productForm'],
@@ -92,6 +106,9 @@ const PREFETCH: [RegExp, keyof typeof PAGES][] = [
   [/^\/admin\/customers$/, 'customers'],
   [/^\/admin\/users\/(new|[^/]+\/edit)$/, 'userForm'],
   [/^\/admin\/users$/, 'users'],
+  [/^\/admin\/settings\/shops\/\d+\/deliveries$/, 'shopDeliveries'],
+  [/^\/admin\/settings\/shops\/(new|\d+)$/, 'shopConnectionForm'],
+  [/^\/admin\/settings(\/.*)?$/, 'settings'],
 ];
 
 /**
@@ -165,6 +182,38 @@ export function AppRoutes() {
         <Route path="/admin/users" element={<UsersPage />} />
         <Route path="/admin/users/new" element={<UserFormPage />} />
         <Route path="/admin/users/:id/edit" element={<UserFormPage />} />
+        <Route
+          path="/admin/settings/*"
+          element={
+            <RequireRole role="ROLE_ADMIN">
+              <SettingsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/admin/settings/shops/new"
+          element={
+            <RequireRole role="ROLE_ADMIN">
+              <ShopConnectionFormPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/admin/settings/shops/:id"
+          element={
+            <RequireRole role="ROLE_ADMIN">
+              <ShopConnectionFormPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/admin/settings/shops/:id/deliveries"
+          element={
+            <RequireRole role="ROLE_ADMIN">
+              <ShopDeliveriesPage />
+            </RequireRole>
+          }
+        />
         {KitPage && <Route path="/admin/_kit" element={<KitPage />} />}
         <Route path="*" element={<NotFoundPage />} />
       </Route>

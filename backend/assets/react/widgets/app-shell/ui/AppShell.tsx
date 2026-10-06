@@ -5,6 +5,7 @@ import {APP_NAME} from '@/shared/config';
 import {useTranslation} from '@/shared/i18n';
 import {
   readSetting,
+  useAnalytics,
   useCurrentPageTitle,
   useViewport,
   writeSetting,
@@ -32,6 +33,8 @@ export function AppShell({children}: {children: ReactNode}) {
   const {pathname} = useLocation();
   const viewport = useViewport();
   const pageTitle = useCurrentPageTitle();
+  // GA4 and Clarity when Settings › Analytics holds their IDs: signed-in pages only (docs/pdr/prd-shops-settings.md).
+  useAnalytics();
   const [rail, setRail] = useState(() => readSetting(SIDEBAR_KEY) === 'rail');
   // The drawer remembers the address it was opened on: following one of its links closes it.
   const [drawerAt, setDrawerAt] = useState<string | null>(null);

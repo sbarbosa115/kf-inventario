@@ -30,6 +30,8 @@
     "confirmOffTitle": "¿Desactivar la URL anterior del webhook?",
     "confirmOffBody": "Las tiendas que aún envíen ahí recibirán 410 y sus pedidos no se registrarán. Hágalo cuando cada tienda apunte a su conexión.",
     "turnedOff": "La URL anterior del webhook está desactivada.",
-    "turnedOn": "La URL anterior del webhook está activa de nuevo."
+    "turnedOn": "La URL anterior del webhook está activa de nuevo.",
+    "on": "Activa",
+    "off": "Desactivada"
   }
 }
