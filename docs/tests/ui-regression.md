@@ -707,6 +707,17 @@ datos: nombre, …", "Crear pedido"; Getting ready: "Alistamiento · W00001", "E
 refusal and the outlined fields are readable. Keyboard only: Tab reaches each missing-field name in the bar and Enter
 moves to the field; on Getting ready the − / + of each card and Ship are reachable, the focus ring visible on each.
 
+### Shop sync and write-back (shops-settings item 5b)
+
+<!-- shops-settings item 5b (shops-sync-api) adds ORD-35 – 37 here, smoke in e2e/orders-sync.spec.ts (the fake shop):
+     "Check now" over every active connection, the order status written back, a failed push and its Retry. -->
+
+### Comment timeline (shops-settings item 8)
+
+<!-- shops-settings item 8 (comments-ui) adds ORD-38 – 44 here, smoke in e2e/comments.spec.ts: the timeline (author,
+     date, the dateless W00003 comment marked approximate), Enter sends, pin, quick phrases, also send to the shop, shop
+     notes, and ORD-44 by hand (390 px, dark, Spanish). -->
+
 ## 6. Invoices (INVC)
 
 **INVC-01 · The list shows the invoices, and the old addresses land on the new screens**
@@ -873,6 +884,12 @@ order's customer and products.
 Smoke: `e2e/order-forms.spec.ts`.
 Edit `W00001`, change the comment and the payment method (PayPal), Update order: no new email reaches the printer.
 
+### Settings › Email (shops-settings items 3 and 7)
+
+<!-- shops-settings item 3 (settings-api) adds MAIL-03 – 04 here (API, OrderEmailTest and a spy transport): the order
+     email takes the sender, printer and cc from Settings, the env when empty; a queued email goes through the SMTP
+     server saved in Settings. -->
+
 ## 9. WooCommerce webhook (HOOK)
 
 The shops post each new order to `/admin/order/1H39j0jpQPsWL958v9R4` (public, never moved). To run a case by hand,
@@ -903,6 +920,13 @@ Smoke: `e2e/webhook.spec.ts`.
 Post the sample order with `X-WC-Webhook-Source: https://unknown-shop.test` (and a new `id`). The answer is still
 `{"status":true}`; no warehouse lists the order, no email arrives, and `docker compose logs php` shows
 "Warehouse [https://unknown-shop.test] was not found".
+
+### Per-connection webhooks and the legacy switch (shops-settings item 5a)
+
+<!-- shops-settings item 5a (shops-api) adds HOOK-03 – 06 here, smoke in e2e/webhook.spec.ts: a signed delivery to
+     /webhooks/shops/{token} placed and linked, a wrong signature (401 and the inbox), an unknown SKU kept and retried,
+     the legacy URL on (as above) and off (410 and its counter). The seeded "Fake shop" connection's token and secret are
+     in src/DataFixtures/ShopFixtures.php. -->
 
 ## 10. Design system (DS)
 
@@ -980,4 +1004,61 @@ place.
 **DS-14 · The page not found is branded, with the way back**
 Smoke: `e2e/design-system.spec.ts`.
 Signed in, open `/admin/nothing-here`: the KF mark, "Page not found", and "Go to the product list", which opens it.
+
+**DS-15 · Every filter control in the kit, light and dark, 44 px on a phone**
+Smoke (part): `e2e/design-system.spec.ts` checks on `/admin/_kit` › Table filters that each control is there and works
+(the Status dropdown's checkbox list with counts, the Created quick picks, the Total quick ranges, a chip removed, the
+pager's Next) and, in the server-mode table, that a header sort and a status tick ask for new rows; by hand: the look.
+On `/admin/_kit`, section "Table filters": "Filter by Order" (a text input), "Status · 1" (a button: a checkbox list
+with each status's count and Clear), "Created" (Today, Last 7 days, Last 30 days, This month, From and To), "Total:
+$100 – $500" (Under $100, $100 – $500, Over $500, Min, Max), "Quantity" (0, 1 – 10, Over 10), "Filters · 4", the
+chips "Status: Created ×", "Total: … ×" with Clear filters, the pager "51 – 75 of 1,240" with Rows per page; under it a
+table of 64 sample orders with a filter row under its header and "1 – 10 of 64". By hand in light and dark at 1440 px:
+every control, panel and chip is readable, the active ones in the accent's soft colour, the focus ring visible; at
+390 px every control, checkbox row and chip is at least 44 px tall and nothing scrolls sideways.
+
+**DS-16 · The filter sheet on a phone**
+Smoke: `e2e/design-system.spec.ts` (390 px, on `/admin/_kit`).
+At 390 px the kit's table has no filter row; "Filters · 0" opens a sheet from the bottom ("Filters", a drag handle,
+Sort, one section per column). Tab and Shift+Tab stay inside it; Escape closes it and nothing changes. Open it again,
+open Status, tick Created: the footer says "Show N results" with N counted for that choice; press it: the sheet
+closes, the table shows only Created orders and the chip "Status: Created" is above it.
+
+## 11. Settings (SET)
+
+Settings (`/admin/settings`, `docs/pdr/prd-shops-settings.md`): for `ROLE_ADMIN` only; tabs General, Email, Analytics,
+Shop connections, Quick phrases.
+
+**SET-01 · Settings is the admin's only**
+Smoke: `e2e/settings.spec.ts`.
+Signed in as the admin: the sidebar's Admin group has Settings (a sliders icon); it opens `/admin/settings`, "Settings"
+with the five tabs, General current: the time zone, "Email leaves from" (the server's MAILER_DSN, `mailpit`, on the dev
+stack) and "The old webhook URL" with On and "Turn off the old webhook URL". Signed in as `inventory`: no Settings entry,
+and `/admin/settings` shows "Page not found"; `/api/v1/settings/email` answers 403.
+
+<!-- shops-settings item 4 (settings-ui) adds SET-02 – 08 here, smoke in e2e/settings.spec.ts: General's email source
+     and the legacy switch, Email saved with the password kept blank, Send test email through the stack's Mailpit, a
+     wrong SMTP host refused in place, Analytics IDs loading the two scripts after navigation (never on sign-in), quick
+     phrases added/renamed/reordered/deactivated, a bad GA ID refused in place. -->
+
+## 12. Shop connections (SHOP)
+
+Settings › Shop connections (`/admin/settings/shops`): one connection per WooCommerce shop, its webhook, keys,
+warehouse, what the app may write back, its health and its failed-deliveries inbox. The dev stack seeds "Fake shop"
+(Colombia, prints orders, both capabilities).
+
+<!-- shops-settings item 6 (shops-ui) adds SHOP-01 – 10 here, smoke in e2e/shops.spec.ts: create a connection (webhook
+     URL and secret with Copy), Test connection with bad and good keys, blank keys kept on edit, deactivate, health and
+     counters, the failed-deliveries table (filters, body, Retry, Discard), the Orders warning line, Check now per
+     connection, the source filter and column naming the shops; SHOP-10 by hand (Spanish, 390 px). -->
+
+## 13. Table filters (FLT)
+
+Every list (products, orders, customers, invoices, users) is filtered, sorted and paged on the server; the filters
+live in the column headers (a bottom sheet on a phone) and in the address.
+
+<!-- shops-settings item 2 (tables-ui) adds FLT-01 – 12 here, smoke in e2e/filters.spec.ts (FLT-11 – 12 by hand): the
+     order text filter across pages, the status multi-select with counts and its chip, a created date range, products
+     by price and quantity, the 1,240 customers paged, invoices by total and payment method, users by role, the URL
+     holding the filters, a header sort, the phone's sheet. -->
 

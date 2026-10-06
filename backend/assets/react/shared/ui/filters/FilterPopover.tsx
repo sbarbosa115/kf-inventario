@@ -11,8 +11,8 @@ import {createPortal} from 'react-dom';
 
 /**
  * A filter's button and the panel it opens under it (a checkbox list, two dates, a range). The panel floats in a
- * portal, so a table's scroll box never clips it; a click outside, Escape (back to the button) or a scroll of the
- * page closes it.
+ * portal, so a table's scroll box never clips it; a click outside or Escape (back to the button) closes it, and it
+ * follows its button when the page scrolls.
  */
 export function FilterPopover({
   label,
@@ -31,7 +31,12 @@ export function FilterPopover({
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState<{top: number; left: number}>();
+  // Under the button, or above it when there is more room there; never taller than the room it has.
+  const [position, setPosition] = useState<{
+    top: number;
+    left: number;
+    maxHeight: number;
+  }>();
 
   const close = (refocus = false) => {
     setOpen(false);
@@ -43,9 +48,17 @@ export function FilterPopover({
     if (!open || !button.current || !panel.current) return;
     const rect = button.current.getBoundingClientRect();
     const width = panel.current.offsetWidth;
+    const height = panel.current.scrollHeight;
+    const below = window.innerHeight - rect.bottom - 12;
+    const above = rect.top - 12;
+    const up = height > below && above > below;
+    const room = up ? above : below;
     setPosition({
-      top: rect.bottom + 4,
+      top: up
+        ? Math.max(8, rect.top - 4 - Math.min(height, room))
+        : rect.bottom + 4,
       left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
+      maxHeight: Math.max(160, room),
     });
   }, [open]);
 
@@ -64,8 +77,28 @@ export function FilterPopover({
       if (!panel.current?.contains(target) && !button.current?.contains(target))
         close();
     };
+    // The page scrolled or changed under the panel: it follows its button, and closes only when the button left the
+    // window.
     const onScroll = (event: Event) => {
-      if (!panel.current?.contains(event.target as Node)) close();
+      if (panel.current?.contains(event.target as Node)) return;
+      const rect = button.current?.getBoundingClientRect();
+      if (!rect || rect.bottom < 0 || rect.top > window.innerHeight) {
+        close();
+        return;
+      }
+      const width = panel.current?.offsetWidth ?? 0;
+      const height = panel.current?.scrollHeight ?? 0;
+      const below = window.innerHeight - rect.bottom - 12;
+      const above = rect.top - 12;
+      const up = height > below && above > below;
+      const room = up ? above : below;
+      setPosition({
+        top: up
+          ? Math.max(8, rect.top - 4 - Math.min(height, room))
+          : rect.bottom + 4,
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
+        maxHeight: Math.max(160, room),
+      });
     };
     // Escape closes it wherever the focus is (a control inside may have gone disabled and dropped it).
     const onKey = (event: KeyboardEvent) => {
@@ -111,7 +144,11 @@ export function FilterPopover({
             className="kf-filter-popover"
             style={
               position
-                ? {top: position.top, left: position.left}
+                ? {
+                    top: position.top,
+                    left: position.left,
+                    maxHeight: position.maxHeight,
+                  }
                 : {visibility: 'hidden'}
             }
           >

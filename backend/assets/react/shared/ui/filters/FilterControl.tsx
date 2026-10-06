@@ -1,9 +1,5 @@
 import './filters.css';
-import type {
-  DateRangeValue,
-  FilterValue,
-  NumberRangeValue,
-} from '@/shared/api';
+import type {DateRangeValue, FilterValue, NumberRangeValue} from '@/shared/api';
 import {DateRangeFields, DateRangeFilter} from './DateRangeFilter';
 import {EnumChecklist, FilterDropdown} from './FilterDropdown';
 import {RangeFields, RangeFilter} from './RangeFilter';
@@ -16,8 +12,7 @@ export const asList = (value: FilterValue | undefined): string[] =>
   Array.isArray(value) ? value : [];
 export const asRange = <T extends DateRangeValue | NumberRangeValue>(
   value: FilterValue | undefined,
-): T =>
-  (typeof value === 'object' && !Array.isArray(value) ? value : {}) as T;
+): T => (typeof value === 'object' && !Array.isArray(value) ? value : {}) as T;
 
 /** The counts of one enum column's values, from the page's facets. */
 export function countsOf(
@@ -51,7 +46,11 @@ export function FilterControl({
   switch (filter.type) {
     case 'text':
       return (
-        <TextFilterInput label={label} value={asText(value)} onChange={onChange} />
+        <TextFilterInput
+          label={label}
+          value={asText(value)}
+          onChange={onChange}
+        />
       );
     case 'enum': {
       const props = {
@@ -61,11 +60,19 @@ export function FilterControl({
         value: asList(value),
         onChange,
       };
-      return layout === 'row' ? <FilterDropdown {...props} /> : <EnumChecklist {...props} />;
+      return layout === 'row' ? (
+        <FilterDropdown {...props} />
+      ) : (
+        <EnumChecklist {...props} />
+      );
     }
     case 'date': {
       const props = {label, value: asRange<DateRangeValue>(value), onChange};
-      return layout === 'row' ? <DateRangeFilter {...props} /> : <DateRangeFields {...props} />;
+      return layout === 'row' ? (
+        <DateRangeFilter {...props} />
+      ) : (
+        <DateRangeFields {...props} />
+      );
     }
     case 'money':
     case 'number': {
@@ -75,7 +82,11 @@ export function FilterControl({
         value: asRange<NumberRangeValue>(value),
         onChange,
       };
-      return layout === 'row' ? <RangeFilter {...props} /> : <RangeFields {...props} />;
+      return layout === 'row' ? (
+        <RangeFilter {...props} />
+      ) : (
+        <RangeFields {...props} />
+      );
     }
   }
 }

@@ -413,7 +413,8 @@
   bottom: 0;
   display: flex;
   gap: var(--kf-space-2);
-  padding: var(--kf-space-3) var(--kf-space-4) calc(var(--kf-space-3) + env(safe-area-inset-bottom, 0px));
+  padding: var(--kf-space-3) var(--kf-space-4)
+    calc(var(--kf-space-3) + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--kf-border);
   background-color: var(--kf-surface-raised);
 }

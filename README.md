@@ -46,10 +46,11 @@ The gate includes `.claude/gate.d/schema-drift`: the mappings may propose only t
 | `Identity` | `user` | sign-in (JSON login, session cookie), users |
 | `Inventory` | `product`, `product_warehouse`, `warehouse` | products, stock per warehouse, moves, the stock spreadsheet |
 | `Customers` | `customer`, `customer_address`, `country`, `state`, `city` | customers, addresses, the locations tree |
-| `Ordering` | `order`, `order_product`, `order_status`, `comment` | orders, partial shipments, PDFs/XLS, the printer email, WooCommerce |
+| `Ordering` | `order`, `order_product`, `order_status`, `comment`; `shop_connection`, `shop_order_link`, `shop_delivery`, `shop_outbox`, `order_comment_meta` | orders, partial shipments, PDFs/XLS, the printer email, the WooCommerce shop connections (webhooks, pull, write-back, failed-deliveries inbox), comment pins and shop notes |
+| `Settings` | `app_setting`, `quick_phrase` | Settings › Email/Analytics/General (env as the fallback), quick phrases, the secrets' encryption (`SecretBox`) |
 | `Invoicing` | `invoice`, `invoice_item` | invoices and their PDF |
 | `Audit` | `log` | the activity log (Shared's `ActivityLog` port) |
-| `Shared` | `messenger_messages` | buses, domain errors, API plumbing, mail queue, PDF rendering |
+| `Shared` | `messenger_messages` | buses, domain errors, API plumbing (the list-query contract: `ListQuery`, `ListQueryParser`, `ListQueryApplier`, the page shape), mail queue, PDF rendering |
 
 Each context has `Domain` (models, repository ports, errors, events), `Application` (commands + handlers, queries,
 ports), `Infrastructure` (Doctrine adapters, mail, spreadsheets) and `UI/Http` (controllers, Input and Output DTOs).
@@ -79,7 +80,15 @@ camera reads barcodes where the page is served over HTTPS (or `localhost`).
 
 JSON under `/api/v1`, `snake_case`, errors as `{"error": "<code>", "message", "detail"?, "violations"?}`. Every
 endpoint asks for the role its legacy page asked for (most accounts also hold `ROLE_USER`, which the API requires
-first). Writes from another origin are refused (403).
+first; Settings and shops: `ROLE_ADMIN`). Writes from another origin are refused (403).
+
+**Lists** (`GET /orders`, `/warehouses/{id}/stock`, `/customers`, `/invoices`, `/users`) follow one contract
+(`docs/pdr/prd-shops-settings.md`, "List query contract"): `page`, `per_page` (25 by default, 100 at most; `0` = every
+row, stock only), `sort` (`field`/`-field` from the endpoint's allow-list), `q`, `filter[<field>]` by column type
+(text, `[]` any of, `[from|to]` Bogotá days, `[min|max]`), `facets=<enum fields>` → `{items, total, page, per_page,
+facets?}` (stock adds `totals: {units, value}`); an unknown field, sort or value is a 422 on `filter.<field>`. Until
+shops-settings' item 1 they filter in memory (`Shared\UI\Http\InMemoryList`); the rows below marked "ss-N" are
+shops-settings' items (501 `not_implemented` until built).
 
 | Method | Path | Role | Built by item |
 |---|---|---|---|
@@ -128,9 +137,28 @@ first). Writes from another origin are refused (403).
 | `GET` | `/api/v1/invoices/{id}` | `ROLE_CAN_READ_INVOICES` | 5: `InvoiceOutput`; 404 `invoice_not_found` |
 | `POST` | `/api/v1/invoices` | `ROLE_CAN_CREATE_INVOICES` | 5: `InvoiceInput` → 201 `InvoiceOutput`; customer by `customer_id` or found/created from `customer` (as orders do); with no address typed, the customer's first is copied; line totals and `tax_rate` % tax worked out as before; 409 `invoice_code_taken` |
 | `GET` | `/api/v1/invoices/{id}/pdf` | `ROLE_CAN_READ_INVOICES` | 5: `application/pdf` (`templates/pdf/invoice.html.twig`, the logo from `public/images/`) |
+| `GET` | `/api/v1/settings/public` | `ROLE_USER` | ss-0: `PublicSettingsOutput {ga4_measurement_id, clarity_project_id}` (null when unset) |
+| `GET` | `/api/v1/settings/email` | `ROLE_ADMIN` | ss-0: `EmailSettingsOutput` (never the password: `has_password`; `source` per value: settings, env, none) |
+| `PUT` | `/api/v1/settings/email` · `POST /api/v1/settings/email/test` | `ROLE_ADMIN` | ss-3 |
+| `GET`/`PUT` | `/api/v1/settings/analytics` | `ROLE_ADMIN` | ss-3 |
+| `GET`/`PUT` | `/api/v1/settings/webhooks` | `ROLE_ADMIN` | ss-0: `{legacy_enabled, legacy_hits_since, legacy_last_hit_at}`; turning it off restarts the counter |
+| `GET` | `/api/v1/settings/quick-phrases` | `ROLE_USER` | ss-3 |
+| `POST`/`PUT`/`DELETE` | `/api/v1/settings/quick-phrases[/{id}]`, `PUT …/order` | `ROLE_ADMIN` | ss-3 |
+| `GET`/`POST`/`PUT`/`DELETE` | `/api/v1/shops[/{id}]`, `…/webhook-secret`, `…/test`, `…/deliveries[/{dId}[/retry\|/discard]]` | `ROLE_ADMIN` | ss-5a |
+| `GET`/`POST` | `/api/v1/shops/{id}/outbox[/{oId}/retry]` | `ROLE_ADMIN` | ss-5b |
+| `GET` | `/api/v1/orders/{id}/comments` | `ROLE_CAN_READ_ORDERS` | ss-7 |
+| `POST` · `POST`/`DELETE` | `/api/v1/orders/{id}/comments` · `…/comments/{cId}/pin` | `ROLE_USER` | ss-7 |
+| `POST`/`GET` | `/webhooks/shops/{token}` | public | ss-5a: a connection's webhook (signature required) |
 | `POST`/`GET` | `/admin/order/1H39j0jpQPsWL958v9R4` | public | 4: the WooCommerce webhook (URL and route name unchanged): warehouse by `X-WC-Webhook-Source` in `warehouse.urls`, printer email only for `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`; always `{status: true}`, failures logged; an order whose shop id is already an order code in that warehouse (deleted ones too, as for the sync) is logged and not placed again; with `WOO_COMMERCE_WEBHOOK_SECRET` set, a delivery without the shop's `X-WC-Webhook-Signature` is logged and not placed (empty by default: no check, as before) |
 
 ## Data model decisions
+
+- **shops-settings added seven tables** (the user's decision, `docs/pdr/prd-shops-settings.md`, "Data model"): one
+  additive migration, `Version20261006000000`, creates `app_setting`, `quick_phrase` (Settings), `shop_connection`,
+  `shop_order_link`, `shop_delivery`, `shop_outbox` and `order_comment_meta` (Ordering), with foreign keys *from* them
+  to `order`, `comment`, `user` and `warehouse`. No existing table or column changes: a shop order keeps `order.source`
+  = web and its shop is the link row; a comment's pin and origin live in its meta row. Secrets in them are sealed
+  (`v1:` + base64, `APP_ENCRYPTION_KEY`).
 
 - **The production schema does not change.** The restructure moved every entity into its context with its table,
   columns, keys and associations as they were (explicit `#[ORM\Table]` on each), kept the migrations' directory,
@@ -149,10 +177,12 @@ first). Writes from another origin are refused (403).
 
 `deploy/cpanel-update.sh` pulls, installs, builds the UI, backs the database up before any pending migration,
 migrates, warms the cache, appends the front-controller rules to `backend/public/.htaccess`, and checks the PHP
-version, extensions, time zone (America/Bogota) and the email queue's cron line. Its header lists the one-time steps
-of moving the existing account to this layout: the document root becomes `backend/public`, the settings move to
-`backend/.env.local` (`deploy/env.local.example`), the cron line drains the email queue, and everyone signs in again
-once.
+version, extensions (`sodium` included), `APP_ENCRYPTION_KEY`, the time zone (America/Bogota) and the cron line. Its
+header lists the one-time steps of moving the existing account to this layout: the document root becomes
+`backend/public`, the settings move to `backend/.env.local` (`deploy/env.local.example`), and everyone signs in again
+once. The cron line (every minute) runs `app:shops:pull --if-due` (the shops' catch-up pull, a no-op until
+shops-settings' item 5b) and then drains the `mail` and `shops` queues, under one `flock`; the script prints it and
+says when the old mail-only line must be replaced. shops-settings' cutover checklist is in its PRD.
 
 The "Sync Orders" button reads the shop's WooCommerce REST API with `WOO_COMMERCE_URL`, `WOO_COMMERCE_API_KEY` and
 `WOO_COMMERCE_API_SECRET` (read-only keys, one shop as before): the URL must be one of the receiving warehouse's

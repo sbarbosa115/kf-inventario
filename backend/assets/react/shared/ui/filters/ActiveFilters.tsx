@@ -1,10 +1,6 @@
 import './filters.css';
 import {useTranslation} from '@/shared/i18n';
-import type {
-  DateRangeValue,
-  FilterValue,
-  NumberRangeValue,
-} from '@/shared/api';
+import type {DateRangeValue, FilterValue, NumberRangeValue} from '@/shared/api';
 import {asList, asRange, asText} from './FilterControl';
 import {useDescribeDates} from './DateRangeFilter';
 import {useDescribeRange} from './RangeFilter';
@@ -67,7 +63,11 @@ export function ActiveFilters({
   });
   if (chips.length === 0) return null;
   return (
-    <div className="kf-active-filters" role="group" aria-label={t('filters.label')}>
+    <div
+      className="kf-active-filters"
+      role="group"
+      aria-label={t('filters.label')}
+    >
       {chips.map(({column, text}) => {
         const chip = t('filters.chip', {label: column.label, value: text});
         return (
@@ -85,7 +85,11 @@ export function ActiveFilters({
           </span>
         );
       })}
-      <button type="button" className="kf-btn kf-btn--ghost kf-btn--sm" onClick={onClear}>
+      <button
+        type="button"
+        className="kf-btn kf-btn--ghost kf-btn--sm"
+        onClick={onClear}
+      >
         <i className="fas fa-times kf-btn__icon" aria-hidden="true" />
         <span className="kf-btn__label">{t('filters.clear')}</span>
       </button>

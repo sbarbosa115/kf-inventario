@@ -58,9 +58,7 @@ export function DateRangeFields({
             className="form-control"
             value={value.from ?? ''}
             max={value.to || undefined}
-            onChange={(event) =>
-              onChange({...value, from: event.target.value})
-            }
+            onChange={(event) => onChange({...value, from: event.target.value})}
           />
         </label>
         <label className="kf-filter-field">
@@ -97,17 +95,17 @@ export function DateRangeFilter({
       active={text !== null}
     >
       <div className="kf-filter-panel">
-          <DateRangeFields label={label} value={value} onChange={onChange} />
-          <div className="kf-filter-panel__footer">
-            <button
-              type="button"
-              className="kf-btn kf-btn--ghost kf-btn--sm"
-              disabled={text === null}
-              onClick={() => onChange({})}
-            >
-              <span className="kf-btn__label">{t('filters.clearOne')}</span>
-            </button>
-          </div>
+        <DateRangeFields label={label} value={value} onChange={onChange} />
+        <div className="kf-filter-panel__footer">
+          <button
+            type="button"
+            className="kf-btn kf-btn--ghost kf-btn--sm"
+            disabled={text === null}
+            onClick={() => onChange({})}
+          >
+            <span className="kf-btn__label">{t('filters.clearOne')}</span>
+          </button>
+        </div>
       </div>
     </FilterPopover>
   );

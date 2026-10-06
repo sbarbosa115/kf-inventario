@@ -20,15 +20,35 @@ export function useQuickRanges(kind: RangeKind): QuickPick[] {
     kind === 'money' ? money(n).replace(/[.,]00(?=\D*$)/, '') : num(n);
   if (kind === 'money') {
     return [
-      {key: 'u100', label: t('filters.under', {amount: show(100)}), value: {max: '99.99'}},
-      {key: '100-500', label: t('filters.between', {from: show(100), to: show(500)}), value: {min: '100', max: '500'}},
-      {key: 'o500', label: t('filters.over', {amount: show(500)}), value: {min: '500.01'}},
+      {
+        key: 'u100',
+        label: t('filters.under', {amount: show(100)}),
+        value: {max: '99.99'},
+      },
+      {
+        key: '100-500',
+        label: t('filters.between', {from: show(100), to: show(500)}),
+        value: {min: '100', max: '500'},
+      },
+      {
+        key: 'o500',
+        label: t('filters.over', {amount: show(500)}),
+        value: {min: '500.01'},
+      },
     ];
   }
   return [
     {key: '0', label: show(0), value: {min: '0', max: '0'}},
-    {key: '1-10', label: t('filters.between', {from: show(1), to: show(10)}), value: {min: '1', max: '10'}},
-    {key: 'o10', label: t('filters.over', {amount: show(10)}), value: {min: '11'}},
+    {
+      key: '1-10',
+      label: t('filters.between', {from: show(1), to: show(10)}),
+      value: {min: '1', max: '10'},
+    },
+    {
+      key: 'o10',
+      label: t('filters.over', {amount: show(10)}),
+      value: {min: '11'},
+    },
   ];
 }
 
@@ -43,7 +63,9 @@ export function useDescribeRange(
     kind === 'money' ? money(Number(text)) : num(Number(text));
   return (value) => {
     const pick = quick.find(
-      (q) => (q.value.min ?? '') === (value.min ?? '') && (q.value.max ?? '') === (value.max ?? ''),
+      (q) =>
+        (q.value.min ?? '') === (value.min ?? '') &&
+        (q.value.max ?? '') === (value.max ?? ''),
     );
     if (pick) return pick.label;
     if (value.min && value.max) {
@@ -72,7 +94,10 @@ export function RangeFields({
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
   const commit = (next: NumberRangeValue) => {
-    if ((next.min ?? '') !== (value.min ?? '') || (next.max ?? '') !== (value.max ?? '')) {
+    if (
+      (next.min ?? '') !== (value.min ?? '') ||
+      (next.max ?? '') !== (value.max ?? '')
+    ) {
       onChange(next);
     }
   };
@@ -146,17 +171,22 @@ export function RangeFilter({
       active={text !== null}
     >
       <div className="kf-filter-panel">
-          <RangeFields label={label} kind={kind} value={value} onChange={onChange} />
-          <div className="kf-filter-panel__footer">
-            <button
-              type="button"
-              className="kf-btn kf-btn--ghost kf-btn--sm"
-              disabled={text === null}
-              onClick={() => onChange({})}
-            >
-              <span className="kf-btn__label">{t('filters.clearOne')}</span>
-            </button>
-          </div>
+        <RangeFields
+          label={label}
+          kind={kind}
+          value={value}
+          onChange={onChange}
+        />
+        <div className="kf-filter-panel__footer">
+          <button
+            type="button"
+            className="kf-btn kf-btn--ghost kf-btn--sm"
+            disabled={text === null}
+            onClick={() => onChange({})}
+          >
+            <span className="kf-btn__label">{t('filters.clearOne')}</span>
+          </button>
+        </div>
       </div>
     </FilterPopover>
   );

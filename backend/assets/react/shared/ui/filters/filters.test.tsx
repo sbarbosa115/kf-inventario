@@ -80,10 +80,22 @@ describe('the filter controls', () => {
     // 2026-10-07 03:00 UTC is still the 6th in Bogotá (UTC−5).
     const now = new Date('2026-10-07T03:00:00Z');
     expect(bogotaToday(now)).toBe('2026-10-06');
-    expect(quickRange('today', now)).toEqual({from: '2026-10-06', to: '2026-10-06'});
-    expect(quickRange('last7', now)).toEqual({from: '2026-09-30', to: '2026-10-06'});
-    expect(quickRange('last30', now)).toEqual({from: '2026-09-07', to: '2026-10-06'});
-    expect(quickRange('thisMonth', now)).toEqual({from: '2026-10-01', to: '2026-10-06'});
+    expect(quickRange('today', now)).toEqual({
+      from: '2026-10-06',
+      to: '2026-10-06',
+    });
+    expect(quickRange('last7', now)).toEqual({
+      from: '2026-09-30',
+      to: '2026-10-06',
+    });
+    expect(quickRange('last30', now)).toEqual({
+      from: '2026-09-07',
+      to: '2026-10-06',
+    });
+    expect(quickRange('thisMonth', now)).toEqual({
+      from: '2026-10-01',
+      to: '2026-10-06',
+    });
   });
 
   it('DateRangeFilter: the button reads the range', () => {
@@ -122,7 +134,11 @@ describe('the filter controls', () => {
     vi.useFakeTimers({shouldAdvanceTime: true});
     const changes: string[] = [];
     render(
-      <TextFilterInput label="Code" value="" onChange={(v) => changes.push(v)} />,
+      <TextFilterInput
+        label="Code"
+        value=""
+        onChange={(v) => changes.push(v)}
+      />,
     );
     const input = screen.getByRole('searchbox', {name: 'Filter by Code'});
 
@@ -144,7 +160,10 @@ describe('the filter controls', () => {
     };
     render(
       <ActiveFilters
-        columns={[STATUS, {label: 'Order', filter: {type: 'text', field: 'code'}}]}
+        columns={[
+          STATUS,
+          {label: 'Order', filter: {type: 'text', field: 'code'}},
+        ]}
         filters={filters}
         onRemove={(field) => removed.push(field)}
         onClear={() => (cleared = true)}
@@ -162,7 +181,12 @@ describe('the filter controls', () => {
 
   it('ActiveFilters: nothing when no column filters', () => {
     const {container} = render(
-      <ActiveFilters columns={[STATUS]} filters={{}} onRemove={() => undefined} onClear={() => undefined} />,
+      <ActiveFilters
+        columns={[STATUS]}
+        filters={{}}
+        onRemove={() => undefined}
+        onClear={() => undefined}
+      />,
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -185,7 +209,10 @@ describe('the filter controls', () => {
     );
     await userEvent.click(screen.getByRole('button', {name: 'Next'}));
     await userEvent.click(screen.getByRole('button', {name: 'Previous'}));
-    await userEvent.selectOptions(screen.getByLabelText('Rows per page'), '100');
+    await userEvent.selectOptions(
+      screen.getByLabelText('Rows per page'),
+      '100',
+    );
     expect(pages).toEqual([3, 1]);
     expect(sizes).toEqual([100]);
     await waitFor(() => expect(sizes).toHaveLength(1));

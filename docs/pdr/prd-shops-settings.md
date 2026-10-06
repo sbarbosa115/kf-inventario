@@ -694,6 +694,53 @@ never runs the whole suite (the coordinator runs it once at the barrier).
 18. **Cases by hand vs smoke:** everything listed as smoke runs in the named spec; manual: DS-15 look, FLT-11/12,
     SHOP-10, ORD-44, and the real-shop cutover steps (production only).
 
+19. **Coordinator note (item 0, 0.1):** the new entities name their table options (`utf8mb4_unicode_ci`) and map
+    their foreign keys as associations to the existing entities (unidirectional: nothing is added to `Order`,
+    `Comment`, `User` or `Warehouse`), so the migration is exactly what Doctrine proposes for them; `pinned_at`,
+    `created_at`… are `datetime_immutable` (a `DATETIME` like the others). `shop_delivery.payload` is nullable (a
+    refused signature keeps no body). The Settings keys also include `webhooks.legacy_hits` and
+    `webhooks.legacy_last_hit_at` (the counter of Decisions 8). The compose `worker` consumes `mail shops`.
+20. **Coordinator note (item 0, 0.3):** the in-memory skeleton (`Shared\UI\Http\InMemoryList`) already answers
+    `facets` and the stock `totals` (same semantics as `ListQueryApplier`), so item 2 builds against real counts while
+    item 1 moves each list into SQL; `ListQueryApplier` is tested on MySQL (`ListQueryApplierTest`) and ready for
+    item 1 (`ListMapping`: DQL per field, closures for `source`/`pinned`, enum value maps). A default sort may be
+    outside the sort allow-list (customers: `-id`). The tables keep their labels (Decisions 13): the customers page
+    keeps 100 a page (the UI's default, so `per_page=100` is sent) and "Search this page"; the Products KPIs and chip
+    counts come from a second request (`per_page=1&facets=in_stock` + `totals`); the order status chips from the
+    `status` facet; the users chips from an `enabled` facet. Two behaviours the server cannot keep are mapped: typing
+    the "Walk-in customer" label (4 letters or more) in the invoices search asks for `filter[walk_in][]=yes`
+    (`pages/invoices/lib/invoiceSearch.ts`; INVC-07 searches "walk-in"); the users search no longer matches role names
+    (the roles filter of item 2 replaces it). The filtered-to-nothing state keeps "Show all" (the specs use it). The
+    specs that read a list endpoint now read `items` (with `per_page=0`/`filter[code]`): the API shape changed, no
+    locator did. `RowMenu` and the filter popovers follow their button when the page scrolls or the list under them
+    changes size, instead of closing (a debounced search narrowing the list closed ORD-03's status menu), and a popover
+    opens above its button when there is more room there.
+21. **Coordinator note (item 0, 0.4):** `GET /settings/public`, `GET /settings/email` and `GET`/`PUT /settings/webhooks`
+    answer for real from item 0 (the General tab and the analytics loader need them; their queries/commands are 0.2's;
+    `tests/Functional/Settings/SettingsShellApiTest.php`); every other settings, shops, outbox and comments route and
+    `/webhooks/shops/{token}` answer 501 whatever the body (the stubs map no input; the Input DTOs exist). Output shapes:
+    `ShopConnectionOutput.webhook_secret` is null except in the answer that created the connection;
+    `ShopDeliveryDetailOutput` is the row plus `payload` (flat); `ShopTestResultOutput.rest.can_write` is null until a
+    write proved it; `POST /orders/sync` declares `SyncResultOutput | ShopsSyncResultOutput` until 5b answers only the
+    second (the spec still expects `{imported, skipped}`). `OrderStatusChanged` is published for every status the two
+    handlers set (Partial included; the mapping ignores it); its no-op handler is already named
+    `Application/EventHandler/PushOrderStatusToShop.php` (5b fills it). `ContractTest`'s item column takes "ss-N".
+    `FakeShopGateway` (tests) knows shops by site URL, keys, orders, notes, failures (401 = read-only keys) and records
+    the writes; `RemoteOrderSource`/`FakeRemoteOrderSource` stay until 5b rewrites the sync. The dev fixtures
+    (`src/DataFixtures/ShopFixtures.php`) seed "Fake shop" (`http://nginx/_fake-shop` — PHP reaches the dev stack as
+    `nginx`; the fake shop route itself is 5a's — Colombia, prints orders, both capabilities) with fixed token, keys and
+    webhook secret as class constants, and make W00003's existing comment dateless (no comment is added, so the counts
+    the specs read are unchanged). `app:shops:pull` exists as a no-op (5b).
+22. **Coordinator note (item 0, 0.5):** `locales/{en,es}/settings.json` holds the shell's and General's keys
+    (`settings.title`, `tabsLabel`, `tabs.*`, `pending`, `general.*`); item 4 adds `settings.email.*`,
+    `settings.analytics.*`, `settings.phrases.*` and the coordinator merges the file. Each later tab is a stub file
+    next to the shell (`pages/settings/ui/{EmailSettings,AnalyticsSettings,QuickPhrases,ShopConnections}.tsx`): items 4
+    and 6 replace the file, not `SettingsPage.tsx`. The routes `/admin/settings/shops/new`, `/admin/settings/shops/:id`
+    and `/admin/settings/shops/:id/deliveries` exist (stub slices `pages/shop-connection-form`, `pages/shop-deliveries`
+    for item 6), so no item edits `app/routes.tsx`. A non-admin gets the not-found page through `app/providers/
+    RequireRole`. The analytics loader reads `/settings/public` on each change of path, so saved IDs load on the next
+    navigation.
+
 ## Risks
 
 - **Cutover gap.** Between the deploy and re-pointing the shops, the legacy URL must keep working: the switch

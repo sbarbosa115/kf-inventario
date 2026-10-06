@@ -35,7 +35,9 @@ export function Pager({
       </span>
       {onPerPage && (
         <label className="kf-pager__size" htmlFor={id}>
-          <span className="kf-pager__size-label">{t('filters.rowsPerPage')}</span>
+          <span className="kf-pager__size-label">
+            {t('filters.rowsPerPage')}
+          </span>
           <select
             id={id}
             className="custom-select custom-select-sm"

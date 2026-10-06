@@ -47,17 +47,24 @@ describe('FilterSheet (DS-16)', () => {
     const sheet = screen.getByRole('dialog', {name: 'Filters'});
     expect(sheet).toHaveAttribute('aria-modal', 'true');
     await waitFor(() =>
-      expect(screen.getByRole('button', {name: 'Show 12 results'})).toBeInTheDocument(),
+      expect(
+        screen.getByRole('button', {name: 'Show 12 results'}),
+      ).toBeInTheDocument(),
     );
     await userEvent.click(screen.getByRole('checkbox', {name: /Created/}));
     await waitFor(() =>
-      expect(screen.getByRole('button', {name: 'Show 4 results'})).toBeInTheDocument(),
+      expect(
+        screen.getByRole('button', {name: 'Show 4 results'}),
+      ).toBeInTheDocument(),
     );
     await userEvent.selectOptions(screen.getByLabelText('Sort'), 'code');
     await userEvent.click(screen.getByRole('button', {name: /^Show/}));
 
     expect(applied).toEqual([{filters: {status: ['1']}, sort: 'code'}]);
-    expect(counted).toContainEqual({filters: {status: ['1']}, sort: '-created_at'});
+    expect(counted).toContainEqual({
+      filters: {status: ['1']},
+      sort: '-created_at',
+    });
   });
 
   it('keeps the focus inside, and Escape closes it without applying', async () => {
@@ -97,10 +104,14 @@ describe('FilterSheet (DS-16)', () => {
       />,
     );
 
-    expect(screen.getByRole('button', {name: /^Created/, expanded: true})).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {name: /^Created/, expanded: true}),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText('From')).toHaveValue('2026-10-01');
     await userEvent.click(screen.getByRole('button', {name: 'Clear filters'}));
-    await userEvent.click(screen.getByRole('button', {name: /^Show|^Filters$/}));
+    await userEvent.click(
+      screen.getByRole('button', {name: /^Show|^Filters$/}),
+    );
     expect(applied).toEqual([{filters: {}, sort: undefined}]);
   });
 });

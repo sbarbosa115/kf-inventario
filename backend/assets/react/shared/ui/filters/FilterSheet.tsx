@@ -104,7 +104,11 @@ export function FilterSheet({
 
   return createPortal(
     <div className="kf-sheet">
-      <div className="kf-sheet__backdrop" aria-hidden="true" onClick={onClose} />
+      <div
+        className="kf-sheet__backdrop"
+        aria-hidden="true"
+        onClick={onClose}
+      />
       <div
         ref={sheet}
         className="kf-sheet__panel"
@@ -113,7 +117,11 @@ export function FilterSheet({
         aria-labelledby={titleId}
         tabIndex={-1}
       >
-        <div className="kf-sheet__handle" aria-hidden="true" title={t('filters.dragHandle')} />
+        <div
+          className="kf-sheet__handle"
+          aria-hidden="true"
+          title={t('filters.dragHandle')}
+        />
         <header className="kf-sheet__header">
           <h2 id={titleId} className="kf-sheet__title">
             {t('filters.label')}
@@ -131,7 +139,9 @@ export function FilterSheet({
         <div className="kf-sheet__body">
           {sortOptions && sortOptions.length > 0 && (
             <label className="kf-sheet__sort">
-              <span className="kf-filter-field__label">{t('filters.sort')}</span>
+              <span className="kf-filter-field__label">
+                {t('filters.sort')}
+              </span>
               <select
                 className="custom-select"
                 value={draft.sort ?? ''}
@@ -150,7 +160,8 @@ export function FilterSheet({
           {columns.map((column) => {
             const field = column.filter.field;
             const value = draft.filters[field];
-            const summary = value === undefined ? null : describe(column, value);
+            const summary =
+              value === undefined ? null : describe(column, value);
             const expanded = open === field;
             return (
               <section key={field} className="kf-sheet__section">
@@ -160,9 +171,16 @@ export function FilterSheet({
                   aria-expanded={expanded}
                   onClick={() => setOpen(expanded ? null : field)}
                 >
-                  <span className="kf-sheet__section-label">{column.label}</span>
-                  {summary && <span className="kf-sheet__section-summary">{summary}</span>}
-                  <i className={`fas fa-chevron-${expanded ? 'up' : 'down'}`} aria-hidden="true" />
+                  <span className="kf-sheet__section-label">
+                    {column.label}
+                  </span>
+                  {summary && (
+                    <span className="kf-sheet__section-summary">{summary}</span>
+                  )}
+                  <i
+                    className={`fas fa-chevron-${expanded ? 'up' : 'down'}`}
+                    aria-hidden="true"
+                  />
                 </button>
                 {expanded && (
                   <div className="kf-sheet__section-body">

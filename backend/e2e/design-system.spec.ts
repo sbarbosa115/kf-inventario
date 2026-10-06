@@ -274,6 +274,74 @@ test.describe('10 Design system, at 1440 px', () => {
       invoices.getByRole('link', {name: 'Open the reader'}),
     ).toHaveCount(0);
   });
+
+  test('DS-15 · every filter control of the kit is there and works', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    const errors = consoleErrors(page);
+    await page.goto('/admin/_kit');
+    const kit = page.getByRole('region', {name: 'Table filters'});
+    // The controls on their own, above the server-mode table that uses them too.
+    const controls = kit.locator('.kit-page__filters');
+
+    await expect(
+      controls.getByRole('searchbox', {name: 'Filter by Order'}),
+    ).toBeVisible();
+    await controls.getByRole('button', {name: 'Status · 1'}).click();
+    const status = page.getByRole('dialog', {name: 'Status · 1'});
+    await expect(status.getByRole('checkbox', {name: /Created/})).toBeChecked();
+    await expect(status).toContainText('Delivered40');
+    await page.keyboard.press('Escape');
+    await expect(status).toHaveCount(0);
+
+    await controls.getByRole('button', {name: 'Created', exact: true}).click();
+    await page.getByRole('button', {name: 'Last 7 days'}).click();
+    await expect(
+      controls.getByRole('button', {name: /^Created: /}),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await controls.getByRole('button', {name: 'Total: $100 – $500'}).click();
+    await page.getByRole('button', {name: 'Over $500'}).click();
+    await expect(
+      controls.getByRole('button', {name: 'Total: Over $500'}),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await kit
+      .getByRole('button', {name: 'Remove the filter Status: Created'})
+      .click();
+    await expect(kit.getByText('Status: Created')).toHaveCount(0);
+    const pager = kit.getByRole('navigation', {name: 'Pages'}).first();
+    await expect(pager).toContainText('51 – 75 of 1,240');
+    await pager.getByRole('button', {name: 'Next'}).click();
+    await expect(pager).toContainText('76 – 100 of 1,240');
+
+    // The server-mode table: a header sort and a status tick ask for other rows.
+    const area = kit.locator('.kf-data-table');
+    const table = area.getByRole('table');
+    await expect(area.getByText('1 – 10 of 64')).toBeVisible();
+    await table.getByRole('button', {name: /^Order/}).click();
+    await expect(table.getByRole('row').nth(2)).toContainText('W00001');
+    await table.getByRole('button', {name: 'Status', exact: true}).click();
+    await page
+      .getByRole('dialog', {name: 'Status'})
+      .getByRole('checkbox', {name: /Delivered/})
+      .check();
+    await page.keyboard.press('Escape');
+    await expect(area.getByText('Status: Delivered')).toBeVisible();
+    await expect(table.getByRole('row').filter({hasText: 'W000'})).toHaveCount(
+      10,
+    );
+    await expect(
+      table
+        .getByRole('row')
+        .filter({hasText: 'W000'})
+        .filter({hasNotText: 'Delivered'}),
+    ).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
 });
 
 test.describe('10 Design system, on a phone (390 px)', () => {
@@ -339,5 +407,51 @@ test.describe('10 Design system, on a phone (390 px)', () => {
         name: 'Upload a stock sheet',
       }),
     ).toBeVisible();
+  });
+
+  test('DS-16 · the filter sheet traps the focus, Escape closes it, and "Show N results" applies', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    const errors = consoleErrors(page);
+    await page.goto('/admin/_kit');
+    const kit = page
+      .getByRole('region', {name: 'Table filters'})
+      .locator('.kf-data-table');
+    const table = kit.getByRole('table');
+    await expect(table.getByRole('row').filter({hasText: 'W000'})).toHaveCount(
+      10,
+    );
+    await expect(
+      table.locator('.kf-table__filters'),
+      'no filter row on a phone',
+    ).toHaveCount(0);
+
+    await kit.getByRole('button', {name: 'Filters · 0'}).click();
+    const sheet = page.getByRole('dialog', {name: 'Filters'});
+    await expect(sheet).toBeVisible();
+    for (let i = 0; i < 12; i++) await page.keyboard.press('Tab');
+    expect(
+      await page.evaluate(
+        () => !!document.activeElement?.closest('[role="dialog"]'),
+      ),
+      'the focus stays in the sheet',
+    ).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(sheet).toHaveCount(0);
+    await expect(kit.getByText('Status: Created')).toHaveCount(0);
+
+    await kit.getByRole('button', {name: 'Filters · 0'}).click();
+    await sheet.getByRole('button', {name: /^Status/}).click();
+    await sheet.getByRole('checkbox', {name: /Created/}).check();
+    await sheet.getByRole('button', {name: 'Show 11 results'}).click();
+
+    await expect(sheet).toHaveCount(0);
+    await expect(kit.getByText('Status: Created')).toBeVisible();
+    await expect(
+      table.getByRole('row').filter({hasText: 'Delivered'}),
+    ).toHaveCount(0);
+    await expect(kit.getByRole('button', {name: 'Filters · 1'})).toBeVisible();
+    expect(errors).toEqual([]);
   });
 });

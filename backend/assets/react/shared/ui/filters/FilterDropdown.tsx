@@ -86,23 +86,23 @@ export function FilterDropdown({
       active={value.length > 0}
     >
       <div className="kf-filter-panel">
-          <EnumChecklist
-            label={label}
-            options={options}
-            counts={counts}
-            value={value}
-            onChange={onChange}
-          />
-          <div className="kf-filter-panel__footer">
-            <button
-              type="button"
-              className="kf-btn kf-btn--ghost kf-btn--sm"
-              disabled={value.length === 0}
-              onClick={() => onChange([])}
-            >
-              <span className="kf-btn__label">{t('filters.clearOne')}</span>
-            </button>
-          </div>
+        <EnumChecklist
+          label={label}
+          options={options}
+          counts={counts}
+          value={value}
+          onChange={onChange}
+        />
+        <div className="kf-filter-panel__footer">
+          <button
+            type="button"
+            className="kf-btn kf-btn--ghost kf-btn--sm"
+            disabled={value.length === 0}
+            onClick={() => onChange([])}
+          >
+            <span className="kf-btn__label">{t('filters.clearOne')}</span>
+          </button>
+        </div>
       </div>
     </FilterPopover>
   );
