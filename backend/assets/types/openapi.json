@@ -1085,22 +1085,16 @@
         },
         "/api/v1/orders/sync": {
             "post": {
-                "summary": "Pulls the orders the WooCommerce shops have waiting (REST API) and places the ones the app does not have yet,\nas the webhook would: `imported` placed, `skipped` already imported (deleted ones included) or not placeable\n(logged). A warehouse whose shop the app holds no keys for is not pulled. 502 order_sync_failed when a shop\ncannot be read (nothing is kept).",
+                "summary": "\"Check now\": the catch-up pull of every active shop connection, due or not, each in its own transaction\n(docs/pdr/prd-shops-settings.md, Decisions 11). 202 with what each connection brought in \u2014 `imported` placed,\n`skipped` already in the app or kept in the failed-deliveries inbox \u2014 and `error` for a shop that could not be\nread (recorded in its health; the others go on). 502 order_sync_failed only when every connection failed.",
+                "description": "Without an active connection nothing is pulled.",
                 "operationId": "post_api_orders_sync",
                 "responses": {
                     "202": {
-                        "description": "One of these.",
+                        "description": "OK.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/SyncResultOutput"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/ShopsSyncResultOutput"
-                                        }
-                                    ]
+                                    "$ref": "#/components/schemas/ShopsSyncResultOutput"
                                 }
                             }
                         }
@@ -1605,7 +1599,7 @@
         },
         "/api/v1/shops/{id}/outbox": {
             "get": {
-                "summary": "The connection's writes in a status (`?status=failed`).",
+                "summary": "The connection's writes in a status, newest first: `?status=` pending, sent or failed (the default: what the\nhealth counts). 404 shop_not_found; 422 for another status.",
                 "operationId": "get_api_shops_outbox",
                 "parameters": [
                     {
@@ -1637,7 +1631,7 @@
         },
         "/api/v1/shops/{id}/outbox/{outboxId}/retry": {
             "post": {
-                "summary": "Queues a failed write again \u2192 pending.",
+                "summary": "Queues a write again, due now \u2192 the row as it is afterwards (pending; sent or failed once the queue has run\nit). A row already sent is answered as it is. 404 shop_not_found / outbox_not_found (also another\nconnection's row).",
                 "operationId": "post_api_shops_outbox_retry",
                 "parameters": [
                     {
@@ -2867,22 +2861,6 @@
                                 "$ref": "#/components/schemas/PinnedCommentOutput"
                             }
                         ]
-                    }
-                },
-                "type": "object"
-            },
-            "SyncResultOutput": {
-                "required": [
-                    "imported",
-                    "skipped"
-                ],
-                "properties": {
-                    "imported": {
-                        "type": "integer"
-                    },
-                    "skipped": {
-                        "title": "Already imported (deleted ones included), or not placeable (unknown SKU, no lines)",
-                        "type": "integer"
                     }
                 },
                 "type": "object"

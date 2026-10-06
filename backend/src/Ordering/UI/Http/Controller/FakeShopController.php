@@ -15,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * run end to end without a real shop. Behind kernel.debug: a production kernel answers 404.
  *
  * It answers the REST calls the app makes (RestShopGateway) with the keys of src/DataFixtures/ShopFixtures.php
- * (HTTP Basic): GET orders (status, modified_after, page), PUT orders/{id} (status), GET/POST orders/{id}/notes,
+ * (HTTP Basic): GET orders (status — `any` for every one —, modified_after, page), PUT orders/{id} (status), GET/POST orders/{id}/notes,
  * GET system_status; and GET /wp-json/ (the site's name). Its state lives in var/fake-shop.json; the specs fill and
  * read it through /_fake-shop/_state (GET: orders, notes and every write the app made; PUT: replace orders/notes;
  * DELETE: empty it).
@@ -115,7 +115,7 @@ final class FakeShopController extends AbstractController
         $since = $request->query->get('modified_after');
         $page = max(1, $request->query->getInt('page', 1));
         $perPage = max(1, $request->query->getInt('per_page', 10));
-        $orders = array_values(array_filter($state['orders'], static fn (array $o): bool => (null === $status || ($o['status'] ?? 'processing') === $status)
+        $orders = array_values(array_filter($state['orders'], static fn (array $o): bool => (null === $status || 'any' === $status || ($o['status'] ?? 'processing') === $status)
             && (null === $since || !isset($o['date_modified_gmt']) || (string) $o['date_modified_gmt'] > (string) $since)));
 
         return \array_slice($orders, ($page - 1) * $perPage, $perPage);

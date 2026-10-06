@@ -1,12 +1,7 @@
 # Services of the test environment only (MicroKernelTrait loads services_<env>.yaml after services.yaml).
 services:
-  # The tests never call a real WooCommerce shop: the "Sync Orders" pull reads a fake the test fills
-  # (tests/Functional/Ordering/SyncOrdersApiTest.php).
-  App\Ordering\Application\Port\RemoteOrderSource:
-    class: App\Tests\Functional\Ordering\FakeRemoteOrderSource
-
-  # The shops' REST API (shops-settings: ShopGateway): tests talk to a fake (tests/Functional/Ordering/
-  # FakeShopGateway.php); item 5b retires FakeRemoteOrderSource with the old sync.
+  # The shops' REST API (shops-settings: ShopGateway): tests never call a real shop, they talk to a fake
+  # (tests/Functional/Ordering/FakeShopGateway.php) — "Test connection", the pull, the write-back.
   App\Ordering\Application\Port\ShopGateway:
     class: App\Tests\Functional\Ordering\FakeShopGateway
     public: true

@@ -712,6 +712,41 @@ moves to the field; on Getting ready the − / + of each card and Ship are reach
 <!-- shops-settings item 5b (shops-sync-api) adds ORD-35 – 37 here, smoke in e2e/orders-sync.spec.ts (the fake shop):
      "Check now" over every active connection, the order status written back, a failed push and its Retry. -->
 
+The dev stack's fake shop (`/_fake-shop`) answers the seeded "Fake shop" connection (Colombia, prints its orders, both
+capabilities on). Its state is read and set with `curl -s localhost:<port>/_fake-shop/_state` (GET: its orders, notes
+and every write the app made; `-X PUT -d '{"orders":[…],"notes":{}}'`: its orders; `-X DELETE`: empty). The pushes
+leave through the `shops` queue: the stack's `worker` sends them within a second or two.
+
+**ORD-35 · Check now pulls every active connection, only what changed since its last pull, and a failing shop fails alone**
+Smoke: `e2e/orders-sync.spec.ts` (through the API).
+Put two `processing` orders in the fake shop with `date_modified_gmt` two and one hours ago and lines `KF-01`/`KF-02`.
+In Settings › Shop connections add a second connection whose site URL is `http://nginx/_fake-shop-gone` (no shop
+there). As the admin, Orders › Check now: a toast per connection — "Fake shop" imported 2, the other could not be
+read — and the two orders are in Colombia with the shop's name in Source (`POST /api/v1/orders/sync` answers 202
+`{imported: 2, failed: 1, connections: […]}`); the broken connection's card shows the failure (`pull_failed`).
+Press Check now again: nothing is imported (the cursor is the newest modification seen). Add a third order modified
+now: only that one is imported; one modified before the cursor is not read. Turn every connection off but the broken
+one: Check now answers 502 "No shop could be read (…)". Put the connections back; delete the broken one.
+By hand on a server: `bin/console app:shops:pull --if-due -v` reads only the connections pulled 15 minutes ago or
+more (run it twice: the second run reads nothing), and deletes the failed deliveries older than 90 days.
+
+**ORD-36 · A linked order's status is written back: Processed → processing, Sent → completed, the others nothing**
+Smoke: `e2e/orders-sync.spec.ts` (through the API).
+Post a signed order to the Fake shop's webhook (HOOK-03). Mark it Processed: within seconds the fake shop's `writes`
+hold `{"call":"status","value":"processing"}` for that order. Ship the whole order in Getting ready (Sent):
+`completed` is written. Mark it Delivered: nothing more (the shop already has `completed`). Created, Completed and
+Partial write nothing, and `GET /api/v1/shops/{id}/outbox?status=sent` lists exactly the two rows. An order typed by
+hand, or one from a connection whose "Order status" switch is off or that is inactive, writes nothing.
+
+**ORD-37 · A push that fails three times is failed in the outbox and the health, and Retry queues it again**
+Smoke: `e2e/orders-sync.spec.ts` (through the API; Retry stands in for the 1- and 5-minute waits).
+Create a connection to `http://nginx/_fake-shop-gone` with "Order status" on, post a signed order to its webhook and
+mark the order Processed: the change is saved at once; `GET /api/v1/shops/{id}/outbox?status=pending` shows the row
+with `attempts: 1` and the error. Wait 1 minute (or Retry), then 5 (or Retry): at the third failure the row is
+`failed` (`?status=failed`), the connection's health has `failed_pushes: 1` and `last_failure_code: push_failed`
+(the card's "1 failed update"). Retry answers `pending` and the worker tries once more (`attempts: 4`, failed again).
+With a shop whose keys cannot write (401) the health says `keys_read_only` at the first failure.
+
 ### Comment timeline (shops-settings item 8)
 
 <!-- shops-settings item 8 (comments-ui) adds ORD-38 – 44 here, smoke in e2e/comments.spec.ts: the timeline (author,
