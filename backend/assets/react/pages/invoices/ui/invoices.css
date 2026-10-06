@@ -1,4 +1,4 @@
-/* The invoices list: the customer with the email under it, and the search in the toolbar. */
+/* The invoices list: the customer with the email under it, and the search and the walk-in list in the toolbar. */
 .kf-invoices__customer {
   display: inline-flex;
   flex-direction: column;
@@ -13,6 +13,11 @@
 .kf-invoices__search {
   flex: 1 1 220px;
   min-width: 0;
+}
+
+.kf-invoices__walk-in {
+  flex: 0 0 auto;
+  min-width: 160px;
 }
 
 @media (max-width: 599px) {

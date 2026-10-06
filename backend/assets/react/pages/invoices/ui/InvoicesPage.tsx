@@ -185,13 +185,15 @@ export function InvoicesPage() {
           />
         </div>
         {!phone && (
-          <FilterDropdown
-            label={walkInFilter.label}
-            options={walkInOptions}
-            counts={data?.facets ? walkInCounts : undefined}
-            value={Array.isArray(walkInValue) ? walkInValue : []}
-            onChange={(value) => list.setFilter('walk_in', value)}
-          />
+          <div className="kf-invoices__walk-in">
+            <FilterDropdown
+              label={walkInFilter.label}
+              options={walkInOptions}
+              counts={data?.facets ? walkInCounts : undefined}
+              value={Array.isArray(walkInValue) ? walkInValue : []}
+              onChange={(value) => list.setFilter('walk_in', value)}
+            />
+          </div>
         )}
       </Toolbar>
       {forbidden ? (
