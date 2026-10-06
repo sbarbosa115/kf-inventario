@@ -219,48 +219,53 @@ selection bar and Move to warehouse opens the panel over the full width; the pro
 bar above the tab bar; every target is at least 44 px; no raw translation key anywhere; Spanish reads naturally
 ("Trasladar a bodega", "Descargar hoja de existencias").
 
-**INV-09 · The upload screen links to the template and to every product**
+**INV-09 · The upload screen shows its three steps and links to the template and to every product**
 Smoke: `e2e/stock.spec.ts`.
 Signed in as the admin, open `/admin/product/upload` (the previous version's address): `/admin/products/upload` opens,
-"Upload products", the description, Download template and Download All Products (each opens an `.xls`), a file box and a
-Warehouse list.
+"Upload a stock sheet", three numbered steps: 1 Download the template (Download the template, Download every product:
+each opens an `.xls`), 2 Fill in the quantities, 3 Choose the warehouse and the file (the warehouse switch, the drop
+zone "Drop the stock sheet here, or choose a file", Upload).
 
-**INV-10 · Upload names what is missing and refuses a file that is not a spreadsheet**
+**INV-10 · Upload names what is missing and refuses a file that is not a spreadsheet in place**
 Smoke: `e2e/stock.spec.ts`.
-Upload with nothing chosen: "Choose a spreadsheet to upload." and "Choose the warehouse the quantities go to."; nothing
-is sent. Choose a `.txt` file and a warehouse: "The file is not an Excel spreadsheet (xls or xlsx)."
+Upload with no file: "Choose the stock sheet to upload." under the drop zone; nothing is sent. Choose (or drop) a `.txt`
+file: "notes.txt is not an Excel sheet. Choose an .xls or .xlsx file." at once, the file is not kept, and Upload still
+sends nothing.
 
 **INV-11 · A spreadsheet from the template is stored in the chosen warehouse**
-Smoke (part): `e2e/stock.spec.ts` uploads the all-products sheet and checks the confirmation.
-Download All Products, put quantities in the Quantity column of two rows and add one new row (code, title, detail,
-quantity, price), choose a warehouse and Upload: "N products were stored." with a link to Products. By hand:
-the product list of that warehouse shows the new product and the quantities added to the existing ones; a sheet with
-the wrong columns says "The spreadsheet could not be read. Use the template and try again."
+Smoke (part): `e2e/stock.spec.ts` uploads the all-products sheet into España and checks the summary and its link.
+Download every product, put quantities in the Quantity column of two rows and add one new row (code, title, detail,
+quantity, price), choose a warehouse and Upload: a summary card "N rows stored in <warehouse>" with "Open the products
+of <warehouse>" (`/admin/products?warehouse=<id>`). By hand: that link opens the product list on that warehouse, with
+the new product and the quantities added to the existing ones; a sheet with the wrong columns says "The spreadsheet
+could not be read. Use the template and try again."
 
-**INV-12 · The barcode reader adds a code on Enter, counts a repeated one and checks it exists**
+**INV-12 · The scan screen lists a code on Enter, counts a repeated one and says when one is not a product**
 Smoke: `e2e/stock.spec.ts`.
-Open `/admin/product/update/bar-code`: `/admin/products/barcode` opens with "No products read yet." Type `KF-01` and
-press Enter: the box empties and the row shows quantity 1; again: still one row, quantity 2. `NOPE-404` gets the red
-cross ("The product does not exist"), `KF-01` the green check. The quantity box can be edited (0 or text turns it red
-and disables Add/Remove products) and the bin removes the row.
+Open `/admin/product/update/bar-code`: `/admin/products/barcode` opens, "Scan stock", with "Nothing scanned yet." Type
+`KF-01` in Barcode and press Enter: the box empties and keeps the focus, the row shows the code, the product's title
+and quantity 1; again: still one row, quantity 2. `NOPE-404` shows "Not a product" in red on its row. The quantity box
+can be edited (0 or text turns it red, says "Every quantity must be a whole number of 1 or more." in the footer and
+disables the main button), − and + step it, and × (Remove NOPE-404) takes the row out.
 
-**INV-13 · The codes read are confirmed and added to the chosen warehouse**
+**INV-13 · With Usa and Add chosen, the codes read are added in one tap**
 Smoke: `e2e/stock.spec.ts`.
-With `KF-01` x2 read and Usa chosen, Add products opens "Confirm the products" naming Usa and the code and quantity;
-Cancel changes nothing; Add quantity shows "The products were added to Usa." and empties the list. The Usa stock list
-of the Products screen shows KF-01 with 2.
+Choose Usa and Add stock, read `KF-01` twice, press "Add to Usa": no question, "Added 2 units to Usa." appears, the
+list empties and the focus is back in Barcode. The Usa stock list of the Products screen shows KF-01 with 2.
 
-**INV-14 · Removing more than the warehouse has is refused and keeps the list**
+**INV-14 · Removing asks first; more than the warehouse has is refused and keeps the list**
 Smoke: `e2e/stock.spec.ts`.
-Read `KF-01`, choose Usa, set the quantity to 50, Remove products, Remove quantity: "There is not enough stock of
-KF-01: 2 available." and the list is still there. With quantity 1 it shows "The products were removed from Usa." and
-Usa keeps 1.
+Choose Usa and Remove stock (the mode turns red, and so does "Remove from Usa"), read `KF-01`, set the quantity to 50,
+Remove from Usa: "Remove from Usa?" says "50 units of 1 product will be taken out of Usa's stock."; Cancel changes
+nothing. "Remove 50 units": "There is not enough stock of KF-01: 2 available." under the box, the list is still there.
+With quantity 1 it shows "Removed 1 unit from Usa." and Usa keeps 1.
 
 **INV-15 · Incoming products wait until "Approve all" puts them in stock**
-Smoke: `e2e/stock.spec.ts` (the move is made through the API; the Products screen's move modal is item 6's).
+Smoke: `e2e/stock.spec.ts` (the move is made through the API; the Products screen's move panel is item 1's).
 After moving KF-02 x4 from Colombia to España, `/admin/product/incoming` opens `/admin/products/incoming`; pick España:
-one row (code, description, 4, España). Approve all: "1 incoming product was approved.", the list says nothing is
-waiting and Approve all is disabled. By hand: España's stock list shows KF-02 with 4 and Colombia's with 96.
+one row (code, product, 4). "Approve all (1)", then "Approve 1 product" in the question: "1 incoming product was
+approved.", the rows fade, "Nothing waiting" and "Approve all (0)" disabled. By hand: España's stock list shows KF-02
+with 4 and Colombia's with 96.
 
 **INV-16 · A person without the inventory role is told so**
 Smoke: `e2e/stock.spec.ts`.
@@ -271,30 +276,92 @@ an upload submitted on `/admin/products/upload` says the same.
 
 <!-- Item 2 (warehouse-ops-ui) adds INV-23 – 30 here, and updates the texts of INV-09 – 16. -->
 
+**INV-23 · The scan screen remembers the warehouse and the mode**
+Smoke: `e2e/stock.spec.ts`.
+Signed in as `inventory`, open Scan: Colombia and Add stock are chosen (nothing remembered yet). Choose España and
+Remove stock, reload: still España and Remove stock, and the main button reads "Remove from España" (disabled with
+nothing scanned). Upload and Incoming open on España too (the warehouse is remembered per browser).
+
+**INV-24 · Undo last scan takes back the last read**
+Smoke: `e2e/stock.spec.ts`.
+Read `KF-01`, `KF-01`, `KF-02`: the last code read is on top and flashes. "Undo last scan": KF-02 goes, KF-01 stays at 2,
+the focus is back in Barcode. Ctrl+Z (⌘Z on a Mac) takes back one more: KF-01 at 1. With nothing read, Undo last scan
+is disabled.
+
+**INV-25 · The footer sums what will be sent, leaving out codes that are not products**
+Smoke: `e2e/stock.spec.ts`.
+Read `KF-01`, `KF-02` twice and `NOPE-25`: the footer says "2 products · 3 units" and "1 code that is not a product is
+left out."; "Add to Colombia" stays enabled. "One more KF-01": "2 products · 4 units". By hand: the footer stays at the
+bottom of the screen while the list scrolls (above the tab bar on a phone).
+
+**INV-26 · The camera on the scan screen**
+Smoke (part): `e2e/stock.spec.ts` checks that on a plain-http address the screen says "The camera needs a secure address
+(https). Type the code instead.", offers no Start camera, and typing still works. The camera itself is covered by
+`CameraScanner.test.tsx` and `ScanStock.test.tsx` with a fake detector (DS-10/11: no real-phone run, the user's
+decision).
+By hand, on `http://localhost:<HTTP_PORT>` with a webcam (optional): Start camera, hold a printed Code 128 label of
+`KF-01`: a tone, the row KF-01 appears with its title; held still it counts once; the sound button in the header turns
+the tone off (and it stays off after a reload).
+
+**INV-27 · The note on what changed is shown until it is dismissed**
+Smoke: `e2e/stock.spec.ts`.
+The first time Scan opens in a browser: "What changed: the warehouse and Add or Remove are chosen first and remembered…"
+above the steps. × (Dismiss): it goes, and stays gone after a reload.
+
+**INV-28 · The drop zone shows the chosen sheet**
+Smoke (part): `e2e/stock.spec.ts` chooses the template and checks its name, "N KB · XLS" and the ×.
+By hand: drag an `.xlsx` from the computer onto the zone: it is outlined while over it, then shows the name, size and
+XLSX; drag a `.pdf`: "<name> is not an Excel sheet. Choose an .xls or .xlsx file." and nothing is kept; the zone works
+with the keyboard (Tab focuses it with the ring, Enter or Space opens the file picker).
+
+**INV-29 · Approve all says what it will do, and Cancel approves nothing**
+Smoke: `e2e/stock.spec.ts` (it moves KF-03 x1 to España and approves it at the end).
+With KF-03 x1 incoming in España, `/admin/products/incoming?warehouse=3`: under the title "in España · 1 product · 1
+unit". "Approve all (1)": "Approve everything incoming?" asks "Approve 1 product, 1 unit, into España's stock?"; Cancel
+closes it and the row is still waiting.
+
+**INV-30 · The warehouse screens on a phone**
+Smoke (part): `e2e/stock.spec.ts` checks at 390 px that Scan, Upload, Incoming and Warehouses do not scroll sideways and
+that "Add to Colombia" is on screen with a code read.
+By hand at 390 px, light and dark: on Scan the warehouse and mode come first as large controls, the camera fills the
+width, the typed box under it, the rows wrap without cutting the code, every button is at least 44 px; Incoming's rows
+are cards; the upload steps and the warehouse cards stack.
+
 ## 3. Warehouses (WH)
 
 <!-- Item 7 (stock-ui) adds WH-01 – 03. -->
 
-**WH-01 · The list shows every warehouse, and the old address lands on it**
+**WH-01 · Every warehouse has a card, and the old address lands on them**
 Smoke: `e2e/stock.spec.ts`.
-Signed in as the admin, open `/admin/warehouse/` (the previous version's address): `/admin/warehouses` opens, "View
-warehouses", one row per warehouse (`#`, name, an Edit button); `/admin/warehouse/edit/1` lands on the same list. The
-search box finds a row by name.
+Signed in as the admin, open `/admin/warehouse/` (the previous version's address): `/admin/warehouses` opens,
+"Warehouses", one card per warehouse (its name, the shop addresses); `/admin/warehouse/edit/1` lands on the same page.
 
-**WH-02 · A warehouse is renamed in a modal, and a blank name is refused**
+**WH-02 · A warehouse is renamed in place, and a blank name is refused**
 Smoke: `e2e/stock.spec.ts` (it puts the name back).
-Edit on a row opens "Edit warehouse" with its name. Clear it and Save: "This value should not be blank." under the
-box, nothing is sent. Type a new name and Save: the modal closes, "Warehouse updated successfully" and the row shows the
-new name. By hand: the new name appears in every warehouse list (Products, Orders, Upload).
+A click on Usa's name turns it into a box with the name, "Enter saves, Escape cancels." under it. Clear it and Save:
+"Type a name for the warehouse." under the box, nothing is sent. Type Miami and press Enter: the box closes, "Usa is now
+Miami." and the card's title is Miami. By hand: the new name appears in every warehouse switch (Products, Scan, Upload,
+Incoming, Orders).
 
 **WH-03 · Any signed-in person can open the warehouses by address**
 Smoke: `e2e/stock.spec.ts`.
-Signed in as `invoices` (no Warehouses entry in the sidebar), `/admin/warehouses` still lists the warehouses, as the
+Signed in as `invoices` (no Warehouses entry in the menu), `/admin/warehouses` still shows the warehouses, as the
 previous version did (the API asks only for a signed-in user: a known gap).
 
 ### Warehouse cards (item 2)
 
 <!-- Item 2 (warehouse-ops-ui) adds WH-04 – 05 here, and updates the texts of WH-01 – 03. -->
+
+**WH-04 · Rename from the card's menu, and Escape cancels**
+Smoke: `e2e/stock.spec.ts`.
+"Actions for España" (⋯) › Rename: the name becomes a box with the focus in it. Type Madrid and press Escape: the card
+reads España again, the focus is back on the name, and nothing was saved (a reload still shows España).
+
+**WH-05 · Each card shows where its shop orders come from**
+Smoke: `e2e/stock.spec.ts`.
+Each card lists, under "Shop orders arrive from", the shop addresses in monospace (Colombia `https://colombia.test`,
+España `https://espana.test`); a warehouse with none says "No shop sends its orders here." By hand at 390 px: the cards
+stack one per row, long addresses wrap inside the card.
 
 ## 4. Customers (CUS)
 

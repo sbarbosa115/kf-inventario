@@ -1,29 +1,38 @@
 import {useState} from 'react';
-import {ApiError, failureMessage} from '@/shared/api';
+import {ApiError, failureMessage, type Schema} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
+import {Button, ConfirmModal, useToast} from '@/shared/ui';
 import {approveIncoming} from '../api/approveIncomingApi';
 
-/** "Approve all": moves every incoming row of the warehouse into its stock. */
+/**
+ * "Approve all (N)": asks first, naming the products, the units and the warehouse, then moves every incoming row of
+ * the warehouse into its stock and says how many the API approved.
+ */
 export function ApproveIncomingButton({
-  warehouseId,
-  disabled = false,
+  warehouse,
+  rows,
   onApproved,
 }: {
-  warehouseId: number;
-  disabled?: boolean;
+  warehouse: {id: number; name: string};
+  /** The incoming rows the page shows: the figures of the label and the question. */
+  rows: Schema<'StockOutput'>[];
   onApproved: (approved: number) => void;
 }) {
   const {t} = useTranslation();
+  const toast = useToast();
+  const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [failure, setFailure] = useState<string | null>(null);
+  const units = rows.reduce((sum, row) => sum + row.quantity, 0);
+  const products = t('stock.count.products', {count: rows.length});
 
   const approve = async () => {
     setBusy(true);
-    setFailure(null);
     try {
-      onApproved((await approveIncoming(warehouseId)).approved);
+      const {approved} = await approveIncoming(warehouse.id);
+      toast.success(t('stock.incoming.approved', {count: approved}));
+      onApproved(approved);
     } catch (error) {
-      setFailure(
+      toast.error(
         error instanceof ApiError && error.status === 403
           ? t('stock.errors.forbidden')
           : error instanceof ApiError && error.status === 404
@@ -32,24 +41,36 @@ export function ApproveIncomingButton({
       );
     } finally {
       setBusy(false);
+      setAsking(false);
     }
   };
 
   return (
     <>
-      <button
-        type="button"
-        className="btn btn-sm btn-success"
-        disabled={disabled || busy}
-        onClick={approve}
+      <Button
+        variant="primary"
+        icon="fa-check"
+        disabled={rows.length === 0}
+        onClick={() => setAsking(true)}
       >
-        <i className="fas fa-check" aria-hidden="true" />{' '}
-        {busy ? t('stock.incoming.approving') : t('stock.incoming.approveAll')}
-      </button>
-      {failure && (
-        <div className="alert alert-danger mt-2" role="alert">
-          {failure}
-        </div>
+        {t('stock.incoming.approveAll', {count: rows.length})}
+      </Button>
+      {asking && (
+        <ConfirmModal
+          title={t('stock.incoming.confirmTitle')}
+          confirmLabel={t('stock.incoming.confirm', {products})}
+          busy={busy}
+          onConfirm={approve}
+          onCancel={() => setAsking(false)}
+        >
+          <p>
+            {t('stock.incoming.confirmBody', {
+              products,
+              units: t('stock.count.units', {count: units}),
+              warehouse: warehouse.name,
+            })}
+          </p>
+        </ConfirmModal>
       )}
     </>
   );

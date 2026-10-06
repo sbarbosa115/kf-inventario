@@ -1,86 +1,102 @@
-import {useMemo, useState} from 'react';
-import {RenameWarehouseModal} from '@/features/rename-warehouse';
-import {apiGet, type Schema} from '@/shared/api';
+import {useId, useState} from 'react';
+import {listWarehouses, type Warehouse} from '@/entities/warehouse';
+import {WarehouseName} from '@/features/rename-warehouse';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
-import {DataTable, PageCard, type Column} from '@/shared/ui';
+import {
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  RowMenu,
+  Skeleton,
+} from '@/shared/ui';
+import './warehouses.css';
 
-type Warehouse = Schema<'WarehouseOutput'>;
+/** One warehouse: its name (renamed in place) and the shop addresses whose orders arrive there. */
+function WarehouseCard({
+  warehouse,
+  editing,
+  onEditingChange,
+  onRenamed,
+}: {
+  warehouse: Warehouse;
+  editing: boolean;
+  onEditingChange: (editing: boolean) => void;
+  onRenamed: () => void;
+}) {
+  const {t} = useTranslation();
+  const urlsId = useId();
+  return (
+    <article className="warehouse-card">
+      <header className="warehouse-card__header">
+        <WarehouseName
+          warehouse={warehouse}
+          editing={editing}
+          onEdit={() => onEditingChange(true)}
+          onDone={() => onEditingChange(false)}
+          onRenamed={onRenamed}
+        />
+        {!editing && (
+          <RowMenu
+            label={t('common.actionsFor', {name: warehouse.name})}
+            actions={[
+              {
+                label: t('stock.warehouses.rename'),
+                icon: 'fa-pen',
+                onSelect: () => onEditingChange(true),
+              },
+            ]}
+          />
+        )}
+      </header>
+      <p className="warehouse-card__label" id={urlsId}>
+        {t('stock.warehouses.urls')}
+      </p>
+      {warehouse.urls.length === 0 ? (
+        <p className="warehouse-card__none">{t('stock.warehouses.noUrls')}</p>
+      ) : (
+        <ul className="warehouse-card__urls" aria-labelledby={urlsId}>
+          {warehouse.urls.map((url) => (
+            <li key={url}>{url}</li>
+          ))}
+        </ul>
+      )}
+    </article>
+  );
+}
 
-/** View warehouses: each one's number and name, and the way to rename it. */
+/** Warehouses: a card each, renamed in place, with the shops that send their orders there (any signed-in user). */
 export function WarehousesPage() {
   const {t} = useTranslation();
-  const {data, loading, error, reload} = useLoad(
-    () => apiGet<Warehouse[]>('/warehouses'),
-    [],
-  );
-  const [editing, setEditing] = useState<Warehouse | null>(null);
-  const [saved, setSaved] = useState(false);
-
-  const columns = useMemo<Column<Warehouse>[]>(
-    () => [
-      {
-        key: 'id',
-        header: t('stock.warehouses.columns.id'),
-        render: (warehouse) => warehouse.id,
-        sortValue: (warehouse) => warehouse.id,
-        searchValue: (warehouse) => warehouse.id,
-      },
-      {
-        key: 'name',
-        header: t('stock.warehouses.columns.name'),
-        render: (warehouse) => warehouse.name,
-        sortValue: (warehouse) => warehouse.name.toLowerCase(),
-        searchValue: (warehouse) => warehouse.name,
-      },
-      {
-        key: 'options',
-        header: t('stock.warehouses.columns.options'),
-        render: (warehouse) => (
-          <button
-            type="button"
-            className="btn btn-sm btn-success"
-            onClick={() => {
-              setSaved(false);
-              setEditing(warehouse);
-            }}
-          >
-            <i className="fas fa-edit" aria-hidden="true" />{' '}
-            {t('stock.warehouses.edit')}
-          </button>
-        ),
-      },
-    ],
-    [t],
-  );
+  const {data, error, reload} = useLoad(listWarehouses, []);
+  const [editing, setEditing] = useState<number | null>(null);
 
   return (
-    <PageCard title={t('stock.warehouses.title')}>
-      {saved && (
-        <div className="alert alert-success" role="status">
-          {t('stock.warehouses.updated')}
-        </div>
+    <>
+      <PageHeader title={t('stock.warehouses.title')} />
+      {error ? (
+        <ErrorState error={error} onRetry={reload} />
+      ) : data === undefined ? (
+        <Skeleton variant="card" />
+      ) : data.length === 0 ? (
+        <EmptyState icon="fa-warehouse" message={t('stock.warehouses.empty')} />
+      ) : (
+        <ul className="warehouse-cards" aria-label={t('stock.warehouses.list')}>
+          {data.map((warehouse) => (
+            <li key={warehouse.id}>
+              <WarehouseCard
+                warehouse={warehouse}
+                editing={editing === warehouse.id}
+                onEditingChange={(on) => setEditing(on ? warehouse.id : null)}
+                onRenamed={() => {
+                  setEditing(null);
+                  reload();
+                }}
+              />
+            </li>
+          ))}
+        </ul>
       )}
-      <DataTable
-        columns={columns}
-        rows={data}
-        rowKey={(warehouse) => warehouse.id}
-        loading={loading && data === undefined}
-        error={error}
-        onRetry={reload}
-        emptyMessage={t('stock.warehouses.empty')}
-      />
-      {editing && (
-        <RenameWarehouseModal
-          warehouse={editing}
-          onClose={() => setEditing(null)}
-          onRenamed={() => {
-            setEditing(null);
-            setSaved(true);
-            reload();
-          }}
-        />
-      )}
-    </PageCard>
+    </>
   );
 }

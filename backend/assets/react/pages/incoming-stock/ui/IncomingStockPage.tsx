@@ -1,39 +1,48 @@
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
+import {listStock, STOCK_INCOMING, type StockItem} from '@/entities/product';
+import {listWarehouses} from '@/entities/warehouse';
 import {ApproveIncomingButton} from '@/features/approve-incoming';
-import {ApiError, apiGet, type Schema} from '@/shared/api';
+import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {useLoad} from '@/shared/lib';
+import {useLoad, useRememberedWarehouse} from '@/shared/lib';
 import {
   DataTable,
   EmptyState,
   ErrorState,
-  Field,
-  Loader,
-  PageCard,
+  Num,
+  PageHeader,
+  Skeleton,
+  Toolbar,
+  WarehouseSwitch,
   type Column,
 } from '@/shared/ui';
+import './incoming-stock.css';
 
-type Stock = Schema<'StockOutput'>;
+/** How long approved rows take to fade before the list reloads. */
+const FADE_MS = 300;
 
-/** Incoming products: what waits for approval in a warehouse, and "Approve all" (ROLE_MANAGE_INVENTORY). */
+/** Incoming: what waits for approval in a warehouse, its totals, and "Approve all (N)" (ROLE_MANAGE_INVENTORY). */
 export function IncomingStockPage() {
   const {t} = useTranslation();
-  const warehouses = useLoad(
-    () => apiGet<Schema<'WarehouseOutput'>[]>('/warehouses'),
-    [],
-  );
-  const [picked, setPicked] = useState<number | null>(null);
-  const [approved, setApproved] = useState<number | null>(null);
-  const warehouseId = picked ?? warehouses.data?.[0]?.id ?? null;
+  const warehouses = useLoad(listWarehouses, []);
+  const [warehouse, pick] = useRememberedWarehouse(warehouses.data);
   const incoming = useLoad(
     () =>
-      warehouseId === null
-        ? Promise.resolve([] as Stock[])
-        : apiGet<Stock[]>(`/warehouses/${warehouseId}/stock?status=0`),
-    [warehouseId],
+      warehouse === undefined
+        ? Promise.resolve([] as StockItem[])
+        : listStock(warehouse.id, STOCK_INCOMING),
+    [warehouse?.id],
+  );
+  const [leaving, setLeaving] = useState(false);
+  const fade = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (fade.current) clearTimeout(fade.current);
+    },
+    [],
   );
 
-  const columns = useMemo<Column<Stock>[]>(
+  const columns = useMemo<Column<StockItem>[]>(
     () => [
       {
         key: 'code',
@@ -41,10 +50,11 @@ export function IncomingStockPage() {
         render: (row) => row.code,
         sortValue: (row) => row.code.toLowerCase(),
         searchValue: (row) => row.code,
+        mono: true,
       },
       {
         key: 'title',
-        header: t('stock.incoming.columns.description'),
+        header: t('stock.incoming.columns.title'),
         render: (row) => row.title,
         sortValue: (row) => row.title.toLowerCase(),
         searchValue: (row) => row.title,
@@ -52,17 +62,9 @@ export function IncomingStockPage() {
       {
         key: 'quantity',
         header: t('stock.incoming.columns.quantity'),
-        render: (row) => row.quantity,
+        render: (row) => <Num value={row.quantity} />,
         sortValue: (row) => row.quantity,
-        searchValue: (row) => row.quantity,
         numeric: true,
-      },
-      {
-        key: 'warehouse',
-        header: t('stock.incoming.columns.warehouse'),
-        render: (row) => row.warehouse.name,
-        sortValue: (row) => row.warehouse.name.toLowerCase(),
-        searchValue: (row) => row.warehouse.name,
       },
     ],
     [t],
@@ -70,71 +72,84 @@ export function IncomingStockPage() {
 
   const forbidden =
     incoming.error instanceof ApiError && incoming.error.status === 403;
+  const rows = incoming.loading ? undefined : incoming.data;
+  const subtitle =
+    warehouse && rows && !forbidden
+      ? t('stock.incoming.subtitle', {
+          warehouse: warehouse.name,
+          products: t('stock.count.products', {count: rows.length}),
+          units: t('stock.count.units', {
+            count: rows.reduce((sum, row) => sum + row.quantity, 0),
+          }),
+        })
+      : undefined;
+
+  const approved = () => {
+    setLeaving(true);
+    fade.current = setTimeout(() => {
+      setLeaving(false);
+      incoming.reload();
+    }, FADE_MS);
+  };
 
   return (
-    <PageCard title={t('stock.incoming.title')}>
+    <>
+      <PageHeader
+        title={t('stock.incoming.title')}
+        subtitle={subtitle}
+        primary={
+          warehouse &&
+          rows &&
+          !forbidden && (
+            <ApproveIncomingButton
+              warehouse={warehouse}
+              rows={leaving ? [] : rows}
+              onApproved={approved}
+            />
+          )
+        }
+      />
       {warehouses.error ? (
         <ErrorState error={warehouses.error} onRetry={warehouses.reload} />
       ) : warehouses.data === undefined ? (
-        <Loader />
+        <Skeleton variant="row" />
       ) : warehouses.data.length === 0 ? (
-        <EmptyState message={t('stock.warehouse.none')} />
+        <EmptyState icon="fa-warehouse" message={t('stock.warehouse.none')} />
       ) : (
         <>
-          <div className="row">
-            <div className="col-md-6">
-              <Field label={t('stock.warehouse.label')}>
-                <select
-                  className="form-control"
-                  value={warehouseId ?? ''}
-                  onChange={(event) => {
-                    setApproved(null);
-                    setPicked(Number(event.target.value));
-                  }}
-                >
-                  {warehouses.data.map((warehouse) => (
-                    <option key={warehouse.id} value={warehouse.id}>
-                      {warehouse.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-          </div>
-          {warehouseId !== null && (
-            <div className="mb-3">
-              <ApproveIncomingButton
-                warehouseId={warehouseId}
-                disabled={!incoming.data || incoming.data.length === 0}
-                onApproved={(count) => {
-                  setApproved(count);
-                  incoming.reload();
-                }}
-              />
-            </div>
-          )}
-          {approved !== null && (
-            <div className="alert alert-success" role="status">
-              {t('stock.incoming.approved', {count: approved})}
-            </div>
-          )}
+          <Toolbar>
+            <WarehouseSwitch
+              warehouses={warehouses.data}
+              value={warehouse?.id ?? null}
+              onChange={pick}
+            />
+          </Toolbar>
           {forbidden ? (
             <div className="alert alert-warning" role="alert">
               {t('errors.forbidden')}
             </div>
+          ) : rows && rows.length === 0 ? (
+            <EmptyState
+              icon="fa-inbox"
+              title={t('stock.incoming.emptyTitle')}
+              message={t('stock.incoming.empty')}
+            />
           ) : (
             <DataTable
               columns={columns}
-              rows={incoming.data}
+              rows={rows}
               rowKey={(row) => row.id}
-              loading={incoming.loading && incoming.data === undefined}
+              rowLabel={(row) => row.code}
+              loading={rows === undefined && !incoming.error}
               error={incoming.error}
               onRetry={incoming.reload}
-              emptyMessage={t('stock.incoming.empty')}
+              rowClassName={() =>
+                leaving ? 'incoming-row--leaving' : undefined
+              }
             />
           )}
         </>
       )}
-    </PageCard>
+    </>
   );
 }
