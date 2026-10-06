@@ -1101,10 +1101,55 @@ with the five tabs, General current: the time zone, "Email leaves from" (the ser
 stack) and "The old webhook URL" with On and "Turn off the old webhook URL". Signed in as `inventory`: no Settings entry,
 and `/admin/settings` shows "Page not found"; `/api/v1/settings/email` answers 403.
 
-<!-- shops-settings item 4 (settings-ui) adds SET-02 – 08 here, smoke in e2e/settings.spec.ts: General's email source
-     and the legacy switch, Email saved with the password kept blank, Send test email through the stack's Mailpit, a
-     wrong SMTP host refused in place, Analytics IDs loading the two scripts after navigation (never on sign-in), quick
-     phrases added/renamed/reordered/deactivated, a bad GA ID refused in place. -->
+**SET-02 · General says where email leaves from, and the legacy switch**
+Smoke: `e2e/settings.spec.ts`.
+Settings › General on a stack with no SMTP server saved: "Email leaves from" reads "The server's MAILER_DSN (no SMTP
+server in Settings)" with the env host (`mailpit`); "The old webhook URL" shows On and "Turn off the old webhook URL".
+
+**SET-03 · Email: the server is saved, the password field is blank afterwards**
+Smoke: `e2e/settings.spec.ts`.
+Settings › Email: under "SMTP server" the muted line says the server's `MAILER_DSN` is used (with its host). Fill Host
+`mailpit`, Port `1025`, User, Password, Encryption None, Save: toast "Email settings saved."; the Password field is blank
+again and the line under it says "A password is saved"; `GET /api/v1/settings/email` answers `has_password: true`, the
+host, `source.dsn: settings` and never the password. After a reload, change only the user and Save with the password
+blank: it stays saved. Sender address, printer address and cc each say where they come from ("From Settings", "From
+the server's environment", "Not set"). A bad address or a port out of 1 – 65535 is refused under its field without a
+request. Changing the Host with the password blank shows "The host changed: a blank password saves none."
+
+**SET-04 · "Send test email" reaches Mailpit through the saved server**
+Smoke: `e2e/settings.spec.ts`.
+With Mailpit saved as the server (SET-03): "Send test email" opens a centred panel with "Send to" prefilled with the
+admin's email; Send shows "Sent through mailpit" inside the panel, and "KF Inventory test email" is in Mailpit
+(`http://localhost:8025`) within seconds. Sending again at once shows "Wait a few seconds before sending another test
+email." (one test email every 10 s).
+
+**SET-05 · A wrong host answers the server's own error inline**
+Smoke: `e2e/settings.spec.ts`.
+Save Host `nowhere.invalid`, Port 25, then "Send test email" and Send: a red alert inside the panel reads "The server
+refused it: …" with the SMTP library's message (a connection error); no green line. The panel stays open and Send can be
+tried again. (The test goes through what is saved: the saving itself does not contact the server.)
+
+**SET-06 · Analytics IDs load both scripts after navigation, never on the sign-in page**
+Smoke: `e2e/settings.spec.ts` (the two external hosts are answered by route interception).
+Settings › Analytics: GA4 `G-SMOKE123`, Clarity `smoke12345`, Save: toast "Analytics settings saved. They load on the
+next page you open." Open Orders from the menu: `<head>` holds `googletagmanager.com/gtag/js?id=G-SMOKE123` and
+`clarity.ms/tag/smoke12345`, once each. Signed out, `/admin/login` requests neither `/settings/public` nor either host.
+By hand: with a real GA4 property, Realtime shows one `page_view` per page opened, without a user id.
+
+**SET-07 · Quick phrases: add, rename, reorder, deactivate**
+Smoke: `e2e/settings.spec.ts`.
+Settings › Quick phrases: type "Smoke first" and Enter (toast "Phrase added."), then "Smoke second"; pencil on the
+second, rename to "Smoke renamed", Enter; the up arrow on it moves it above the first (the arrows at the ends are
+disabled; each is 44 px on a phone); the switch on "Smoke first" turns it off: it stays listed struck through, and
+`GET /api/v1/settings/quick-phrases` (what the comment box reads) no longer holds it while `?all=1` does. The preview
+under the list shows the active phrases in order. The bin asks "Delete this phrase?" and removes it only on "Delete
+phrase". By hand once item 8 is merged: the order comment box's phrase bar shows the active phrases in this order.
+
+**SET-08 · A bad GA ID is refused in place**
+Smoke: `e2e/settings.spec.ts`.
+Settings › Analytics: `UA-123456-1` in the GA4 field and Save: "A GA4 ID looks like G-ABC1234 …" under the field, no
+toast, nothing saved. The same for a Clarity ID with a space or capitals. Empty fields save and turn that tool off.
+
 
 ## 12. Shop connections (SHOP)
 
