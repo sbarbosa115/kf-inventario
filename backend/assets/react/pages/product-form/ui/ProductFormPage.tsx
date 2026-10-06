@@ -3,7 +3,7 @@ import {getProduct} from '@/entities/product';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
-import {ErrorState, Loader, PageCard} from '@/shared/ui';
+import {ErrorState, PageHeader, Skeleton} from '@/shared/ui';
 import {ProductForm} from './ProductForm';
 
 /** Create product (/admin/products/new) and Edit product (/admin/products/:uuid/edit): one form for both. */
@@ -11,9 +11,10 @@ export function ProductFormPage() {
   const {t} = useTranslation();
   const {uuid} = useParams();
   return uuid === undefined ? (
-    <PageCard title={t('products.form.newTitle')}>
+    <>
+      <PageHeader title={t('products.form.newTitle')} back="/admin/products" />
       <ProductForm />
-    </PageCard>
+    </>
   ) : (
     <EditProduct uuid={uuid} />
   );
@@ -26,7 +27,8 @@ function EditProduct({uuid}: {uuid: string}) {
   const forbidden = error instanceof ApiError && error.status === 403;
 
   return (
-    <PageCard title={t('products.form.editTitle')}>
+    <>
+      <PageHeader title={t('products.form.editTitle')} back="/admin/products" />
       {missing ? (
         <div className="alert alert-warning" role="alert">
           <p>{t('products.notFound')}</p>
@@ -39,10 +41,10 @@ function EditProduct({uuid}: {uuid: string}) {
       ) : error ? (
         <ErrorState error={error} onRetry={reload} />
       ) : data === undefined ? (
-        <Loader />
+        <Skeleton variant="form" />
       ) : (
         <ProductForm key={data.uuid} product={data} />
       )}
-    </PageCard>
+    </>
   );
 }

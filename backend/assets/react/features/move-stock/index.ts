@@ -1,1 +1,1 @@
-export {MoveStockModal} from './ui/MoveStockModal';
+export {MoveStockPanel} from './ui/MoveStockPanel';

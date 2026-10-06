@@ -3,7 +3,14 @@ import type {StockItem} from '@/entities/product';
 import type {Warehouse} from '@/entities/warehouse';
 import {ApiError, failureMessage} from '@/shared/api';
 import {useTranslation, type Translate} from '@/shared/i18n';
-import {DataTable, Field, Modal, type Column} from '@/shared/ui';
+import {
+  Button,
+  DataTable,
+  Field,
+  Num,
+  SlideOver,
+  type Column,
+} from '@/shared/ui';
 import {moveStock} from '../api/moveStockApi';
 import {moveItems, quantityOptions} from '../model/moveLines';
 
@@ -33,10 +40,10 @@ function moveFailure(error: unknown, t: Translate): string {
 }
 
 /**
- * Move to Warehouse: the selected stock rows of `source`, a quantity (1..available) for each and the destination
+ * Move to warehouse, in a slide-over so the list stays in view: the selected stock rows of `source`, a quantity (1..available) for each and the destination
  * (every other warehouse). The stock arrives there as incoming, waiting for approval.
  */
-export function MoveStockModal({
+export function MoveStockPanel({
   rows,
   source,
   warehouses,
@@ -70,10 +77,11 @@ export function MoveStockModal({
         key: 'code',
         header: t('products.columns.code'),
         render: (row) => row.code,
+        mono: true,
       },
       {
         key: 'title',
-        header: t('products.columns.description'),
+        header: t('products.columns.title'),
         render: (row) => row.title,
       },
       {
@@ -81,33 +89,33 @@ export function MoveStockModal({
         header: t('products.columns.quantity'),
         render: (row) =>
           row.quantity > 0 ? (
-            <select
-              className="form-control form-control-sm"
-              aria-label={t('products.move.quantityOf', {code: row.code})}
-              value={picked[row.uuid] ?? 1}
-              onChange={(event) =>
-                setPicked((now) => ({
-                  ...now,
-                  [row.uuid]: Number(event.target.value),
-                }))
-              }
-            >
-              {quantityOptions(row.quantity).map((quantity) => (
-                <option key={quantity} value={quantity}>
-                  {quantity}
-                </option>
-              ))}
-            </select>
+            <span className="d-inline-flex align-items-center">
+              <select
+                className="form-control form-control-sm"
+                aria-label={t('products.move.quantityOf', {code: row.code})}
+                value={picked[row.uuid] ?? 1}
+                onChange={(event) =>
+                  setPicked((now) => ({
+                    ...now,
+                    [row.uuid]: Number(event.target.value),
+                  }))
+                }
+              >
+                {quantityOptions(row.quantity).map((quantity) => (
+                  <option key={quantity} value={quantity}>
+                    {quantity}
+                  </option>
+                ))}
+              </select>
+              <span className="text-muted ml-2 text-nowrap">
+                / <Num value={row.quantity} />
+              </span>
+            </span>
           ) : (
             <span className="text-muted">
               {t('products.move.noneAvailable')}
             </span>
           ),
-      },
-      {
-        key: 'warehouse',
-        header: t('products.columns.warehouse'),
-        render: (row) => row.warehouse.name,
       },
     ],
     [t, picked],
@@ -127,30 +135,28 @@ export function MoveStockModal({
   };
 
   return (
-    <Modal
+    <SlideOver
       title={t('products.move.title')}
-      size="lg"
+      width="lg"
       onClose={onClose}
+      header={
+        <p className="text-muted mb-0">
+          {t('products.move.summary', {source: source.name})}
+        </p>
+      }
       footer={
         <>
-          <button
-            type="button"
-            className="btn btn-secondary"
+          <Button variant="secondary" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            variant="primary"
             onClick={move}
-            disabled={busy || !destination || items.length === 0}
+            loading={busy}
+            disabled={!destination || items.length === 0}
           >
-            {busy ? (
-              <>
-                <i className="fas fa-sync fa-spin mr-1" aria-hidden="true" />
-                {t('products.move.moving')}
-              </>
-            ) : (
-              t('products.move.submit')
-            )}
-          </button>
-          <button type="button" className="btn btn-primary" onClick={onClose}>
-            {t('common.close')}
-          </button>
+            {busy ? t('products.move.moving') : t('products.move.submit')}
+          </Button>
         </>
       }
     >
@@ -183,14 +189,13 @@ export function MoveStockModal({
           {t('products.move.nothingToMove')}
         </div>
       )}
-      <hr />
       <DataTable
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}
         searchable={false}
-        pageSize={5}
+        pageSize={0}
       />
-    </Modal>
+    </SlideOver>
   );
 }
