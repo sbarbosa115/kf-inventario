@@ -6,6 +6,7 @@ use App\Identity\Domain\Model\User;
 use App\Ordering\Domain\Model\Comment;
 use App\Shared\Application\Query\AnyOfFilter;
 use App\Shared\Application\Query\DateRangeFilter;
+use App\Shared\Application\Query\ListFilter;
 use App\Shared\Application\Query\ListQuery;
 use App\Shared\Application\Query\NumberRangeFilter;
 use App\Shared\Application\Query\Sort;
@@ -13,6 +14,7 @@ use App\Shared\Application\Query\TextFilter;
 use App\Shared\Infrastructure\Persistence\ListMapping;
 use App\Shared\Infrastructure\Persistence\ListQueryApplier;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -48,8 +50,8 @@ final class ListQueryApplierTest extends KernelTestCase
     }
 
     /**
-     * @param array<string, \App\Shared\Application\Query\ListFilter> $filters
-     * @param list<string>                                            $facets
+     * @param array<string, ListFilter> $filters
+     * @param list<string>              $facets
      */
     private static function query(array $filters = [], ?string $q = null, ?Sort $sort = null, int $page = 1, int $perPage = 25, array $facets = []): ListQuery
     {
@@ -166,5 +168,77 @@ final class ListQueryApplierTest extends KernelTestCase
         $result = (new ListQueryApplier())->page($qb, new ListQuery(1, 25, new Sort('content', false), null, ['created_at' => $range], []), $mapping);
 
         self::assertSame(['lqa first', 'lqa last'], array_map(static fn (Comment $c): string => (string) $c->getContent(), $result->items));
+    }
+
+    public function testAColumnOfSeveralExpressionsMatchesAnyOfThem(): void
+    {
+        $this->user('Nora', 'lqa-nora');
+        $this->user('Olga', 'lqa-olga');
+        $this->em->flush();
+
+        $qb = $this->em->createQueryBuilder()->select('u')->from(User::class, 'u')->where('u.username LIKE :prefix')->setParameter('prefix', 'lqa-%');
+        $mapping = new ListMapping(id: 'u.id', columns: ['who' => ['u.name', 'u.email']]);
+        $result = (new ListQueryApplier())->page($qb, self::query(['who' => new TextFilter('olga@')]), $mapping);
+
+        self::assertSame(['Olga'], array_map(static fn (User $u): string => (string) $u->getName(), $result->items), 'The email matched although the name did not.');
+    }
+
+    public function testAClosureColumnWritesItsOwnConditionAndLeavesItsFacetToTheList(): void
+    {
+        $this->user('Pia', 'lqa-pia', true);
+        $this->user('Quim', 'lqa-quim', false);
+        $this->em->flush();
+
+        $seen = [];
+        $active = static function (QueryBuilder $qb, ListFilter $filter, string $param) use (&$seen): ?string {
+            \assert($filter instanceof AnyOfFilter);
+            $seen[] = $param;
+            if (['on', 'off'] === $filter->values) {
+                return null;
+            }
+            $qb->setParameter($param, 'on' === $filter->values[0]);
+
+            return "u.enabled = :{$param}";
+        };
+        $mapping = new ListMapping(id: 'u.id', columns: ['name' => 'u.name', 'active' => $active]);
+        $page = function (ListQuery $query) use ($mapping): array {
+            $qb = $this->em->createQueryBuilder()->select('u')->from(User::class, 'u')->where('u.username LIKE :prefix')->setParameter('prefix', 'lqa-%');
+            $result = (new ListQueryApplier())->page($qb, $query, $mapping);
+
+            return [array_map(static fn (User $u): string => (string) $u->getName(), $result->items), $result->facets];
+        };
+
+        self::assertSame([['Quim'], ['active' => []]], $page(self::query(['active' => new AnyOfFilter(['off'])], facets: ['active'])), 'A closure column has no GROUP BY facet: the list answers it.');
+        self::assertSame(['Pia', 'Quim'], $page(self::query(['active' => new AnyOfFilter(['on', 'off'])]))[0], 'null: no condition.');
+        self::assertSame(['lq1', 'lq1'], $seen, 'The closure is handed a parameter name to bind its value under (once per query: not for a facet).');
+    }
+
+    public function testWithoutASortTheNewestRowComesFirst(): void
+    {
+        foreach (['R1', 'R2', 'R3'] as $i => $name) {
+            $this->user($name, 'lqa-r'.$i);
+        }
+        $this->em->flush();
+
+        $qb = $this->em->createQueryBuilder()->select('u')->from(User::class, 'u')->where('u.username LIKE :prefix')->setParameter('prefix', 'lqa-%');
+        $result = (new ListQueryApplier())->page($qb, new ListQuery(1, 25, null, null, [], []), $this->users());
+
+        self::assertSame(['R3', 'R2', 'R1'], array_map(static fn (User $u): string => (string) $u->getName(), $result->items));
+    }
+
+    public function testASortHasAnExpressionOfItsOwnOrItsColumnElseTheNewestComeFirst(): void
+    {
+        foreach (['S2', 'S1'] as $i => $name) {
+            $this->user($name, 'lqa-t'.$i);
+        }
+        $this->em->flush();
+
+        $qb = $this->em->createQueryBuilder()->select('u')->from(User::class, 'u')->where('u.username LIKE :prefix')->setParameter('prefix', 'lqa-%');
+        $mapping = new ListMapping(id: 'u.id', columns: ['name' => 'u.name', 'flag' => static fn (): ?string => null], sorts: ['id' => 'u.id']);
+        $applier = new ListQueryApplier();
+
+        self::assertSame(['S1', 'S2'], array_map(static fn (User $u): string => (string) $u->getName(), $applier->page(clone $qb, self::query(sort: new Sort('id', true)), $mapping)->items), 'A sort expression of its own (customers: -id).');
+        self::assertSame(['S2', 'S1'], array_map(static fn (User $u): string => (string) $u->getName(), $applier->page(clone $qb, self::query(sort: new Sort('name', true)), $mapping)->items), 'A column is its own sort.');
+        self::assertSame(['S1', 'S2'], array_map(static fn (User $u): string => (string) $u->getName(), $applier->page(clone $qb, self::query(sort: new Sort('flag', false)), $mapping)->items), 'A closure column has no sort expression: newest first.');
     }
 }
