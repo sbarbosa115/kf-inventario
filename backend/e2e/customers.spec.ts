@@ -69,7 +69,7 @@ test.describe('4 Customers', () => {
         .getByRole('status')
         .filter({hasText: 'The customer was created successfully.'}),
     ).toBeVisible();
-    await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
+    await page.getByRole('searchbox', {name: 'Search customers'}).fill(NEW_CUSTOMER.email);
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
     ).toBeVisible();
@@ -80,7 +80,7 @@ test.describe('4 Customers', () => {
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/customers');
-    await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
+    await page.getByRole('searchbox', {name: 'Search customers'}).fill(NEW_CUSTOMER.email);
     await page
       .getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)})
       .getByRole('button', {name: /Actions for/})
@@ -116,7 +116,7 @@ test.describe('4 Customers', () => {
         .getByRole('status')
         .filter({hasText: 'The customer was updated successfully.'}),
     ).toBeVisible();
-    await page.getByRole('searchbox').fill('3009998877');
+    await page.getByRole('searchbox', {name: 'Search customers'}).fill('3009998877');
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
     ).toBeVisible();
@@ -127,7 +127,7 @@ test.describe('4 Customers', () => {
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/customers');
-    await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
+    await page.getByRole('searchbox', {name: 'Search customers'}).fill(NEW_CUSTOMER.email);
     const row = page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)});
 
     await row.getByRole('button', {name: /Actions for/}).click();
@@ -149,7 +149,7 @@ test.describe('4 Customers', () => {
     await expect(
       page.getByRole('status').filter({hasText: 'The customer was deleted.'}),
     ).toBeVisible();
-    await page.getByRole('searchbox').fill(NEW_CUSTOMER.email);
+    await page.getByRole('searchbox', {name: 'Search customers'}).fill(NEW_CUSTOMER.email);
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
     ).toHaveCount(0);
@@ -191,14 +191,14 @@ test.describe('4 Customers', () => {
     expect(answer.status()).toBe(403);
   });
 
-  test('CUS-07 · the header counts the page, the search says it covers this page, and a row opens the form', async ({
+  test('CUS-07 · the header counts the page, the search covers every customer, and a row opens the form', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/customers');
 
     await expect(page.getByText(/^1–\d+ of [\d,]+$/)).toBeVisible();
-    const search = page.getByRole('searchbox', {name: 'Search this page'});
+    const search = page.getByRole('searchbox', {name: 'Search customers'});
     await search.fill('jose.perez@example.com');
     const row = page.getByRole('row', {name: /jose\.perez@example\.com/});
     await expect(row).toBeVisible();
@@ -239,7 +239,7 @@ test.describe('4 Customers', () => {
     await page.getByLabel('Name', {exact: true}).fill('Never saved');
     await page.getByRole('link', {name: 'Cancel'}).click();
     await expect(page).toHaveURL(/\/admin\/customers$/);
-    await page.getByRole('searchbox', {name: 'Search this page'}).fill('Never');
+    await page.getByRole('searchbox', {name: 'Search customers'}).fill('Never');
     await expect(page.getByRole('row', {name: /Never saved/})).toHaveCount(0);
   });
 });
