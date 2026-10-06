@@ -17,6 +17,7 @@ use App\Ordering\Application\Command\SyncOrderComments;
 use App\Ordering\Application\Command\SyncRemoteOrders;
 use App\Ordering\Application\Command\UpdateOrder;
 use App\Ordering\Application\Query\Orders;
+use App\Ordering\Domain\Model\Order;
 use App\Ordering\UI\Http\Input\OrderCommentInput;
 use App\Ordering\UI\Http\Input\OrderCommentsInput;
 use App\Ordering\UI\Http\Input\OrderInput;
@@ -28,9 +29,14 @@ use App\Ordering\UI\Http\Output\OrderDetailOutput;
 use App\Ordering\UI\Http\Output\OrderOutput;
 use App\Ordering\UI\Http\Output\SyncResultOutput;
 use App\Shared\Application\Command\CommandBus;
+use App\Shared\Application\Query\ListField;
+use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\ApiValidationException;
+use App\Shared\UI\Http\InMemoryList;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\ListQueryParser;
+use App\Shared\UI\Http\Output\PageOutput;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,23 +54,64 @@ final class OrderController extends AbstractController
         private readonly Orders $orders,
         private readonly InputMapper $inputs,
         private readonly OrderPresenter $presenter,
+        private readonly ListQueryParser $lists,
     ) {
     }
 
     /**
-     * `warehouse_id`: that warehouse's orders, newest first (the list filters and pages them in the browser).
+     * The orders list's contract (docs/pdr/prd-shops-settings.md, "List query contract"). `source`: phone, web (not
+     * from a connection) or shop:<connection id>; `pinned`: 1 (has a pinned comment).
+     */
+    public static function listSchema(): ListSchema
+    {
+        return new ListSchema(
+            fields: [
+                'code' => ListField::text(),
+                'customer' => ListField::text(),
+                'status' => ListField::enum(array_map('strval', range(Order::STATUS_CREATED, Order::STATUS_DELIVERED))),
+                'source' => ListField::enumMatching('/^(phone|web|shop:\d{1,9})$/'),
+                'created_at' => ListField::date(),
+                'pinned' => ListField::enum(['1']),
+            ],
+            sorts: ['code', 'customer', 'status', 'created_at'],
+            defaultSort: '-created_at',
+        );
+    }
+
+    /**
+     * `warehouse_id` (required): a page of that warehouse's orders, newest first — the list contract (q over code,
+     * customer name and email; filters code, customer, status[] 1–6, source[] phone|web|shop:<id>, created_at,
+     * pinned[] 1; sorts code, customer, status, created_at; facets of status and source).
      */
     #[Route('/api/v1/orders', name: 'api_orders_list', methods: ['GET'])]
     #[IsGranted('ROLE_CAN_READ_ORDERS')]
-    #[ApiResponse(OrderOutput::class, list: true)]
+    #[ApiResponse(OrderOutput::class, page: true)]
     public function list(Request $request): JsonResponse
     {
         $warehouseId = $request->query->getInt('warehouse_id');
         if ($warehouseId < 1) {
             throw ApiValidationException::single('warehouse_id', 'This value should be positive.');
         }
+        $query = $this->lists->parse($request, self::listSchema());
 
-        return $this->json(array_map($this->presenter->order(...), $this->orders->ofWarehouse($warehouseId)));
+        // Item 0's walking skeleton: filtered in memory; item 1 (list-api) moves it into SQL.
+        $customer = static fn (OrderOutput $o): string => null === $o->customer ? '' : trim(($o->customer->firstName ?? '').' '.($o->customer->lastName ?? ''));
+        $page = InMemoryList::page(
+            $this->presenter->orders($this->orders->ofWarehouse($warehouseId)),
+            $query,
+            [
+                'code' => static fn (OrderOutput $o) => $o->code,
+                'customer' => static fn (OrderOutput $o) => trim($customer($o).' '.($o->customer->email ?? '')),
+                'status' => static fn (OrderOutput $o) => (string) $o->status,
+                'source' => static fn (OrderOutput $o) => null !== $o->shop ? 'shop:'.$o->shop->id : (Order::SOURCE_PHONE === $o->source ? 'phone' : 'web'),
+                'created_at' => static fn (OrderOutput $o) => null === $o->createdAt ? null : new \DateTimeImmutable($o->createdAt),
+                'pinned' => static fn (OrderOutput $o) => null === $o->pinnedComment ? null : '1',
+            ],
+            [static fn (OrderOutput $o) => $o->code, $customer, static fn (OrderOutput $o) => $o->customer?->email],
+            static fn (OrderOutput $o) => $o->id,
+        );
+
+        return $this->json(PageOutput::of($page, $query, static fn (OrderOutput $o) => $o));
     }
 
     /**

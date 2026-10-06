@@ -10,13 +10,19 @@ use App\Customers\UI\Http\Output\CountryRefOutput;
 use App\Customers\UI\Http\Output\CustomerOutput;
 use App\Customers\UI\Http\Output\CustomerRefOutput;
 use App\Customers\UI\Http\Output\StateRefOutput;
+use App\Identity\Domain\Model\User;
 use App\Inventory\Domain\Model\ProductWarehouse;
 use App\Inventory\Domain\Model\Warehouse;
 use App\Inventory\UI\Http\Output\StockOutput;
 use App\Inventory\UI\Http\Output\WarehouseRefOutput;
+use App\Ordering\Application\Port\ShopOrderLinks;
+use App\Ordering\Application\Port\ShopRef;
 use App\Ordering\Domain\Model\Comment;
 use App\Ordering\Domain\Model\Order;
+use App\Ordering\Domain\Model\OrderCommentMeta;
 use App\Ordering\Domain\Model\OrderProduct;
+use App\Ordering\Domain\Repository\CommentMetaRepository;
+use App\Ordering\UI\Http\Output\CommentAuthorOutput;
 use App\Ordering\UI\Http\Output\OrderCommentOutput;
 use App\Ordering\UI\Http\Output\OrderDetailOutput;
 use App\Ordering\UI\Http\Output\OrderLineOutput;
@@ -26,13 +32,42 @@ use App\Ordering\UI\Http\Output\OrderPartialsOutput;
 use App\Ordering\UI\Http\Output\PartialLineOutput;
 use App\Ordering\UI\Http\Output\PartialLineProductOutput;
 use App\Ordering\UI\Http\Output\PendingLineOutput;
+use App\Ordering\UI\Http\Output\PinnedCommentOutput;
+use App\Ordering\UI\Http\Output\ShopRefOutput;
 
 /**
  * Orders as the API answers them (the Output DTOs of the route map).
  */
 final class OrderPresenter
 {
+    public function __construct(
+        private readonly ShopOrderLinks $links,
+        private readonly CommentMetaRepository $metas,
+    ) {
+    }
+
     public function order(Order $order): OrderOutput
+    {
+        return $this->orders([$order])[0];
+    }
+
+    /**
+     * The list's rows, with each order's shop and pinned comment read in one query each.
+     *
+     * @param list<Order> $orders
+     *
+     * @return list<OrderOutput>
+     */
+    public function orders(array $orders): array
+    {
+        $ids = array_map(static fn (Order $o): int => (int) $o->getId(), $orders);
+        $shops = $this->links->shopsOf($ids);
+        $pinned = $this->metas->pinnedOfOrders($ids);
+
+        return array_map(fn (Order $order): OrderOutput => $this->row($order, $shops[(int) $order->getId()] ?? null, $pinned[(int) $order->getId()] ?? null), $orders);
+    }
+
+    private function row(Order $order, ?ShopRef $shop, ?OrderCommentMeta $pinned): OrderOutput
     {
         $customer = $order->getCustomer();
 
@@ -47,11 +82,15 @@ final class OrderPresenter
             warehouse: self::warehouse($order->getWarehouse()),
             customer: null === $customer ? null : new CustomerRefOutput((int) $customer->getId(), $customer->getFirstName(), $customer->getLastName(), $customer->getEmail(), $customer->getPhone()),
             commentsCount: $order->getComments()->count(),
+            shop: self::shop($shop),
+            pinnedComment: self::pinned($order, $pinned),
         );
     }
 
     public function detail(Order $order): OrderDetailOutput
     {
+        $id = (int) $order->getId();
+
         return new OrderDetailOutput(
             id: (int) $order->getId(),
             code: $order->getCode(),
@@ -64,15 +103,62 @@ final class OrderPresenter
             customer: self::customer($order->getCustomer()),
             comments: $this->comments($order),
             products: self::lines($order),
+            shop: self::shop($this->links->shopsOf([$id])[$id] ?? null),
+            pinnedComment: self::pinned($order, $this->metas->pinnedOfOrders([$id])[$id] ?? null),
         );
     }
 
     /**
+     * The order's comments as the timeline reads them: a legacy comment without a date carries the order's, marked
+     * approximate; a comment without metadata is an `app` comment, not pinned (docs/pdr/prd-shops-settings.md,
+     * Decisions 14). Shops-settings' item 7 orders them and adds the timeline's query.
+     *
      * @return list<OrderCommentOutput>
      */
     public function comments(Order $order): array
     {
-        return array_map(static fn (Comment $comment) => new OrderCommentOutput((int) $comment->getId(), $comment->getContent()), $order->getComments()->getValues());
+        $comments = $order->getComments()->getValues();
+        $metas = $this->metas->ofComments(array_map(static fn (Comment $c): int => (int) $c->getId(), $comments));
+
+        return array_map(static function (Comment $comment) use ($order, $metas): OrderCommentOutput {
+            $meta = $metas[(int) $comment->getId()] ?? null;
+            $at = $comment->getCreatedAt() ?? $order->getCreatedAt();
+            $connection = $meta?->connection();
+
+            return new OrderCommentOutput(
+                id: (int) $comment->getId(),
+                content: $comment->getContent(),
+                createdAt: $at?->format(\DATE_ATOM),
+                approximate: null === $comment->getCreatedAt(),
+                author: self::author($comment->getUser()),
+                origin: $meta?->origin() ?? OrderCommentMeta::ORIGIN_APP,
+                shop: null === $connection ? null : new ShopRefOutput((int) $connection->id(), $connection->name()),
+                pinned: $meta?->isPinned() ?? false,
+                pinnedAt: $meta?->pinnedAt()?->format(\DATE_ATOM),
+                pinnedBy: self::author($meta?->pinnedBy()),
+                sentToShop: $meta?->sendsToShop() ?? false,
+            );
+        }, $comments);
+    }
+
+    private static function shop(?ShopRef $shop): ?ShopRefOutput
+    {
+        return null === $shop ? null : new ShopRefOutput($shop->id, $shop->name);
+    }
+
+    private static function pinned(Order $order, ?OrderCommentMeta $meta): ?PinnedCommentOutput
+    {
+        if (null === $meta || !$meta->isPinned()) {
+            return null;
+        }
+        $comment = $meta->comment();
+
+        return new PinnedCommentOutput((int) $comment->getId(), (string) $comment->getContent(), ($comment->getCreatedAt() ?? $order->getCreatedAt())?->format(\DATE_ATOM));
+    }
+
+    private static function author(?User $user): ?CommentAuthorOutput
+    {
+        return null === $user ? null : new CommentAuthorOutput((int) $user->getId(), (string) ($user->getName() ?? $user->getUsername()));
     }
 
     /**

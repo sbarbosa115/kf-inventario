@@ -142,7 +142,7 @@ final class InvoiceApiTest extends ApiTestCase
         $this->anInvoice('OLD-1', '2026-01-01 10:00:00', $customer);
         $this->anInvoice('NEW-1', '2026-03-01 10:00:00');
 
-        $list = $this->getJson('/api/v1/invoices');
+        $list = $this->getJson('/api/v1/invoices')['items'];
 
         $this->assertStatus(200);
         self::assertSame(['NEW-1', 'OLD-1'], array_column($list, 'code'));

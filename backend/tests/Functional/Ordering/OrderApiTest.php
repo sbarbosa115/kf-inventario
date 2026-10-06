@@ -115,7 +115,7 @@ final class OrderApiTest extends ApiTestCase
         $second = $this->placeOrder($usa, $customer, [[$a, 2]], ['code' => 'SECOND']);
         $this->placeOrder($colombia, $customer, [[$a, 3]], ['code' => 'ELSEWHERE']);
 
-        $list = $this->getJson('/api/v1/orders?warehouse_id='.$usa->getId());
+        $list = $this->getJson('/api/v1/orders?warehouse_id='.$usa->getId())['items'];
         $this->assertStatus(200);
         self::assertSame([$second, $first], array_column($list, 'id'), "One warehouse's orders, newest first.");
         self::assertSame(['id' => $customer->getId(), 'first_name' => 'Jose', 'last_name' => 'Perez', 'email' => 'jose.perez@example.com', 'phone' => '3001234567'], $list[0]['customer']);
@@ -143,7 +143,7 @@ final class OrderApiTest extends ApiTestCase
         $order->setWarehouse($warehouse);
         $this->save($order);
 
-        $list = $this->getJson('/api/v1/orders?warehouse_id='.$warehouse->getId());
+        $list = $this->getJson('/api/v1/orders?warehouse_id='.$warehouse->getId())['items'];
 
         $this->assertStatus(200);
         self::assertSame(['NO-CUSTOMER'], array_column($list, 'code'), 'The list left-joins the customer (decision 9).');

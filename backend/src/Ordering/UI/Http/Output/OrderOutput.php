@@ -25,6 +25,9 @@ final readonly class OrderOutput
         public ?WarehouseRefOutput $warehouse,
         public ?CustomerRefOutput $customer,
         public int $commentsCount,
+        /** The shop connection the order came from (shop_order_link); null for orders typed here or imported before connections */
+        public ?ShopRefOutput $shop,
+        public ?PinnedCommentOutput $pinnedComment,
     ) {
     }
 }

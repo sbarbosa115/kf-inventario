@@ -10,9 +10,14 @@ use App\Identity\Domain\Model\User;
 use App\Identity\UI\Http\Input\UserInput;
 use App\Identity\UI\Http\Output\UserOutput;
 use App\Shared\Application\Command\CommandBus;
+use App\Shared\Application\Query\ListField;
+use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\ApiValidationException;
+use App\Shared\UI\Http\InMemoryList;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\ListQueryParser;
+use App\Shared\UI\Http\Output\PageOutput;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,18 +33,53 @@ final class UserController extends AbstractController
         private readonly Users $users,
         private readonly CommandBus $bus,
         private readonly InputMapper $mapper,
+        private readonly ListQueryParser $lists,
     ) {
     }
 
+    /** The users list's contract (docs/pdr/prd-shops-settings.md, "List query contract"). */
+    public static function listSchema(): ListSchema
+    {
+        return new ListSchema(
+            fields: [
+                'name' => ListField::text(),
+                'username' => ListField::text(),
+                'email' => ListField::text(),
+                'roles' => ListField::enum(UserInput::ROLES),
+                'enabled' => ListField::enum(['yes', 'no']),
+            ],
+            sorts: ['name', 'username', 'email'],
+            defaultSort: 'name',
+        );
+    }
+
     /**
-     * Every user, by name.
+     * A page of users, by name: the list contract (q over name, username and email; filters name, username, email,
+     * roles[] — the nine assignable —, enabled[] yes/no; sorts name, username, email).
      */
     #[Route('/api/v1/users', name: 'api_users_list', methods: ['GET'])]
     #[IsGranted('ROLE_MANAGE_USERS')]
-    #[ApiResponse(UserOutput::class, list: true)]
-    public function list(): JsonResponse
+    #[ApiResponse(UserOutput::class, page: true)]
+    public function list(Request $request): JsonResponse
     {
-        return $this->json(array_map(self::present(...), $this->users->all()));
+        $query = $this->lists->parse($request, self::listSchema());
+
+        // Item 0's walking skeleton: filtered in memory; item 1 (list-api) moves it into SQL.
+        $page = InMemoryList::page(
+            array_map(self::present(...), $this->users->all()),
+            $query,
+            [
+                'name' => static fn (UserOutput $u) => $u->name,
+                'username' => static fn (UserOutput $u) => $u->username,
+                'email' => static fn (UserOutput $u) => $u->email,
+                'roles' => static fn (UserOutput $u) => array_values(array_intersect($u->roles, UserInput::ROLES)),
+                'enabled' => static fn (UserOutput $u) => $u->enabled ? 'yes' : 'no',
+            ],
+            [static fn (UserOutput $u) => $u->name, static fn (UserOutput $u) => $u->username, static fn (UserOutput $u) => $u->email],
+            static fn (UserOutput $u) => $u->id,
+        );
+
+        return $this->json(PageOutput::of($page, $query, static fn (UserOutput $u) => $u));
     }
 
     /**

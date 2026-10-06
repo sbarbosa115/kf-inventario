@@ -55,7 +55,7 @@
         },
         "/api/v1/users": {
             "get": {
-                "summary": "Every user, by name.",
+                "summary": "A page of users, by name: the list contract (q over name, username and email; filters name, username, email,\nroles[] \u2014 the nine assignable \u2014, enabled[] yes/no; sorts name, username, email).",
                 "operationId": "get_api_users_list",
                 "responses": {
                     "200": {
@@ -63,10 +63,39 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/UserOutput"
-                                    }
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/UserOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "facets": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/components/schemas/FacetCountOutput"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -280,7 +309,8 @@
         },
         "/api/v1/warehouses/{id}/stock": {
             "get": {
-                "summary": "The warehouse's stock rows with `status` (1 in stock, default; 0 incoming), by product. 404 warehouse_not_found.",
+                "summary": "A page of the warehouse's stock rows with `status` (1 in stock, default; 0 incoming): the list contract (q over\ncode, title and detail; filters code, title, detail, quantity, price, in_stock; sorts code, title, quantity,\nprice; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row the filters keep.",
+                "description": "404 warehouse_not_found.",
                 "operationId": "get_api_stock_list",
                 "parameters": [
                     {
@@ -299,10 +329,43 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/StockOutput"
-                                    }
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page",
+                                        "totals"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StockOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "facets": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/components/schemas/FacetCountOutput"
+                                                }
+                                            }
+                                        },
+                                        "totals": {
+                                            "$ref": "#/components/schemas/StockTotalsOutput"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -466,7 +529,7 @@
         },
         "/api/v1/customers": {
             "get": {
-                "summary": "`page` (1\u2026), `per_page` (100 by default and at most, as the legacy list). Customers by id.",
+                "summary": "A page of customers, newest first: the list contract (q over first/last name, email, phone and city; filters\nname, email, phone, city, country[] (country ids, any address); sorts name, email, city).",
                 "operationId": "get_api_customers_page",
                 "responses": {
                     "200": {
@@ -495,6 +558,15 @@
                                         },
                                         "per_page": {
                                             "type": "integer"
+                                        },
+                                        "facets": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/components/schemas/FacetCountOutput"
+                                                }
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -641,7 +713,7 @@
         },
         "/api/v1/orders": {
             "get": {
-                "summary": "`warehouse_id`: that warehouse's orders, newest first (the list filters and pages them in the browser).",
+                "summary": "`warehouse_id` (required): a page of that warehouse's orders, newest first \u2014 the list contract (q over code,\ncustomer name and email; filters code, customer, status[] 1\u20136, source[] phone|web|shop:<id>, created_at,\npinned[] 1; sorts code, customer, status, created_at; facets of status and source).",
                 "operationId": "get_api_orders_list",
                 "responses": {
                     "200": {
@@ -649,10 +721,39 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/OrderOutput"
-                                    }
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OrderOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "facets": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/components/schemas/FacetCountOutput"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -963,7 +1064,7 @@
         },
         "/api/v1/invoices": {
             "get": {
-                "summary": "Every invoice, newest first.",
+                "summary": "A page of invoices, newest first: the list contract (q over code, customer name and email; filters code,\ncustomer, payment_method[], created_at, total, walk_in[] yes/no; sorts code, customer, created_at, total).",
                 "operationId": "get_api_invoices_list",
                 "responses": {
                     "200": {
@@ -971,10 +1072,39 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/InvoiceOutput"
-                                    }
+                                    "required": [
+                                        "items",
+                                        "total",
+                                        "page",
+                                        "per_page"
+                                    ],
+                                    "properties": {
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/InvoiceOutput"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "facets": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/components/schemas/FacetCountOutput"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -1135,6 +1265,21 @@
                 },
                 "type": "object"
             },
+            "FacetCountOutput": {
+                "required": [
+                    "value",
+                    "count"
+                ],
+                "properties": {
+                    "value": {
+                        "type": "string"
+                    },
+                    "count": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "ProductStockOutput": {
                 "required": [
                     "warehouse_id",
@@ -1273,6 +1418,24 @@
                     },
                     "warehouse": {
                         "$ref": "#/components/schemas/WarehouseRefOutput"
+                    }
+                },
+                "type": "object"
+            },
+            "StockTotalsOutput": {
+                "required": [
+                    "units",
+                    "value"
+                ],
+                "properties": {
+                    "units": {
+                        "title": "The sum of the quantities",
+                        "type": "integer"
+                    },
+                    "value": {
+                        "title": "The sum of quantity \u00d7 price, in dollars",
+                        "type": "number",
+                        "format": "float"
                     }
                 },
                 "type": "object"
@@ -1532,6 +1695,41 @@
                 },
                 "type": "object"
             },
+            "ShopRefOutput": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PinnedCommentOutput": {
+                "required": [
+                    "id",
+                    "content"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "title": "ISO 8601; the order's date when the comment has none (legacy rows)",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "OrderOutput": {
                 "required": [
                     "id",
@@ -1587,13 +1785,49 @@
                     },
                     "comments_count": {
                         "type": "integer"
+                    },
+                    "shop": {
+                        "title": "The shop connection the order came from (shop_order_link); null for orders typed here or imported before connections",
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ShopRefOutput"
+                            }
+                        ]
+                    },
+                    "pinned_comment": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/PinnedCommentOutput"
+                            }
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "CommentAuthorOutput": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
             },
             "OrderCommentOutput": {
                 "required": [
-                    "id"
+                    "id",
+                    "approximate",
+                    "origin",
+                    "pinned",
+                    "sent_to_shop"
                 ],
                 "properties": {
                     "id": {
@@ -1602,6 +1836,57 @@
                     "content": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "created_at": {
+                        "title": "ISO 8601; a legacy comment without a date carries the order's, with `approximate`",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "approximate": {
+                        "title": "true when created_at is the order's date, not the comment's",
+                        "type": "boolean"
+                    },
+                    "author": {
+                        "title": "null for a shop note, or a legacy comment without a user",
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CommentAuthorOutput"
+                            }
+                        ]
+                    },
+                    "origin": {
+                        "title": "app (typed here), shop (a note pulled from the shop), phrase (a quick phrase)",
+                        "type": "string"
+                    },
+                    "shop": {
+                        "title": "the connection a shop note came from",
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ShopRefOutput"
+                            }
+                        ]
+                    },
+                    "pinned": {
+                        "type": "boolean"
+                    },
+                    "pinned_at": {
+                        "title": "ISO 8601",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "pinned_by": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CommentAuthorOutput"
+                            }
+                        ]
+                    },
+                    "sent_to_shop": {
+                        "title": "the comment was also sent to the order's shop as an order note",
+                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -1707,6 +1992,23 @@
                         "items": {
                             "$ref": "#/components/schemas/OrderLineOutput"
                         }
+                    },
+                    "shop": {
+                        "title": "The shop connection the order came from (shop_order_link); null for orders typed here or imported before connections",
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ShopRefOutput"
+                            }
+                        ]
+                    },
+                    "pinned_comment": {
+                        "nullable": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/PinnedCommentOutput"
+                            }
+                        ]
                     }
                 },
                 "type": "object"

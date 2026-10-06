@@ -7,9 +7,14 @@ use App\Customers\Application\Query\Customers;
 use App\Customers\UI\Http\Input\CustomerInput;
 use App\Customers\UI\Http\Output\CustomerOutput;
 use App\Shared\Application\Command\CommandBus;
+use App\Shared\Application\Query\ListField;
+use App\Shared\Application\Query\ListSchema;
 use App\Shared\UI\Http\ApiResponse;
 use App\Shared\UI\Http\ApiValidationException;
+use App\Shared\UI\Http\InMemoryList;
 use App\Shared\UI\Http\InputMapper;
+use App\Shared\UI\Http\ListQueryParser;
+use App\Shared\UI\Http\Output\PageOutput;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,8 +25,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class CustomerController extends AbstractController
 {
-    private const MAX_PER_PAGE = 100;
-
     /** The legacy customers screen, and the order (new, edit) and new-invoice pages that embedded every customer. */
     private const PICKER_ROLES = "is_granted('ROLE_MANAGE_CUSTOMERS') or is_granted('ROLE_CAN_CREATE_ORDERS') or is_granted('ROLE_CAN_UPDATE_ORDERS') or is_granted('ROLE_CAN_CREATE_INVOICES')";
 
@@ -30,26 +33,56 @@ final class CustomerController extends AbstractController
         private readonly CommandBus $bus,
         private readonly InputMapper $inputs,
         private readonly ValidatorInterface $validator,
+        private readonly ListQueryParser $lists,
     ) {
     }
 
+    /** The customers list's contract (docs/pdr/prd-shops-settings.md, "List query contract"). */
+    public static function listSchema(): ListSchema
+    {
+        return new ListSchema(
+            fields: [
+                'name' => ListField::text(),
+                'email' => ListField::text(),
+                'phone' => ListField::text(),
+                'city' => ListField::text(),
+                'country' => ListField::enumMatching('/^\d{1,9}$/'),
+            ],
+            sorts: ['name', 'email', 'city'],
+            defaultSort: '-id',
+        );
+    }
+
     /**
-     * `page` (1…), `per_page` (100 by default and at most, as the legacy list). Customers by id.
+     * A page of customers, newest first: the list contract (q over first/last name, email, phone and city; filters
+     * name, email, phone, city, country[] (country ids, any address); sorts name, email, city).
      */
     #[Route('/api/v1/customers', name: 'api_customers_page', methods: ['GET'])]
     #[IsGranted('ROLE_MANAGE_CUSTOMERS')]
     #[ApiResponse(CustomerOutput::class, page: true)]
     public function page(Request $request): JsonResponse
     {
-        $page = max(1, $request->query->getInt('page', 1));
-        $perPage = min(self::MAX_PER_PAGE, max(1, $request->query->getInt('per_page', self::MAX_PER_PAGE)));
+        $query = $this->lists->parse($request, self::listSchema());
 
-        return $this->json([
-            'items' => array_map(CustomerOutput::of(...), $this->customers->page($page, $perPage)),
-            'total' => $this->customers->count(),
-            'page' => $page,
-            'per_page' => $perPage,
-        ]);
+        // Item 0's walking skeleton: filtered in memory; item 1 (list-api) moves it into SQL.
+        $name = static fn (CustomerOutput $c): string => trim(($c->firstName ?? '').' '.($c->lastName ?? ''));
+        $city = static fn (CustomerOutput $c): ?string => ($c->addresses[0] ?? null)?->city?->name;
+        $page = InMemoryList::page(
+            array_map(CustomerOutput::of(...), $this->customers->all()),
+            $query,
+            [
+                'id' => static fn (CustomerOutput $c) => $c->id,
+                'name' => $name,
+                'email' => static fn (CustomerOutput $c) => $c->email,
+                'phone' => static fn (CustomerOutput $c) => $c->phone,
+                'city' => $city,
+                'country' => static fn (CustomerOutput $c) => array_values(array_unique(array_filter(array_map(static fn ($a): ?string => null === $a->city ? null : (string) $a->city->state->country->id, $c->addresses)))),
+            ],
+            [$name, static fn (CustomerOutput $c) => $c->email, static fn (CustomerOutput $c) => $c->phone, $city],
+            static fn (CustomerOutput $c) => $c->id,
+        );
+
+        return $this->json(PageOutput::of($page, $query, static fn (CustomerOutput $c) => $c));
     }
 
     /**

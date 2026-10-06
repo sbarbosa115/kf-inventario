@@ -65,7 +65,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every user, by name. */
+        /**
+         * A page of users, by name: the list contract (q over name, username and email; filters name, username, email,
+         *     roles[] — the nine assignable —, enabled[] yes/no; sorts name, username, email).
+         */
         get: operations["get_api_users_list"];
         put?: never;
         /** UserInput: creates a user. The password is required. 422 when invalid. */
@@ -194,7 +197,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The warehouse's stock rows with `status` (1 in stock, default; 0 incoming), by product. 404 warehouse_not_found. */
+        /**
+         * A page of the warehouse's stock rows with `status` (1 in stock, default; 0 incoming): the list contract (q over
+         *     code, title and detail; filters code, title, detail, quantity, price, in_stock; sorts code, title, quantity,
+         *     price; `per_page=0` every row, for the pickers) and `totals` (units, value) over every row the filters keep.
+         * @description 404 warehouse_not_found.
+         */
         get: operations["get_api_stock_list"];
         put?: never;
         post?: never;
@@ -319,7 +327,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `page` (1…), `per_page` (100 by default and at most, as the legacy list). Customers by id. */
+        /**
+         * A page of customers, newest first: the list contract (q over first/last name, email, phone and city; filters
+         *     name, email, phone, city, country[] (country ids, any address); sorts name, email, city).
+         */
         get: operations["get_api_customers_page"];
         put?: never;
         /**
@@ -397,7 +408,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `warehouse_id`: that warehouse's orders, newest first (the list filters and pages them in the browser). */
+        /**
+         * `warehouse_id` (required): a page of that warehouse's orders, newest first — the list contract (q over code,
+         *     customer name and email; filters code, customer, status[] 1–6, source[] phone|web|shop:<id>, created_at,
+         *     pinned[] 1; sorts code, customer, status, created_at; facets of status and source).
+         */
         get: operations["get_api_orders_list"];
         put?: never;
         /**
@@ -576,7 +591,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every invoice, newest first. */
+        /**
+         * A page of invoices, newest first: the list contract (q over code, customer name and email; filters code,
+         *     customer, payment_method[], created_at, total, walk_in[] yes/no; sorts code, customer, created_at, total).
+         */
         get: operations["get_api_invoices_list"];
         put?: never;
         /**
@@ -661,6 +679,10 @@ export interface components {
             roles: string[];
             enabled: boolean;
         };
+        FacetCountOutput: {
+            value: string;
+            count: number;
+        };
         ProductStockOutput: {
             warehouse_id: number;
             quantity: number;
@@ -702,6 +724,15 @@ export interface components {
             /** Format: float */
             price?: number | null;
             warehouse: components["schemas"]["WarehouseRefOutput"];
+        };
+        StockTotalsOutput: {
+            /** The sum of the quantities */
+            units: number;
+            /**
+             * The sum of quantity × price, in dollars
+             * Format: float
+             */
+            value: number;
         };
         ApprovedOutput: {
             approved: number;
@@ -767,6 +798,16 @@ export interface components {
             email?: string | null;
             phone?: string | null;
         };
+        ShopRefOutput: {
+            id: number;
+            name: string;
+        };
+        PinnedCommentOutput: {
+            id: number;
+            content: string;
+            /** ISO 8601; the order's date when the comment has none (legacy rows) */
+            created_at?: string | null;
+        };
         OrderOutput: {
             id: number;
             code?: string | null;
@@ -782,10 +823,33 @@ export interface components {
             warehouse?: components["schemas"]["WarehouseRefOutput"] | null;
             customer?: components["schemas"]["CustomerRefOutput"] | null;
             comments_count: number;
+            /** The shop connection the order came from (shop_order_link); null for orders typed here or imported before connections */
+            shop?: components["schemas"]["ShopRefOutput"] | null;
+            pinned_comment?: components["schemas"]["PinnedCommentOutput"] | null;
+        };
+        CommentAuthorOutput: {
+            id: number;
+            name: string;
         };
         OrderCommentOutput: {
             id: number;
             content?: string | null;
+            /** ISO 8601; a legacy comment without a date carries the order's, with `approximate` */
+            created_at?: string | null;
+            /** true when created_at is the order's date, not the comment's */
+            approximate: boolean;
+            /** null for a shop note, or a legacy comment without a user */
+            author?: components["schemas"]["CommentAuthorOutput"] | null;
+            /** app (typed here), shop (a note pulled from the shop), phrase (a quick phrase) */
+            origin: string;
+            /** the connection a shop note came from */
+            shop?: components["schemas"]["ShopRefOutput"] | null;
+            pinned: boolean;
+            /** ISO 8601 */
+            pinned_at?: string | null;
+            pinned_by?: components["schemas"]["CommentAuthorOutput"] | null;
+            /** the comment was also sent to the order's shop as an order note */
+            sent_to_shop: boolean;
         };
         OrderLineProductOutput: {
             code: string;
@@ -811,6 +875,9 @@ export interface components {
             customer?: components["schemas"]["CustomerOutput"] | null;
             comments: components["schemas"]["OrderCommentOutput"][];
             products: components["schemas"]["OrderLineOutput"][];
+            /** The shop connection the order came from (shop_order_link); null for orders typed here or imported before connections */
+            shop?: components["schemas"]["ShopRefOutput"] | null;
+            pinned_comment?: components["schemas"]["PinnedCommentOutput"] | null;
         };
         SyncResultOutput: {
             imported: number;
@@ -953,7 +1020,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserOutput"][];
+                    "application/json": {
+                        items: components["schemas"]["UserOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                        facets?: {
+                            [key: string]: components["schemas"]["FacetCountOutput"][];
+                        };
+                    };
                 };
             };
         };
@@ -1162,7 +1237,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StockOutput"][];
+                    "application/json": {
+                        items: components["schemas"]["StockOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                        facets?: {
+                            [key: string]: components["schemas"]["FacetCountOutput"][];
+                        };
+                        totals: components["schemas"]["StockTotalsOutput"];
+                    };
                 };
             };
         };
@@ -1309,6 +1393,9 @@ export interface operations {
                         total: number;
                         page: number;
                         per_page: number;
+                        facets?: {
+                            [key: string]: components["schemas"]["FacetCountOutput"][];
+                        };
                     };
                 };
             };
@@ -1452,7 +1539,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OrderOutput"][];
+                    "application/json": {
+                        items: components["schemas"]["OrderOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                        facets?: {
+                            [key: string]: components["schemas"]["FacetCountOutput"][];
+                        };
+                    };
                 };
             };
         };
@@ -1722,7 +1817,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["InvoiceOutput"][];
+                    "application/json": {
+                        items: components["schemas"]["InvoiceOutput"][];
+                        total: number;
+                        page: number;
+                        per_page: number;
+                        facets?: {
+                            [key: string]: components["schemas"]["FacetCountOutput"][];
+                        };
+                    };
                 };
             };
         };

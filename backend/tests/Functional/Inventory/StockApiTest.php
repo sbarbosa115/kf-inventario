@@ -35,7 +35,7 @@ final class StockApiTest extends ApiTestCase
         $this->aStock($b, $colombia, 7, self::PENDING);
         $this->aStock($b, $usa, 3);
 
-        $rows = $this->getJson("/api/v1/warehouses/{$colombia->getId()}/stock");
+        $rows = $this->getJson("/api/v1/warehouses/{$colombia->getId()}/stock")['items'];
 
         $this->assertStatus(200);
         self::assertSame([[
@@ -60,14 +60,14 @@ final class StockApiTest extends ApiTestCase
         $this->aStock($a, $colombia, 100);
         $this->aStock($b, $colombia, 7, self::PENDING);
 
-        $rows = $this->getJson("/api/v1/warehouses/{$colombia->getId()}/stock?status=0");
+        $rows = $this->getJson("/api/v1/warehouses/{$colombia->getId()}/stock?status=0")['items'];
 
         $this->assertStatus(200);
         self::assertSame(['KF-02'], array_column($rows, 'code'), 'status=0 lists what waits for approval.');
         self::assertSame(0, $rows[0]['status']);
     }
 
-    public function testTheListIsOrderedByProduct(): void
+    public function testTheListIsOrderedByCodeUnlessAskedOtherwise(): void
     {
         $colombia = $this->aWarehouse('Colombia');
         $first = $this->aProduct('KF-B');
@@ -75,9 +75,9 @@ final class StockApiTest extends ApiTestCase
         $this->aStock($second, $colombia, 1);
         $this->aStock($first, $colombia, 1);
 
-        $rows = $this->getJson("/api/v1/warehouses/{$colombia->getId()}/stock");
+        $rows = $this->getJson("/api/v1/warehouses/{$colombia->getId()}/stock")['items'];
 
-        self::assertSame(['KF-B', 'KF-A'], array_column($rows, 'code'), 'As the legacy list: by product, oldest first.');
+        self::assertSame(['KF-A', 'KF-B'], array_column($rows, 'code'), 'By code unless asked otherwise (the list contract: default sort code).');
     }
 
     public function testAnUnknownWarehouseHasNoStock(): void
