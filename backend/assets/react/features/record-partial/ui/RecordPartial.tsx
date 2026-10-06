@@ -1,8 +1,15 @@
-import {useEffect, useRef, useState, type FormEvent} from 'react';
-import {Link} from 'react-router-dom';
+import {useId, useState} from 'react';
 import {ApiError, failureMessage} from '@/shared/api';
 import {useTranslation, type Translate} from '@/shared/i18n';
-import {Modal} from '@/shared/ui';
+import type {DetectorFactory} from '@/shared/lib';
+import {
+  ActionBar,
+  Button,
+  CameraScanner,
+  ScanInput,
+  StatusBadge,
+  type Tone,
+} from '@/shared/ui';
 import {
   recordPartial,
   type OrderPartials,
@@ -10,18 +17,28 @@ import {
 } from '../api/recordPartialApi';
 import {
   CLOSED_STATUSES,
-  COMPLETE,
   currentOf,
-  leftLabel,
-  rowClass,
+  leftOf,
+  lineState,
   scan,
+  shipmentUnits,
   shippedOf,
   stockOf,
   unscan,
+  type LineState,
+  type OrderLine,
   type ScanResult,
 } from '../model/shipment';
+import './record-partial.css';
 
-type Refusal = Exclude<ScanResult, 'added'>;
+type Refusal = {result: Exclude<ScanResult, 'added'>; code: string};
+
+/** The tone of a line's state; a pending line shows no badge, so nothing alarms before anything happened. */
+const STATE_TONES: Record<Exclude<LineState, 'pending'>, Tone> = {
+  complete: 'accent',
+  shipped: 'neutral',
+  short: 'warning',
+};
 
 /** What the server's refusal of a shipment means for the person packing it. */
 function refusalMessage(error: unknown, t: Translate): string {
@@ -47,53 +64,151 @@ function refusalMessage(error: unknown, t: Translate): string {
   return failureMessage(error, t);
 }
 
+/** One product of the order: its code and title, its progress, its stock, and the stepper of this shipment. */
+function ShipmentLine({
+  line,
+  partials,
+  current,
+  flash,
+  onMore,
+  onLess,
+}: {
+  line: OrderLine;
+  partials: OrderPartials;
+  current: PartialItem[];
+  /** Grows each time this line is read, to flash it again. */
+  flash: number;
+  onMore: () => void;
+  onLess: () => void;
+}) {
+  const {t} = useTranslation();
+  const codeId = useId();
+  const {code, title, detail} = line.product;
+  const shipped = shippedOf(partials, line.uuid);
+  const inShipment = currentOf(current, line.uuid);
+  const state = lineState(line, partials, current);
+  const progress = t('gettingReady.progress', {
+    shipped,
+    ordered: line.quantity,
+    current: inShipment,
+  });
+  const width = (value: number) =>
+    `${line.quantity > 0 ? Math.min(100, (value / line.quantity) * 100) : 0}%`;
+
+  return (
+    <li
+      aria-labelledby={codeId}
+      className={`shipment-line${state === 'pending' ? '' : ` is-${state}`}`}
+    >
+      {flash > 0 && (
+        <span key={flash} className="shipment-line__flash" aria-hidden="true" />
+      )}
+      <div className="shipment-line__what">
+        <span className="shipment-line__code" id={codeId}>
+          {code}
+        </span>
+        {title && title !== code && (
+          <span className="shipment-line__title">{title}</span>
+        )}
+        {detail && <span className="shipment-line__detail">{detail}</span>}
+      </div>
+      <div className="shipment-line__progress">
+        <div
+          className="shipment-line__bar"
+          role="progressbar"
+          aria-label={t('gettingReady.progressOf', {code})}
+          aria-valuemin={0}
+          aria-valuemax={line.quantity}
+          aria-valuenow={shipped + inShipment}
+          aria-valuetext={progress}
+        >
+          <span
+            className="shipment-line__bar-shipped"
+            style={{width: width(shipped)}}
+          />
+          <span
+            className="shipment-line__bar-current"
+            style={{width: width(inShipment)}}
+          />
+        </div>
+        <div className="shipment-line__facts">
+          <span className="shipment-line__count">{progress}</span>
+          <span className="shipment-line__stock">
+            {t('gettingReady.inStock', {stock: stockOf(partials, code)})}
+          </span>
+          {state !== 'pending' && (
+            <StatusBadge tone={STATE_TONES[state]}>
+              {t(`gettingReady.states.${state}`)}
+            </StatusBadge>
+          )}
+        </div>
+      </div>
+      <div className="shipment-line__stepper">
+        <Button
+          variant="secondary"
+          size="lg"
+          icon="fa-minus"
+          aria-label={t('gettingReady.less', {code})}
+          disabled={inShipment === 0}
+          onClick={onLess}
+        />
+        <output
+          className="shipment-line__current"
+          aria-label={t('gettingReady.thisShipmentOf', {code})}
+        >
+          {inShipment}
+        </output>
+        <Button
+          variant="secondary"
+          size="lg"
+          icon="fa-plus"
+          aria-label={t('gettingReady.more', {code})}
+          disabled={leftOf(line, partials, current) <= 0}
+          onClick={onMore}
+        />
+      </div>
+    </li>
+  );
+}
+
 /**
- * The getting-ready screen's work: scan (or type) each product's barcode to put one in this shipment, check it
- * against the order, what was shipped and the warehouse's stock, then save the shipment. Ports the legacy
- * PartialHandler.
+ * The getting-ready screen's work: scan each product (the camera or the barcode box) to put one in this shipment,
+ * checked against the order, what was shipped and the warehouse's stock; refusals are said inline under the scanner,
+ * which keeps its focus; then ship it. The rules are the legacy PartialHandler's (`model/shipment`).
  */
 export function RecordPartial({
   partials,
   onSaved,
+  detector,
 }: {
   partials: OrderPartials;
   onSaved: (partials: OrderPartials) => void;
+  /** How the camera decodes frames; tests pass a fake. */
+  detector?: DetectorFactory;
 }) {
   const {t} = useTranslation();
-  const [code, setCode] = useState('');
   const [current, setCurrent] = useState<PartialItem[]>([]);
   const [refusal, setRefusal] = useState<Refusal | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const barcode = useRef<HTMLInputElement>(null);
+  const [flashes, setFlashes] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    barcode.current?.focus();
-  }, []);
-
-  const add = (productCode: string) => {
-    if (productCode.trim() === '') return;
-    const next = scan(productCode, partials, current);
+  const add = (code: string) => {
+    const next = scan(code, partials, current);
     setCurrent(next.current);
     if (next.result === 'added') {
-      setCode('');
+      setRefusal(null);
+      const uuid = next.line?.uuid ?? '';
+      setFlashes((now) => ({...now, [uuid]: (now[uuid] ?? 0) + 1}));
     } else {
-      setRefusal(next.result);
+      setRefusal({
+        result: next.result,
+        code: next.line?.product.code ?? code.trim(),
+      });
     }
   };
 
-  const dismiss = () => {
-    setRefusal(null);
-    setCode('');
-    barcode.current?.focus();
-  };
-
-  const onScan = (event: FormEvent) => {
-    event.preventDefault();
-    add(code);
-  };
-
-  const save = async () => {
+  const ship = async () => {
     setFailure(null);
     setSending(true);
     try {
@@ -105,34 +220,54 @@ export function RecordPartial({
   };
 
   const closed = CLOSED_STATUSES.includes(partials.status);
+  const units = shipmentUnits(current);
+  let status: string | undefined;
+  if (closed) status = t('gettingReady.closed');
+  else if (units === 0) status = t('gettingReady.nothingYet');
 
   return (
-    <div>
-      <form onSubmit={onScan}>
-        <p>{t('gettingReady.description')}</p>
-        <div className="form-inline">
-          <label htmlFor="getting-ready-barcode" className="sr-only">
-            {t('gettingReady.barCode')}
-          </label>
-          <input
-            id="getting-ready-barcode"
-            type="text"
-            className="form-control form-control-sm my-1 mr-sm-2"
-            placeholder={t('gettingReady.barCode')}
-            value={code}
-            autoComplete="off"
-            ref={barcode}
-            onChange={(event) => setCode(event.target.value)}
-          />
-          <button
-            type="submit"
-            className="btn btn-primary btn-sm my-2"
-            disabled={code.trim() === ''}
-          >
-            {t('gettingReady.addAction')}
-          </button>
-        </div>
-      </form>
+    <div className="record-partial">
+      <section
+        className="record-partial__scanner"
+        aria-label={t('gettingReady.scanner')}
+      >
+        <p className="record-partial__hint">{t('gettingReady.description')}</p>
+        <CameraScanner
+          onScan={add}
+          paused={sending || closed}
+          detector={detector}
+        />
+        <ScanInput onScan={add} size="lg" autoFocus />
+        {refusal && (
+          <p className="record-partial__refusal" role="alert">
+            <i className="fas fa-exclamation-circle" aria-hidden="true" />{' '}
+            {t(`gettingReady.refusals.${refusal.result}`, {
+              code: refusal.code,
+            })}
+          </p>
+        )}
+      </section>
+
+      {partials.products.length === 0 ? (
+        <p className="record-partial__empty">{t('gettingReady.noProducts')}</p>
+      ) : (
+        <ol
+          className="record-partial__lines"
+          aria-label={t('gettingReady.list')}
+        >
+          {partials.products.map((line) => (
+            <ShipmentLine
+              key={line.uuid}
+              line={line}
+              partials={partials}
+              current={current}
+              flash={flashes[line.uuid] ?? 0}
+              onMore={() => add(line.product.code)}
+              onLess={() => setCurrent((now) => unscan(now, line.uuid))}
+            />
+          ))}
+        </ol>
+      )}
 
       {failure && (
         <div className="alert alert-danger" role="alert">
@@ -140,117 +275,26 @@ export function RecordPartial({
         </div>
       )}
 
-      <table className="table table-sm getting-ready__table">
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">{t('gettingReady.code')}</th>
-            <th scope="col">{t('gettingReady.productDescription')}</th>
-            <th scope="col">{t('gettingReady.inventory')}</th>
-            <th scope="col">{t('gettingReady.orderQuantity')}</th>
-            <th scope="col">{t('gettingReady.orderLeft')}</th>
-            <th scope="col">{t('gettingReady.thisOrder')}</th>
-            <th scope="col">{t('gettingReady.options')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {partials.products.map((line, index) => {
-            const inThisOrder = currentOf(current, line.uuid);
-            const left = leftLabel(line, partials, current);
-            return (
-              <tr key={line.uuid} className={rowClass(line, partials, current)}>
-                <th scope="row">{index + 1}</th>
-                <td className="getting-ready__code">{line.product.code}</td>
-                <td className="getting-ready__detail">{line.product.detail}</td>
-                <td className="text-center">
-                  <button
-                    type="button"
-                    className="btn btn-info btn-sm"
-                    title={t('gettingReady.inventoryAvailable')}
-                    aria-label={`${stockOf(partials, line.product.code)} ${t('gettingReady.inventoryAvailable')}`}
-                  >
-                    {stockOf(partials, line.product.code)}
-                  </button>
-                </td>
-                <td className="text-center">{`${line.quantity} / ${left}`}</td>
-                <td className="text-center">
-                  {shippedOf(partials, line.uuid)}
-                </td>
-                <td className="text-center">
-                  <input
-                    type="number"
-                    className="form-control form-control-sm"
-                    aria-label={t('gettingReady.thisOrder')}
-                    readOnly
-                    value={inThisOrder}
-                  />
-                </td>
-                <td className="text-nowrap">
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-danger"
-                    aria-label={t('gettingReady.removeOne')}
-                    title={t('gettingReady.removeOne')}
-                    disabled={inThisOrder === 0}
-                    onClick={() => setCurrent(unscan(current, line.uuid))}
-                  >
-                    <i className="fas fa-minus-circle" aria-hidden="true" />
-                  </button>{' '}
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-success"
-                    aria-label={t('gettingReady.addOne')}
-                    title={t('gettingReady.addOne')}
-                    disabled={left === COMPLETE}
-                    onClick={() => add(line.product.code)}
-                  >
-                    <i className="fas fa-plus-circle" aria-hidden="true" />
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-          {partials.products.length === 0 && (
-            <tr>
-              <td colSpan={8} className="text-center">
-                {t('gettingReady.noProducts')}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-
-      <div className="form-row">
-        <div className="form-group col-md-6">
-          <Link className="btn btn-danger btn-block" to="/admin/orders">
+      <ActionBar
+        status={status}
+        secondary={
+          <Button variant="ghost" size="lg" to="/admin/orders">
             {t('common.cancel')}
-          </Link>
-        </div>
-        <div className="form-group col-md-6">
-          <button
-            className="btn btn-success btn-block"
-            type="button"
-            disabled={sending || closed || current.length === 0}
-            onClick={save}
+          </Button>
+        }
+        primary={
+          <Button
+            variant="primary"
+            size="lg"
+            icon="fa-truck"
+            loading={sending}
+            disabled={closed || units === 0}
+            onClick={ship}
           >
-            {sending ? t('common.saving') : t('gettingReady.addPartial')}
-          </button>
-        </div>
-      </div>
-
-      {refusal && (
-        <Modal
-          title={t(`gettingReady.refusals.${refusal}.error`)}
-          onClose={dismiss}
-          footer={
-            <button type="button" className="btn btn-success" onClick={dismiss}>
-              {t(`gettingReady.refusals.${refusal}.ok`)}
-            </button>
-          }
-        >
-          <p className="mb-0">{t(`gettingReady.refusals.${refusal}.title`)}</p>
-        </Modal>
-      )}
+            {t('gettingReady.ship', {count: units})}
+          </Button>
+        }
+      />
     </div>
   );
 }

@@ -1,1 +1,1 @@
-export {RenameWarehouseModal} from './ui/RenameWarehouseModal';
+export {WarehouseName} from './ui/WarehouseName';

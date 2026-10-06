@@ -5,22 +5,24 @@ import {listWarehouses} from '@/entities/warehouse';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
-import {ErrorState, Loader, PageCard} from '@/shared/ui';
+import {ErrorState, PageHeader, Skeleton} from '@/shared/ui';
 import {getOrder} from '../api/orderFormApi';
 import {OrderForm} from './OrderForm';
 
-/** Create a new order (/admin/orders/new) and Editing Order (/admin/orders/:id/edit): one form for both. */
+/** New order (/admin/orders/new) and Edit order (/admin/orders/:id/edit): one form for both. */
 export function OrderFormPage() {
   const {t} = useTranslation();
   const {id} = useParams();
   return (
-    <PageCard
-      title={
-        id === undefined ? t('orderForm.newTitle') : t('orderForm.editTitle')
-      }
-    >
+    <>
+      <PageHeader
+        title={
+          id === undefined ? t('orderForm.newTitle') : t('orderForm.editTitle')
+        }
+        back="/admin/orders"
+      />
       <Loaded id={id} />
-    </PageCard>
+    </>
   );
 }
 
@@ -74,7 +76,7 @@ function Loaded({id}: {id: string | undefined}) {
     !customersSettled ||
     (id !== undefined && order.data === undefined)
   ) {
-    return <Loader />;
+    return <Skeleton variant="form" />;
   }
   return (
     <OrderForm

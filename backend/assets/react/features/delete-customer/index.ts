@@ -1,1 +1,1 @@
-export {DeleteCustomerButton} from './ui/DeleteCustomerButton';
+export {customerName, DeleteCustomerDialog} from './ui/DeleteCustomerDialog';

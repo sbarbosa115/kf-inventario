@@ -1,20 +1,37 @@
+import type {ReactNode} from 'react';
 import {
-  customerLabel,
-  formatInvoiceDate,
+  customerName,
   getInvoice,
   invoicePdfUrl,
+  type Invoice,
+  type InvoiceItem,
 } from '@/entities/invoice';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {useLoad} from '@/shared/lib';
-import {ErrorState, Loader, Modal} from '@/shared/ui';
+import {useFormat, useLoad} from '@/shared/lib';
+import {
+  Button,
+  DataTable,
+  ErrorState,
+  Money,
+  Num,
+  Skeleton,
+  SlideOver,
+  type Column,
+} from '@/shared/ui';
+import './invoice-detail.css';
 
-/** The Invoice Detail dialog: the invoice's lines and totals, and the link to its PDF. */
+/**
+ * An invoice in a slide-over beside the list: who and when, its lines, the totals and the way to its PDF. The title
+ * is right before the invoice loads when the list passes its code.
+ */
 export function InvoiceDetail({
   invoiceId,
+  code,
   onClose,
 }: {
   invoiceId: number;
+  code?: string | null;
   onClose: () => void;
 }) {
   const {t} = useTranslation();
@@ -24,16 +41,29 @@ export function InvoiceDetail({
     reload,
   } = useLoad(() => getInvoice(invoiceId), [invoiceId]);
   const gone = error instanceof ApiError && error.status === 404;
+  const title = t('invoices.detail.title', {
+    code: invoice?.code ?? code ?? String(invoiceId),
+  });
 
   return (
-    <Modal
-      title={t('invoices.detail.title')}
-      size="lg"
+    <SlideOver
+      title={title}
+      width="lg"
       onClose={onClose}
       footer={
-        <button type="button" className="btn btn-secondary" onClick={onClose}>
-          {t('common.close')}
-        </button>
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            {t('common.close')}
+          </Button>
+          <Button
+            variant="primary"
+            icon="fa-file-pdf"
+            href={invoicePdfUrl(invoiceId)}
+            target="_blank"
+          >
+            {t('invoices.detail.viewPdf')}
+          </Button>
+        </>
       }
     >
       {gone ? (
@@ -43,93 +73,131 @@ export function InvoiceDetail({
       ) : error ? (
         <ErrorState error={error} onRetry={reload} />
       ) : invoice === undefined ? (
-        <Loader />
+        <Skeleton variant="form" />
       ) : (
-        <>
-          <div className="row mb-2">
-            <div className="col-md-6">
-              <p className="mb-1">
-                <strong>{t('invoices.columns.code')}:</strong> {invoice.code}
-              </p>
-              <p className="mb-1">
-                <strong>{t('invoices.columns.customer')}:</strong>{' '}
-                {customerLabel(invoice.customer) ?? t('invoices.posClient')}
-              </p>
-              <p className="mb-1">
-                <strong>{t('invoices.columns.date')}:</strong>{' '}
-                {formatInvoiceDate(invoice.created_at)}
-              </p>
-              {invoice.comment && (
-                <p className="mb-1">
-                  <strong>{t('invoices.form.comment')}:</strong>{' '}
-                  {invoice.comment}
-                </p>
-              )}
-            </div>
-            <div className="col-md-6 text-right">
-              <a
-                href={invoicePdfUrl(invoice.id)}
-                className="btn btn-sm btn-success"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t('invoices.detail.viewPdf')}
-              </a>
-            </div>
-          </div>
-          <div className="table-responsive">
-            <table className="table table-sm table-striped">
-              <thead>
-                <tr>
-                  <th scope="col">{t('invoices.detail.productCode')}</th>
-                  <th scope="col">{t('invoices.detail.description')}</th>
-                  <th scope="col" className="text-right">
-                    {t('invoices.detail.quantity')}
-                  </th>
-                  <th scope="col" className="text-right">
-                    {t('invoices.detail.unitPrice')}
-                  </th>
-                  <th scope="col" className="text-right">
-                    {t('invoices.columns.total')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.product?.code ?? ''}</td>
-                    <td>{item.description}</td>
-                    <td className="text-right">{item.quantity}</td>
-                    <td className="text-right">{item.unit_price}</td>
-                    <td className="text-right">{item.total}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="text-right">
-            {invoice.tax_amount !== null &&
-              invoice.tax_amount !== undefined && (
-                <>
-                  <div>
-                    <strong>{t('invoices.form.subtotal')}:</strong>{' '}
-                    {invoice.subtotal}
-                  </div>
-                  <div>
-                    <strong>
-                      {t('invoices.form.tax', {rate: Number(invoice.tax_rate)})}
-                      :
-                    </strong>{' '}
-                    {invoice.tax_amount}
-                  </div>
-                </>
-              )}
-            <div>
-              <strong>{t('invoices.columns.total')}:</strong> {invoice.total}
-            </div>
-          </div>
-        </>
+        <Body invoice={invoice} />
       )}
-    </Modal>
+    </SlideOver>
+  );
+}
+
+function Body({invoice}: {invoice: Invoice}) {
+  const {t} = useTranslation();
+  const {date} = useFormat();
+  const name = customerName(invoice.customer);
+  const hasTax =
+    invoice.tax_amount !== null && invoice.tax_amount !== undefined;
+
+  const columns: Column<InvoiceItem>[] = [
+    {
+      key: 'code',
+      header: t('invoices.detail.productCode'),
+      render: (item) => item.product?.code ?? '',
+      mono: true,
+    },
+    {
+      key: 'description',
+      header: t('invoices.detail.description'),
+      render: (item) => item.description,
+    },
+    {
+      key: 'quantity',
+      header: t('invoices.detail.quantity'),
+      render: (item) => <Num value={item.quantity} />,
+      numeric: true,
+    },
+    {
+      key: 'unit_price',
+      header: t('invoices.detail.unitPrice'),
+      render: (item) => <Money amount={item.unit_price} />,
+      numeric: true,
+    },
+    {
+      key: 'total',
+      header: t('invoices.detail.lineTotal'),
+      render: (item) => <Money amount={item.total} />,
+      numeric: true,
+    },
+  ];
+
+  return (
+    <>
+      <dl className="kf-invoice-detail__facts">
+        <Fact label={t('invoices.columns.customer')}>
+          {name ?? t('invoices.posClient')}
+          {invoice.customer?.email && (
+            <span className="kf-invoice-detail__muted">
+              {' '}
+              · {invoice.customer.email}
+            </span>
+          )}
+        </Fact>
+        <Fact label={t('invoices.columns.date')}>
+          {date(invoice.created_at)}
+        </Fact>
+        {invoice.comment && (
+          <Fact label={t('invoices.form.comment')}>{invoice.comment}</Fact>
+        )}
+      </dl>
+      <DataTable
+        columns={columns}
+        rows={invoice.items}
+        rowKey={(item) => item.id}
+        rowLabel={(item) => item.description ?? String(item.id)}
+        searchable={false}
+        pageSize={0}
+        cardTitle={(item) => item.description}
+        cardFacts={['quantity', 'unit_price', 'total']}
+      />
+      <dl className="kf-invoice-detail__totals">
+        {hasTax && (
+          <>
+            <Total
+              label={t('invoices.form.subtotal')}
+              amount={invoice.subtotal}
+            />
+            <Total
+              label={t('invoices.form.tax', {rate: Number(invoice.tax_rate)})}
+              amount={invoice.tax_amount}
+            />
+          </>
+        )}
+        <Total
+          label={t('invoices.columns.total')}
+          amount={invoice.total}
+          large
+        />
+      </dl>
+    </>
+  );
+}
+
+function Fact({label, children}: {label: string; children: ReactNode}) {
+  return (
+    <div className="kf-invoice-detail__fact">
+      <dt>{label}</dt>
+      <dd>{children}</dd>
+    </div>
+  );
+}
+
+function Total({
+  label,
+  amount,
+  large = false,
+}: {
+  label: string;
+  amount: string | number | null | undefined;
+  large?: boolean;
+}) {
+  return (
+    <div
+      className={`kf-invoice-detail__total${large ? ' kf-invoice-detail__total--large' : ''}`}
+    >
+      <dt>{label}</dt>
+      <dd>
+        <Money amount={amount} />
+      </dd>
+    </div>
   );
 }

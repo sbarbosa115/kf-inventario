@@ -1,29 +1,22 @@
 import {useTranslation} from '@/shared/i18n';
+import {Button} from '@/shared/ui';
 import {stockSheetUrl} from '../lib/stockSheetUrl';
 
 /**
- * Update Selected Using Excel: the stock spreadsheet of the selected products, to fill in and upload. Downloaded by a
- * plain link (the session cookie authenticates it); disabled until something is selected.
+ * Download stock sheet: the spreadsheet of the given products, to fill in and upload. A plain link (the session
+ * cookie authenticates it); it never renders without a product.
  */
 export function DownloadStockSheet({uuids}: {uuids: readonly string[]}) {
   const {t} = useTranslation();
-  const label = (
-    <>
-      <i className="fas fa-archive mr-1" aria-hidden="true" />
-      {t('products.sheet.download')}
-    </>
-  );
-  return uuids.length === 0 ? (
-    <button type="button" className="btn btn-sm btn-success m-1" disabled>
-      {label}
-    </button>
-  ) : (
-    <a
-      className="btn btn-sm btn-success m-1"
+  return (
+    <Button
+      variant="secondary"
+      size="sm"
+      icon="fa-file-excel"
       href={stockSheetUrl(uuids)}
       download
     >
-      {label}
-    </a>
+      {t('products.sheet.download')}
+    </Button>
   );
 }

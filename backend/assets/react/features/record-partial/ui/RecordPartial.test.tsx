@@ -1,7 +1,8 @@
-import {render, screen, within} from '@testing-library/react';
+import {act, render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import {vi} from 'vitest';
+import type {DetectorFactory} from '@/shared/lib';
 import {fakeApi} from '@/shared/test/fakeApi';
 import type {OrderPartials} from '../api/recordPartialApi';
 import {RecordPartial} from './RecordPartial';
@@ -30,12 +31,12 @@ const PARTIALS: OrderPartials = {
     {
       uuid: UUID_1,
       quantity: 3,
-      product: {code: 'KF-01', title: 'KF-01', detail: 'Chair'},
+      product: {code: 'KF-01', title: 'Front bumper', detail: 'Chrome'},
     },
     {
       uuid: UUID_2,
       quantity: 2,
-      product: {code: 'KF-02', title: 'KF-02', detail: 'Table'},
+      product: {code: 'KF-02', title: 'Rear spoiler', detail: null},
     },
   ],
   // One KF-01 left in an earlier partial shipment.
@@ -44,142 +45,213 @@ const PARTIALS: OrderPartials = {
     {uuid: UUID_1, quantity: 2},
     {uuid: UUID_2, quantity: 2},
   ],
+  // KF-02: two ordered, one in the warehouse.
   inventory: [stock(UUID_1, 'KF-01', 10), stock(UUID_2, 'KF-02', 1)],
 };
 
-function renderIt(partials: OrderPartials = PARTIALS, onSaved = vi.fn()) {
+function renderIt(
+  partials: OrderPartials = PARTIALS,
+  onSaved = vi.fn(),
+  detector?: DetectorFactory,
+) {
   render(
     <MemoryRouter>
-      <RecordPartial partials={partials} onSaved={onSaved} />
+      <RecordPartial
+        partials={partials}
+        onSaved={onSaved}
+        detector={detector}
+      />
     </MemoryRouter>,
   );
   return onSaved;
 }
 
-const rowOf = (code: string) =>
-  screen.getByRole('row', {name: new RegExp(`\\b${code}\\b`)});
+const barcode = () => screen.getByLabelText('Barcode');
 
+/** One product of the order, by its code. */
+const line = (code: string) => screen.getByRole('listitem', {name: code});
+
+/** One read, typed like a person: ScanInput takes an Enter within 50 ms of the last read for the same scanner burst. */
 async function scan(code: string) {
-  const input = screen.getByLabelText('Bar Code');
-  await userEvent.clear(input);
-  await userEvent.type(input, `${code}{Enter}`);
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  await userEvent.type(barcode(), `${code}{Enter}`);
 }
 
-describe('RecordPartial', () => {
-  it('lists every product of the order with its stock, what is left and what was shipped', () => {
-    renderIt();
+const shipButton = () => screen.getByRole('button', {name: /^Ship/});
 
-    const kf01 = within(rowOf('KF-01'));
-    expect(kf01.getByText('Chair')).toBeInTheDocument();
-    expect(
-      kf01.getByRole('button', {name: /10/}),
-      'the stock button shows what the warehouse holds',
-    ).toBeInTheDocument();
-    expect(
-      kf01.getByText('3 / 2'),
-      'ordered / left once the earlier shipment is counted',
-    ).toBeInTheDocument();
-    expect(kf01.getByLabelText('This Order')).toHaveValue(0);
-    expect(rowOf('KF-01')).toHaveClass('row-selected-some-added');
-    expect(rowOf('KF-02')).toHaveClass('row-selected-all-pending');
+describe('RecordPartial', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
-  it('focuses the barcode field, and Enter adds one of the scanned product', async () => {
+  it('lists every product with its progress and its stock, and starts neutral', () => {
     renderIt();
-    expect(screen.getByLabelText('Bar Code')).toHaveFocus();
+
+    const kf01 = within(line('KF-01'));
+    expect(kf01.getByText('Front bumper')).toBeInTheDocument();
+    expect(
+      kf01.getByText('Shipped 1 of 3 · this shipment 0'),
+      'the progress replaces "3 / 2" and "Aggregate Partials"',
+    ).toBeInTheDocument();
+    expect(kf01.getByText('In stock 10')).toBeInTheDocument();
+    expect(
+      kf01.queryByRole('button', {name: /10/}),
+      'the stock is text, not a button',
+    ).not.toBeInTheDocument();
+    const bar = kf01.getByRole('progressbar');
+    expect(bar).toHaveAttribute('aria-valuemax', '3');
+    expect(bar).toHaveAttribute('aria-valuenow', '1');
+    expect(line('KF-01'), 'nothing happened yet: no tint').not.toHaveClass(
+      'is-complete',
+    );
+    expect(line('KF-01')).not.toHaveClass('is-short');
+  });
+
+  it('warns, in words, when the warehouse holds fewer than what is left', () => {
+    renderIt();
+
+    expect(line('KF-02')).toHaveClass('is-short');
+    expect(
+      within(line('KF-02')).getByText('Short of stock'),
+    ).toBeInTheDocument();
+    expect(line('KF-01')).not.toHaveClass('is-short');
+  });
+
+  it('focuses the barcode box, and Enter adds one of the scanned product and keeps the focus', async () => {
+    renderIt();
+    expect(barcode()).toHaveFocus();
 
     await scan('kf-01');
 
-    expect(within(rowOf('KF-01')).getByLabelText('This Order')).toHaveValue(1);
-    expect(within(rowOf('KF-01')).getByText('3 / 1')).toBeInTheDocument();
-    expect(screen.getByLabelText('Bar Code')).toHaveValue('');
+    const kf01 = within(line('KF-01'));
+    expect(
+      kf01.getByText('Shipped 1 of 3 · this shipment 1'),
+    ).toBeInTheDocument();
+    expect(kf01.getByLabelText('This shipment of KF-01')).toHaveTextContent(
+      '1',
+    );
+    expect(kf01.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2');
+    expect(barcode()).toHaveValue('');
+    expect(barcode()).toHaveFocus();
   });
 
-  it('shows ~ once the order has all of a product, and refuses one more with the limit modal', async () => {
+  it('turns a row complete when this shipment completes it, and refuses one more inline without taking the focus', async () => {
     renderIt();
 
     await scan('KF-01');
     await scan('KF-01');
 
-    const row = within(rowOf('KF-01'));
-    expect(row.getByText('3 / ~')).toBeInTheDocument();
-    expect(rowOf('KF-01')).toHaveClass('row-selected-completed');
+    expect(line('KF-01')).toHaveClass('is-complete');
+    expect(within(line('KF-01')).getByText('Complete')).toBeInTheDocument();
     expect(
-      row.getByRole('button', {name: 'Add one'}),
+      within(line('KF-01')).getByRole('button', {name: 'One more KF-01'}),
       'nothing left to add',
     ).toBeDisabled();
 
     await scan('KF-01');
-    const dialog = screen.getByRole('dialog');
-    expect(
-      within(dialog).getByText(
-        'You reached the limit of product allowed to add to this order.',
-      ),
-    ).toBeInTheDocument();
-    await userEvent.click(
-      within(dialog).getByRole('button', {name: 'Continue adding'}),
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Nothing more of KF-01 is left to ship.',
     );
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(row.getByLabelText('This Order')).toHaveValue(2);
-    expect(screen.getByLabelText('Bar Code')).toHaveFocus();
+    expect(screen.queryByRole('dialog'), 'no modal').not.toBeInTheDocument();
+    expect(barcode(), 'the scanner keeps the focus').toHaveFocus();
+    expect(
+      within(line('KF-01')).getByLabelText('This shipment of KF-01'),
+    ).toHaveTextContent('2');
   });
 
-  it('refuses a product that is not on the order', async () => {
+  it('refuses a product that is not on the order inline, and clears the refusal on the next good scan', async () => {
     renderIt();
 
     await scan('XX-99');
-
-    expect(
-      within(screen.getByRole('dialog')).getByText(
-        'You are trying to add a product that is not on the current order, please click to continue.',
-      ),
-    ).toBeInTheDocument();
-  });
-
-  it('refuses more than the warehouse holds with the inventory modal', async () => {
-    renderIt();
-
-    await scan('KF-02');
-    expect(within(rowOf('KF-02')).getByLabelText('This Order')).toHaveValue(1);
-    await scan('KF-02');
-
-    const dialog = screen.getByRole('dialog');
-    expect(
-      within(dialog).getByText(
-        'There is no enough quantity of this product on inventory.',
-      ),
-    ).toBeInTheDocument();
-    await userEvent.click(
-      within(dialog).getByRole('button', {name: 'Continue'}),
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'XX-99 is not on this order.',
     );
-    expect(within(rowOf('KF-02')).getByLabelText('This Order')).toHaveValue(1);
+    expect(barcode()).toHaveFocus();
+
+    await scan('KF-01');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('adds and takes away one with the + and − buttons', async () => {
+  it('refuses more than the warehouse holds inline', async () => {
     renderIt();
-    const row = within(rowOf('KF-02'));
-    expect(row.getByRole('button', {name: 'Remove one'})).toBeDisabled();
 
-    await userEvent.click(row.getByRole('button', {name: 'Add one'}));
-    expect(row.getByLabelText('This Order')).toHaveValue(1);
-    expect(rowOf('KF-02')).toHaveClass('row-selected-some-added');
+    await scan('KF-02');
+    await scan('KF-02');
 
-    await userEvent.click(row.getByRole('button', {name: 'Remove one'}));
-    expect(row.getByLabelText('This Order')).toHaveValue(0);
-    expect(rowOf('KF-02')).toHaveClass('row-selected-all-pending');
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'The warehouse holds no more KF-02.',
+    );
+    expect(barcode()).toHaveFocus();
+    expect(
+      within(line('KF-02')).getByLabelText('This shipment of KF-02'),
+    ).toHaveTextContent('1');
   });
 
-  it('sends what this shipment holds and hands the answer back', async () => {
+  it('adds and takes away one with the stepper', async () => {
+    renderIt();
+    const kf01 = within(line('KF-01'));
+    expect(kf01.getByRole('button', {name: 'One less KF-01'})).toBeDisabled();
+
+    await userEvent.click(kf01.getByRole('button', {name: 'One more KF-01'}));
+    expect(kf01.getByLabelText('This shipment of KF-01')).toHaveTextContent(
+      '1',
+    );
+
+    await userEvent.click(kf01.getByRole('button', {name: 'One less KF-01'}));
+    expect(kf01.getByLabelText('This shipment of KF-01')).toHaveTextContent(
+      '0',
+    );
+  });
+
+  it('adds a code the camera reads', async () => {
+    vi.useFakeTimers({shouldAdvanceTime: true});
+    Object.defineProperty(window, 'isSecureContext', {
+      value: true,
+      configurable: true,
+    });
+    HTMLMediaElement.prototype.play = vi.fn(async () => undefined);
+    const frames: string[][] = [];
+    const track = {stop: vi.fn(), getCapabilities: () => ({})};
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      mediaDevices: {
+        getUserMedia: vi.fn(async () => ({
+          getTracks: () => [track],
+          getVideoTracks: () => [track],
+        })),
+      },
+      vibrate: vi.fn(),
+    });
+    const detector: DetectorFactory = async () => ({
+      detect: async () => frames.shift() ?? [],
+    });
+    renderIt(PARTIALS, vi.fn(), detector);
+
+    await userEvent.click(screen.getByRole('button', {name: 'Start camera'}));
+    await screen.findByText('Point the camera at a barcode.');
+    frames.push(['KF-01']);
+    await act(() => vi.advanceTimersByTimeAsync(200));
+
+    expect(
+      within(line('KF-01')).getByLabelText('This shipment of KF-01'),
+    ).toHaveTextContent('1');
+  });
+
+  it('names the count on the ship button, and sends what this shipment holds', async () => {
     const api = fakeApi({
       'POST /orders/7/partials': [200, {...PARTIALS, status: 4}],
     });
     const onSaved = renderIt();
-    const save = screen.getByRole('button', {name: 'Save Current'});
-    expect(save, 'nothing to send yet').toBeDisabled();
+    expect(shipButton(), 'nothing to send yet').toBeDisabled();
+    expect(screen.getByText('Scan the products to ship.')).toBeInTheDocument();
 
     await scan('KF-01');
+    expect(shipButton()).toHaveTextContent('Ship 1 product');
+    await scan('KF-01');
     await scan('KF-02');
-    await userEvent.click(save);
+    expect(shipButton()).toHaveTextContent('Ship 3 products');
+    await userEvent.click(shipButton());
 
     expect(api.calls).toEqual([
       expect.objectContaining({
@@ -187,7 +259,7 @@ describe('RecordPartial', () => {
         path: '/orders/7/partials',
         body: {
           items: [
-            {uuid: UUID_1, quantity: 1},
+            {uuid: UUID_1, quantity: 2},
             {uuid: UUID_2, quantity: 1},
           ],
         },
@@ -210,29 +282,32 @@ describe('RecordPartial', () => {
     const onSaved = renderIt();
 
     await scan('KF-01');
-    await userEvent.click(screen.getByRole('button', {name: 'Save Current'}));
+    await userEvent.click(shipButton());
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The warehouse does not hold enough of KF-01 (0 available).',
     );
     expect(onSaved).not.toHaveBeenCalled();
-    expect(
-      screen.getByRole('button', {name: 'Save Current'}),
-    ).not.toBeDisabled();
+    expect(shipButton()).toBeEnabled();
   });
 
   it.each([5, 6])(
-    'cannot save an order that is already sent or delivered (status %i)',
-    async (status) => {
+    'cannot ship an order that is already sent or delivered (status %i), and says why',
+    (status) => {
       renderIt({...PARTIALS, status});
 
-      expect(screen.getByRole('button', {name: 'Save Current'})).toBeDisabled();
+      expect(shipButton()).toBeDisabled();
+      expect(
+        screen.getByText(
+          'This order was already sent: it takes no more shipments.',
+        ),
+      ).toBeInTheDocument();
     },
   );
 
   it('says so when the order has no products', () => {
     renderIt({...PARTIALS, products: [], inventory: []});
 
-    expect(screen.getByText('No products were found')).toBeInTheDocument();
+    expect(screen.getByText('This order has no products.')).toBeInTheDocument();
   });
 });

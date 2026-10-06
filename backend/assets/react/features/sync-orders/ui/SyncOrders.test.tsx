@@ -2,38 +2,50 @@ import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {vi} from 'vitest';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {ToastProvider} from '@/shared/ui';
 import {SyncOrdersButton} from './SyncOrdersButton';
 
 function renderButton() {
-  const onResult = vi.fn();
-  render(<SyncOrdersButton onResult={onResult} />);
-  return onResult;
+  const onSynced = vi.fn();
+  render(
+    <ToastProvider>
+      <SyncOrdersButton onSynced={onSynced} />
+    </ToastProvider>,
+  );
+  return onSynced;
 }
 
 const sync = () =>
-  userEvent.click(screen.getByRole('button', {name: 'Sync Orders'}));
+  userEvent.click(screen.getByRole('button', {name: 'Sync shop orders'}));
 
 describe('SyncOrdersButton', () => {
-  it('pulls the shops’ orders and says how many were imported and skipped', async () => {
+  it('is a labelled button, not an icon alone', () => {
+    fakeApi({});
+    renderButton();
+
+    expect(
+      screen.getByRole('button', {name: 'Sync shop orders'}),
+    ).toHaveTextContent('Sync shop orders');
+  });
+
+  it('pulls the shops’ orders, says how many were imported and skipped in a toast, and tells the list', async () => {
     const api = fakeApi({
       'POST /orders/sync': [202, {imported: 3, skipped: 2}],
     });
-    const onResult = renderButton();
+    const onSynced = renderButton();
 
     await sync();
 
-    await waitFor(() =>
-      expect(onResult).toHaveBeenCalledWith({
-        ok: true,
-        message: '3 orders imported, 2 skipped.',
-      }),
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      '3 orders imported, 2 skipped.',
     );
+    expect(onSynced).toHaveBeenCalledTimes(1);
     expect(api.calls.map((c) => `${c.method} ${c.path}`)).toEqual([
       'POST /orders/sync',
     ]);
   });
 
-  it('turns while it runs and cannot be pressed twice', async () => {
+  it('is busy while it runs and cannot be pressed twice', async () => {
     let answer: (value: Response) => void = () => {};
     vi.stubGlobal(
       'fetch',
@@ -43,35 +55,34 @@ describe('SyncOrdersButton', () => {
 
     await sync();
 
-    const button = screen.getByRole('button', {name: 'Syncing orders…'});
+    const button = screen.getByRole('button', {name: 'Syncing shop orders…'});
     expect(button).toBeDisabled();
-    expect(button.querySelector('.fa-spin')).not.toBeNull();
+    expect(button).toHaveAttribute('aria-busy', 'true');
     answer(
       new Response(JSON.stringify({imported: 0, skipped: 0}), {status: 202}),
     );
     await waitFor(() =>
-      expect(screen.getByRole('button', {name: 'Sync Orders'})).toBeEnabled(),
+      expect(
+        screen.getByRole('button', {name: 'Sync shop orders'}),
+      ).toBeEnabled(),
     );
   });
 
-  it('says the shops could not be reached when the pull failed (502)', async () => {
+  it('says the shops could not be reached when the pull failed (502), in a toast that stays', async () => {
     fakeApi({
       'POST /orders/sync': [
         502,
         {error: 'order_sync_failed', message: 'Bad gateway'},
       ],
     });
-    const onResult = renderButton();
+    const onSynced = renderButton();
 
     await sync();
 
-    await waitFor(() =>
-      expect(onResult).toHaveBeenCalledWith({
-        ok: false,
-        message:
-          'The shops could not be reached, so no order was imported. Try again in a moment.',
-      }),
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The shops could not be reached, so no order was imported. Try again in a moment.',
     );
+    expect(onSynced).not.toHaveBeenCalled();
   });
 
   it('says the pull is not available while the server cannot do it (501)', async () => {
@@ -81,29 +92,23 @@ describe('SyncOrdersButton', () => {
         {error: 'order_sync_unavailable', message: 'Not implemented'},
       ],
     });
-    const onResult = renderButton();
+    renderButton();
 
     await sync();
 
-    await waitFor(() =>
-      expect(onResult).toHaveBeenCalledWith({
-        ok: false,
-        message: 'Pulling orders from the shops is not available yet.',
-      }),
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Pulling orders from the shops is not available yet.',
     );
   });
 
   it('says it is our side for any other failure', async () => {
     fakeApi({'POST /orders/sync': [500, {error: 'internal_error'}]});
-    const onResult = renderButton();
+    renderButton();
 
     await sync();
 
-    await waitFor(() =>
-      expect(onResult).toHaveBeenCalledWith({
-        ok: false,
-        message: 'Something went wrong on our side. Try again in a moment.',
-      }),
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Something went wrong on our side. Try again in a moment.',
     );
   });
 });

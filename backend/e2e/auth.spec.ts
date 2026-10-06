@@ -15,12 +15,12 @@ test.describe('1 Authentication and shell', () => {
     await page.goto('/admin/login');
 
     await page.getByLabel('Username').fill(ADMIN);
-    await page.getByLabel('Password').fill(PASSWORD);
-    await page.getByRole('button', {name: 'Log In'}).click();
+    await page.getByLabel('Password', {exact: true}).fill(PASSWORD);
+    await page.getByRole('button', {name: 'Sign in'}).click();
 
     await expect(page).toHaveURL(/\/admin\/products$/);
     await expect(
-      page.getByRole('button', {name: /sbarbosa115@gmail\.com/}),
+      page.getByRole('button', {name: 'Sergio Barbosa'}),
     ).toBeVisible();
     expect(errors).toEqual([]);
   });
@@ -31,8 +31,8 @@ test.describe('1 Authentication and shell', () => {
     await page.goto('/admin/login');
 
     await page.getByLabel('Username').fill(ADMIN);
-    await page.getByLabel('Password').fill('not-the-password');
-    await page.getByRole('button', {name: 'Log In'}).click();
+    await page.getByLabel('Password', {exact: true}).fill('not-the-password');
+    await page.getByRole('button', {name: 'Sign in'}).click();
 
     await expect(page.getByRole('alert')).toHaveText(
       'Wrong username or password.',
@@ -47,22 +47,22 @@ test.describe('1 Authentication and shell', () => {
 
     await expect(page).toHaveURL(/\/admin\/login$/);
     await page.getByLabel('Username').fill(ADMIN);
-    await page.getByLabel('Password').fill(PASSWORD);
-    await page.getByRole('button', {name: 'Log In'}).click();
+    await page.getByLabel('Password', {exact: true}).fill(PASSWORD);
+    await page.getByRole('button', {name: 'Sign in'}).click();
 
     await expect(page).toHaveURL(/\/admin\/warehouses$/);
   });
 
-  test('AUTH-04 · Logout ends the session', async ({page}) => {
+  test('AUTH-04 · Sign out ends the session', async ({page}) => {
     // Its own session: signing out of the shared one (signedInAs) would sign every later test out.
     await page.goto('/admin/login');
     await page.getByLabel('Username').fill(ADMIN);
-    await page.getByLabel('Password').fill(PASSWORD);
-    await page.getByRole('button', {name: 'Log In'}).click();
+    await page.getByLabel('Password', {exact: true}).fill(PASSWORD);
+    await page.getByRole('button', {name: 'Sign in'}).click();
     await expect(page).toHaveURL(/\/admin\/products$/);
 
-    await page.getByRole('button', {name: /sbarbosa115@gmail\.com/}).click();
-    await page.getByRole('link', {name: 'Logout'}).click();
+    await page.getByRole('button', {name: 'Sergio Barbosa'}).click();
+    await page.getByRole('menuitem', {name: 'Sign out'}).click();
 
     await expect(page).toHaveURL(/\/admin\/login$/);
     await page.goto('/admin/products');
@@ -85,10 +85,10 @@ test.describe('1 Authentication and shell', () => {
     await page.goto('/admin/products');
 
     for (const name of [
-      'Product List',
-      'Upload products',
-      'Barcode reader',
-      'Incoming products',
+      'Products',
+      'Upload a stock sheet',
+      'Scan',
+      'Incoming',
       'Warehouses',
       'Orders',
       'Customers',
@@ -99,13 +99,15 @@ test.describe('1 Authentication and shell', () => {
     expect(errors).toEqual([]);
   });
 
-  test('NAV-02 · an inventory clerk sees the products menu only', async ({
+  test('NAV-02 · an inventory clerk sees the warehouse entries only', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVENTORY);
     await page.goto('/admin/products');
 
-    await expect(page.getByRole('link', {name: 'Product List'})).toBeVisible();
+    await expect(
+      page.getByRole('link', {name: 'Products', exact: true}),
+    ).toBeVisible();
     for (const name of [
       'Warehouses',
       'Orders',

@@ -42,13 +42,38 @@ async function sessionOf(
   return file;
 }
 
+/**
+ * The smoke stack is a dev build: Symfony's debug toolbar sits over the bottom of the page (dialog footers, the
+ * phone tab bar) and its panels hold texts such as ROLE_ADMIN. Production has no toolbar, so every page of a run
+ * goes without it.
+ */
+async function withoutDebugToolbar(context: BrowserContext): Promise<void> {
+  await context.addInitScript(() => {
+    const strip = () =>
+      document
+        .querySelectorAll('.sf-toolbar, [id^="sfwdt"], [id^="sfMiniToolbar"]')
+        .forEach((node) => node.remove());
+    new MutationObserver(strip).observe(document, {
+      childList: true,
+      subtree: true,
+    });
+  });
+}
+
 interface Fixtures {
   /** A page signed in as this username. */
   signedInAs: (username: string) => Promise<Page>;
 }
 
 export const test = base.extend<Fixtures>({
-  signedInAs: async ({browser, baseURL, viewport, locale}, provide) => {
+  context: async ({context}, provide) => {
+    await withoutDebugToolbar(context);
+    await provide(context);
+  },
+  signedInAs: async (
+    {browser, baseURL, viewport, locale, isMobile, hasTouch},
+    provide,
+  ) => {
     const contexts: BrowserContext[] = [];
     await provide(async (username) => {
       const storageState = await sessionOf(
@@ -60,9 +85,12 @@ export const test = base.extend<Fixtures>({
         baseURL,
         viewport,
         locale,
+        isMobile,
+        hasTouch,
         storageState,
       });
       contexts.push(context);
+      await withoutDebugToolbar(context);
       return context.newPage();
     });
     await Promise.all(contexts.map((c) => c.close()));

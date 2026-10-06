@@ -1,1 +1,1 @@
-export {OrderStatusSelect} from './ui/OrderStatusSelect';
+export {OrderStatusMenu} from './ui/OrderStatusMenu';

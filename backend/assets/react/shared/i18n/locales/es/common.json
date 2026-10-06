@@ -1,0 +1,78 @@
+{
+  "appName": "KF Inventory",
+  "loading": "Cargando…",
+  "loadFailed": "No se pudo cargar. Revise su conexión e intente de nuevo.",
+  "serverFailed": "Ocurrió un error de nuestra parte. Intente de nuevo en un momento.",
+  "retry": "Reintentar",
+  "save": "Guardar",
+  "saving": "Guardando…",
+  "cancel": "Cancelar",
+  "close": "Cerrar",
+  "confirm": "Confirmar",
+  "delete": "Eliminar",
+  "edit": "Editar",
+  "create": "Crear",
+  "search": "Buscar",
+  "showAll": "Mostrar todo",
+  "empty": "Aún no hay nada.",
+  "filteredEmpty": "Nada coincide con estos filtros.",
+  "previous": "Anterior",
+  "next": "Siguiente",
+  "pageOf": "Página {{page}} de {{pages}}",
+  "selectAll": "Seleccionar todo",
+  "selectRow": "Seleccionar fila",
+  "footer": "KF Inventory © {{year}}",
+  "dismiss": "Descartar",
+  "more": "Más",
+  "actions": "Acciones",
+  "actionsFor": "Acciones para {{name}}",
+  "selected_one": "{{count}} seleccionado",
+  "selected_other": "{{count}} seleccionados",
+  "clearSelection": "Quitar selección",
+  "clearFilters": "Quitar filtros",
+  "all": "Todos",
+  "clearSearch": "Borrar la búsqueda",
+  "back": "Volver",
+  "saved": "Guardado",
+  "notifications": "Notificaciones",
+  "warehouse": "Bodega",
+  "password": {
+    "show": "Mostrar contraseña",
+    "hide": "Ocultar contraseña",
+    "capsLock": "Bloq Mayús está activado"
+  },
+  "language": {
+    "label": "Idioma",
+    "en": "English",
+    "es": "Español"
+  },
+  "theme": {
+    "label": "Tema",
+    "current": "Tema: {{theme}}",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "sound": {
+    "on": "Sonido activado",
+    "off": "Sonido desactivado"
+  },
+  "scan": {
+    "label": "Código de barras",
+    "placeholder": "Escanee o escriba un código y presione Enter"
+  },
+  "camera": {
+    "label": "Cámara",
+    "start": "Encender cámara",
+    "stop": "Apagar cámara",
+    "asking": "Esperando permiso para usar la cámara…",
+    "scanning": "Apunte la cámara a un código de barras.",
+    "denied": "No se permitió la cámara. Permítala en la configuración del sitio del navegador o escriba el código.",
+    "noCamera": "No se encontró una cámara en este dispositivo. Escriba el código.",
+    "insecure": "La cámara necesita una dirección segura (https). Escriba el código.",
+    "failed": "No se pudo encender la cámara. Escriba el código.",
+    "torchOn": "Encender la linterna",
+    "torchOff": "Apagar la linterna",
+    "read": "Leído {{code}}"
+  }
+}

@@ -1,0 +1,167 @@
+/*
+ * The design tokens of KF Inventory (docs/pdr/prd-redesign.md, "Tokens"; docs/design/README.md). The only file under
+ * assets/react with colour values: every other stylesheet uses these variables (tokens.test.ts checks both, and the
+ * contrast of every pair the screens use, in both themes).
+ *
+ * The theme is html[data-theme="light" | "dark"], set before the first paint by the inline script in
+ * templates/spa.html.twig and kept by shared/lib/theme.ts.
+ */
+:root {
+  color-scheme: light;
+
+  /* Surfaces and text: one warm-neutral family tinted towards the olive. */
+  --kf-bg: #f6f7f5;
+  --kf-surface: #ffffff;
+  --kf-surface-sunken: #eef0ec;
+  --kf-surface-raised: #ffffff;
+  --kf-border: #dfe3dc;
+  --kf-border-strong: #848c85;
+  --kf-text: #1d2420;
+  --kf-text-muted: #5d6862;
+
+  /* The accent: the KF logo's olive. Links use the darker hover (the plain olive is 4.51:1 on the page). */
+  --kf-accent: #5d7b2b;
+  --kf-accent-hover: #4d6823;
+  --kf-accent-soft: #e9efe0;
+  --kf-on-accent: #ffffff;
+  --kf-link: #4d6823;
+  --kf-focus: #5d7b2b;
+
+  /* Meaning: danger only for destructive actions; warning needs attention; info is a state. */
+  --kf-danger: #b42318;
+  --kf-danger-hover: #912018;
+  --kf-danger-soft: #fbe9e7;
+  --kf-danger-text: #8a1c12;
+  --kf-on-danger: #ffffff;
+  --kf-warning: #b54708;
+  --kf-warning-soft: #fbeedc;
+  --kf-warning-text: #7a3103;
+  --kf-on-warning: #ffffff;
+  --kf-info: #1f5f8b;
+  --kf-info-soft: #e3eef7;
+  --kf-info-text: #174a6e;
+  --kf-on-info: #ffffff;
+  --kf-neutral-soft: #eef0ec;
+  --kf-neutral-text: #3f4843;
+
+  /* The shell's sidebar: the logo's dark ring. */
+  --kf-sidebar: #23241c;
+  --kf-sidebar-text: #e8ebe4;
+  --kf-sidebar-muted: #8f9189;
+  --kf-sidebar-active: #9cc263;
+  --kf-sidebar-hover: #2f3127;
+
+  /* Overlays */
+  --kf-backdrop: rgb(20 22 18 / 0.45);
+  --kf-shadow-float:
+    0 12px 32px -8px rgb(35 36 28 / 0.28), 0 2px 6px rgb(35 36 28 / 0.12);
+  --kf-skeleton: #e6e9e3;
+  --kf-skeleton-shine: #f2f4f0;
+
+  /* Type */
+  --kf-font-sans:
+    'Geist Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --kf-font-mono:
+    'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --kf-text-label: 0.75rem;
+  --kf-text-sm: 0.875rem;
+  --kf-text-body: 1rem;
+  --kf-text-lg: 1.125rem;
+  --kf-text-title: 1.375rem;
+  --kf-text-kpi: 1.75rem;
+
+  /* Space: a 4 px scale */
+  --kf-space-1: 4px;
+  --kf-space-2: 8px;
+  --kf-space-3: 12px;
+  --kf-space-4: 16px;
+  --kf-space-5: 24px;
+  --kf-space-6: 32px;
+  --kf-space-7: 40px;
+  --kf-space-8: 48px;
+
+  /* Shape */
+  --kf-radius-control: 6px;
+  --kf-radius-card: 10px;
+  --kf-radius-pill: 999px;
+  --kf-row-height: 44px;
+  --kf-row-height-comfortable: 52px;
+  --kf-target: 44px;
+
+  /* Layers */
+  --kf-z-dropdown: 100;
+  --kf-z-sticky: 200;
+  --kf-z-popover: 250;
+  --kf-z-drawer: 300;
+  --kf-z-dialog: 400;
+  --kf-z-toast: 500;
+
+  /* Layout */
+  --kf-content-max: 1200px;
+  --kf-form-max: 720px;
+  --kf-form-narrow: 640px;
+  --kf-sidebar-width: 240px;
+  --kf-rail-width: 64px;
+  --kf-topbar-height: 56px;
+  --kf-tabbar-height: 60px;
+
+  /* Motion */
+  --kf-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --kf-duration-fast: 150ms;
+  --kf-duration: 200ms;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --kf-bg: #141612;
+  --kf-surface: #1c1f19;
+  --kf-surface-sunken: #181a15;
+  --kf-surface-raised: #24281f;
+  --kf-border: #30352a;
+  --kf-border-strong: #6b7364;
+  --kf-text: #e8ebe4;
+  --kf-text-muted: #a3ab9c;
+
+  --kf-accent: #9cc263;
+  --kf-accent-hover: #b0d27e;
+  --kf-accent-soft: #2a3620;
+  --kf-on-accent: #141612;
+  --kf-link: #9cc263;
+  --kf-focus: #9cc263;
+
+  --kf-danger: #ff8a7a;
+  --kf-danger-hover: #ffa395;
+  --kf-danger-soft: #3a1f1b;
+  --kf-danger-text: #ff8a7a;
+  --kf-on-danger: #141612;
+  --kf-warning: #f0b35a;
+  --kf-warning-soft: #3a2c17;
+  --kf-warning-text: #f0b35a;
+  --kf-on-warning: #141612;
+  --kf-info: #7ab8e0;
+  --kf-info-soft: #182c3a;
+  --kf-info-text: #7ab8e0;
+  --kf-on-info: #141612;
+  --kf-neutral-soft: #2a2e26;
+  --kf-neutral-text: #c9cfc3;
+
+  --kf-sidebar: #141612;
+  --kf-sidebar-text: #e8ebe4;
+  --kf-sidebar-muted: #8f9189;
+  --kf-sidebar-active: #9cc263;
+  --kf-sidebar-hover: #1f221b;
+
+  --kf-backdrop: rgb(0 0 0 / 0.6);
+  --kf-shadow-float:
+    0 12px 32px -8px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.4);
+  --kf-skeleton: #262a22;
+  --kf-skeleton-shine: #30352a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --kf-duration-fast: 0ms;
+    --kf-duration: 0ms;
+  }
+}

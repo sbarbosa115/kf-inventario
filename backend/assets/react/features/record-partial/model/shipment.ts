@@ -4,11 +4,8 @@ import type {OrderPartials, PartialItem} from '../api/recordPartialApi';
 
 export type OrderLine = OrderPartials['products'][number];
 
-/** What scanning a code did: added one, or why it was refused (each refusal has its modal). */
+/** What scanning a code did: added one, or why it was refused (each refusal is said inline, under the scanner). */
 export type ScanResult = 'added' | 'not_in_order' | 'no_inventory' | 'limit';
-
-/** Shown instead of a number when nothing of a product is left to add. */
-export const COMPLETE = '~';
 
 /** Orders already sent (5) or delivered (6) take no more shipments. */
 export const CLOSED_STATUSES = [5, 6];
@@ -45,26 +42,29 @@ export function leftOf(
   );
 }
 
-/** The number the "left" column shows: `~` once the line is complete. */
-export function leftLabel(
+/**
+ * How a line stands, said in words next to its progress: something still left (`pending`), completed by this
+ * shipment (`complete`), all taken by earlier shipments (`shipped`), or the warehouse holds fewer than what is still
+ * to ship (`short`).
+ */
+export type LineState = 'pending' | 'complete' | 'shipped' | 'short';
+
+export function lineState(
   line: OrderLine,
   partials: OrderPartials,
   current: PartialItem[],
-): string {
+): LineState {
   const left = leftOf(line, partials, current);
-  return left <= 0 ? COMPLETE : String(left);
+  const inShipment = currentOf(current, line.uuid);
+  if (left <= 0) return inShipment > 0 ? 'complete' : 'shipped';
+  // This shipment's units are still in the warehouse until it is saved: what must come out is left + this shipment.
+  if (stockOf(partials, line.product.code) < left + inShipment) return 'short';
+  return 'pending';
 }
 
-/** The row's tint: complete, nothing added yet, or some added. */
-export function rowClass(
-  line: OrderLine,
-  partials: OrderPartials,
-  current: PartialItem[],
-): string {
-  const left = leftOf(line, partials, current);
-  if (left <= 0) return 'row-selected-completed';
-  if (left === line.quantity) return 'row-selected-all-pending';
-  return 'row-selected-some-added';
+/** How many units this shipment holds. */
+export function shipmentUnits(current: PartialItem[]): number {
+  return current.reduce((sum, item) => sum + item.quantity, 0);
 }
 
 /**
@@ -76,17 +76,20 @@ export function scan(
   code: string,
   partials: OrderPartials,
   current: PartialItem[],
-): {result: ScanResult; current: PartialItem[]} {
+): {result: ScanResult; current: PartialItem[]; line?: OrderLine} {
   const line = partials.products.find((p) => same(p.product.code, code.trim()));
   if (!line) return {result: 'not_in_order', current};
   if (currentOf(current, line.uuid) >= stockOf(partials, line.product.code)) {
-    return {result: 'no_inventory', current};
+    return {result: 'no_inventory', current, line};
   }
-  if (leftOf(line, partials, current) <= 0) return {result: 'limit', current};
+  if (leftOf(line, partials, current) <= 0) {
+    return {result: 'limit', current, line};
+  }
 
   const exists = current.some((item) => same(item.uuid, line.uuid));
   return {
     result: 'added',
+    line,
     current: exists
       ? current.map((item) =>
           same(item.uuid, line.uuid)

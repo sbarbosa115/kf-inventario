@@ -1,4 +1,4 @@
-import {apiGet, apiPost, type Schema} from '@/shared/api';
+import {ApiError, apiGet, apiPost, type Schema} from '@/shared/api';
 
 /** One line of the request body (the schema has none): a code and how many. */
 export interface StockItem {
@@ -6,15 +6,17 @@ export interface StockItem {
   quantity: number;
 }
 
-/** Resolves when the product exists; the API answers 404 product_not_found otherwise. */
-export async function productExists(code: string): Promise<boolean> {
+/** The product with this code, or null when there is none (the API answers 404 product_not_found). */
+export async function findProductByCode(
+  code: string,
+): Promise<Schema<'ProductOutput'> | null> {
   try {
-    await apiGet<Schema<'ProductOutput'>>(
+    return await apiGet<Schema<'ProductOutput'>>(
       `/products/by-code/${encodeURIComponent(code)}`,
     );
-    return true;
-  } catch {
-    return false;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
   }
 }
 

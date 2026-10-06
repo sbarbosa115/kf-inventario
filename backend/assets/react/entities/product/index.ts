@@ -15,3 +15,5 @@ export {
   violationsToErrors,
 } from './model/productForm';
 export type {ProductFormErrors, ProductFormValues} from './model/productForm';
+export {matchesStock, stockFigures} from './model/stockFigures';
+export type {StockFigures, StockFilter} from './model/stockFigures';

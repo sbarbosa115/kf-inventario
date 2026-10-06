@@ -1,0 +1,725 @@
+/*
+ * Bootstrap 4's classes mapped onto the tokens (tokens.css), in both themes. Loaded after Bootstrap and Font Awesome
+ * (app/index.tsx). The meaning of colour: primary/success = the accent (the one main action), danger = destructive
+ * only, every other button (secondary, info, outline-*) = secondary. Cancel and Close are never red.
+ */
+
+/* ---- Base ------------------------------------------------------------------------------------------------- */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--kf-bg);
+  color: var(--kf-text);
+  font-family: var(--kf-font-sans);
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+  color: var(--kf-text);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--kf-link);
+}
+
+a:hover {
+  color: var(--kf-accent-hover);
+}
+
+code,
+kbd,
+pre,
+samp,
+.text-monospace {
+  font-family: var(--kf-font-mono);
+}
+
+code {
+  color: var(--kf-text);
+}
+
+hr {
+  border-top-color: var(--kf-border);
+}
+
+::selection {
+  background: var(--kf-accent-soft);
+  color: var(--kf-text);
+}
+
+/* One visible focus ring: 2 px accent, 2 px away, on keyboard focus only. */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--kf-focus);
+  outline-offset: 2px;
+}
+
+.btn:focus,
+.btn.focus,
+.form-control:focus,
+.custom-select:focus,
+.page-link:focus,
+.close:focus {
+  box-shadow: none;
+}
+
+.btn:focus-visible,
+.page-link:focus-visible,
+.close:focus-visible,
+.dropdown-item:focus-visible {
+  outline: 2px solid var(--kf-focus);
+  outline-offset: 2px;
+}
+
+.text-muted,
+.form-text,
+.blockquote-footer {
+  color: var(--kf-text-muted) !important;
+}
+
+.text-danger {
+  color: var(--kf-danger) !important;
+}
+
+.text-success {
+  color: var(--kf-accent) !important;
+}
+
+.text-warning {
+  color: var(--kf-warning-text) !important;
+}
+
+.text-info,
+.text-primary {
+  color: var(--kf-link) !important;
+}
+
+.text-secondary {
+  color: var(--kf-text-muted) !important;
+}
+
+.text-dark,
+.text-body {
+  color: var(--kf-text) !important;
+}
+
+.bg-light,
+.bg-white {
+  background-color: var(--kf-surface) !important;
+}
+
+.bg-dark {
+  background-color: var(--kf-sidebar) !important;
+}
+
+.border,
+.border-top,
+.border-bottom,
+.border-left,
+.border-right {
+  border-color: var(--kf-border) !important;
+}
+
+/* Numbers line up. */
+.text-right,
+td.text-right,
+th.text-right {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Buttons ---------------------------------------------------------------------------------------------- */
+.btn {
+  border-radius: var(--kf-radius-control);
+  font-weight: 500;
+  transition:
+    background-color var(--kf-duration-fast) var(--kf-ease),
+    border-color var(--kf-duration-fast) var(--kf-ease),
+    color var(--kf-duration-fast) var(--kf-ease),
+    transform var(--kf-duration-fast) var(--kf-ease);
+}
+
+.btn:not(:disabled):not(.disabled):active {
+  transform: translateY(1px);
+}
+
+.btn.disabled,
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary,
+.btn-success {
+  background-color: var(--kf-accent);
+  border-color: var(--kf-accent);
+  color: var(--kf-on-accent);
+}
+
+.btn-primary:hover,
+.btn-success:hover,
+.btn-primary:not(:disabled):not(.disabled):active,
+.btn-success:not(:disabled):not(.disabled):active,
+.btn-primary:focus,
+.btn-success:focus {
+  background-color: var(--kf-accent-hover);
+  border-color: var(--kf-accent-hover);
+  color: var(--kf-on-accent);
+}
+
+.btn-primary.disabled,
+.btn-primary:disabled,
+.btn-success.disabled,
+.btn-success:disabled {
+  background-color: var(--kf-accent);
+  border-color: var(--kf-accent);
+  color: var(--kf-on-accent);
+}
+
+.btn-danger {
+  background-color: var(--kf-danger);
+  border-color: var(--kf-danger);
+  color: var(--kf-on-danger);
+}
+
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:not(:disabled):not(.disabled):active,
+.btn-danger.disabled,
+.btn-danger:disabled {
+  background-color: var(--kf-danger-hover);
+  border-color: var(--kf-danger-hover);
+  color: var(--kf-on-danger);
+}
+
+.btn-danger.disabled,
+.btn-danger:disabled {
+  background-color: var(--kf-danger);
+  border-color: var(--kf-danger);
+}
+
+.btn-secondary,
+.btn-info,
+.btn-light,
+.btn-dark,
+.btn-warning,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-success,
+.btn-outline-info,
+.btn-outline-dark,
+.btn-outline-light,
+.btn-outline-warning {
+  background-color: var(--kf-surface);
+  border-color: var(--kf-border-strong);
+  color: var(--kf-text);
+}
+
+.btn-secondary:hover,
+.btn-info:hover,
+.btn-light:hover,
+.btn-dark:hover,
+.btn-warning:hover,
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover,
+.btn-outline-success:hover,
+.btn-outline-info:hover,
+.btn-outline-dark:hover,
+.btn-outline-light:hover,
+.btn-outline-warning:hover,
+.btn-secondary:not(:disabled):not(.disabled):active,
+.btn-info:not(:disabled):not(.disabled):active,
+.btn-outline-secondary:not(:disabled):not(.disabled):active,
+.btn-outline-primary:not(:disabled):not(.disabled):active,
+.btn-secondary:focus,
+.btn-info:focus,
+.btn-outline-secondary:focus,
+.btn-outline-primary:focus {
+  background-color: var(--kf-surface-sunken);
+  border-color: var(--kf-border-strong);
+  color: var(--kf-text);
+}
+
+.btn-secondary.disabled,
+.btn-secondary:disabled,
+.btn-info.disabled,
+.btn-info:disabled,
+.btn-outline-secondary.disabled,
+.btn-outline-secondary:disabled {
+  background-color: var(--kf-surface);
+  border-color: var(--kf-border-strong);
+  color: var(--kf-text);
+}
+
+.btn-outline-danger {
+  background-color: var(--kf-surface);
+  border-color: var(--kf-danger);
+  color: var(--kf-danger);
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:focus,
+.btn-outline-danger:not(:disabled):not(.disabled):active {
+  background-color: var(--kf-danger-soft);
+  border-color: var(--kf-danger);
+  color: var(--kf-danger-text);
+}
+
+.btn-link {
+  color: var(--kf-link);
+}
+
+.btn-link:hover {
+  color: var(--kf-accent-hover);
+}
+
+/* Touch screens get 44 px targets. */
+@media (pointer: coarse) {
+  .btn,
+  .form-control,
+  .custom-select {
+    min-height: var(--kf-target);
+  }
+}
+
+/* ---- Forms ------------------------------------------------------------------------------------------------ */
+label {
+  font-weight: 500;
+  font-size: var(--kf-text-sm);
+  color: var(--kf-text);
+  margin-bottom: var(--kf-space-1);
+}
+
+.form-check-label {
+  font-weight: 400;
+  font-size: var(--kf-text-body);
+}
+
+.form-control,
+.custom-select,
+.custom-file-label,
+.input-group-text {
+  background-color: var(--kf-surface);
+  border-color: var(--kf-border-strong);
+  border-radius: var(--kf-radius-control);
+  color: var(--kf-text);
+  transition:
+    border-color var(--kf-duration-fast) var(--kf-ease),
+    box-shadow var(--kf-duration-fast) var(--kf-ease);
+}
+
+.input-group-text {
+  background-color: var(--kf-surface-sunken);
+  color: var(--kf-text-muted);
+}
+
+.form-control::placeholder {
+  color: var(--kf-text-muted);
+  opacity: 1;
+}
+
+.form-control:focus,
+.custom-select:focus {
+  background-color: var(--kf-surface);
+  border-color: var(--kf-accent);
+  color: var(--kf-text);
+  outline: 2px solid var(--kf-focus);
+  outline-offset: 0;
+}
+
+.form-control:disabled,
+.form-control[readonly],
+.custom-select:disabled {
+  background-color: var(--kf-surface-sunken);
+  color: var(--kf-text-muted);
+}
+
+/* Bootstrap draws the select's arrow with a hard-coded dark SVG; a native select shows the theme's own. */
+select.form-control,
+.custom-select {
+  color-scheme: inherit;
+}
+
+.custom-select {
+  background-color: var(--kf-surface);
+}
+
+.form-control.is-invalid,
+.was-validated .form-control:invalid,
+.custom-select.is-invalid {
+  border-color: var(--kf-danger);
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+.form-control.is-invalid:focus,
+.custom-select.is-invalid:focus {
+  border-color: var(--kf-danger);
+  outline-color: var(--kf-danger);
+}
+
+.invalid-feedback {
+  color: var(--kf-danger);
+  font-size: var(--kf-text-sm);
+}
+
+.form-control.is-valid {
+  border-color: var(--kf-border-strong);
+  background-image: none;
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--kf-accent);
+}
+
+input[type='file'].form-control-file {
+  color: var(--kf-text);
+}
+
+/* ---- Tables ----------------------------------------------------------------------------------------------- */
+.table {
+  color: var(--kf-text);
+  background-color: var(--kf-surface);
+  font-size: var(--kf-text-sm);
+}
+
+.table th,
+.table td {
+  border-top-color: var(--kf-border);
+  vertical-align: middle;
+}
+
+.table thead th {
+  background-color: var(--kf-surface-sunken);
+  border-bottom: 1px solid var(--kf-border);
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-label);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.table thead th .btn-link {
+  color: var(--kf-text-muted) !important;
+  font-size: inherit;
+}
+
+.table-sm td,
+.table-sm th {
+  padding: 0.5rem 0.75rem;
+}
+
+.table td {
+  height: var(--kf-row-height);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: transparent;
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--kf-surface-sunken);
+  color: var(--kf-text);
+}
+
+.table-bordered,
+.table-bordered td,
+.table-bordered th {
+  border-color: var(--kf-border);
+}
+
+.table-success,
+.table-success > td,
+.table-success > th {
+  background-color: var(--kf-accent-soft);
+}
+
+.table-warning,
+.table-warning > td,
+.table-warning > th {
+  background-color: var(--kf-warning-soft);
+}
+
+.table-danger,
+.table-danger > td,
+.table-danger > th {
+  background-color: var(--kf-danger-soft);
+}
+
+.table-active,
+.table-active > td,
+.table-active > th {
+  background-color: var(--kf-accent-soft);
+}
+
+.table-responsive {
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-surface);
+}
+
+.table-responsive > .table {
+  margin-bottom: 0;
+}
+
+/* A legacy table without a .table-responsive box scrolls inside itself on narrow screens, never the page. */
+@media (max-width: 1023px) {
+  .table:not(.kf-table) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* ---- Cards, alerts, badges -------------------------------------------------------------------------------- */
+.card {
+  background-color: var(--kf-surface);
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-card);
+  color: var(--kf-text);
+}
+
+.card-header,
+.card-footer {
+  background-color: var(--kf-surface);
+  border-color: var(--kf-border);
+}
+
+.card-header:first-child {
+  border-radius: var(--kf-radius-card) var(--kf-radius-card) 0 0;
+}
+
+.list-group-item {
+  background-color: var(--kf-surface);
+  border-color: var(--kf-border);
+  color: var(--kf-text);
+}
+
+.alert {
+  border-radius: var(--kf-radius-control);
+  border-width: 1px;
+  color: var(--kf-text);
+}
+
+.alert-success {
+  background-color: var(--kf-accent-soft);
+  border-color: var(--kf-accent);
+}
+
+.alert-danger {
+  background-color: var(--kf-danger-soft);
+  border-color: var(--kf-danger);
+}
+
+.alert-warning {
+  background-color: var(--kf-warning-soft);
+  border-color: var(--kf-warning);
+}
+
+.alert-info,
+.alert-primary,
+.alert-secondary,
+.alert-light,
+.alert-dark {
+  background-color: var(--kf-info-soft);
+  border-color: var(--kf-info);
+}
+
+.alert .alert-link,
+.alert a {
+  color: var(--kf-text);
+  text-decoration: underline;
+}
+
+.alert .close {
+  color: var(--kf-text);
+}
+
+.badge {
+  border-radius: var(--kf-radius-pill);
+  font-weight: 500;
+  padding: 0.25em 0.6em;
+}
+
+.badge-primary,
+.badge-success {
+  background-color: var(--kf-accent-soft);
+  color: var(--kf-link);
+}
+
+.badge-danger {
+  background-color: var(--kf-danger-soft);
+  color: var(--kf-danger-text);
+}
+
+.badge-warning {
+  background-color: var(--kf-warning-soft);
+  color: var(--kf-warning-text);
+}
+
+.badge-info {
+  background-color: var(--kf-info-soft);
+  color: var(--kf-info-text);
+}
+
+.badge-secondary,
+.badge-light,
+.badge-dark {
+  background-color: var(--kf-neutral-soft);
+  color: var(--kf-neutral-text);
+}
+
+/* ---- Dialogs ---------------------------------------------------------------------------------------------- */
+.modal {
+  z-index: var(--kf-z-dialog);
+}
+
+.modal-backdrop {
+  z-index: calc(var(--kf-z-dialog) - 1);
+  background-color: var(--kf-backdrop);
+}
+
+.modal-backdrop.show {
+  opacity: 1;
+}
+
+.modal-content {
+  background-color: var(--kf-surface-raised);
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-card);
+  box-shadow: var(--kf-shadow-float);
+  color: var(--kf-text);
+}
+
+.modal-header,
+.modal-footer {
+  border-color: var(--kf-border);
+}
+
+.close {
+  color: var(--kf-text);
+  text-shadow: none;
+  opacity: 0.7;
+}
+
+.close:hover {
+  color: var(--kf-text);
+  opacity: 1;
+}
+
+/* ---- Navigation pieces ------------------------------------------------------------------------------------ */
+.nav-tabs {
+  border-bottom-color: var(--kf-border);
+}
+
+.nav-tabs .nav-link {
+  color: var(--kf-text-muted);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+}
+
+.nav-tabs .nav-link:hover,
+.nav-tabs .nav-link:focus {
+  color: var(--kf-text);
+  border-bottom-color: var(--kf-border-strong);
+}
+
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link {
+  background-color: transparent;
+  color: var(--kf-text);
+  border-bottom-color: var(--kf-accent);
+  font-weight: 600;
+}
+
+.pagination .page-link {
+  background-color: var(--kf-surface);
+  border-color: var(--kf-border);
+  color: var(--kf-link);
+}
+
+.pagination .page-link:hover {
+  background-color: var(--kf-surface-sunken);
+  border-color: var(--kf-border);
+  color: var(--kf-accent-hover);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--kf-accent);
+  border-color: var(--kf-accent);
+  color: var(--kf-on-accent);
+}
+
+.pagination .page-item.disabled .page-link {
+  background-color: var(--kf-surface);
+  border-color: var(--kf-border);
+  color: var(--kf-text-muted);
+}
+
+.dropdown-menu {
+  z-index: var(--kf-z-dropdown);
+  background-color: var(--kf-surface-raised);
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-control);
+  box-shadow: var(--kf-shadow-float);
+  color: var(--kf-text);
+}
+
+.dropdown-item {
+  color: var(--kf-text);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: var(--kf-surface-sunken);
+  color: var(--kf-text);
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  background-color: var(--kf-accent-soft);
+  color: var(--kf-text);
+}
+
+.dropdown-divider {
+  border-top-color: var(--kf-border);
+}
+
+/* ---- Spinners --------------------------------------------------------------------------------------------- */
+.spinner-border.text-secondary {
+  color: var(--kf-text-muted) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+
+  .spinner-border {
+    animation-duration: 1.5s !important;
+  }
+}

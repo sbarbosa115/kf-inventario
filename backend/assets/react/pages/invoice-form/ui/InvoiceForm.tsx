@@ -1,12 +1,11 @@
 import {useState, type FormEvent} from 'react';
-import {Link, useNavigate} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import Select from 'react-select';
 import {type Customer, type CustomerFormValues} from '@/entities/customer';
 import {
   createInvoice,
   emptyInvoiceForm,
   emptyLine,
-  formatCents,
   invoiceFormToPayload,
   invoicePdfUrl,
   invoiceTotals,
@@ -26,7 +25,15 @@ import {AddressForm} from '@/widgets/address-form';
 import {ApiError, failureMessage} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
-import {Field} from '@/shared/ui';
+import {
+  ActionBar,
+  Button,
+  Field,
+  FormLayout,
+  FormSection,
+  Money,
+  useToast,
+} from '@/shared/ui';
 import {
   customerPayload,
   noCustomer,
@@ -46,9 +53,9 @@ const customerOption = (c: Customer): Option => ({
 });
 
 /**
- * Create invoice: the customer (picked, or typed for a new one), the code the server suggests, the payment method,
- * the tax and the lines, with the subtotal, tax and total as they are typed. Saving opens the PDF in a new tab and
- * goes to the list.
+ * Create invoice, laid out like the document: the customer on the left, the invoice (code, payment method, tax,
+ * comments) on the right, the lines as a table under them and the subtotal, tax and total as they are typed. Saving
+ * opens the PDF in a new tab and goes to the list.
  */
 export function InvoiceForm({
   suggestedCode,
@@ -63,6 +70,7 @@ export function InvoiceForm({
 }) {
   const {t} = useTranslation();
   const navigate = useNavigate();
+  const toast = useToast();
   const [values, setValues] = useState<InvoiceFormValues>(() =>
     emptyInvoiceForm(suggestedCode),
   );
@@ -127,7 +135,8 @@ export function InvoiceForm({
         invoiceFormToPayload(values, customerPayload(customer)),
       );
       window.open(invoicePdfUrl(created.id), '_blank');
-      navigate('/admin/invoices', {state: {saved: 'created'}});
+      toast.success(t('invoices.created'));
+      navigate('/admin/invoices');
     } catch (error) {
       if (error instanceof ApiError && error.code === 'invoice_code_taken') {
         setErrors({code: t('invoices.form.codeTaken')});
@@ -147,297 +156,339 @@ export function InvoiceForm({
     }
   };
 
+  const warehouse = warehouses.find((w) => w.id === warehouseId);
+
   return (
-    <form onSubmit={submit} noValidate>
+    <FormLayout columns={2} onSubmit={submit} label={t('invoices.create')}>
       {failure && (
-        <div className="alert alert-danger" role="alert">
+        <div className="alert alert-danger kf-invoice-form__wide" role="alert">
           {failure}
         </div>
       )}
-      <div className="row">
-        <div className="col-md-6">
-          <h2 className="h5">{t('invoices.form.customer')}</h2>
-          <div className="form-group">
-            <label htmlFor="invoice-customer">
-              {t('invoices.form.pickCustomer')}
-            </label>
-            <Select<Option>
-              inputId="invoice-customer"
-              isClearable
-              placeholder={t('invoices.form.searchCustomer')}
-              noOptionsMessage={() => t('invoices.form.noOptions')}
-              options={customers.map(customerOption)}
-              value={
-                customer.id === null
-                  ? null
-                  : customers
-                      .map(customerOption)
-                      .find((o) => o.value === customer.id)
-              }
-              onChange={(option) => {
-                const picked = customers.find((c) => c.id === option?.value);
-                setCustomer(picked ? pickCustomer(picked) : noCustomer());
-              }}
-            />
-          </div>
-          <div className="form-row">
-            <div className="col-md-6">
-              <Field label={t('invoices.form.firstName')}>
-                <input
-                  className="form-control"
-                  value={customer.values.first_name}
-                  maxLength={255}
-                  onChange={(e) =>
-                    setCustomerValues({first_name: e.target.value})
-                  }
-                />
-              </Field>
-            </div>
-            <div className="col-md-6">
-              <Field label={t('invoices.form.lastName')}>
-                <input
-                  className="form-control"
-                  value={customer.values.last_name}
-                  maxLength={255}
-                  onChange={(e) =>
-                    setCustomerValues({last_name: e.target.value})
-                  }
-                />
-              </Field>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="col-md-6">
-              <Field label={t('invoices.form.email')}>
-                <input
-                  type="email"
-                  className="form-control"
-                  value={customer.values.email}
-                  maxLength={255}
-                  onChange={(e) => setCustomerValues({email: e.target.value})}
-                />
-              </Field>
-            </div>
-            <div className="col-md-6">
-              <Field label={t('invoices.form.phone')}>
-                <input
-                  className="form-control"
-                  value={customer.values.phone}
-                  maxLength={255}
-                  onChange={(e) => setCustomerValues({phone: e.target.value})}
-                />
-              </Field>
-            </div>
-          </div>
-          <AddressForm
-            addresses={customer.values.addresses}
-            locations={locations}
-            onChange={(addresses) => setCustomerValues({addresses})}
+      <FormSection
+        title={t('invoices.form.customer')}
+        description={t('invoices.form.customerHint')}
+      >
+        <div className="form-group">
+          <label htmlFor="invoice-customer">
+            {t('invoices.form.pickCustomer')}
+          </label>
+          <Select<Option>
+            classNamePrefix="kf-select"
+            inputId="invoice-customer"
+            isClearable
+            placeholder={t('invoices.form.searchCustomer')}
+            noOptionsMessage={() => t('invoices.form.noOptions')}
+            options={customers.map(customerOption)}
+            value={
+              customer.id === null
+                ? null
+                : customers
+                    .map(customerOption)
+                    .find((o) => o.value === customer.id)
+            }
+            onChange={(option) => {
+              const picked = customers.find((c) => c.id === option?.value);
+              setCustomer(picked ? pickCustomer(picked) : noCustomer());
+            }}
           />
-          <hr />
-          <Field label={t('invoices.form.code')} error={errors.code}>
-            <input
-              className="form-control"
-              value={values.code}
-              maxLength={255}
-              onChange={(e) => set('code', e.target.value)}
-            />
-          </Field>
-          <Field label={t('invoices.form.paymentMethod')}>
-            <select
-              className="form-control"
-              value={values.payment_method}
-              onChange={(e) => set('payment_method', e.target.value)}
-            >
-              <option value="">--</option>
-              {PAYMENT_METHODS.map((method) => (
-                <option key={method} value={method}>
-                  {t(`invoices.form.payment.${method}`)}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label={t('invoices.form.taxRate')}>
-            <select
-              className="form-control"
-              value={values.tax_rate}
-              onChange={(e) => set('tax_rate', e.target.value)}
-            >
-              {TAX_RATES.map((rate) => (
-                <option key={rate} value={rate}>
-                  {rate}%
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label={t('invoices.form.comment')}>
-            <textarea
-              className="form-control"
-              rows={3}
-              value={values.comment}
-              onChange={(e) => set('comment', e.target.value)}
-            />
-          </Field>
         </div>
+        <div className="form-row">
+          <div className="col-md-6">
+            <Field label={t('invoices.form.firstName')}>
+              <input
+                className="form-control"
+                value={customer.values.first_name}
+                maxLength={255}
+                onChange={(e) =>
+                  setCustomerValues({first_name: e.target.value})
+                }
+              />
+            </Field>
+          </div>
+          <div className="col-md-6">
+            <Field label={t('invoices.form.lastName')}>
+              <input
+                className="form-control"
+                value={customer.values.last_name}
+                maxLength={255}
+                onChange={(e) => setCustomerValues({last_name: e.target.value})}
+              />
+            </Field>
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="col-md-6">
+            <Field label={t('invoices.form.email')}>
+              <input
+                type="email"
+                className="form-control"
+                value={customer.values.email}
+                maxLength={255}
+                onChange={(e) => setCustomerValues({email: e.target.value})}
+              />
+            </Field>
+          </div>
+          <div className="col-md-6">
+            <Field label={t('invoices.form.phone')}>
+              <input
+                className="form-control"
+                value={customer.values.phone}
+                maxLength={255}
+                onChange={(e) => setCustomerValues({phone: e.target.value})}
+              />
+            </Field>
+          </div>
+        </div>
+        <AddressForm
+          addresses={customer.values.addresses}
+          locations={locations}
+          onChange={(addresses) => setCustomerValues({addresses})}
+        />
+      </FormSection>
 
-        <div className="col-md-6">
-          <h2 className="h5">{t('invoices.form.items')}</h2>
-          <Field label={t('invoices.form.warehouse')}>
-            <select
-              className="form-control"
-              value={warehouseId ?? ''}
-              onChange={(e) =>
-                setWarehouseId(
-                  e.target.value === '' ? null : Number(e.target.value),
-                )
-              }
-            >
-              <option value="">--</option>
-              {warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
-          </Field>
+      <FormSection title={t('invoices.form.invoice')}>
+        <Field label={t('invoices.form.code')} error={errors.code}>
+          <input
+            className="form-control kf-mono"
+            value={values.code}
+            maxLength={255}
+            onChange={(e) => set('code', e.target.value)}
+          />
+        </Field>
+        <div className="form-row">
+          <div className="col-md-6">
+            <Field label={t('invoices.form.paymentMethod')}>
+              <select
+                className="form-control"
+                value={values.payment_method}
+                onChange={(e) => set('payment_method', e.target.value)}
+              >
+                <option value="">--</option>
+                {PAYMENT_METHODS.map((method) => (
+                  <option key={method} value={method}>
+                    {t(`invoices.form.payment.${method}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          <div className="col-md-6">
+            <Field label={t('invoices.form.taxRate')}>
+              <select
+                className="form-control"
+                value={values.tax_rate}
+                onChange={(e) => set('tax_rate', e.target.value)}
+              >
+                {TAX_RATES.map((rate) => (
+                  <option key={rate} value={rate}>
+                    {rate}%
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        </div>
+        <Field label={t('invoices.form.comment')}>
+          <textarea
+            className="form-control"
+            rows={3}
+            value={values.comment}
+            onChange={(e) => set('comment', e.target.value)}
+          />
+        </Field>
+      </FormSection>
+
+      <div className="kf-invoice-form__wide">
+        <FormSection title={t('invoices.form.lines')}>
+          <div className="kf-invoice-form__warehouse">
+            <Field label={t('invoices.form.warehouse')}>
+              <select
+                className="form-control"
+                value={warehouseId ?? ''}
+                onChange={(e) =>
+                  setWarehouseId(
+                    e.target.value === '' ? null : Number(e.target.value),
+                  )
+                }
+              >
+                <option value="">--</option>
+                {warehouses.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
           {stock.error !== null && stock.error !== undefined && (
             <div className="alert alert-warning" role="alert">
               {t('invoices.form.stockFailed')}
             </div>
           )}
-          <div className="d-flex justify-content-end mb-2">
-            <AddAllProductsButton
-              stock={products}
-              lines={values.lines}
-              onChange={(lines) => set('lines', lines)}
-            />
-            <button
-              type="button"
-              className="btn btn-sm btn-secondary"
-              onClick={() => set('lines', [...values.lines, emptyLine()])}
-            >
-              {t('invoices.form.addItem')}
-            </button>
-          </div>
           {errors.items && (
             <div className="alert alert-danger" role="alert">
               {errors.items}
             </div>
           )}
-          {values.lines.map((line, index) => {
-            const number = index + 1;
-            return (
-              <fieldset
-                key={line.key}
-                className="form-row mb-2 invoice-form__line"
-                aria-label={t('invoices.form.item', {number})}
-              >
-                <div className="col-md-5 mb-1">
-                  <Select<Option>
-                    isClearable
-                    aria-label={t('invoices.form.product', {number})}
-                    placeholder={t('invoices.form.productPlaceholder')}
-                    noOptionsMessage={() => t('invoices.form.noOptions')}
-                    options={productOptions}
-                    value={
-                      productOptions.find((o) => o.value === line.product_id) ??
-                      null
-                    }
-                    onChange={(option) => pickProduct(line.key, option)}
-                  />
-                  <input
-                    className="form-control mt-1"
-                    aria-label={t('invoices.form.description', {number})}
-                    placeholder={t('invoices.form.descriptionPlaceholder')}
-                    value={line.description}
-                    maxLength={255}
-                    onChange={(e) =>
-                      setLine(line.key, {description: e.target.value})
-                    }
-                  />
-                </div>
-                <div className="col-md-2 mb-1">
-                  <input
-                    className="form-control"
-                    inputMode="numeric"
-                    aria-label={t('invoices.form.quantity', {number})}
-                    value={line.quantity}
-                    onChange={(e) =>
-                      setLine(line.key, {quantity: e.target.value})
-                    }
-                  />
-                </div>
-                <div className="col-md-2 mb-1">
-                  <input
-                    className="form-control"
-                    inputMode="decimal"
-                    aria-label={t('invoices.form.unitPrice', {number})}
-                    value={line.unit_price}
-                    onChange={(e) =>
-                      setLine(line.key, {unit_price: e.target.value})
-                    }
-                  />
-                </div>
-                <div className="col-md-2 mb-1 invoice-form__line-total">
-                  {formatCents(lineCents(line.quantity, line.unit_price))}
-                </div>
-                <div className="col-md-1 mb-1">
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    aria-label={t('invoices.form.remove', {number})}
-                    title={t('invoices.form.remove', {number})}
-                    onClick={() =>
-                      set(
-                        'lines',
-                        values.lines.filter((l) => l.key !== line.key),
-                      )
-                    }
+          <table className="kf-invoice-form__lines">
+            <thead>
+              <tr>
+                <th scope="col">{t('invoices.form.columns.product')}</th>
+                <th scope="col">{t('invoices.form.columns.description')}</th>
+                <th scope="col" className="kf-invoice-form__num">
+                  {t('invoices.form.columns.quantity')}
+                </th>
+                <th scope="col" className="kf-invoice-form__num">
+                  {t('invoices.form.columns.unitPrice')}
+                </th>
+                <th scope="col" className="kf-invoice-form__num">
+                  {t('invoices.form.columns.lineTotal')}
+                </th>
+                <th scope="col">
+                  <span className="sr-only">{t('common.actions')}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {values.lines.map((line, index) => {
+                const number = index + 1;
+                return (
+                  <tr
+                    key={line.key}
+                    aria-label={t('invoices.form.line', {number})}
                   >
-                    <i className="fas fa-times" aria-hidden="true" />
-                  </button>
-                </div>
-              </fieldset>
-            );
-          })}
-          <div className="d-flex justify-content-end mt-3">
-            <div className="text-right invoice-form__totals">
-              <div>
-                <strong>{t('invoices.form.subtotal')}:</strong>{' '}
-                <span data-testid="subtotal">
-                  {formatCents(totals.subtotal)}
-                </span>
-              </div>
-              <div>
-                <strong>
-                  {t('invoices.form.tax', {rate: Number(values.tax_rate)})}:
-                </strong>{' '}
-                <span data-testid="tax">{formatCents(totals.tax)}</span>
-              </div>
-              <div>
-                <strong>{t('invoices.form.total')}:</strong>{' '}
-                <span data-testid="total">{formatCents(totals.total)}</span>
-              </div>
-            </div>
+                    <td data-label={t('invoices.form.columns.product')}>
+                      <Select<Option>
+                        classNamePrefix="kf-select"
+                        isClearable
+                        aria-label={t('invoices.form.product', {number})}
+                        placeholder={t('invoices.form.productPlaceholder')}
+                        noOptionsMessage={() => t('invoices.form.noOptions')}
+                        options={productOptions}
+                        value={
+                          productOptions.find(
+                            (o) => o.value === line.product_id,
+                          ) ?? null
+                        }
+                        onChange={(option) => pickProduct(line.key, option)}
+                      />
+                    </td>
+                    <td data-label={t('invoices.form.columns.description')}>
+                      <input
+                        className="form-control"
+                        aria-label={t('invoices.form.description', {number})}
+                        placeholder={t('invoices.form.descriptionPlaceholder')}
+                        value={line.description}
+                        maxLength={255}
+                        onChange={(e) =>
+                          setLine(line.key, {description: e.target.value})
+                        }
+                      />
+                    </td>
+                    <td
+                      className="kf-invoice-form__num"
+                      data-label={t('invoices.form.columns.quantity')}
+                    >
+                      <input
+                        className="form-control kf-num"
+                        inputMode="numeric"
+                        aria-label={t('invoices.form.quantity', {number})}
+                        value={line.quantity}
+                        onChange={(e) =>
+                          setLine(line.key, {quantity: e.target.value})
+                        }
+                      />
+                    </td>
+                    <td
+                      className="kf-invoice-form__num"
+                      data-label={t('invoices.form.columns.unitPrice')}
+                    >
+                      <input
+                        className="form-control kf-num"
+                        inputMode="decimal"
+                        aria-label={t('invoices.form.unitPrice', {number})}
+                        value={line.unit_price}
+                        onChange={(e) =>
+                          setLine(line.key, {unit_price: e.target.value})
+                        }
+                      />
+                    </td>
+                    <td
+                      className="kf-invoice-form__num kf-invoice-form__line-total"
+                      data-label={t('invoices.form.columns.lineTotal')}
+                    >
+                      <Money
+                        amount={lineCents(line.quantity, line.unit_price) / 100}
+                      />
+                    </td>
+                    <td className="kf-invoice-form__remove">
+                      <Button
+                        variant="ghost"
+                        icon="fa-times"
+                        aria-label={t('invoices.form.remove', {number})}
+                        onClick={() =>
+                          set(
+                            'lines',
+                            values.lines.filter((l) => l.key !== line.key),
+                          )
+                        }
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="kf-invoice-form__line-actions">
+            <Button
+              icon="fa-plus"
+              onClick={() => set('lines', [...values.lines, emptyLine()])}
+            >
+              {t('invoices.form.addLine')}
+            </Button>
+            <AddAllProductsButton
+              stock={products}
+              warehouseName={warehouse?.name ?? ''}
+              lines={values.lines}
+              onChange={(lines) => set('lines', lines)}
+            />
           </div>
-        </div>
+          <dl className="kf-invoice-form__totals">
+            <div>
+              <dt>{t('invoices.form.subtotal')}</dt>
+              <dd data-testid="subtotal">
+                <Money amount={totals.subtotal / 100} />
+              </dd>
+            </div>
+            <div>
+              <dt>{t('invoices.form.tax', {rate: Number(values.tax_rate)})}</dt>
+              <dd data-testid="tax">
+                <Money amount={totals.tax / 100} />
+              </dd>
+            </div>
+            <div className="kf-invoice-form__grand">
+              <dt>{t('invoices.form.total')}</dt>
+              <dd data-testid="total">
+                <Money amount={totals.total / 100} />
+              </dd>
+            </div>
+          </dl>
+        </FormSection>
       </div>
-      <div className="form-row mt-3">
-        <div className="col-md-6 mb-2">
-          <Link to="/admin/invoices" className="btn btn-danger btn-block">
+
+      <ActionBar
+        secondary={
+          <Button variant="ghost" to="/admin/invoices">
             {t('common.cancel')}
-          </Link>
-        </div>
-        <div className="col-md-6 mb-2">
-          <button
-            type="submit"
-            className="btn btn-success btn-block"
-            disabled={busy}
-          >
-            {busy ? t('common.saving') : t('invoices.form.submit')}
-          </button>
-        </div>
-      </div>
-    </form>
+          </Button>
+        }
+        primary={
+          <Button variant="primary" type="submit" loading={busy}>
+            {t('invoices.form.submit')}
+          </Button>
+        }
+      />
+    </FormLayout>
   );
 }

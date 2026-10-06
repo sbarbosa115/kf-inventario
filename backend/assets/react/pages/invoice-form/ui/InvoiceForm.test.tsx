@@ -1,8 +1,9 @@
-import {render, screen} from '@testing-library/react';
+import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {vi} from 'vitest';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {ToastProvider} from '@/shared/ui';
 import {InvoiceFormPage} from './InvoiceFormPage';
 
 const stockRow = (id: number, title: string, price: number | null) => ({
@@ -63,12 +64,14 @@ const base = () => ({
 
 function renderPage() {
   render(
-    <MemoryRouter initialEntries={['/admin/invoices/new']}>
-      <Routes>
-        <Route path="/admin/invoices" element={<p>invoices list</p>} />
-        <Route path="/admin/invoices/new" element={<InvoiceFormPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={['/admin/invoices/new']}>
+        <Routes>
+          <Route path="/admin/invoices" element={<p>invoices list</p>} />
+          <Route path="/admin/invoices/new" element={<InvoiceFormPage />} />
+        </Routes>
+      </MemoryRouter>
+    </ToastProvider>,
   );
 }
 
@@ -80,21 +83,74 @@ const pickProduct = async (row: number, name: string) => {
 };
 
 describe('InvoiceFormPage', () => {
+  it('lays the lines out as a table with a header per column, and an action bar under it', async () => {
+    fakeApi(base());
+    renderPage();
+    await screen.findByLabelText('Invoice number');
+
+    const table = screen.getByRole('table');
+    expect(
+      within(table)
+        .getAllByRole('columnheader')
+        .map((header) => header.textContent),
+    ).toEqual([
+      'Product',
+      'Description',
+      'Qty',
+      'Unit price',
+      'Line total',
+      'Actions',
+    ]);
+    expect(
+      screen.getByRole('heading', {name: 'Customer', level: 2}),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {name: 'Invoice', level: 2}),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', {name: 'Cancel'})).toHaveAttribute(
+      'href',
+      '/admin/invoices',
+    );
+    expect(
+      screen.getByRole('button', {name: 'Create invoice'}),
+    ).toHaveAttribute('type', 'submit');
+  });
+
+  it('shows each line total, the subtotal, the sales tax and the total as money', async () => {
+    fakeApi(base());
+    renderPage();
+    await screen.findByLabelText('Invoice number');
+    await screen.findByText('Add all products from Colombia');
+    await pickProduct(1, 'Tab');
+    await userEvent.clear(screen.getByLabelText('Quantity 1'));
+    await userEvent.type(screen.getByLabelText('Quantity 1'), '40');
+    await userEvent.selectOptions(screen.getByLabelText('Sales tax'), '6%');
+
+    const line = screen.getByRole('row', {name: 'Line 1'});
+    expect(within(line).getByText('$1,000.00')).toBeInTheDocument();
+    expect(screen.getByTestId('subtotal')).toHaveTextContent('$1,000.00');
+    expect(screen.getByTestId('tax')).toHaveTextContent('$60.00');
+    expect(screen.getByTestId('total')).toHaveTextContent('$1,060.00');
+    expect(screen.getByText('Sales tax 6%')).toBeInTheDocument();
+  });
+
   it('offers the next code and one empty item', async () => {
     fakeApi(base());
     renderPage();
 
-    expect(await screen.findByLabelText('Invoice #')).toHaveValue('20260002');
+    expect(await screen.findByLabelText('Invoice number')).toHaveValue(
+      '20260002',
+    );
     expect(screen.getByLabelText('Description 1')).toHaveValue('');
     expect(screen.queryByLabelText('Description 2')).not.toBeInTheDocument();
-    expect(screen.getByTestId('total')).toHaveTextContent('0.00');
+    expect(screen.getByTestId('total')).toHaveTextContent('$0.00');
   });
 
   it('fills the description and the price from the product picked', async () => {
     fakeApi(base());
     renderPage();
-    await screen.findByLabelText('Invoice #');
-    await screen.findByText('Add all products');
+    await screen.findByLabelText('Invoice number');
+    await screen.findByText('Add all products from Colombia');
 
     await pickProduct(1, 'Tab');
 
@@ -105,11 +161,13 @@ describe('InvoiceFormPage', () => {
   it('adds every product of the warehouse that is not on the invoice yet', async () => {
     fakeApi(base());
     renderPage();
-    await screen.findByLabelText('Invoice #');
+    await screen.findByLabelText('Invoice number');
     await pickProduct(1, 'Chair');
 
     await userEvent.click(
-      await screen.findByRole('button', {name: 'Add all products'}),
+      await screen.findByRole('button', {
+        name: 'Add all products from Colombia',
+      }),
     );
 
     expect(screen.getByLabelText('Description 1')).toHaveValue('Chair');
@@ -128,17 +186,17 @@ describe('InvoiceFormPage', () => {
     await userEvent.clear(screen.getByLabelText('Unit price 1'));
     await userEvent.type(screen.getByLabelText('Unit price 1'), '11.11');
 
-    expect(screen.getByTestId('subtotal')).toHaveTextContent('33.33');
-    expect(screen.getByTestId('total')).toHaveTextContent('33.33');
+    expect(screen.getByTestId('subtotal')).toHaveTextContent('$33.33');
+    expect(screen.getByTestId('total')).toHaveTextContent('$33.33');
 
-    await userEvent.selectOptions(screen.getByLabelText('Sale Tax'), '6%');
+    await userEvent.selectOptions(screen.getByLabelText('Sales tax'), '6%');
 
-    expect(screen.getByTestId('tax')).toHaveTextContent('2.00');
-    expect(screen.getByTestId('total')).toHaveTextContent('35.33');
+    expect(screen.getByTestId('tax')).toHaveTextContent('$2.00');
+    expect(screen.getByTestId('total')).toHaveTextContent('$35.33');
 
-    await userEvent.click(screen.getByRole('button', {name: 'Remove item 1'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Remove line 1'}));
 
-    expect(screen.getByTestId('total')).toHaveTextContent('0.00');
+    expect(screen.getByTestId('total')).toHaveTextContent('$0.00');
   });
 
   it('wants at least one item and sends nothing without it', async () => {
@@ -146,7 +204,7 @@ describe('InvoiceFormPage', () => {
     renderPage();
 
     await userEvent.click(
-      await screen.findByRole('button', {name: 'Create Invoice'}),
+      await screen.findByRole('button', {name: 'Create invoice'}),
     );
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -164,16 +222,16 @@ describe('InvoiceFormPage', () => {
     renderPage();
 
     await userEvent.type(
-      await screen.findByLabelText('Customer'),
+      await screen.findByRole('combobox', {name: 'Customer'}),
       'ana{enter}',
     );
 
-    expect(screen.getByLabelText('First Name')).toHaveValue('Ana');
+    expect(screen.getByLabelText('First name')).toHaveValue('Ana');
     expect(screen.getByLabelText('Email')).toHaveValue('ana@kf.test');
     expect(screen.getByLabelText('Address')).toHaveValue('1 Main St');
 
     await userEvent.type(screen.getByLabelText('Description 1'), 'Part');
-    await userEvent.click(screen.getByRole('button', {name: 'Create Invoice'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Create invoice'}));
 
     await screen.findByText('invoices list');
     const sent = api.calls.find((call) => call.method === 'POST')!
@@ -191,19 +249,20 @@ describe('InvoiceFormPage', () => {
     });
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     renderPage();
-    await screen.findByLabelText('Invoice #');
+    await screen.findByLabelText('Invoice number');
     await pickProduct(1, 'Chair');
-    await userEvent.selectOptions(screen.getByLabelText('Sale Tax'), '6%');
+    await userEvent.selectOptions(screen.getByLabelText('Sales tax'), '6%');
     await userEvent.selectOptions(
-      screen.getByLabelText('Payment Method'),
+      screen.getByLabelText('Payment method'),
       'Credit card - Paypal',
     );
     await userEvent.type(screen.getByLabelText('Comments'), 'Paid');
-    await userEvent.click(screen.getByRole('button', {name: 'Add item'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Add line'}));
 
-    await userEvent.click(screen.getByRole('button', {name: 'Create Invoice'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Create invoice'}));
 
     expect(await screen.findByText('invoices list')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Invoice created.');
     expect(open).toHaveBeenCalledWith('/api/v1/invoices/9/pdf', '_blank');
     expect(api.calls.find((call) => call.method === 'POST')!.body).toEqual({
       code: '20260002',
@@ -233,12 +292,12 @@ describe('InvoiceFormPage', () => {
     renderPage();
     await userEvent.type(await screen.findByLabelText('Description 1'), 'Part');
 
-    await userEvent.click(screen.getByRole('button', {name: 'Create Invoice'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Create invoice'}));
 
     expect(
       await screen.findByText('An invoice with this code already exists.'),
     ).toBeInTheDocument();
     expect(open).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', {name: 'Create Invoice'})).toBeEnabled();
+    expect(screen.getByRole('button', {name: 'Create invoice'})).toBeEnabled();
   });
 });

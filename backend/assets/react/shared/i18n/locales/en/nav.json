@@ -1,0 +1,28 @@
+{
+  "skip": "Skip to content",
+  "main": "Main menu",
+  "tabs": "Shortcuts",
+  "menu": "Menu",
+  "closeMenu": "Close the menu",
+  "more": "More",
+  "collapse": "Collapse the menu",
+  "expand": "Expand the menu",
+  "toggle": "Show or hide the menu",
+  "scanShortcut": "Open the reader",
+  "account": "Account",
+  "logout": "Sign out",
+  "sections": {
+    "warehouse": "Warehouse",
+    "sales": "Sales",
+    "admin": "Admin"
+  },
+  "productList": "Products",
+  "productsUpload": "Upload a stock sheet",
+  "barcode": "Scan",
+  "incoming": "Incoming",
+  "warehouses": "Warehouses",
+  "orders": "Orders",
+  "invoices": "Invoices",
+  "customers": "Customers",
+  "users": "Users"
+}

@@ -66,6 +66,15 @@ docker compose exec php php bin/console nelmio:apidoc:dump --format=json > backe
 docker compose exec node npm run -s api:types
 ```
 
+### Design system
+
+The screens are built from one kit, `@/shared/ui`, on design tokens (`shared/ui/styles/tokens.css`, light and dark)
+with Bootstrap 4 underneath: `docs/design/README.md` lists the tokens, which component to use when, the copy rules and
+the English/Spanish glossary; the dev-only page `/admin/_kit` shows every component. The UI is in English and Spanish
+(the top bar's EN/ES, remembered per browser; first visit follows the browser), light, dark or the system's theme, and
+works on a 390 px phone (drawer, bottom tab bar, lists as cards). Money is in US dollars, dates in Bogotá time. The
+camera reads barcodes where the page is served over HTTPS (or `localhost`).
+
 ## API reference
 
 JSON under `/api/v1`, `snake_case`, errors as `{"error": "<code>", "message", "detail"?, "violations"?}`. Every
@@ -191,4 +200,11 @@ The security audit of the restructure (`docs/security/audits/2026-10-05-restruct
   header (set it in cPanel once HTTPS is confirmed): deferred by the user; the other security headers are sent.
 - `master` committed an `APP_SECRET` in `.env.dist`: give production a fresh one in `backend/.env.local` at cutover.
 - The invoice roles are reached by no other role (as in production): an admin sees Invoices only when given them.
-- English only: the i18n layer supports a second locale, none is written.
+- The redesign (`docs/pdr/prd-redesign.md`): PDFs, spreadsheets and emails stay English and keep their look; the
+  Spanish texts are ours (one proofreading pass, no native review); the KF mark is a trace of a 180 px PNG until a vector file arrives;
+  "Sync shop orders" still pulls one of the four WooCommerce shops; the camera works only over HTTPS (or `localhost`),
+  so it is not available on the dev stack opened from a phone by IP, and it was not tried on real phones (the user's
+  decision; the tests use a fake detector); the customers search covers the current page only (the API pages
+  without searching). An order is Sent only when one shipment covers all of it, as before: the shipment that
+  completes a partial order leaves it Partial. `app:smoke:prepare --seed` alone cannot empty a database that holds
+  partial-shipment child orders (a foreign key): reset with `backend/e2e/prepare.sh` (drop, migrate, seed) instead.

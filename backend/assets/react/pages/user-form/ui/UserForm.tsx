@@ -1,8 +1,9 @@
 import {useState, type FormEvent} from 'react';
-import {Link, useNavigate} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {
   createUser,
   emptyUserForm,
+  ROLE_GROUPS,
   updateUser,
   userFormToPayload,
   userToForm,
@@ -13,13 +14,22 @@ import {
   type UserFormValues,
 } from '@/entities/user';
 import {ApiError, failureMessage} from '@/shared/api';
-import {ASSIGNABLE_ROLES} from '@/shared/config';
 import {useTranslation} from '@/shared/i18n';
-import {Field} from '@/shared/ui';
+import {
+  ActionBar,
+  Button,
+  Field,
+  FormLayout,
+  FormSection,
+  PasswordField,
+  useToast,
+} from '@/shared/ui';
+import './user-form.css';
 
 /** The user's fields. Without `user` it creates one; with it, it edits that one (a blank password keeps theirs). */
 export function UserForm({user}: {user?: User}) {
   const {t} = useTranslation();
+  const toast = useToast();
   const navigate = useNavigate();
   const [values, setValues] = useState<UserFormValues>(() =>
     user ? userToForm(user) : emptyUserForm(),
@@ -54,9 +64,8 @@ export function UserForm({user}: {user?: User}) {
       } else {
         await createUser(payload);
       }
-      navigate('/admin/users', {
-        state: {saved: user ? 'updated' : 'created'},
-      });
+      toast.success(t(user ? 'users.updated' : 'users.created'));
+      navigate('/admin/users');
     } catch (error) {
       if (error instanceof ApiError && error.status === 422) {
         setErrors(violationsToErrors(error.body));
@@ -72,88 +81,120 @@ export function UserForm({user}: {user?: User}) {
   };
 
   return (
-    <form onSubmit={submit} noValidate>
+    <FormLayout narrow onSubmit={submit} label={t('users.form.account')}>
       {failure && (
         <div className="alert alert-danger" role="alert">
           {failure}
         </div>
       )}
-      <Field label={t('users.form.name')} error={errors.name}>
-        <input
-          className="form-control"
-          value={values.name}
-          maxLength={255}
-          onChange={(event) => set('name', event.target.value)}
-        />
-      </Field>
-      <Field label={t('users.form.email')} error={errors.email}>
-        <input
-          type="email"
-          className="form-control"
-          value={values.email}
-          maxLength={255}
-          onChange={(event) => set('email', event.target.value)}
-        />
-      </Field>
-      <Field label={t('users.form.username')} error={errors.username}>
-        <input
-          className="form-control"
-          autoComplete="off"
-          value={values.username}
-          maxLength={255}
-          onChange={(event) => set('username', event.target.value)}
-        />
-      </Field>
-      <Field label={t('users.form.password')} error={errors.password}>
-        <input
-          type="password"
-          className="form-control"
-          autoComplete="new-password"
+      <FormSection
+        title={t('users.form.account')}
+        description={t('users.form.accountHint')}
+      >
+        <Field label={t('users.form.name')} error={errors.name}>
+          <input
+            className="form-control"
+            value={values.name}
+            maxLength={255}
+            onChange={(event) => set('name', event.target.value)}
+          />
+        </Field>
+        <Field label={t('users.form.email')} error={errors.email}>
+          <input
+            type="email"
+            className="form-control"
+            value={values.email}
+            maxLength={255}
+            onChange={(event) => set('email', event.target.value)}
+          />
+        </Field>
+        <Field label={t('users.form.username')} error={errors.username}>
+          <input
+            className="form-control"
+            autoComplete="off"
+            value={values.username}
+            maxLength={255}
+            onChange={(event) => set('username', event.target.value)}
+          />
+        </Field>
+        <PasswordField
+          label={t('users.form.password')}
           value={values.password}
-          onChange={(event) => set('password', event.target.value)}
+          onChange={(value) => set('password', value)}
+          autoComplete="new-password"
+          error={errors.password}
         />
-      </Field>
-      {user && (
-        <p className="form-text text-muted small mt-n2 mb-3">
-          {t('users.form.passwordKeep')}
-        </p>
-      )}
-      <fieldset className="form-group">
-        <legend className="col-form-label">{t('users.form.roles')}</legend>
-        {ASSIGNABLE_ROLES.map((role) => (
-          <div className="form-check" key={role}>
-            <input
-              id={`role-${role}`}
-              type="checkbox"
-              className="form-check-input"
-              checked={values.roles.includes(role)}
-              onChange={(event) => toggleRole(role, event.target.checked)}
-            />
-            <label className="form-check-label" htmlFor={`role-${role}`}>
-              {role}
-            </label>
-          </div>
+        {user && (
+          <p className="form-text text-muted small mt-n2 mb-3">
+            {t('users.form.passwordKeep')}
+          </p>
+        )}
+        <Field label={t('users.form.status')} error={errors.enabled}>
+          <select
+            className="form-control"
+            value={values.enabled ? '1' : '0'}
+            onChange={(event) => set('enabled', event.target.value === '1')}
+          >
+            <option value="1">{t('users.form.enabled')}</option>
+            <option value="0">{t('users.form.disabled')}</option>
+          </select>
+        </Field>
+      </FormSection>
+      <FormSection
+        title={t('users.form.roles')}
+        description={t('users.form.rolesHint')}
+      >
+        {ROLE_GROUPS.map((group) => (
+          <fieldset className="kf-role-group" key={group.key}>
+            <legend className="kf-role-group__legend">
+              {t(`roles.groups.${group.key}`)}
+            </legend>
+            {group.key === 'admin' && (
+              <p className="kf-role-group__note">{t('roles.adminNote')}</p>
+            )}
+            {group.roles.map((role) => (
+              <div className="kf-role" key={role}>
+                <input
+                  id={`role-${role}`}
+                  type="checkbox"
+                  className="kf-role__input"
+                  aria-describedby={`role-${role}-description`}
+                  checked={values.roles.includes(role)}
+                  onChange={(event) => toggleRole(role, event.target.checked)}
+                />
+                <div className="kf-role__text">
+                  <label className="kf-role__name" htmlFor={`role-${role}`}>
+                    {t(`roles.names.${role}`)}
+                  </label>
+                  <span
+                    className="kf-role__description"
+                    id={`role-${role}-description`}
+                  >
+                    {t(`roles.descriptions.${role}`)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </fieldset>
         ))}
         {errors.roles && (
-          <div className="text-danger small mt-1">{errors.roles}</div>
+          <div className="text-danger small mt-1" role="alert">
+            {errors.roles}
+          </div>
         )}
-      </fieldset>
-      <Field label={t('users.form.status')} error={errors.enabled}>
-        <select
-          className="form-control"
-          value={values.enabled ? '1' : '0'}
-          onChange={(event) => set('enabled', event.target.value === '1')}
-        >
-          <option value="1">{t('users.form.enabled')}</option>
-          <option value="0">{t('users.form.disabled')}</option>
-        </select>
-      </Field>
-      <button type="submit" className="btn btn-primary mr-2" disabled={busy}>
-        {busy ? t('common.saving') : t('common.save')}
-      </button>
-      <Link to="/admin/users" className="btn btn-secondary">
-        {t('common.cancel')}
-      </Link>
-    </form>
+      </FormSection>
+      <ActionBar
+        secondary={
+          <Button to="/admin/users" variant="ghost">
+            {t('common.cancel')}
+          </Button>
+        }
+        primary={
+          <Button type="submit" variant="primary" loading={busy}>
+            {busy ? t('common.saving') : t('common.save')}
+          </Button>
+        }
+      />
+    </FormLayout>
   );
 }

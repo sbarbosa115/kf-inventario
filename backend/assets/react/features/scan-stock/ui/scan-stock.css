@@ -1,0 +1,203 @@
+/* The scan screen: phone-first, the warehouse and mode on top, the camera and the box, the running list, the footer. */
+.scan-stock {
+  display: grid;
+  /* One column that shrinks to the screen: an auto column grows to its longest line and the phone scrolls sideways. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--kf-space-4);
+  min-width: 0;
+  max-width: var(--kf-form-max);
+}
+
+.scan-stock__intro {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kf-space-2);
+  padding: var(--kf-space-2) var(--kf-space-3);
+  border: 1px solid var(--kf-border);
+  border-left: 3px solid var(--kf-info);
+  border-radius: var(--kf-radius-control);
+  background-color: var(--kf-info-soft);
+  color: var(--kf-text);
+  font-size: var(--kf-text-sm);
+}
+
+.scan-stock__intro > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.scan-stock__intro > .fas {
+  padding-top: 5px;
+  color: var(--kf-info-text);
+}
+
+.scan-stock__step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--kf-space-3);
+  min-width: 0;
+}
+
+.scan-stock__step-title {
+  display: flex;
+  align-items: center;
+  gap: var(--kf-space-2);
+  margin: 0;
+  font-size: var(--kf-text-body);
+  font-weight: 600;
+}
+
+.scan-stock__step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--kf-radius-pill);
+  background-color: var(--kf-accent-soft);
+  color: var(--kf-accent-hover);
+  font-size: var(--kf-text-label);
+  font-weight: 700;
+}
+
+.scan-stock__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kf-space-3);
+  min-width: 0;
+}
+
+.scan-stock__choices > * {
+  min-width: 0;
+}
+
+/* The mode: a large segmented control; Remove takes the danger colour when it is the mode. */
+.scan-mode .scan-mode__option {
+  min-height: 44px;
+  padding: 0 var(--kf-space-4);
+  font-size: var(--kf-text-body);
+}
+
+.scan-mode .scan-mode__option--remove[aria-checked='true'] {
+  background-color: var(--kf-danger-soft);
+  color: var(--kf-danger-text);
+  box-shadow: 0 0 0 1px var(--kf-danger);
+}
+
+.scan-stock__failure {
+  margin: 0;
+}
+
+.scan-stock__empty {
+  margin: 0;
+  padding: var(--kf-space-5) var(--kf-space-3);
+  border: 1px dashed var(--kf-border-strong);
+  border-radius: var(--kf-radius-card);
+  color: var(--kf-text-muted);
+  text-align: center;
+}
+
+.scan-stock__lines {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--kf-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scan-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kf-space-2) var(--kf-space-3);
+  min-width: 0;
+  padding: var(--kf-space-2) var(--kf-space-3);
+  border: 1px solid var(--kf-border);
+  border-radius: var(--kf-radius-card);
+  background-color: var(--kf-surface);
+}
+
+.scan-line.is-flashing {
+  animation: scan-line-flash 600ms var(--kf-ease, ease-out);
+}
+
+@keyframes scan-line-flash {
+  from {
+    background-color: var(--kf-accent-soft);
+  }
+
+  to {
+    background-color: var(--kf-surface);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-line.is-flashing {
+    animation: none;
+    background-color: var(--kf-accent-soft);
+  }
+}
+
+.scan-line--missing {
+  border-color: var(--kf-danger);
+}
+
+.scan-line__what {
+  display: grid;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.scan-line__code {
+  font-family: var(--kf-font-mono);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.scan-line__title,
+.scan-line__note {
+  color: var(--kf-text-muted);
+  font-size: var(--kf-text-sm);
+  overflow-wrap: anywhere;
+}
+
+.scan-line__missing {
+  color: var(--kf-danger-text);
+  font-size: var(--kf-text-sm);
+  font-weight: 600;
+}
+
+.scan-line__count {
+  display: flex;
+  align-items: center;
+  gap: var(--kf-space-1);
+}
+
+.scan-line__quantity {
+  width: 4.5rem;
+  height: 44px;
+  font-family: var(--kf-font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.scan-stock__totals {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.scan-stock__left-out,
+.scan-stock__invalid {
+  display: block;
+  font-size: var(--kf-text-sm);
+}
+
+.scan-stock__left-out {
+  color: var(--kf-text-muted);
+}
+
+.scan-stock__invalid {
+  color: var(--kf-danger-text);
+}

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="KF">
+  <!-- The KF mark, traced from docs/design/brand/kf-logo-180.png: the dark ring, the olive disc, the white italic KF.
+       Flat (no gloss). A true vector from the owner replaces this trace. -->
+  <circle cx="50" cy="50" r="50" fill="#23241c"/>
+  <circle cx="50" cy="50" r="42" fill="#5d7b2b"/>
+  <g fill="#ffffff" transform="translate(50 50) skewX(-14) scale(0.9) translate(-50 -50)">
+    <path d="M6 29h14v16l15-16h17L34 48.5 52 71H35L20 53v18H6z"/>
+    <path d="M55 29h39l-1.5 11H69v6h21l-1.5 10H69v15H55z"/>
+  </g>
+</svg>

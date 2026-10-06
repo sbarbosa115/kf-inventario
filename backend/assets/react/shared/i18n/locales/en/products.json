@@ -1,0 +1,75 @@
+{
+  "title": "Products",
+  "create": "Create product",
+  "noWarehouses": "There are no warehouses yet. Add one before managing stock.",
+  "empty": "This warehouse has no products in stock. Upload a stock sheet or move products here to add some.",
+  "selected_one": "{{count}} product selected",
+  "selected_other": "{{count}} products selected",
+  "search": "Search products",
+  "filters": {
+    "label": "Stock",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock"
+  },
+  "kpi": {
+    "products": "Products",
+    "units": "Units",
+    "value": "Stock value"
+  },
+  "columns": {
+    "code": "Code",
+    "title": "Title",
+    "detail": "Detail",
+    "quantity": "Quantity",
+    "price": "Price"
+  },
+  "actions": {
+    "edit": "Edit"
+  },
+  "moved": "Moved to {{warehouse}}. The products arrive there as incoming.",
+  "notFound": "This product no longer exists.",
+  "backToList": "Back to the products",
+  "move": {
+    "open": "Move to warehouse",
+    "title": "Move to warehouse",
+    "summary": "From {{source}}",
+    "destination": "Destination warehouse",
+    "noDestination": "There is no other warehouse to move products to.",
+    "quantityOf": "Quantity of {{code}}",
+    "noneAvailable": "Product quantity is 0",
+    "submit": "Move",
+    "moving": "Moving",
+    "nothingToMove": "None of the selected products has stock to move."
+  },
+  "sheet": {
+    "download": "Download stock sheet"
+  },
+  "errors": {
+    "insufficient_stock": "Only {{available}} of {{code}} are available.",
+    "same_warehouse": "Source and destination warehouse cannot be the same.",
+    "product_not_found": "One of the products no longer exists. Reload the list and try again.",
+    "stock_not_found": "One of the products is no longer in this warehouse. Reload the list and try again.",
+    "warehouse_not_found": "That warehouse no longer exists. Reload the page and try again."
+  },
+  "form": {
+    "newTitle": "Create product",
+    "editTitle": "Edit product",
+    "section": "Product",
+    "sectionHelp": "What the warehouse and the invoices call it.",
+    "status": "Status",
+    "statusHelp": "An inactive product stays on file but is no longer offered.",
+    "active": "Active",
+    "code": "Code",
+    "title": "Title",
+    "detail": "Detail",
+    "price": "Price",
+    "saved": "Product saved",
+    "nextUpload": "Or add many at once from a sheet.",
+    "scanStock": "Scan stock",
+    "uploadSheet": "Upload a stock sheet",
+    "required": "This value should not be blank.",
+    "notEqual": "This value should not be equal to \"{{value}}\".",
+    "invalidNumber": "This value should be a valid number.",
+    "positiveOrZero": "This value should be either positive or zero."
+  }
+}

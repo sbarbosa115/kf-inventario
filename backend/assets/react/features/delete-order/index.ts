@@ -1,1 +1,1 @@
-export {DeleteOrderButton} from './ui/DeleteOrderButton';
+export {DeleteOrderConfirm} from './ui/DeleteOrderConfirm';

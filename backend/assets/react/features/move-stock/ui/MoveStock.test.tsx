@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import type {StockItem} from '@/entities/product';
 import type {Warehouse} from '@/entities/warehouse';
 import {fakeApi} from '@/shared/test/fakeApi';
-import {MoveStockModal} from './MoveStockModal';
+import {MoveStockPanel} from './MoveStockPanel';
 
 const COLOMBIA: Warehouse = {id: 1, name: 'Colombia', urls: []};
 const USA: Warehouse = {id: 2, name: 'Usa', urls: []};
@@ -31,7 +31,7 @@ function renderModal(
   const onMoved = vi.fn();
   const onClose = vi.fn();
   render(
-    <MoveStockModal
+    <MoveStockPanel
       rows={rows}
       source={COLOMBIA}
       warehouses={warehouses}
@@ -43,6 +43,20 @@ function renderModal(
 }
 
 describe('MoveStock', () => {
+  it('is a slide-over named Move to warehouse that says where the stock leaves from', () => {
+    fakeApi({});
+    renderModal([stock(1, 'KF-01', 4)]);
+
+    const panel = screen.getByRole('dialog', {name: 'Move to warehouse'});
+    expect(within(panel).getByText('From Colombia')).toBeInTheDocument();
+    expect(within(panel).getByRole('button', {name: 'Move'})).toHaveClass(
+      'kf-btn--primary',
+    );
+    expect(within(panel).getByRole('button', {name: 'Cancel'})).toHaveClass(
+      'kf-btn--secondary',
+    );
+  });
+
   it('offers from 1 to the quantity available for each selected product, starting at 1', () => {
     fakeApi({});
     renderModal([stock(1, 'KF-01', 4), stock(2, 'KF-02', 0)]);
@@ -65,7 +79,7 @@ describe('MoveStock', () => {
     renderModal([stock(1, 'KF-01', 4)]);
 
     const destination = screen.getByRole('combobox', {
-      name: 'Destination Warehouse',
+      name: 'Destination warehouse',
     });
     expect(
       within(destination)
@@ -84,7 +98,7 @@ describe('MoveStock', () => {
     ]);
 
     await userEvent.selectOptions(
-      screen.getByRole('combobox', {name: 'Destination Warehouse'}),
+      screen.getByRole('combobox', {name: 'Destination warehouse'}),
       'España',
     );
     await userEvent.selectOptions(
@@ -149,13 +163,14 @@ describe('MoveStock', () => {
     expect(screen.getByRole('button', {name: 'Move'})).toBeDisabled();
   });
 
-  it('closes without moving anything', async () => {
+  it('closes without moving anything, from Cancel and from the cross', async () => {
     const api = fakeApi({});
     const {onClose} = renderModal([stock(1, 'KF-01', 4)]);
 
-    await userEvent.click(screen.getAllByRole('button', {name: 'Close'})[1]!);
+    await userEvent.click(screen.getByRole('button', {name: 'Cancel'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Close'}));
 
-    expect(onClose).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(2);
     expect(api.calls).toHaveLength(0);
   });
 });

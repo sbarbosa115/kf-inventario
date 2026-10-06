@@ -1,29 +1,14 @@
 import type {Invoice} from '../api/invoiceApi';
 
-const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-/** "05 Oct 2026" from an ISO 8601 date: the day the server wrote, whatever the browser's time zone. */
-export function formatInvoiceDate(iso: string | null | undefined): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '');
-  if (!match) return '';
-  return `${match[3]} ${MONTHS[Number(match[2]) - 1] ?? ''} ${match[1]}`;
+/** The day (YYYY-MM-DD) the server wrote an ISO 8601 date on, whatever the browser's time zone; '' when it is none. */
+export function invoiceDay(iso: string | null | undefined): string {
+  return /^\d{4}-\d{2}-\d{2}/.exec(iso ?? '')?.[0] ?? '';
 }
 
-/** "First Last [email]", as the legacy list showed it; null when the invoice has no customer. */
-export function customerLabel(customer: Invoice['customer']): string | null {
+/** "First Last"; null when the invoice has no customer (a point-of-sale invoice) or the customer has no name. */
+export function customerName(customer: Invoice['customer']): string | null {
   if (!customer) return null;
-  return `${customer.first_name ?? ''} ${customer.last_name ?? ''} [${customer.email ?? ''}]`;
+  const name =
+    `${customer.first_name ?? ''} ${customer.last_name ?? ''}`.trim();
+  return name === '' ? null : name;
 }

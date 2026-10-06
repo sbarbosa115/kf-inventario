@@ -8,6 +8,7 @@ import {
 } from '@/entities/customer';
 import {LocationManager, type Country} from '@/entities/location';
 import {useTranslation} from '@/shared/i18n';
+import {Button} from '@/shared/ui';
 import './address-form.css';
 
 const NO_PLACE: PlaceValue = {id: null, name: ''};
@@ -26,7 +27,8 @@ const isValidNewOption = (
 /**
  * A customer's addresses: street, zip code and the country → state → city selects, each of which also takes a name
  * that does not exist yet (it goes up with id null and is created when the customer is saved). The first address
- * cannot be removed; with none, the widget offers to add one. Used by the customer form and the order form.
+ * cannot be removed; each address is a card (its number and, when it has one, its type), and "Add address" sits
+ * under the cards. With none, the widget offers to add one. Used by the customer form and the order form.
  */
 export function AddressForm({
   addresses,
@@ -61,15 +63,12 @@ export function AddressForm({
           manager={manager}
           showErrors={showErrors}
           onChange={(changes) => update(index, changes)}
-          onAdd={add}
           onRemove={index === 0 ? undefined : () => remove(index)}
         />
       ))}
-      {addresses.length === 0 && (
-        <button type="button" className="btn btn-success" onClick={add}>
-          {t('address.add')} <i className="fas fa-plus" aria-hidden="true" />
-        </button>
-      )}
+      <Button icon="fa-plus" onClick={add}>
+        {t('address.add')}
+      </Button>
     </div>
   );
 }
@@ -80,7 +79,6 @@ function AddressRow({
   manager,
   showErrors,
   onChange,
-  onAdd,
   onRemove,
 }: {
   number: number;
@@ -88,7 +86,6 @@ function AddressRow({
   manager: LocationManager;
   showErrors: boolean;
   onChange: (changes: Partial<AddressValue>) => void;
-  onAdd: () => void;
   onRemove?: () => void;
 }) {
   const {t} = useTranslation();
@@ -110,60 +107,53 @@ function AddressRow({
     getNewOptionData: newOption,
     formatCreateLabel: (name: string) => t('address.create', {name}),
     noOptionsMessage: () => t('address.noOptions'),
-    classNamePrefix: 'address-select',
+    classNamePrefix: 'kf-select',
+    placeholder: '',
   };
 
+  const type =
+    address.address_type === 1
+      ? t('address.type.billing')
+      : address.address_type === 2
+        ? t('address.type.shipping')
+        : null;
+  const heading = type
+    ? t('address.groupTyped', {number, type})
+    : t('address.group', {number});
+
   return (
-    <fieldset
-      className="address-form__row"
-      aria-label={t('address.group', {number})}
-    >
-      <hr />
+    <fieldset className="address-form__card" aria-label={heading}>
+      <div className="address-form__head">
+        <span className="address-form__title" aria-hidden="true">
+          {heading}
+        </span>
+        {onRemove && (
+          <Button variant="ghost" size="sm" icon="fa-times" onClick={onRemove}>
+            {t('address.remove')}
+          </Button>
+        )}
+      </div>
       <div className="form-row">
-        <div className="col-md-1 text-center address-form__buttons">
-          <button
-            type="button"
-            className="btn btn-success"
-            onClick={onAdd}
-            aria-label={t('address.add')}
-            title={t('address.add')}
-          >
-            <i className="fas fa-plus" aria-hidden="true" />
-          </button>{' '}
-          {onRemove && (
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={onRemove}
-              aria-label={t('address.remove')}
-              title={t('address.remove')}
-            >
-              <i className="fas fa-minus-circle" aria-hidden="true" />
-            </button>
-          )}
-        </div>
-        <div className="form-group col-md-5">
+        <div className="form-group col-md-8">
           <label htmlFor={`${id}-address`}>{t('address.address')}</label>
           <input
             id={`${id}-address`}
             className={`form-control${showErrors && address.address.trim() === '' ? ' is-invalid' : ''}`}
             value={address.address}
             maxLength={255}
-            placeholder={t('address.address')}
             onChange={(event) => onChange({address: event.target.value})}
           />
           {showErrors && address.address.trim() === '' && (
             <div className="invalid-feedback">{required}</div>
           )}
         </div>
-        <div className="form-group col-md-6">
+        <div className="form-group col-md-4">
           <label htmlFor={`${id}-zip`}>{t('address.zipCode')}</label>
           <input
             id={`${id}-zip`}
             className={`form-control${showErrors && address.zip_code.trim() === '' ? ' is-invalid' : ''}`}
             value={address.zip_code}
             maxLength={255}
-            placeholder={t('address.zipCode')}
             onChange={(event) => onChange({zip_code: event.target.value})}
           />
           {showErrors && address.zip_code.trim() === '' && (
@@ -172,13 +162,11 @@ function AddressRow({
         </div>
       </div>
       <div className="form-row">
-        <div className="col-md-1" />
-        <div className="form-group col-md-5">
+        <div className="form-group col-md-4">
           <label htmlFor={`${id}-country`}>{t('address.country')}</label>
           <CreatableSelect<PlaceValue>
             {...common}
             inputId={`${id}-country`}
-            placeholder={t('address.country')}
             options={manager.countries()}
             value={selected(address.country)}
             onChange={(option) =>
@@ -191,12 +179,11 @@ function AddressRow({
             }
           />
         </div>
-        <div className="form-group col-md-6">
+        <div className="form-group col-md-4">
           <label htmlFor={`${id}-state`}>{t('address.state')}</label>
           <CreatableSelect<PlaceValue>
             {...common}
             inputId={`${id}-state`}
-            placeholder={t('address.state')}
             options={manager.statesByCountryId(address.country.id)}
             value={selected(address.state)}
             onChange={(option) =>
@@ -208,15 +195,11 @@ function AddressRow({
             }
           />
         </div>
-      </div>
-      <div className="form-row">
-        <div className="col-md-1" />
-        <div className="form-group col-md-5">
+        <div className="form-group col-md-4">
           <label htmlFor={`${id}-city`}>{t('address.city')}</label>
           <CreatableSelect<PlaceValue>
             {...common}
             inputId={`${id}-city`}
-            placeholder={t('address.city')}
             options={manager.citiesByState(address.state.id)}
             value={selected(address.city)}
             onChange={(option) =>

@@ -1,0 +1,21 @@
+/* The status badge that opens the status menu: the badge itself is the button, a chevron says it opens. */
+.kf-status-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kf-space-1);
+  min-height: var(--kf-target);
+  padding: 0 var(--kf-space-1);
+  border: 0;
+  border-radius: var(--kf-radius-control);
+  background: transparent;
+  color: var(--kf-text-muted);
+  cursor: pointer;
+}
+
+.kf-status-menu:hover {
+  background-color: var(--kf-surface-sunken);
+}
+
+.kf-status-menu__chevron {
+  font-size: var(--kf-text-label);
+}
