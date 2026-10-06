@@ -739,14 +739,16 @@ never runs the whole suite (the coordinator runs it once at the barrier).
    `backend/.env.local` (optional; they are no longer read once a connection exists / the switch is off).
 9. Settings › Analytics: paste the GA4 and Clarity IDs. Settings › Quick phrases: add the office's phrases.
 
-## Open questions for the user (what the code and the answers cannot settle)
+## Open questions for the user
 
-1. **WooCommerce version** of the four shops: `modified_after` needs ≥ 5.8; otherwise the pull uses the 30-day
-   window every time (works, slower). Can the shops be checked (WooCommerce › Status)?
-2. **Shop notes:** should the shop's notes imported into the timeline be *customer notes only* (the default built
-   here) or every note WooCommerce records (payments, status changes — noisy)?
-3. **Retention** of failed-delivery bodies (customer data): 90 days by default; a different number?
-4. **Analytics identity:** send a hashed user id to GA4/Clarity (per-person sessions) or nothing (default: nothing).
+None left. The four questions the plan raised were answered on 2026-10-06:
+
+1. **WooCommerce version:** all four shops run 5.8 or newer, so the pull uses the `modified_after` cursor. The
+   30-day window stays only for a connection's first pull (no cursor yet).
+2. **Shop notes in the timeline:** customer notes only (the checkout note and notes sent to the customer); system
+   notes (payments, status changes) are not imported.
+3. **Failed-delivery retention:** 90 days, then purged by the pull command.
+4. **Analytics identity:** anonymous; no user id, hashed or not, is sent to GA4 or Clarity.
 
 ## Acceptance
 
