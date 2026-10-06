@@ -206,4 +206,5 @@ The security audit of the restructure (`docs/security/audits/2026-10-05-restruct
   so it is not available on the dev stack opened from a phone by IP, and it was not tried on real phones (the user's
   decision; the tests use a fake detector); the customers search covers the current page only (the API pages
   without searching). An order is Sent only when one shipment covers all of it, as before: the shipment that
-  completes a partial order leaves it Partial.
+  completes a partial order leaves it Partial. `app:smoke:prepare --seed` alone cannot empty a database that holds
+  partial-shipment child orders (a foreign key): reset with `backend/e2e/prepare.sh` (drop, migrate, seed) instead.
