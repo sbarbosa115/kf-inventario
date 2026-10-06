@@ -187,6 +187,11 @@ else
     [[ -d "$BACKEND/vendor" ]] || fail "backend/vendor/ is missing and Composer is not available: upload vendor/ built with PHP 8.4, or install Composer."
 fi
 
+# Symfony reads backend/.env and backend/.env.local only through symfony/dotenv. Without it nothing in them is
+# loaded, and Doctrine falls back to root@localhost with no password ("Access denied for user 'root'@'localhost'").
+[[ -f "$BACKEND/vendor/symfony/dotenv/Dotenv.php" ]] || fail "backend/vendor has no symfony/dotenv, so backend/.env.local would not be read: run composer install again (symfony/dotenv is a production dependency)."
+[[ -f "$BACKEND/.env" ]] || fail "backend/.env is missing: it is committed (local defaults that .env.local overrides); restore it with git checkout -- backend/.env."
+
 step "Production cache"
 # Before the migrations, not after: right after a pull, var/cache/prod still holds the previous version's
 # container, and in prod Symfony trusts it without checking. A migration check booting that stale container can
