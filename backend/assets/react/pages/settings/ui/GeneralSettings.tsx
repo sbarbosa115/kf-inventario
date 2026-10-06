@@ -1,51 +1,19 @@
-import {useState} from 'react';
-import {
-  getEmailSettings,
-  getWebhookSettings,
-  saveWebhookSettings,
-  type WebhookSettings,
-} from '@/entities/settings';
-import {failureMessage} from '@/shared/api';
+import {getEmailSettings, getWebhookSettings} from '@/entities/settings';
 import {useTranslation} from '@/shared/i18n';
 import {useFormat, useLoad} from '@/shared/lib';
-import {
-  Button,
-  ConfirmModal,
-  ErrorState,
-  Skeleton,
-  StatusBadge,
-  useToast,
-} from '@/shared/ui';
+import {ErrorState, Skeleton, StatusBadge} from '@/shared/ui';
 
 /**
- * Settings › General: facts about this installation (the time zone, where email leaves from) and the switch of the
- * legacy webhook URL, with what reached it since it was turned off (docs/pdr/prd-shops-settings.md, Decisions 8).
+ * Settings › General: facts about this installation (the time zone, where email leaves from) and the old webhook URL,
+ * retired (a 410 tombstone since the legacy webhook was removed: docs/pdr/prd-shops-settings.md, "Decision (user,
+ * 2026-10-06)"), with what still reached it since the deploy — any hit is a shop not re-pointed.
  */
 export function GeneralSettings() {
   const {t} = useTranslation();
   const {dateTime} = useFormat();
-  const toast = useToast();
   const email = useLoad(getEmailSettings, []);
   const webhooks = useLoad(getWebhookSettings, []);
-  const [saved, setSaved] = useState<WebhookSettings | null>(null);
-  const [confirming, setConfirming] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const legacy = saved ?? webhooks.data;
-
-  const save = async (enabled: boolean) => {
-    setBusy(true);
-    try {
-      setSaved(await saveWebhookSettings(enabled));
-      toast.success(
-        t(enabled ? 'settings.general.turnedOn' : 'settings.general.turnedOff'),
-      );
-    } catch (error) {
-      toast.error(failureMessage(error, t));
-    } finally {
-      setBusy(false);
-      setConfirming(false);
-    }
-  };
+  const legacy = webhooks.data;
 
   return (
     <div className="kf-settings__general">
@@ -91,56 +59,22 @@ export function GeneralSettings() {
         ) : (
           <div className="kf-settings__legacy">
             <p className="kf-settings__legacy-state">
-              <StatusBadge tone={legacy.legacy_enabled ? 'accent' : 'neutral'}>
-                {legacy.legacy_enabled
-                  ? t('settings.general.on')
-                  : t('settings.general.off')}
+              <StatusBadge tone="neutral">
+                {t('settings.general.retired')}
               </StatusBadge>{' '}
-              {t(
-                legacy.legacy_enabled
-                  ? 'settings.general.legacyOn'
-                  : 'settings.general.legacyOff',
-              )}
+              {t('settings.general.legacyRetired')}
             </p>
-            {!legacy.legacy_enabled && (
-              <p className="kf-settings__muted">
-                {legacy.legacy_hits_since > 0
-                  ? t('settings.general.legacyHits', {
-                      count: legacy.legacy_hits_since,
-                      date: dateTime(legacy.legacy_last_hit_at),
-                    })
-                  : t('settings.general.legacyNoHits')}
-              </p>
-            )}
-            {legacy.legacy_enabled ? (
-              <Button
-                variant="danger"
-                icon="fa-power-off"
-                loading={busy}
-                onClick={() => setConfirming(true)}
-              >
-                {t('settings.general.turnOff')}
-              </Button>
-            ) : (
-              <Button loading={busy} onClick={() => save(true)}>
-                {t('settings.general.turnOn')}
-              </Button>
-            )}
+            <p className="kf-settings__muted">
+              {legacy.legacy_hits > 0
+                ? t('settings.general.legacyHits', {
+                    count: legacy.legacy_hits,
+                    date: dateTime(legacy.legacy_last_hit_at),
+                  })
+                : t('settings.general.legacyNoHits')}
+            </p>
           </div>
         )}
       </section>
-      {confirming && (
-        <ConfirmModal
-          title={t('settings.general.confirmOffTitle')}
-          confirmLabel={t('settings.general.turnOff')}
-          danger
-          busy={busy}
-          onConfirm={() => save(false)}
-          onCancel={() => setConfirming(false)}
-        >
-          {t('settings.general.confirmOffBody')}
-        </ConfirmModal>
-      )}
     </div>
   );
 }

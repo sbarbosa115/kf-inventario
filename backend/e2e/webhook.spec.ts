@@ -3,9 +3,9 @@ import {ADMIN, expect, test} from './support/test';
 import {emailCount, emailTo} from './support/mail';
 
 /**
- * 9 WooCommerce webhook (docs/tests/ui-regression.md, HOOK-01 – 06): what a shop posts to the legacy, public URL (the
- * fixtures' warehouse 1, Colombia, receives https://colombia.test's orders and prints them) and to a connection's own
- * URL (the seeded "Fake shop" connection: Colombia, prints its orders; src/DataFixtures/ShopFixtures.php).
+ * 9 WooCommerce webhook (docs/tests/ui-regression.md, HOOK-01 – 05): the old, public URL is a tombstone (410, nothing
+ * placed, the hit counted: the legacy webhook was removed on 2026-10-06), and a shop posts to its connection's own URL
+ * (the seeded "Fake shop" connection: Colombia, prints its orders; src/DataFixtures/ShopFixtures.php).
  */
 const WEBHOOK = '/admin/order/1H39j0jpQPsWL958v9R4';
 const PRINTER = 'printer@kf.local';
@@ -40,66 +40,28 @@ function shopOrder(id: number): Record<string, unknown> {
 }
 
 test.describe('9 WooCommerce webhook', () => {
-  test('HOOK-01 · a shop order lands in its warehouse with both addresses and is emailed to the printer', async ({
+  test('HOOK-01 · the old webhook URL answers 410 to everything and places nothing', async ({
     request,
     signedInAs,
   }) => {
     const code = 900000 + Math.floor(Math.random() * 99999);
-    const since = new Date();
-
-    const answer = await request.post(WEBHOOK, {
-      data: shopOrder(code),
-      headers: {'X-WC-Webhook-Source': 'https://colombia.test'},
-    });
-
-    expect(answer.status()).toBe(200);
-    expect(await answer.json()).toEqual({status: true});
-    const admin = await signedInAs(ADMIN);
-    const orders = (
-      (await (
-        await admin.request.get(
-          `/api/v1/orders?warehouse_id=1&filter[code]=${code}`,
-        )
-      ).json()) as {items: {id: number; code: string}[]}
-    ).items;
-    const placed = orders.find((order) => order.code === String(code));
-    expect(placed, 'the order is in warehouse 1').toBeDefined();
-    const detail = (await (
-      await admin.request.get(`/api/v1/orders/${placed?.id}`)
-    ).json()) as {
-      customer: {addresses: {address_type: number}[]};
-      products: {product: {code: string}; quantity: number}[];
-    };
-    expect(detail.customer.addresses.map((a) => a.address_type)).toEqual([
-      1, 2,
-    ]);
-    expect(
-      detail.products.map((line) => [line.product.code, line.quantity]),
-    ).toEqual([
-      ['KF-01', 2],
-      ['KF-02', 1],
-    ]);
-    const email = await emailTo(request, PRINTER, {
-      subject: new RegExp(`Order #${code} was created`),
-      since,
-    });
-    expect(email.to).toEqual([PRINTER]);
-  });
-
-  test('HOOK-02 · an unknown shop is answered ok and nothing is placed or emailed', async ({
-    request,
-    signedInAs,
-  }) => {
-    const code = 800000 + Math.floor(Math.random() * 99999);
     const emailsBefore = await emailCount(request, PRINTER);
 
-    const answer = await request.post(WEBHOOK, {
-      data: shopOrder(code),
-      headers: {'X-WC-Webhook-Source': 'https://unknown-shop.test'},
-    });
+    // A source the removed import matched (warehouse 1's `urls`) and the Fake shop's own site: neither is imported.
+    for (const source of ['https://colombia.test', 'http://nginx/_fake-shop']) {
+      const answer = await request.post(WEBHOOK, {
+        data: shopOrder(code),
+        headers: {'X-WC-Webhook-Source': source},
+      });
+      expect(answer.status()).toBe(410);
+      expect(await answer.json()).toEqual({
+        status: false,
+        error: 'webhook_moved',
+      });
+    }
+    const ping = await request.get(WEBHOOK);
+    expect(ping.status(), 'GET too, public').toBe(410);
 
-    expect(answer.status()).toBe(200);
-    expect(await answer.json()).toEqual({status: true});
     const admin = await signedInAs(ADMIN);
     for (const warehouse of [1, 2, 3]) {
       const orders = (
@@ -112,6 +74,39 @@ test.describe('9 WooCommerce webhook', () => {
       expect(orders.map((order) => order.code)).not.toContain(String(code));
     }
     expect(await emailCount(request, PRINTER)).toBe(emailsBefore);
+  });
+
+  test('HOOK-02 · a hit on the old URL is counted and shown in Settings', async ({
+    request,
+    signedInAs,
+  }) => {
+    const admin = await signedInAs(ADMIN);
+    const before = (await (
+      await admin.request.get('/api/v1/settings/webhooks')
+    ).json()) as {legacy_hits: number};
+
+    await request.post(WEBHOOK, {
+      data: shopOrder(800000 + Math.floor(Math.random() * 99999)),
+      headers: {'X-WC-Webhook-Source': 'https://colombia.test'},
+    });
+
+    const after = (await (
+      await admin.request.get('/api/v1/settings/webhooks')
+    ).json()) as {legacy_hits: number; legacy_last_hit_at: string | null};
+    expect(after.legacy_hits).toBe(before.legacy_hits + 1);
+    expect(after.legacy_last_hit_at).not.toBeNull();
+    await admin.goto('/admin/settings');
+    await expect(
+      admin.getByText(
+        new RegExp(
+          `^${after.legacy_hits} deliver(y|ies) reached it since the deploy`,
+        ),
+      ),
+    ).toBeVisible();
+    await admin.goto('/admin/settings/shops');
+    await expect(admin.getByRole('alert')).toContainText(
+      `The old webhook URL received ${after.legacy_hits} deliver`,
+    );
   });
 });
 
@@ -183,6 +178,22 @@ test.describe('9 WooCommerce webhook · connections', () => {
     const placed = orders.find((order) => order.code === String(code));
     expect(placed, "in the connection's warehouse, Colombia").toBeDefined();
     expect(placed?.shop?.name, 'the order names its shop').toBe('Fake shop');
+    const detail = (await (
+      await admin.request.get(`/api/v1/orders/${placed?.id}`)
+    ).json()) as {
+      customer: {addresses: {address_type: number}[]};
+      products: {product: {code: string}; quantity: number}[];
+    };
+    expect(
+      detail.customer.addresses.map((a) => a.address_type),
+      'billing and shipping',
+    ).toEqual([1, 2]);
+    expect(
+      detail.products.map((line) => [line.product.code, line.quantity]),
+    ).toEqual([
+      ['KF-01', 2],
+      ['KF-02', 1],
+    ]);
     const shops = (await (
       await admin.request.get('/api/v1/shops')
     ).json()) as Shop[];
@@ -280,41 +291,5 @@ test.describe('9 WooCommerce webhook · connections', () => {
     const placed = (await retried.json()) as Delivery;
     expect(placed.status).toBe('placed');
     expect(placed.order?.code).toBe(String(code));
-  });
-
-  test('HOOK-06 · the legacy URL counts its hits; turned off it answers 410', async ({
-    request,
-    signedInAs,
-  }) => {
-    const admin = await signedInAs(ADMIN);
-    try {
-      expect(
-        (
-          await admin.request.put('/api/v1/settings/webhooks', {
-            data: {legacy_enabled: false},
-          })
-        ).status(),
-      ).toBe(200);
-
-      const answer = await request.post(WEBHOOK, {
-        data: shopOrder(400000 + Math.floor(Math.random() * 99999)),
-        headers: {'X-WC-Webhook-Source': 'https://colombia.test'},
-      });
-
-      expect(answer.status()).toBe(410);
-      expect(await answer.json()).toEqual({
-        status: false,
-        error: 'webhook_moved',
-      });
-      const settings = (await (
-        await admin.request.get('/api/v1/settings/webhooks')
-      ).json()) as {legacy_hits_since: number; legacy_last_hit_at: string};
-      expect(settings.legacy_hits_since).toBe(1);
-      expect(settings.legacy_last_hit_at).not.toBeNull();
-    } finally {
-      await admin.request.put('/api/v1/settings/webhooks', {
-        data: {legacy_enabled: true},
-      });
-    }
   });
 });

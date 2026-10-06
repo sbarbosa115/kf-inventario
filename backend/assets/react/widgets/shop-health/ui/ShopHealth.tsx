@@ -23,7 +23,7 @@ function IssueLine({issue}: {issue: ShopIssue}) {
 /**
  * The shops' warning line above the orders (ROLE_ADMIN reads the connections; docs/pdr/prd-shops-settings.md,
  * "Screen proposals" 3): an active connection with orders it could not place, updates that did not reach the shop or
- * a failure newer than its last success, and the old webhook URL reached after it was turned off. One problem is one
+ * a failure newer than its last success, and the old webhook URL (a 410 tombstone) still reached. One problem is one
  * line with its "Fix in Settings" link; several fold into one line that opens. Nothing at all while every shop is
  * healthy, or when the connections cannot be read (the Orders page is not the place for that error).
  */

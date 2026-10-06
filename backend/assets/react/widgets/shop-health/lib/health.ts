@@ -66,16 +66,15 @@ export function connectionIssue(
   };
 }
 
-/** The old webhook URL was reached after it was turned off: a shop still points at it. */
+/** The old webhook URL (a 410 tombstone) was reached since the deploy: a shop still points at it. */
 export function legacyIssue(
   webhooks: WebhookSettings | undefined,
   t: Translate,
 ): ShopIssue | null {
-  if (!webhooks || webhooks.legacy_enabled) return null;
-  if (webhooks.legacy_hits_since <= 0) return null;
+  if (!webhooks || webhooks.legacy_hits <= 0) return null;
   return {
     key: 'legacy',
-    text: t('shops.health.legacy', {count: webhooks.legacy_hits_since}),
+    text: t('shops.health.legacy', {count: webhooks.legacy_hits}),
     href: '/admin/settings',
   };
 }

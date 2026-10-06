@@ -202,8 +202,8 @@ function ShopCard({
  * Settings › Shop connections (ROLE_ADMIN; docs/pdr/prd-shops-settings.md, "Screen proposals" 3): a card per
  * WooCommerce shop with its site, state, warehouse, printing, health and failure counters, and a menu (Edit, Test
  * connection, Failed deliveries, Deactivate/Activate, Delete). A connection orders came from cannot be deleted: the
- * answer offers to deactivate it. Empty, the tab explains the cutover; the old webhook URL reached after it was turned
- * off is a warning on top.
+ * answer offers to deactivate it. Empty, the tab explains the cutover; the old webhook URL (a 410 tombstone) still
+ * reached is a warning on top.
  */
 export function ShopConnections() {
   const {t} = useTranslation();

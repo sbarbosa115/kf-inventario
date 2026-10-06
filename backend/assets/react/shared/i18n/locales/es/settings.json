@@ -19,19 +19,11 @@
       "none": "Sin configurar: no se envía ningún correo"
     },
     "legacyTitle": "La URL anterior del webhook",
-    "legacyOn": "Activa: las tiendas aún pueden enviar pedidos a la URL anterior del webhook.",
-    "legacyOff": "Desactivada: la URL anterior del webhook responde 410 y no registra nada.",
-    "legacyHits_one": "{{count}} entrega llegó desde que se desactivó; la última el {{date}}.",
-    "legacyHits_other": "{{count}} entregas llegaron desde que se desactivó; la última el {{date}}.",
-    "legacyNoHits": "No ha llegado nada desde que se desactivó.",
-    "turnOff": "Desactivar la URL anterior del webhook",
-    "turnOn": "Volver a activar la URL anterior del webhook",
-    "confirmOffTitle": "¿Desactivar la URL anterior del webhook?",
-    "confirmOffBody": "Las tiendas que aún envíen ahí recibirán 410 y sus pedidos no se registrarán. Hágalo cuando cada tienda apunte a su conexión.",
-    "turnedOff": "La URL anterior del webhook está desactivada.",
-    "turnedOn": "La URL anterior del webhook está activa de nuevo.",
-    "on": "Activa",
-    "off": "Desactivada"
+    "legacyRetired": "Responde 410 y no registra nada: cada tienda envía a la URL de su propia conexión (Conexiones con tiendas).",
+    "legacyHits_one": "{{count}} entrega llegó desde la actualización; la última el {{date}}: una tienda aún apunta a ella.",
+    "legacyHits_other": "{{count}} entregas llegaron desde la actualización; la última el {{date}}: una tienda aún apunta a ella.",
+    "legacyNoHits": "No ha llegado nada desde la actualización.",
+    "retired": "Retirada"
   },
   "email": {
     "smtpTitle": "Servidor SMTP",

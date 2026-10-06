@@ -39,15 +39,14 @@ function aShop(
   };
 }
 
-const LEGACY_ON = {
-  legacy_enabled: true,
-  legacy_hits_since: 0,
+const NO_LEGACY_HITS = {
+  legacy_hits: 0,
   legacy_last_hit_at: null,
 };
 
 function renderHealth(
   shops: ShopConnection[],
-  webhooks: Record<string, unknown> = LEGACY_ON,
+  webhooks: Record<string, unknown> = NO_LEGACY_HITS,
 ) {
   const api = fakeApi({
     'GET /shops': [200, shops],
@@ -136,10 +135,9 @@ describe('ShopHealth', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('warns when the old webhook URL was reached after it was turned off', async () => {
+  it('warns when the old webhook URL is still reached', async () => {
     renderHealth([aShop(1, 'Kfvintage')], {
-      legacy_enabled: false,
-      legacy_hits_since: 2,
+      legacy_hits: 2,
       legacy_last_hit_at: '2026-10-06T10:00:00-05:00',
     });
 
@@ -147,7 +145,7 @@ describe('ShopHealth', () => {
       name: 'Shop connections',
     });
     expect(region).toHaveTextContent(
-      'The old webhook URL received 2 deliveries since it was turned off: a shop still points at it.',
+      'The old webhook URL received 2 deliveries since the deploy: a shop still points at it.',
     );
     expect(
       within(region).getByRole('link', {name: 'Fix in Settings'}),
@@ -190,7 +188,7 @@ describe('ShopHealth', () => {
   it('stays silent when the connections cannot be read', async () => {
     fakeApi({
       'GET /shops': [500, {error: 'internal_error'}],
-      'GET /settings/webhooks': [200, LEGACY_ON],
+      'GET /settings/webhooks': [200, NO_LEGACY_HITS],
     });
     render(
       <MemoryRouter>

@@ -1,5 +1,4 @@
 import {render, screen, within} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {fakeApi} from '@/shared/test/fakeApi';
 import {ToastProvider} from '@/shared/ui';
@@ -37,7 +36,7 @@ describe('SettingsPage', () => {
       'GET /settings/email': [200, EMAIL],
       'GET /settings/webhooks': [
         200,
-        {legacy_enabled: true, legacy_hits_since: 0, legacy_last_hit_at: null},
+        {legacy_hits: 0, legacy_last_hit_at: null},
       ],
     });
     renderAt('/admin/settings');
@@ -64,40 +63,40 @@ describe('SettingsPage', () => {
     expect(screen.getByText('(mailpit)')).toBeInTheDocument();
   });
 
-  it('turns the old webhook URL off after asking, and shows what reached it since', async () => {
-    const api = fakeApi({
+  it('shows the old webhook URL as retired, with no switch', async () => {
+    fakeApi({
       'GET /settings/email': [200, EMAIL],
       'GET /settings/webhooks': [
         200,
-        {legacy_enabled: true, legacy_hits_since: 0, legacy_last_hit_at: null},
-      ],
-      'PUT /settings/webhooks': [
-        200,
-        {legacy_enabled: false, legacy_hits_since: 0, legacy_last_hit_at: null},
+        {legacy_hits: 0, legacy_last_hit_at: null},
       ],
     });
     renderAt('/admin/settings');
 
-    await userEvent.click(
-      await screen.findByRole('button', {name: 'Turn off the old webhook URL'}),
-    );
-    const dialog = screen.getByRole('dialog', {
-      name: 'Turn off the old webhook URL?',
+    expect(
+      await screen.findByText('Nothing reached it since the deploy.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/answers 410 and places nothing/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: /old webhook URL/})).toBeNull();
+  });
+
+  it('counts what still reaches the old webhook URL', async () => {
+    fakeApi({
+      'GET /settings/email': [200, EMAIL],
+      'GET /settings/webhooks': [
+        200,
+        {legacy_hits: 3, legacy_last_hit_at: '2026-10-06T10:00:00-05:00'},
+      ],
     });
-    expect(dialog).toHaveTextContent('Shops still posting there will get 410');
-    await userEvent.click(
-      within(dialog).getByRole('button', {
-        name: 'Turn off the old webhook URL',
-      }),
-    );
+    renderAt('/admin/settings');
 
     expect(
-      await screen.findByText('Nothing reached it since it was turned off.'),
-    ).toBeInTheDocument();
-    expect(api.calls.at(-1)?.body).toEqual({legacy_enabled: false});
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'The old webhook URL is off.',
-    );
+      await screen.findByText(
+        /^3 deliveries reached it since the deploy, the last on /,
+      ),
+    ).toHaveTextContent(/a shop still points at it\.$/);
   });
 
   it('shows the shop connections on their tab', async () => {
@@ -105,7 +104,7 @@ describe('SettingsPage', () => {
       'GET /shops': [200, []],
       'GET /settings/webhooks': [
         200,
-        {legacy_enabled: true, legacy_hits_since: 0, legacy_last_hit_at: null},
+        {legacy_hits: 0, legacy_last_hit_at: null},
       ],
     });
     renderAt('/admin/settings/shops');

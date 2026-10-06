@@ -40,9 +40,8 @@ function aShop(
   };
 }
 
-const LEGACY_ON = {
-  legacy_enabled: true,
-  legacy_hits_since: 0,
+const NO_LEGACY_HITS = {
+  legacy_hits: 0,
   legacy_last_hit_at: null,
 };
 
@@ -64,7 +63,7 @@ const OLD = aShop(5, 'Kfold', {}, {active: false});
 
 function renderTab(routes: Parameters<typeof fakeApi>[0]) {
   const api = fakeApi({
-    'GET /settings/webhooks': [200, LEGACY_ON],
+    'GET /settings/webhooks': [200, NO_LEGACY_HITS],
     ...routes,
   });
   render(
@@ -95,7 +94,7 @@ describe('ShopConnections', () => {
     expect(
       await screen.findByText(/Create one connection per shop/),
     ).toHaveTextContent(
-      'Create one connection per shop, paste its webhook URL and secret in WooCommerce, test it, then turn off the old webhook URL in General.',
+      'Create one connection per shop, paste its webhook URL and secret in WooCommerce, then test it.',
     );
     const links = screen.getAllByRole('link', {name: 'Add connection'});
     expect(links[0]).toHaveAttribute('href', '/admin/settings/shops/new');
@@ -329,21 +328,20 @@ describe('ShopConnections', () => {
     });
   });
 
-  it('warns when the old webhook URL was reached after it was turned off', async () => {
+  it('warns when the old webhook URL is still reached', async () => {
     renderTab({
       'GET /shops': [200, [KFVINTAGE]],
       'GET /settings/webhooks': [
         200,
         {
-          legacy_enabled: false,
-          legacy_hits_since: 3,
+          legacy_hits: 3,
           legacy_last_hit_at: '2026-10-06T10:00:00-05:00',
         },
       ],
     });
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'The old webhook URL received 3 deliveries since it was turned off: a shop still points at it.',
+      'The old webhook URL received 3 deliveries since the deploy: a shop still points at it.',
     );
   });
 });

@@ -42,7 +42,7 @@ test.describe('11 Settings', () => {
     await expect(admin.getByText('America/Bogota')).toBeVisible();
     await expect(admin.getByText(/The server's MAILER_DSN/)).toBeVisible();
     await expect(
-      admin.getByRole('button', {name: 'Turn off the old webhook URL'}),
+      admin.getByRole('heading', {name: 'The old webhook URL'}),
     ).toBeVisible();
     expect(errors).toEqual([]);
 
@@ -61,7 +61,7 @@ test.describe('11 Settings', () => {
   });
 
   test.describe.serial('Email, Analytics and Quick phrases tabs', () => {
-    test('SET-02 · General says where email leaves from, and the legacy switch', async ({
+    test('SET-02 · General says where email leaves from, and that the old webhook URL is retired', async ({
       signedInAs,
     }) => {
       const admin = await signedInAs(ADMIN);
@@ -75,8 +75,12 @@ test.describe('11 Settings', () => {
         admin.getByRole('heading', {name: 'The old webhook URL'}),
       ).toBeVisible();
       await expect(
-        admin.getByRole('button', {name: 'Turn off the old webhook URL'}),
+        admin.getByText(/answers 410 and places nothing/),
       ).toBeVisible();
+      await expect(admin.getByText(/since the deploy/)).toBeVisible();
+      await expect(
+        admin.getByRole('button', {name: /old webhook URL/}),
+      ).toHaveCount(0);
     });
 
     test('SET-03 · Email: the server is saved, the password field is blank afterwards', async ({

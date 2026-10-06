@@ -19,19 +19,11 @@
       "none": "Not configured: no email is sent"
     },
     "legacyTitle": "The old webhook URL",
-    "legacyOn": "On: shops can still post orders to the old webhook URL.",
-    "legacyOff": "Off: the old webhook URL answers 410 and places nothing.",
-    "legacyHits_one": "{{count}} delivery reached it since it was turned off, the last on {{date}}.",
-    "legacyHits_other": "{{count}} deliveries reached it since it was turned off, the last on {{date}}.",
-    "legacyNoHits": "Nothing reached it since it was turned off.",
-    "turnOff": "Turn off the old webhook URL",
-    "turnOn": "Turn the old webhook URL back on",
-    "confirmOffTitle": "Turn off the old webhook URL?",
-    "confirmOffBody": "Shops still posting there will get 410 and their orders will not be placed. Do this after every shop points at its connection.",
-    "turnedOff": "The old webhook URL is off.",
-    "turnedOn": "The old webhook URL is on again.",
-    "on": "On",
-    "off": "Off"
+    "legacyRetired": "It answers 410 and places nothing: each shop posts to its own connection's URL (Shop connections).",
+    "legacyHits_one": "{{count}} delivery reached it since the deploy, the last on {{date}}: a shop still points at it.",
+    "legacyHits_other": "{{count}} deliveries reached it since the deploy, the last on {{date}}: a shop still points at it.",
+    "legacyNoHits": "Nothing reached it since the deploy.",
+    "retired": "Retired"
   },
   "email": {
     "smtpTitle": "SMTP server",

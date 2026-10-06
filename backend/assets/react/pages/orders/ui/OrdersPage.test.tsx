@@ -195,8 +195,7 @@ describe('OrdersPage', () => {
         'GET /settings/webhooks': [
           200,
           {
-            legacy_enabled: true,
-            legacy_hits_since: 0,
+            legacy_hits: 0,
             legacy_last_hit_at: null,
           },
         ],
@@ -249,7 +248,7 @@ describe('OrdersPage', () => {
       'GET /shops': [200, [shop(4, 'Kfvintage', 0), shop(7, 'Klassicfab', 0)]],
       'GET /settings/webhooks': [
         200,
-        {legacy_enabled: true, legacy_hits_since: 0, legacy_last_hit_at: null},
+        {legacy_hits: 0, legacy_last_hit_at: null},
       ],
     });
 

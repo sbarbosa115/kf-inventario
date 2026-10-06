@@ -1,7 +1,7 @@
 import {apiDelete, apiGet, apiPost, apiPut, type Schema} from '@/shared/api';
 
 // Settings (docs/pdr/prd-shops-settings.md, "API changes" › Settings): ROLE_ADMIN, except the public IDs and the
-// quick phrases' read. Item 0 serves public, GET email and webhooks; item 3 the rest (501 until then).
+// quick phrases' read. Item 0 serves public, GET email and webhooks; item 3 the rest.
 
 export type PublicSettings = Schema<'PublicSettingsOutput'>;
 export type EmailSettings = Schema<'EmailSettingsOutput'>;
@@ -52,14 +52,9 @@ export const getAnalyticsSettings = () =>
 export const saveAnalyticsSettings = (payload: AnalyticsSettingsPayload) =>
   apiPut<AnalyticsSettings>('/settings/analytics', payload);
 
+/** The hits on the old webhook URL since the deploy (read-only: it is a 410 tombstone). */
 export const getWebhookSettings = () =>
   apiGet<WebhookSettings>('/settings/webhooks');
-
-/** Turns the legacy webhook URL off (410 from then on; its hit counter starts at 0) or back on. */
-export const saveWebhookSettings = (legacyEnabled: boolean) =>
-  apiPut<WebhookSettings>('/settings/webhooks', {
-    legacy_enabled: legacyEnabled,
-  });
 
 /** The active phrases in order; `all` (admins): the inactive ones too. */
 export const listQuickPhrases = (all = false) =>

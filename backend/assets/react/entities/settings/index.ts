@@ -9,7 +9,6 @@ export {
   reorderQuickPhrases,
   saveAnalyticsSettings,
   saveEmailSettings,
-  saveWebhookSettings,
   sendTestEmail,
   updateQuickPhrase,
 } from './api/settingsApi';
