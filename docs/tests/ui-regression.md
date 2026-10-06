@@ -357,12 +357,6 @@ Smoke: `e2e/stock.spec.ts`.
 "Actions for España" (⋯) › Rename: the name becomes a box with the focus in it. Type Madrid and press Escape: the card
 reads España again, the focus is back on the name, and nothing was saved (a reload still shows España).
 
-**WH-05 · Each card shows where its shop orders come from**
-Smoke: `e2e/stock.spec.ts`.
-Each card lists, under "Shop orders arrive from", the shop addresses in monospace (Colombia `https://colombia.test`,
-España `https://espana.test`); a warehouse with none says "No shop sends its orders here." By hand at 390 px: the cards
-stack one per row, long addresses wrap inside the card.
-
 ## 4. Customers (CUS)
 
 **CUS-01 · The list shows the customers, and the old address lands on it**

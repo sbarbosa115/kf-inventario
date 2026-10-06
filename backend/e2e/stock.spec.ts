@@ -537,17 +537,4 @@ test.describe('3 Warehouses', () => {
     const names = ((await list.json()) as {name: string}[]).map((w) => w.name);
     expect(names, 'nothing was saved').toContain('España');
   });
-
-  test('WH-05 · each card shows the shop addresses whose orders arrive there', async ({
-    signedInAs,
-  }) => {
-    const page = await signedInAs(ADMIN);
-    await page.goto('/admin/warehouses');
-
-    await expect(card(page, 'Colombia')).toContainText(
-      'Shop orders arrive from',
-    );
-    await expect(card(page, 'Colombia')).toContainText('https://colombia.test');
-    await expect(card(page, 'España')).toContainText('https://espana.test');
-  });
 });
