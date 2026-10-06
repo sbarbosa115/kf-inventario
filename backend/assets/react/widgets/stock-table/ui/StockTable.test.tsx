@@ -167,7 +167,10 @@ describe('StockTable', () => {
     renderTable();
     await screen.findByText('KF-01');
 
-    await userEvent.type(screen.getByRole('searchbox', {name: 'Search products'}), 'kf-02');
+    await userEvent.type(
+      screen.getByRole('searchbox', {name: 'Search products'}),
+      'kf-02',
+    );
     await vi.waitFor(() =>
       expect(screen.queryByText('KF-01')).not.toBeInTheDocument(),
     );
@@ -180,7 +183,9 @@ describe('StockTable', () => {
     await userEvent.click(screen.getByRole('button', {name: 'Show all'}));
     expect(await screen.findByText('KF-01')).toBeInTheDocument();
     expect(screen.getByText('KF-04')).toBeInTheDocument();
-    expect(screen.getByRole('searchbox', {name: 'Search products'})).toHaveValue('');
+    expect(
+      screen.getByRole('searchbox', {name: 'Search products'}),
+    ).toHaveValue('');
   });
 
   it('reloads for another warehouse, forgets the selection and remembers the choice', async () => {
@@ -419,7 +424,9 @@ describe('StockTable', () => {
 
       await userEvent.click(screen.getByRole('button', {name: 'Filters · 0'}));
       const sheet = screen.getByRole('dialog', {name: 'Filters'});
-      await userEvent.click(within(sheet).getByRole('button', {name: /^Stock/}));
+      await userEvent.click(
+        within(sheet).getByRole('button', {name: /^Stock/}),
+      );
       await userEvent.click(
         within(sheet).getByRole('checkbox', {name: /Out of stock/}),
       );

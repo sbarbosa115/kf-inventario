@@ -529,13 +529,17 @@ describe('OrderTable', () => {
       'Sent0',
       'Delivered1',
     ]);
-    await userEvent.click(within(panel).getByRole('checkbox', {name: /Created/}));
-    await userEvent.click(within(panel).getByRole('checkbox', {name: /Partial/}));
+    await userEvent.click(
+      within(panel).getByRole('checkbox', {name: /Created/}),
+    );
+    await userEvent.click(
+      within(panel).getByRole('checkbox', {name: /Partial/}),
+    );
 
     await waitFor(() => expect(codes()).toEqual(['W00001', 'W00004']));
-    expect(listCalls(api).at(-1)?.url.searchParams.getAll('filter[status][]')).toEqual(
-      ['1', '4'],
-    );
+    expect(
+      listCalls(api).at(-1)?.url.searchParams.getAll('filter[status][]'),
+    ).toEqual(['1', '4']);
     expect(screen.getByText('Status: Created, Partial')).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     expect(
@@ -570,15 +574,15 @@ describe('OrderTable', () => {
       'ruiz{Enter}',
     );
     await waitFor(() => expect(codes()).toEqual(['W00006']));
-    expect(listCalls(api).at(-1)?.url.searchParams.get('filter[customer]')).toBe(
-      'ruiz',
-    );
+    expect(
+      listCalls(api).at(-1)?.url.searchParams.get('filter[customer]'),
+    ).toBe('ruiz');
 
     await userEvent.click(filterButton('Comments'));
     await userEvent.click(screen.getByRole('checkbox', {name: /Pinned only/}));
-    expect(listCalls(api).at(-1)?.url.searchParams.getAll('filter[pinned][]')).toEqual(
-      ['1'],
-    );
+    expect(
+      listCalls(api).at(-1)?.url.searchParams.getAll('filter[pinned][]'),
+    ).toEqual(['1']);
   });
 
   it('on a phone, has no filter row: Filters · N opens the sheet, which counts its draft with one row asked', async () => {
@@ -599,7 +603,9 @@ describe('OrderTable', () => {
 
       await userEvent.click(screen.getByRole('button', {name: 'Filters · 0'}));
       const sheet = screen.getByRole('dialog', {name: 'Filters'});
-      await userEvent.click(within(sheet).getByRole('button', {name: /^Status/}));
+      await userEvent.click(
+        within(sheet).getByRole('button', {name: /^Status/}),
+      );
       await userEvent.click(
         within(sheet).getByRole('checkbox', {name: /Delivered/}),
       );
@@ -612,7 +618,9 @@ describe('OrderTable', () => {
         (c) => c.url.searchParams.get('per_page') === '1',
       );
       expect(counted?.url.searchParams.get('warehouse_id')).toBe('1');
-      expect(screen.getByRole('button', {name: 'Filters · 1'})).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', {name: 'Filters · 1'}),
+      ).toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();
     }

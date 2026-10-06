@@ -33,27 +33,26 @@ async function apiJson<T>(request: APIRequestContext, url: string): Promise<T> {
   return (await answer.json()) as T;
 }
 
-interface Page_<T> {
+interface ListPage<T> {
   items: T[];
   total: number;
   facets?: Record<string, {value: string; count: number}[]>;
 }
 
 const SEEDED = 1240;
-const seededEmail = (n: number) =>
-  `flt-${String(n).padStart(4, '0')}@flt.test`;
+const seededEmail = (n: number) => `flt-${String(n).padStart(4, '0')}@flt.test`;
 
 /** FLT-05's customers: 1,240 of them, created through the API unless an earlier run of this stack left them. */
 async function seedCustomers(page: Page) {
   const origin = new URL(page.url() || 'http://nginx').origin;
-  const have = await apiJson<Page_<unknown>>(
+  const have = await apiJson<ListPage<unknown>>(
     page.request,
     '/api/v1/customers?per_page=1&filter[email]=%40flt.test',
   );
   if (have.total >= SEEDED) return;
   const existing = new Set<string>();
   for (let p = 1; existing.size < have.total; p++) {
-    const chunk = await apiJson<Page_<{email: string}>>(
+    const chunk = await apiJson<ListPage<{email: string}>>(
       page.request,
       `/api/v1/customers?per_page=100&page=${p}&filter[email]=%40flt.test`,
     );
@@ -111,7 +110,9 @@ test.describe('13 Table filters', () => {
     await expect(bodyRows(page)).toHaveCount(1);
     await expect(bodyRows(page).first()).toContainText('W00007');
     await expect(chip(page, 'Order: W00007')).toBeVisible();
-    await expect(page).toHaveURL(/filter%5Bcode%5D=W00007|filter\[code\]=W00007/);
+    await expect(page).toHaveURL(
+      /filter%5Bcode%5D=W00007|filter\[code\]=W00007/,
+    );
     expect(errors).toEqual([]);
   });
 
@@ -136,7 +137,10 @@ test.describe('13 Table filters', () => {
         .locator('.kf-filter-checklist__count')
         .textContent(),
     );
-    expect(created + processed, 'the fixtures hold created and processed orders').toBeGreaterThan(0);
+    expect(
+      created + processed,
+      'the fixtures hold created and processed orders',
+    ).toBeGreaterThan(0);
     await tick(panel, /Created/);
     await tick(panel, /Processed/);
     await expect(filterButton(page, 'Status · 2')).toBeVisible();
@@ -175,7 +179,7 @@ test.describe('13 Table filters', () => {
   }) => {
     const page = await signedInAs(INVENTORY);
     const stock = (
-      await apiJson<Page_<{code: string; quantity: number; price: number}>>(
+      await apiJson<ListPage<{code: string; quantity: number; price: number}>>(
         page.request,
         '/api/v1/warehouses/1/stock?per_page=0',
       )
@@ -188,14 +192,18 @@ test.describe('13 Table filters', () => {
     await page.keyboard.press('Escape');
     const over500 = stock.filter((s) => s.price > 500);
     if (over500.length === 0) {
-      await expect(page.getByText('Nothing matches these filters.')).toBeVisible();
+      await expect(
+        page.getByText('Nothing matches these filters.'),
+      ).toBeVisible();
     } else {
       await expect(bodyRows(page)).toHaveCount(over500.length);
     }
     await expect(chip(page, 'Price: Over $500')).toBeVisible();
 
     // A typed minimum, then the quantity's quick range.
-    const prices = [...new Set(stock.map((s) => s.price))].sort((a, b) => a - b);
+    const prices = [...new Set(stock.map((s) => s.price))].sort(
+      (a, b) => a - b,
+    );
     const min = prices[Math.floor(prices.length / 2)]!;
     await filterButton(page, /^Price/).click();
     await page.getByLabel('Min').fill(String(min));
@@ -235,7 +243,9 @@ test.describe('13 Table filters', () => {
     await expect(page).toHaveURL(/page=2/);
 
     // The seventh seeded customer is near the end, newest first: a filter finds it from any page.
-    const email = filterRow(page).getByRole('searchbox', {name: 'Filter by Email'});
+    const email = filterRow(page).getByRole('searchbox', {
+      name: 'Filter by Email',
+    });
     await email.fill(seededEmail(7));
     await email.press('Enter');
     await expect(bodyRows(page)).toHaveCount(1);
@@ -248,10 +258,9 @@ test.describe('13 Table filters', () => {
   }) => {
     const page = await signedInAs(SALES);
     const invoices = (
-      await apiJson<Page_<{code: string; total: string; payment_method: string | null}>>(
-        page.request,
-        '/api/v1/invoices?per_page=100',
-      )
+      await apiJson<
+        ListPage<{code: string; total: string; payment_method: string | null}>
+      >(page.request, '/api/v1/invoices?per_page=100')
     ).items;
     await page.goto('/admin/invoices');
     await expect(bodyRows(page)).toHaveCount(invoices.length);
@@ -275,7 +284,9 @@ test.describe('13 Table filters', () => {
     await expect(chip(page, 'Payment: Credit card - Paypal')).toBeVisible();
     const both = between.filter((i) => i.payment_method === 'credit_card');
     if (both.length === 0) {
-      await expect(page.getByText('Nothing matches these filters.')).toBeVisible();
+      await expect(
+        page.getByText('Nothing matches these filters.'),
+      ).toBeVisible();
     } else {
       await expect(bodyRows(page)).toHaveCount(both.length);
     }
@@ -287,7 +298,7 @@ test.describe('13 Table filters', () => {
   }) => {
     const page = await signedInAs(ADMIN);
     const facets = (
-      await apiJson<Page_<unknown>>(
+      await apiJson<ListPage<unknown>>(
         page.request,
         '/api/v1/users?per_page=1&facets=roles',
       )
@@ -302,7 +313,9 @@ test.describe('13 Table filters', () => {
     const panel = page.getByRole('dialog', {name: 'Roles'});
     await expect(panel.getByRole('checkbox')).toHaveCount(9);
     await expect(
-      panel.locator('label', {hasText: /^Inventory/}).locator('.kf-filter-checklist__count'),
+      panel
+        .locator('label', {hasText: /^Inventory/})
+        .locator('.kf-filter-checklist__count'),
     ).toHaveText(String(inventory));
     await expect(panel).not.toContainText('ROLE_');
     await tick(panel, /^Inventory/);
@@ -325,7 +338,9 @@ test.describe('13 Table filters', () => {
     await filterButton(page, 'Status').click();
     await tick(page.getByRole('dialog', {name: 'Status'}), /Created/);
     await page.keyboard.press('Escape');
-    const code = filterRow(page).getByRole('searchbox', {name: 'Filter by Order'});
+    const code = filterRow(page).getByRole('searchbox', {
+      name: 'Filter by Order',
+    });
     await code.fill('W0000');
     await code.press('Enter');
     await expect(page).toHaveURL(/filter%5Bcode%5D=W0000|filter\[code\]=W0000/);
@@ -383,7 +398,11 @@ test.describe('13 Table filters', () => {
 });
 
 test.describe('13 Table filters, on a phone (390 px)', () => {
-  test.use({viewport: {width: 390, height: 844}, isMobile: true, hasTouch: true});
+  test.use({
+    viewport: {width: 390, height: 844},
+    isMobile: true,
+    hasTouch: true,
+  });
 
   test('FLT-10 · On a phone, the filters are a sheet: "Show N results" counts the draft and applies it', async ({
     signedInAs,
@@ -394,7 +413,7 @@ test.describe('13 Table filters, on a phone (390 px)', () => {
     await expect(bodyRows(page).first()).toBeVisible();
     await expect(filterRow(page)).toHaveCount(0);
     const created = (
-      await apiJson<Page_<unknown>>(
+      await apiJson<ListPage<unknown>>(
         page.request,
         '/api/v1/orders?warehouse_id=1&per_page=1&filter[status][]=1',
       )

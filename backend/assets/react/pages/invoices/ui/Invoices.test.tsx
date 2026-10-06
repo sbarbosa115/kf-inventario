@@ -308,7 +308,9 @@ describe('InvoicesPage', () => {
     );
     await waitFor(() => expect(shown('20260001')).toBe(false));
     expect(
-      listCalls(api).at(-1)?.url.searchParams.getAll('filter[payment_method][]'),
+      listCalls(api)
+        .at(-1)
+        ?.url.searchParams.getAll('filter[payment_method][]'),
     ).toEqual(['credit_card']);
     await userEvent.keyboard('{Escape}');
     await userEvent.click(
@@ -321,9 +323,9 @@ describe('InvoicesPage', () => {
     await userEvent.click(filterButton('Total'));
     await userEvent.type(screen.getByLabelText('Min'), '10{Enter}');
     await waitFor(() => expect(shown('20260001')).toBe(false));
-    expect(listCalls(api).at(-1)?.url.searchParams.get('filter[total][min]')).toBe(
-      '10',
-    );
+    expect(
+      listCalls(api).at(-1)?.url.searchParams.get('filter[total][min]'),
+    ).toBe('10');
     expect(
       screen.getByText('Total: From $10.00', {
         selector: '.kf-active-filters__text',

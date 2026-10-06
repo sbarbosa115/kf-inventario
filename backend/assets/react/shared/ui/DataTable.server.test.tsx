@@ -291,18 +291,20 @@ describe('DataTable filters by column type', () => {
     const asked: TableQuery[] = [];
     render(<Typed asked={asked} />);
 
-    const [, filters] = within(screen.getAllByRole('rowgroup')[0]!).getAllByRole(
-      'row',
-    );
+    const [, filters] = within(
+      screen.getAllByRole('rowgroup')[0]!,
+    ).getAllByRole('row');
     const cells = within(filters!).getAllByRole('cell');
     expect(
       within(cells[0]!).getByRole('searchbox', {name: 'Filter by Invoice'}),
     ).toBeInTheDocument();
-    expect(cells[1], 'a column without a filter has an empty cell').toBeEmptyDOMElement();
-    expect(within(cells[2]!).getByRole('button', {name: 'Date'})).toHaveAttribute(
-      'aria-haspopup',
-      'dialog',
-    );
+    expect(
+      cells[1],
+      'a column without a filter has an empty cell',
+    ).toBeEmptyDOMElement();
+    expect(
+      within(cells[2]!).getByRole('button', {name: 'Date'}),
+    ).toHaveAttribute('aria-haspopup', 'dialog');
     expect(
       within(cells[3]!).getByRole('button', {name: 'Total'}),
     ).toBeInTheDocument();
@@ -311,7 +313,9 @@ describe('DataTable filters by column type', () => {
       'a filter without a column has no place in the row',
     ).not.toBeInTheDocument();
 
-    await userEvent.click(within(cells[3]!).getByRole('button', {name: 'Total'}));
+    await userEvent.click(
+      within(cells[3]!).getByRole('button', {name: 'Total'}),
+    );
     await userEvent.click(screen.getByRole('button', {name: 'Over $500'}));
     expect(asked.at(-1)).toMatchObject({
       filters: {total: {min: '500.01'}},
@@ -379,11 +383,7 @@ describe('DataTable filters by column type', () => {
   it('goes back to page 1 when the rows per page change, and Previous is off on the first page', async () => {
     const asked: TableQuery[] = [];
     render(
-      <Typed
-        asked={asked}
-        total={1240}
-        initial={{page: 3, perPage: 25}}
-      />,
+      <Typed asked={asked} total={1240} initial={{page: 3, perPage: 25}} />,
     );
 
     const pager = screen.getByRole('navigation', {name: 'Pages'});
@@ -393,6 +393,8 @@ describe('DataTable filters by column type', () => {
       '100',
     );
     expect(asked.at(-1)).toMatchObject({page: 1, perPage: 100});
-    expect(within(pager).getByRole('button', {name: 'Previous'})).toBeDisabled();
+    expect(
+      within(pager).getByRole('button', {name: 'Previous'}),
+    ).toBeDisabled();
   });
 });

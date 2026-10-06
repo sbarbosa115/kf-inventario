@@ -69,7 +69,9 @@ test.describe('4 Customers', () => {
         .getByRole('status')
         .filter({hasText: 'The customer was created successfully.'}),
     ).toBeVisible();
-    await page.getByRole('searchbox', {name: 'Search customers'}).fill(NEW_CUSTOMER.email);
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill(NEW_CUSTOMER.email);
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
     ).toBeVisible();
@@ -80,7 +82,9 @@ test.describe('4 Customers', () => {
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/customers');
-    await page.getByRole('searchbox', {name: 'Search customers'}).fill(NEW_CUSTOMER.email);
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill(NEW_CUSTOMER.email);
     await page
       .getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)})
       .getByRole('button', {name: /Actions for/})
@@ -116,7 +120,9 @@ test.describe('4 Customers', () => {
         .getByRole('status')
         .filter({hasText: 'The customer was updated successfully.'}),
     ).toBeVisible();
-    await page.getByRole('searchbox', {name: 'Search customers'}).fill('3009998877');
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill('3009998877');
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
     ).toBeVisible();
@@ -127,7 +133,9 @@ test.describe('4 Customers', () => {
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/customers');
-    await page.getByRole('searchbox', {name: 'Search customers'}).fill(NEW_CUSTOMER.email);
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill(NEW_CUSTOMER.email);
     const row = page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)});
 
     await row.getByRole('button', {name: /Actions for/}).click();
@@ -149,7 +157,9 @@ test.describe('4 Customers', () => {
     await expect(
       page.getByRole('status').filter({hasText: 'The customer was deleted.'}),
     ).toBeVisible();
-    await page.getByRole('searchbox', {name: 'Search customers'}).fill(NEW_CUSTOMER.email);
+    await page
+      .getByRole('searchbox', {name: 'Search customers'})
+      .fill(NEW_CUSTOMER.email);
     await expect(
       page.getByRole('row', {name: new RegExp(NEW_CUSTOMER.email)}),
     ).toHaveCount(0);

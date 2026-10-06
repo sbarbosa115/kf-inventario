@@ -356,19 +356,19 @@ export function DataTable<Row>({
   const filteredEmpty = server !== null && rows.length === 0 && filtering;
   const emptyInTable = filteredEmpty && rowFilters && !phone;
   const filteredEmptyState = (
-        <EmptyState
-          icon="fa-filter"
-          message={t('common.filteredEmpty')}
-          action={
-            <button
-              type="button"
-              className="kf-btn kf-btn--secondary kf-btn--sm"
-              onClick={clearServerFilters}
-            >
-              <span className="kf-btn__label">{t('common.showAll')}</span>
-            </button>
-          }
-        />
+    <EmptyState
+      icon="fa-filter"
+      message={t('common.filteredEmpty')}
+      action={
+        <button
+          type="button"
+          className="kf-btn kf-btn--secondary kf-btn--sm"
+          onClick={clearServerFilters}
+        >
+          <span className="kf-btn__label">{t('common.showAll')}</span>
+        </button>
+      }
+    />
   );
   const span =
     columns.length +
@@ -527,78 +527,78 @@ export function DataTable<Row>({
                 </tr>
               ) : (
                 shown.map((row) => {
-                const key = rowKey(row);
-                const isSelected = selected?.has(key) ?? false;
-                const actions = rowActions?.(row) ?? [];
-                return (
-                  <tr
-                    key={key}
-                    role="row"
-                    className={
-                      [rowClassName?.(row), isSelected ? 'is-selected' : null]
-                        .filter(Boolean)
-                        .join(' ') || undefined
-                    }
-                    onClick={onRowClick ? clickRow(row) : undefined}
-                  >
-                    {selectable && (
-                      <td role="cell" className="kf-table__select">
-                        <label className="kf-table__select-hit">
-                          <input
-                            type="checkbox"
-                            aria-label={t('common.selectRow')}
-                            checked={isSelected}
-                            onChange={(event) =>
-                              toggle([key], event.target.checked)
-                            }
-                          />
-                        </label>
-                      </td>
-                    )}
-                    {cardTitle && (
-                      <td role="cell" className="kf-table__card-title">
-                        {cardTitle(row)}
-                      </td>
-                    )}
-                    {columns.map((column) => (
-                      <td
-                        key={column.key}
-                        role="cell"
-                        data-label={column.header}
-                        className={
-                          [
-                            column.numeric ? 'kf-table__num' : null,
-                            column.mono ? 'kf-table__mono' : null,
-                            hiddenOnCard(column.key)
-                              ? 'kf-table__card-hidden'
-                              : null,
-                            column.key === cardLead
-                              ? 'kf-table__card-lead'
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(' ') || undefined
-                        }
-                      >
-                        {column.render(row)}
-                      </td>
-                    ))}
-                    {hasActions && (
-                      <td role="cell" className="kf-table__actions">
-                        {primaryAction?.(row)}
-                        {actions.length > 0 && (
-                          <RowMenu
-                            actions={actions}
-                            label={t('common.actionsFor', {
-                              name: rowLabel?.(row) ?? String(key),
-                            })}
-                          />
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                );
-              })
+                  const key = rowKey(row);
+                  const isSelected = selected?.has(key) ?? false;
+                  const actions = rowActions?.(row) ?? [];
+                  return (
+                    <tr
+                      key={key}
+                      role="row"
+                      className={
+                        [rowClassName?.(row), isSelected ? 'is-selected' : null]
+                          .filter(Boolean)
+                          .join(' ') || undefined
+                      }
+                      onClick={onRowClick ? clickRow(row) : undefined}
+                    >
+                      {selectable && (
+                        <td role="cell" className="kf-table__select">
+                          <label className="kf-table__select-hit">
+                            <input
+                              type="checkbox"
+                              aria-label={t('common.selectRow')}
+                              checked={isSelected}
+                              onChange={(event) =>
+                                toggle([key], event.target.checked)
+                              }
+                            />
+                          </label>
+                        </td>
+                      )}
+                      {cardTitle && (
+                        <td role="cell" className="kf-table__card-title">
+                          {cardTitle(row)}
+                        </td>
+                      )}
+                      {columns.map((column) => (
+                        <td
+                          key={column.key}
+                          role="cell"
+                          data-label={column.header}
+                          className={
+                            [
+                              column.numeric ? 'kf-table__num' : null,
+                              column.mono ? 'kf-table__mono' : null,
+                              hiddenOnCard(column.key)
+                                ? 'kf-table__card-hidden'
+                                : null,
+                              column.key === cardLead
+                                ? 'kf-table__card-lead'
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(' ') || undefined
+                          }
+                        >
+                          {column.render(row)}
+                        </td>
+                      ))}
+                      {hasActions && (
+                        <td role="cell" className="kf-table__actions">
+                          {primaryAction?.(row)}
+                          {actions.length > 0 && (
+                            <RowMenu
+                              actions={actions}
+                              label={t('common.actionsFor', {
+                                name: rowLabel?.(row) ?? String(key),
+                              })}
+                            />
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

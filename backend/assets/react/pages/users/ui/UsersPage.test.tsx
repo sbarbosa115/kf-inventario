@@ -132,7 +132,10 @@ describe('UsersPage', () => {
     const api = fakeApi({'GET /users': users([ANA, BEN])});
     renderPage();
 
-    await userEvent.type(await screen.findByRole('searchbox', {name: 'Search'}), 'ben');
+    await userEvent.type(
+      await screen.findByRole('searchbox', {name: 'Search'}),
+      'ben',
+    );
 
     await waitFor(() =>
       expect(screen.queryByText('Ana Gomez')).not.toBeInTheDocument(),
@@ -166,7 +169,10 @@ describe('UsersPage', () => {
     fakeApi({'GET /users': users([ANA, BEN])});
     renderPage();
 
-    await userEvent.type(await screen.findByRole('searchbox', {name: 'Search'}), 'zzz');
+    await userEvent.type(
+      await screen.findByRole('searchbox', {name: 'Search'}),
+      'zzz',
+    );
     expect(
       await screen.findByText('Nothing matches these filters.'),
     ).toBeInTheDocument();
@@ -217,17 +223,24 @@ describe('UsersPage', () => {
       .map((box) => box.closest('label')?.textContent);
     expect(options, 'the nine assignable roles, by plain name').toHaveLength(9);
     expect(options).toEqual(
-      expect.arrayContaining(['Admin1', 'Inventory1', 'Invoices: update1', 'Orders0']),
+      expect.arrayContaining([
+        'Admin1',
+        'Inventory1',
+        'Invoices: update1',
+        'Orders0',
+      ]),
     );
     expect(options.join(' ')).not.toContain('ROLE_');
-    await userEvent.click(within(panel).getByRole('checkbox', {name: /^Admin/}));
+    await userEvent.click(
+      within(panel).getByRole('checkbox', {name: /^Admin/}),
+    );
 
     await waitFor(() =>
       expect(screen.queryByText('Ben Ruiz')).not.toBeInTheDocument(),
     );
-    expect(api.calls.at(-1)?.url.searchParams.getAll('filter[roles][]')).toEqual([
-      'ROLE_ADMIN',
-    ]);
+    expect(
+      api.calls.at(-1)?.url.searchParams.getAll('filter[roles][]'),
+    ).toEqual(['ROLE_ADMIN']);
     expect(
       screen.getByText('Roles: Admin', {selector: '.kf-active-filters__text'}),
     ).toBeInTheDocument();

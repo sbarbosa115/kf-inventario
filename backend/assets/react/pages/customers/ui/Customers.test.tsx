@@ -54,8 +54,7 @@ const customers = (rows: Row[]) =>
       email: (c) => c.email,
       phone: (c) => c.phone,
       city: (c) => c.addresses[0]?.city.name,
-      country: (c) =>
-        c.addresses.map((a) => String(a.city.state.country.id)),
+      country: (c) => c.addresses.map((a) => String(a.city.state.country.id)),
     },
     search: [
       (c) => `${c.first_name} ${c.last_name}`,
@@ -198,14 +197,18 @@ describe('CustomersPage', () => {
     renderPage('/admin/customers?page=2');
 
     await screen.findAllByText('Ben Ruiz');
-    expect(listCalls(api)[0]?.url.search).toBe('?page=2&per_page=25&facets=country');
+    expect(listCalls(api)[0]?.url.search).toBe(
+      '?page=2&per_page=25&facets=country',
+    );
     expect(screen.getByRole('navigation', {name: 'Pages'})).toHaveTextContent(
       '26 – 26 of 26',
     );
     expect(screen.getByRole('button', {name: 'Next'})).toBeDisabled();
     await userEvent.click(screen.getByRole('button', {name: 'Previous'}));
     expect((await screen.findAllByText('Ana Gomez')).length).toBeGreaterThan(0);
-    expect(listCalls(api).at(-1)?.url.search).toBe('?per_page=25&facets=country');
+    expect(listCalls(api).at(-1)?.url.search).toBe(
+      '?per_page=25&facets=country',
+    );
   });
 
   it('shows no pager when everything fits in one page', async () => {
@@ -385,8 +388,12 @@ describe('CustomersPage', () => {
         .getAllByRole('checkbox')
         .map((box) => box.closest('label')?.textContent),
     ).toEqual(['Colombia1', 'USA0']);
-    await userEvent.click(within(panel).getByRole('checkbox', {name: /Colombia/}));
-    await waitFor(() => expect(screen.queryAllByText('Ben Ruiz')).toHaveLength(0));
+    await userEvent.click(
+      within(panel).getByRole('checkbox', {name: /Colombia/}),
+    );
+    await waitFor(() =>
+      expect(screen.queryAllByText('Ben Ruiz')).toHaveLength(0),
+    );
     expect(
       listCalls(api).at(-1)?.url.searchParams.getAll('filter[country][]'),
     ).toEqual(['1']);
