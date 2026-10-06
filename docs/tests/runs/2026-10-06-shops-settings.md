@@ -27,6 +27,7 @@ the last row is green.
 | 2 | 2026-10-06 11:06 | `9636ed2` | Green: 119 passed, 0 failed | — |
 | 3 | 2026-10-06 11:17 | `7098916` | Green: 119 passed, 0 failed | — |
 | 4 | 2026-10-06 13:12 | `8151dc9` | Not green: 155 passed, 1 failed, 2 skipped | FLT-08; skipped: FLT-09, FLT-10 |
+| 5 | 2026-10-06 13:23 | `cc7cc33` | Green: 158 passed, 0 failed | — |
 <!-- smoke.py adds a row per run of the whole suite -->
 
 ### Smoke findings
