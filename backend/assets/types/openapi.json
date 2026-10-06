@@ -1250,7 +1250,7 @@
                 }
             },
             "post": {
-                "summary": "ShopConnectionInput \u2192 201 with `webhook_secret` (once) and `webhook_url`. 409 shop_url_taken, shop_name_taken;\n404 warehouse_not_found; 422 shop_url_invalid (not https, a private host).",
+                "summary": "ShopConnectionInput \u2192 201 with `webhook_secret` (once) and `webhook_url`. 409 shop_url_taken, shop_name_taken;\n404 warehouse_not_found; 422 shop_url_invalid (not https, a private host; `detail.reason` says which).",
                 "operationId": "post_api_shops_create",
                 "responses": {
                     "201": {
@@ -1295,7 +1295,7 @@
                 }
             },
             "put": {
-                "summary": "ShopConnectionInput: blank consumer_key/consumer_secret keep the saved ones. 404 shop_not_found.",
+                "summary": "ShopConnectionInput: blank consumer_key/consumer_secret keep the saved ones. 404 shop_not_found; the create's\n409 and 422.",
                 "operationId": "put_api_shops_update",
                 "parameters": [
                     {
@@ -1322,7 +1322,7 @@
                 }
             },
             "delete": {
-                "summary": "204; 409 shop_has_orders when orders came from it (deactivate it instead).",
+                "summary": "204; 409 shop_has_orders when orders came from it (deactivate it instead). Its inbox goes with it.",
                 "operationId": "delete_api_shops_delete",
                 "parameters": [
                     {
@@ -1371,7 +1371,7 @@
                 }
             },
             "post": {
-                "summary": "Rotates the signing secret \u2192 the new one, to paste.",
+                "summary": "Rotates the signing secret \u2192 the new one, to paste. Deliveries signed with the old one are refused from now.",
                 "operationId": "post_api_shops_webhook_secret_rotate",
                 "parameters": [
                     {
@@ -1400,7 +1400,7 @@
         },
         "/api/v1/shops/{id}/test": {
             "post": {
-                "summary": "ShopTestInput (the keys as typed, else the saved ones): \"Test connection\", 15 s, never an error status.",
+                "summary": "ShopTestInput (the URL and keys as typed, each blank one the saved one): \"Test connection\", 15 s, never an\nerror status \u2014 `rest.ok` and `rest.error` say what happened. 404 shop_not_found.",
                 "operationId": "post_api_shops_test",
                 "parameters": [
                     {
@@ -1429,7 +1429,7 @@
         },
         "/api/v1/shops/{id}/deliveries": {
             "get": {
-                "summary": "A page of the connection's inbox (`?status=failed`; the list contract).",
+                "summary": "A page of the connection's inbox, newest first (the list contract: `?status=failed` or filter[status][],\nfilter[kind][], filter[reason_code][], filter[received_at][from|to], filter[remote_order_id], filter[customer];\nq over the shop order number and the customer).",
                 "operationId": "get_api_shops_deliveries",
                 "parameters": [
                     {
@@ -1490,7 +1490,7 @@
         },
         "/api/v1/shops/{id}/deliveries/{deliveryId}": {
             "get": {
-                "summary": "One inbox row with its body. 404 delivery_not_found.",
+                "summary": "One inbox row with its body. 404 delivery_not_found (also another connection's).",
                 "operationId": "get_api_shops_delivery",
                 "parameters": [
                     {
@@ -1566,7 +1566,7 @@
         },
         "/api/v1/shops/{id}/deliveries/{deliveryId}/discard": {
             "post": {
-                "summary": "Marks the row discarded.",
+                "summary": "Marks the row discarded (a placed row stays placed).",
                 "operationId": "post_api_shops_delivery_discard",
                 "parameters": [
                     {
