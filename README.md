@@ -236,12 +236,6 @@ Everything else does what the legacy pages did (roles included). On purpose, eac
   admin-only); unlinked orders show Web or Phone.
 - A new shop connection must be saved before "Test connection" will work (the test runs against the connection's
   stored keys and URL).
-- ORD-35 smoke run may leave Usa orders behind if run before the orders.spec (the fake shop's pull cursor advances
-  past them); run orders.spec first or manually clear the cursor in Settings › Shop connections › Usa › Check now
-  before a smoke run.
-
-The security audit of the restructure (`docs/security/audits/2026-10-05-restructure.md`) left these open:
-
 - **`sync-comments`, partial shipments, the order XLS and the warehouses need only `ROLE_USER`** (as before, PRD
   decision 11): any account, an invoices-only one included, can record a partial shipment (stock out, order
   completed), replace an order's comments and rename a warehouse. Audit finding 1 (High): accepted by the user on

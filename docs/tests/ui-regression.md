@@ -521,6 +521,22 @@ this."; `/api/v1/orders?warehouse_id=1` answers 403.
 
 ### Orders list and detail, redesigned (item 3)
 
+**ORD-19 · With nothing waiting at the shops, Check now places nothing, and it needs the sync role**
+Smoke: `e2e/orders-sync.spec.ts`.
+As the admin, `POST /api/v1/orders/sync` answers 202 with one row per active connection (`imported` 0, `skipped` 0,
+`error` null for the seeded "Fake shop" with nothing waiting) and no new order; as `inventory` it answers 403. By hand:
+Orders › "Check now": the toast says no order was imported, and the list is unchanged.
+
+**ORD-20 · Check now pulls a real shop's waiting orders once, into its connection's warehouse**
+Needs a WooCommerce test shop (≥ 5.8) with at least one `processing` order whose line SKUs are products here (e.g.
+`KF-01`) and Read/Write REST keys. Settings › Shop connections › Add connection with that shop's URL and keys,
+warehouse Colombia, prints orders on; Test connection says ok. Orders › Check now: the toast counts the imported
+orders; each one's code is the shop's order number, its Source names the connection, its customer has billing and
+shipping addresses, its lines are by SKU; Mailpit has "Order #<number> was created" for each. Check now again: nothing
+is imported, no order appears twice. Change the connection's secret key to a wrong value and Check now: the toast says
+the shop could not be read, and the connection's health shows "pull failed". Put the right key back; delete the
+connection's orders and deactivate it when done.
+
 **ORD-21 · Each status chip counts its orders and keeps only them**
 Smoke: `e2e/orders.spec.ts`.
 On Colombia, the Partial chip's count is the number of rows it leaves (W00004 and W00010 among them) and it shows

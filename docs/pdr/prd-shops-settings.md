@@ -789,7 +789,8 @@ never runs the whole suite (the coordinator runs it once at the barrier).
 7. Settings › General: **turn off the old webhook URL**. Watch the hit counter for a day: any hit means a shop was
    not re-pointed (step 5 again).
 8. Remove `WOO_COMMERCE_URL/_API_KEY/_API_SECRET/_WEBHOOK_SECRET` and `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID` from
-   `backend/.env.local` (optional; they are no longer read once a connection exists / the switch is off).
+   `backend/.env.local` once the switch is off (the first three are no longer read at all; the legacy URL reads the
+   last two while its switch is on). Written into `deploy/cpanel-update.sh`'s header and the README (item 9).
 9. Settings › Analytics: paste the GA4 and Clarity IDs. Settings › Quick phrases: add the office's phrases.
 
 ## Open questions for the user

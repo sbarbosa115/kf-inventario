@@ -16,9 +16,26 @@
 #      old public/.htaccess had), upload_max_filesize and post_max_size as before.
 #   5. Run this script, then add the cron line it prints (the order emails are queued now).
 #   6. Everyone signs in again once (the sessions of the old version do not carry over). The WooCommerce webhook URL
-#      does not change.
+#      did not change then (it moves per shop in the shops-settings cutover below).
 #
 # First time on a new account: git clone <repo> ~/kf-inventory, then steps 2 to 5.
+#
+# Shops-settings cutover, once (docs/pdr/prd-shops-settings.md, "Cutover checklist"):
+#   1. Before deploying: add APP_ENCRYPTION_KEY to backend/.env.local (php -r 'echo bin2hex(random_bytes(32));');
+#      create Read/Write REST keys in each of the four shops (WooCommerce › Settings › Advanced › REST API).
+#   2. Run this script (backup, the one migration). Replace the old cron line with the one it prints. The old
+#      webhook URL keeps working: its switch is on.
+#   3. Settings › Email: the SMTP server (or empty to keep MAILER_DSN), sender, printer, cc; "Send test email".
+#   4. Settings › Shop connections: create the four connections (URL, keys, the warehouse whose URLs held that shop,
+#      "prints orders" for the one that was ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID, "Order status" on to update the shop);
+#      "Test connection" each.
+#   5. In each shop: WooCommerce › Settings › Advanced › Webhooks › "Order created" → the connection's URL and
+#      secret, API v3, Save (the connection's "last webhook" moves).
+#   6. Place a test order in each shop (or "Check now"): it appears in Orders with the shop's name; the printer
+#      email arrives for the printing connection.
+#   7. Settings › General: turn the old webhook URL off; watch its hit counter for a day (a hit = a shop missed).
+#   8. Then remove WOO_COMMERCE_* and ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID from backend/.env.local.
+#   9. Settings › Analytics (GA4, Clarity IDs) and Settings › Quick phrases.
 #
 # Settings it takes from the environment, all optional:
 #   PHP         path to the PHP 8.4 CLI  (detected)
