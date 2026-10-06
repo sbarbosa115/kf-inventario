@@ -41,11 +41,11 @@ function renderAt(path: string) {
     <MemoryRouter initialEntries={[path]}>
       <ToastProvider>
         <Routes>
-        <Route path="/admin/orders" element={<OrdersList />} />
-        <Route
-          path="/admin/orders/:id/getting-ready"
-          element={<OrderGettingReadyPage />}
-        />
+          <Route path="/admin/orders" element={<OrdersList />} />
+          <Route
+            path="/admin/orders/:id/getting-ready"
+            element={<OrderGettingReadyPage />}
+          />
         </Routes>
       </ToastProvider>
     </MemoryRouter>,
@@ -67,9 +67,7 @@ describe('OrderGettingReadyPage', () => {
     expect(document.title).toBe('Getting ready · W00001 · KF Inventory');
     expect(screen.getByText('Created'), 'the status badge').toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('Barcode'), 'KF-01{Enter}');
-    await userEvent.click(
-      screen.getByRole('button', {name: 'Ship 1 product'}),
-    );
+    await userEvent.click(screen.getByRole('button', {name: 'Ship 1 product'}));
 
     expect(await screen.findByText('orders list')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(

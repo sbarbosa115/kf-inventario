@@ -131,10 +131,7 @@ describe('RecordPartial', () => {
     expect(kf01.getByLabelText('This shipment of KF-01')).toHaveTextContent(
       '1',
     );
-    expect(kf01.getByRole('progressbar')).toHaveAttribute(
-      'aria-valuenow',
-      '2',
-    );
+    expect(kf01.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2');
     expect(barcode()).toHaveValue('');
     expect(barcode()).toHaveFocus();
   });

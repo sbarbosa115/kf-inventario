@@ -20,21 +20,27 @@ const line = (uuid: string, code: string, quantity: number) => ({
   product: {code, title: `Title ${code}`, detail: null},
 });
 
+const KF01 = line('u1', 'KF-01', 3);
+const KF02 = line('u2', 'KF-02', 2);
+const KF03 = line('u3', 'KF-03', 1);
+
 // KF-01: 3 ordered, 1 shipped before, 10 in stock. KF-02: 2 ordered, 1 in stock. KF-03: 1 ordered, all shipped.
 const PARTIALS: OrderPartials = {
   order_id: 7,
   code: 'W00007',
   status: 4,
-  products: [line('u1', 'KF-01', 3), line('u2', 'KF-02', 2), line('u3', 'KF-03', 1)],
+  products: [KF01, KF02, KF03],
   products_aggregate: [
     {uuid: 'u1', quantity: 1, product: {code: 'KF-01'}},
     {uuid: 'u3', quantity: 1, product: {code: 'KF-03'}},
   ],
   pending: [],
-  inventory: [stock('u1', 'KF-01', 10), stock('u2', 'KF-02', 1), stock('u3', 'KF-03', 5)],
+  inventory: [
+    stock('u1', 'KF-01', 10),
+    stock('u2', 'KF-02', 1),
+    stock('u3', 'KF-03', 5),
+  ],
 };
-
-const [KF01, KF02, KF03] = PARTIALS.products;
 
 describe('lineState', () => {
   it('is pending, not alarming, while something is left and the warehouse holds it', () => {

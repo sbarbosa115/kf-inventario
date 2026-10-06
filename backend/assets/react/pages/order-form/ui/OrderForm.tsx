@@ -1,4 +1,4 @@
-import {Fragment, useId, useRef, useState, type FormEvent} from 'react';
+import {Fragment, useId, useState, type FormEvent} from 'react';
 import {useNavigate} from 'react-router-dom';
 import Select from 'react-select';
 import type {Customer, CustomerFormValues} from '@/entities/customer';
@@ -99,9 +99,6 @@ export function OrderForm({
   const [highlight, setHighlight] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const fields = useRef<Partial<Record<MissingField, HTMLElement | null>>>(
-    {},
-  );
 
   const stock = useLoad(
     () =>
@@ -159,15 +156,14 @@ export function OrderForm({
   /** The "Required" under a field, once the person asked to see what is missing. */
   const required = (field: MissingField) =>
     highlight && missing.includes(field) ? t('orderForm.required') : null;
-  const ref = (field: MissingField) => (element: HTMLElement | null) => {
-    fields.current[field] = element;
-  };
 
-  /** Highlights every missing field and moves to the one named. */
-  const goTo = (field: MissingField) => {
+  /** Highlights every missing field and moves to the one named (by its `name`, in this form). */
+  const goTo = (field: MissingField, form: HTMLFormElement | null) => {
     setHighlight(true);
+    const named = (name: string) =>
+      form?.querySelector<HTMLElement>(`[name="${name}"]`)?.focus();
     if (field === 'products' && values.warehouse_id === null) {
-      fields.current.warehouse?.focus();
+      named('warehouse');
       return;
     }
     if (field === 'products') {
@@ -185,7 +181,7 @@ export function OrderForm({
         ?.focus();
       return;
     }
-    fields.current[field]?.focus();
+    named(field);
   };
 
   const submit = async (event: FormEvent) => {
@@ -221,7 +217,9 @@ export function OrderForm({
             <button
               type="button"
               className="order-form__missing-field"
-              onClick={() => goTo(field)}
+              onClick={(event) =>
+                goTo(field, event.currentTarget.closest('form'))
+              }
             >
               {t(`orderForm.missingNames.${field}`)}
             </button>
@@ -276,7 +274,7 @@ export function OrderForm({
               error={required('first_name')}
             >
               <input
-                ref={ref('first_name')}
+                name="first_name"
                 className="form-control"
                 required
                 value={values.customer.first_name}
@@ -286,9 +284,12 @@ export function OrderForm({
             </Field>
           </div>
           <div className="col-md-6">
-            <Field label={t('orderForm.lastName')} error={required('last_name')}>
+            <Field
+              label={t('orderForm.lastName')}
+              error={required('last_name')}
+            >
               <input
-                ref={ref('last_name')}
+                name="last_name"
                 className="form-control"
                 required
                 value={values.customer.last_name}
@@ -302,7 +303,7 @@ export function OrderForm({
           <div className="col-md-6">
             <Field label={t('orderForm.email')} error={required('email')}>
               <input
-                ref={ref('email')}
+                name="email"
                 type="email"
                 className="form-control"
                 required
@@ -337,9 +338,12 @@ export function OrderForm({
       >
         <div className="form-row">
           <div className="col-md-6">
-            <Field label={t('orderForm.warehouse')} error={required('warehouse')}>
+            <Field
+              label={t('orderForm.warehouse')}
+              error={required('warehouse')}
+            >
               <select
-                ref={ref('warehouse')}
+                name="warehouse"
                 className="form-control"
                 required
                 value={values.warehouse_id ?? ''}
@@ -374,7 +378,7 @@ export function OrderForm({
               error={required('payment_method')}
             >
               <select
-                ref={ref('payment_method')}
+                name="payment_method"
                 className="form-control"
                 required
                 value={values.payment_method ?? ''}
@@ -397,9 +401,7 @@ export function OrderForm({
           <ErrorState error={stock.error} onRetry={stock.reload} />
         ) : null}
         <table className="table order-lines">
-          <caption className="sr-only">
-            {t('orderForm.lines')}
-          </caption>
+          <caption className="sr-only">{t('orderForm.lines')}</caption>
           <thead>
             <tr>
               <th scope="col">{t('orderForm.productColumn')}</th>
@@ -507,7 +509,7 @@ export function OrderForm({
           <div className="col-md-4">
             <Field label={t('orderForm.source')} error={required('source')}>
               <select
-                ref={ref('source')}
+                name="source"
                 className="form-control"
                 required
                 value={values.source ?? ''}
@@ -525,7 +527,7 @@ export function OrderForm({
           <div className="col-md-4">
             <Field label={t('orderForm.status')} error={required('status')}>
               <select
-                ref={ref('status')}
+                name="status"
                 className="form-control"
                 required
                 value={values.status ?? ''}

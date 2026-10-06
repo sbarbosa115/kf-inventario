@@ -221,20 +221,27 @@ describe('OrderFormPage', () => {
     ).toBeInTheDocument();
 
     await userEvent.click(
-      within(missing()).getByRole('button', {name: 'a product with its quantity'}),
+      within(missing()).getByRole('button', {
+        name: 'a product with its quantity',
+      }),
     );
     expect(
       screen.getByLabelText('Warehouse'),
       'no warehouse yet: its products cannot be picked, the warehouse comes first',
     ).toHaveFocus();
 
-    await userEvent.selectOptions(screen.getByLabelText('Warehouse'), 'Colombia');
+    await userEvent.selectOptions(
+      screen.getByLabelText('Warehouse'),
+      'Colombia',
+    );
     expect(
       screen.getByLabelText('Warehouse'),
       'filled: no longer highlighted',
     ).not.toHaveAttribute('aria-invalid');
     await userEvent.click(
-      within(missing()).getByRole('button', {name: 'a product with its quantity'}),
+      within(missing()).getByRole('button', {
+        name: 'a product with its quantity',
+      }),
     );
     expect(screen.getByLabelText('Product 1')).toHaveFocus();
   });
@@ -251,18 +258,25 @@ describe('OrderFormPage', () => {
         .map((header) => header.textContent),
     ).toEqual(['Product', 'Quantity', 'Remove']);
     expect(
-      screen.getByText('Choose the warehouse first: its products are offered here.'),
+      screen.getByText(
+        'Choose the warehouse first: its products are offered here.',
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Add product'})).toBeDisabled();
 
-    await userEvent.selectOptions(screen.getByLabelText('Warehouse'), 'Colombia');
+    await userEvent.selectOptions(
+      screen.getByLabelText('Warehouse'),
+      'Colombia',
+    );
     await pickOption('Product 1', 'Title KF-01 (KF-01)');
     await userEvent.type(screen.getByLabelText('Quantity of product 1'), '3');
     await userEvent.click(screen.getByRole('button', {name: 'Add product'}));
     await pickOption('Product 2', 'Title KF-02 (KF-02)');
     expect(within(table).getAllByRole('row')).toHaveLength(3);
 
-    await userEvent.click(screen.getByRole('button', {name: 'Remove product 1'}));
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Remove product 1'}),
+    );
     expect(within(table).getAllByRole('row')).toHaveLength(2);
     expect(
       screen.getByText('Title KF-02 (KF-02)'),
@@ -281,7 +295,10 @@ describe('OrderFormPage', () => {
     const note = 'Remove the products to change the warehouse.';
     expect(screen.queryByText(note)).not.toBeInTheDocument();
 
-    await userEvent.selectOptions(screen.getByLabelText('Warehouse'), 'Colombia');
+    await userEvent.selectOptions(
+      screen.getByLabelText('Warehouse'),
+      'Colombia',
+    );
     await pickOption('Product 1', 'Title KF-01 (KF-01)');
     await userEvent.type(screen.getByLabelText('Quantity of product 1'), '2');
 

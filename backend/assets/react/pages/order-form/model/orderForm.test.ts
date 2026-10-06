@@ -1,4 +1,9 @@
-import {emptyLine, emptyOrderForm, isOrderFormValid, missingFields} from './orderForm';
+import {
+  emptyLine,
+  emptyOrderForm,
+  isOrderFormValid,
+  missingFields,
+} from './orderForm';
 
 describe('missingFields', () => {
   it('names everything an empty order lacks, in the order of the form', () => {
