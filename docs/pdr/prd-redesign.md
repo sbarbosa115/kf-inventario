@@ -576,6 +576,18 @@ never runs the suite; the coordinator runs it once at the barrier.
     (the smoke stack is a dev build). At 390 px the dev stack's Symfony debug toolbar covers the tab bar's bottom-right
     corner; NAV-05 presses More with the keyboard for that reason (production has no toolbar).
 
+19. **Coordinator note (wave 1):** dialogs stack: `useFocusTrap` keeps a list of open dialogs and only the topmost one
+    (a dialog rendered inside another sits above it) answers Escape and Tab, so a `ConfirmModal` over a `SlideOver`
+    closes alone; item 3's workaround in `OrderDetail` is removed. The body keeps `modal-open` until the last one closes.
+20. **Coordinator note (wave 1, item 2):** a scanned code that matches no product is listed under the scan with
+    "Not found" and left out of the request; the footer says how many were left out. The old screen sent it and the
+    server skipped it (`AddStockHandler`/`RemoveStockHandler` pass over `ProductNotFound`), so what is saved is the same.
+21. **Coordinator note (wave 1):** kept as they are, no kit change: after creating a product, two toasts (saved, and
+    the label download) since `Toast` takes one action; tables needing a specific search label use their own `Toolbar`
+    (no `searchLabel` on `DataTable`). The UI hides actions the session's roles do not reach (`useCan`, reachable
+    roles from `/api/v1/session`); the server's checks are unchanged. The admin reaches `ROLE_MANAGE_ORDERS` through the
+    hierarchy (the regression doc said otherwise; corrected).
+
 ## Risks
 
 - **Muscle memory:** the barcode reader changes most (warehouse first, one-tap add). Mitigation: same route, same
