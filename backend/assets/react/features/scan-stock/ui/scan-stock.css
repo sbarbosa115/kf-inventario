@@ -1,6 +1,8 @@
 /* The scan screen: phone-first, the warehouse and mode on top, the camera and the box, the running list, the footer. */
 .scan-stock {
   display: grid;
+  /* One column that shrinks to the screen: an auto column grows to its longest line and the phone scrolls sideways. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--kf-space-4);
   min-width: 0;
   max-width: var(--kf-form-max);
@@ -32,6 +34,7 @@
 
 .scan-stock__step {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--kf-space-3);
   min-width: 0;
 }
@@ -96,6 +99,7 @@
 
 .scan-stock__lines {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--kf-space-2);
   margin: 0;
   padding: 0;

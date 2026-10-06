@@ -626,7 +626,8 @@ product's stock to 1 with the Scan screen's Remove first).
 Smoke: `e2e/order-forms.spec.ts`.
 Scan KF-01 twice: the button reads "Ship 2 products"; press it: back on the orders list, toast "Shipment saved: order
 <number> is partial.", the order is Partial. Getting ready again: KF-01's "In stock" is 2 less, "Shipped 2 of 2 · this
-shipment 0" with the "Shipped" badge. Scan KF-02, "Ship 1 product": toast "… is sent."; open it again: KF-02 says
+shipment 0" with the "Shipped" badge. Scan KF-02, "Ship 1 product": toast "… is partial." again (only a shipment of the whole order at once sends it, as
+before the redesign); open it again: KF-02 says
 "Shipped 1 of 1" and its + is disabled. The fixtures' `W00005` (Sent): Ship is disabled and the bar says "This order
 was already sent: it takes no more shipments." By hand: Cancel goes back to the orders list without saving.
 

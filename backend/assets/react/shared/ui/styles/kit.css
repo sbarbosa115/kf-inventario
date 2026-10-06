@@ -1153,12 +1153,14 @@
 }
 
 @media (max-width: 599px) {
+  /* Side by side while they fit, one under the other when a label is long (Spanish): never wider than the phone. */
   .kf-action-bar__buttons {
+    flex-wrap: wrap;
     width: 100%;
   }
 
   .kf-action-bar__buttons > * {
-    flex: 1;
+    flex: 1 1 auto;
   }
 }
 

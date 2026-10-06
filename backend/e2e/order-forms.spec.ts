@@ -253,8 +253,10 @@ test.describe('5 Orders: the order form and getting ready', () => {
     await expect(shipButton(page)).toHaveText('Ship 1 product');
     await shipButton(page).click();
     await expect(page).toHaveURL(/\/admin\/orders$/);
+    // Only a shipment of the whole order at once sends it (RecordPartialShipmentHandler, as the legacy code did):
+    // the shipment that completes it leaves it Partial.
     await expect(
-      page.getByText(`Shipment saved: order ${CODE} is sent.`),
+      page.getByText(`Shipment saved: order ${CODE} is partial.`),
     ).toBeVisible();
 
     await page.goto(`/admin/orders/${placedId}/getting-ready`);

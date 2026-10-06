@@ -97,7 +97,7 @@ test.describe('5 Orders', () => {
       ).toBeVisible();
     }
     const row = await findOrder(page, 'W00001');
-    await expect(row.getByText('Jose Perez')).toBeVisible();
+    await expect(row.getByText('Jose Perez', {exact: true})).toBeVisible();
     await expect(row.getByText('jose.perez@example.com')).toBeVisible();
     await expect(row.getByText('Phone')).toBeVisible();
     await expect(

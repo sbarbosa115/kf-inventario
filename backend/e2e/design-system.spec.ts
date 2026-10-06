@@ -301,8 +301,7 @@ test.describe('10 Design system, on a phone (390 px)', () => {
       'Scan',
       'Incoming',
     ]);
-    // The dev stack's Symfony debug toolbar covers the bottom right corner of a phone: the keyboard reaches More.
-    await tabs.getByRole('button', {name: 'More'}).press('Enter');
+    await tabs.getByRole('button', {name: 'More'}).click();
     await expect(
       page.getByRole('dialog', {name: 'Main menu'}).getByRole('link', {
         name: 'Upload a stock sheet',

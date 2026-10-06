@@ -169,12 +169,12 @@ test.describe('6 Invoices', () => {
 
     await page.getByRole('button', {name: 'Clear filters'}).click();
     await expect(search).toHaveValue('');
-    await page.getByLabel('From').fill('2999-01-01');
+    await page.getByLabel('From', {exact: true}).fill('2999-01-01');
     await expect(
       page.getByText('Nothing matches these filters.'),
     ).toBeVisible();
     await page.getByRole('button', {name: 'Clear filters'}).click();
-    await page.getByLabel('To').fill('2000-01-01');
+    await page.getByLabel('To', {exact: true}).fill('2000-01-01');
     await expect(
       page.getByText('Nothing matches these filters.'),
     ).toBeVisible();
