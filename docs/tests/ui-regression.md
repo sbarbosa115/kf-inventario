@@ -637,24 +637,6 @@ Smoke: `e2e/order-forms.spec.ts`.
 to the orders. Signed in as `inventory`, `/admin/orders/<id>/edit`: "You do not have permission to do this.";
 `/api/v1/orders/<id>` answers 403.
 
-**ORD-19 · Sync Orders without shop keys places nothing, and needs the sync role**
-Smoke (part): `e2e/orders-sync.spec.ts` posts to `/api/v1/orders/sync` as the admin (202 `{"imported":0,"skipped":0}`,
-no new order) and as `inventory` (403).
-The stack's `backend/.env` leaves `WOO_COMMERCE_URL`, `_API_KEY` and `_API_SECRET` empty. By hand: as the admin, Orders ›
-Sync Orders (the button of ORD-01 – 10): a message says no order was imported, and the list is unchanged.
-
-**ORD-20 · Sync Orders pulls a shop's waiting orders once, into the warehouse of that shop**
-Needs a WooCommerce test shop with at least one `processing` order of the last 30 days whose line SKUs are products
-here (e.g. `KF-01`), and read-only REST keys (WooCommerce › Settings › Advanced › REST API). In `backend/.env.local`
-set `WOO_COMMERCE_URL=<the shop's address>`, `WOO_COMMERCE_API_KEY=ck_…`, `WOO_COMMERCE_API_SECRET=cs_…`; Warehouses ›
-edit Colombia (warehouse 1) so its URLs hold that same address. As the admin, Orders › warehouse Colombia › Sync
-Orders: a message says how many were imported; each new order's code is the shop's order number, source Web, status
-Created, its customer with a billing and a shipping address, its lines by SKU; within a minute Mailpit has "Order
-#<number> was created" for each (warehouse 1 prints). Press Sync Orders again: nothing is imported, the same number are
-skipped, no order appears twice. Delete one of the imported orders and sync again: it does not come back. Change
-`WOO_COMMERCE_API_SECRET` to a wrong value and sync: an error says the shop could not be read (502
-`order_sync_failed`), and `docker compose logs php` (or `var/log/dev.log`) names the shop's answer. Put the right keys
-back and empty `backend/.env.local` when done.
 
 ### Order form and getting ready, redesigned (item 4)
 

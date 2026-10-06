@@ -191,18 +191,19 @@ migrates, warms the cache, appends the front-controller rules to `backend/public
 version, extensions (`sodium` included), `APP_ENCRYPTION_KEY`, the time zone (America/Bogota) and the cron line. Its
 header lists the one-time steps of moving the existing account to this layout: the document root becomes
 `backend/public`, the settings move to `backend/.env.local` (`deploy/env.local.example`), and everyone signs in again
-once. The cron line (every minute) runs `app:shops:pull --if-due` (the shops' catch-up pull, a no-op until
-shops-settings' item 5b) and then drains the `mail` and `shops` queues, under one `flock`; the script prints it and
-says when the old mail-only line must be replaced. shops-settings' cutover checklist is in its PRD.
+once. The cron line (every minute) runs `app:shops:pull --if-due` (the shops' catch-up pull) and then drains the
+`mail` and `shops` queues, under one `flock`; the script prints it and says when the old mail-only line must be
+replaced.
 
-The "Sync Orders" button reads the shop's WooCommerce REST API with `WOO_COMMERCE_URL`, `WOO_COMMERCE_API_KEY` and
-`WOO_COMMERCE_API_SECRET` (read-only keys, one shop as before): the URL must be one of the receiving warehouse's
-`urls` (the address its webhook comes from). With any of the three empty the button places nothing.
+For the shops-settings feature (cutover from the legacy WooCommerce webhook to per-connection webhooks): before
+deploying, generate `APP_ENCRYPTION_KEY`; deploy (the migration creates the shop tables); then in Settings ›
+Shop connections create the four connections (name, shop URL, REST keys); re-point each shop's webhook to its
+connection's URL; verify with a test order; turn off the legacy URL in Settings › General. The full cutover checklist
+is in `docs/pdr/prd-shops-settings.md` (the `Cutover checklist` section).
 
-The webhook (`/admin/order/1H39j0jpQPsWL958v9R4`) is public, as before: its secret path and the
-`X-WC-Webhook-Source` header are all that admit an order. Setting `WOO_COMMERCE_WEBHOOK_SECRET` to the webhook's secret
-in the shop (WooCommerce › Settings › Advanced › Webhooks) makes it check WooCommerce's `X-WC-Webhook-Signature` too:
-recommended, once the secret is copied from the shop (a wrong one refuses every order, logged as a warning).
+The legacy webhook (`/admin/order/1H39j0jpQPsWL958v9R4`) is public and works as before (its secret path and
+`X-WC-Webhook-Source` header admit an order), but per-connection webhooks (under `/webhooks/shops/{token}`) are
+preferred and require an HMAC-SHA256 signature. The legacy URL answers 410 once it is turned off in Settings › General.
 
 ## What behaves differently from the Twig app
 
@@ -226,6 +227,18 @@ Everything else does what the legacy pages did (roles included). On purpose, eac
   such a product can show its stock twice and refuse a removal it could cover. Find them before or after the cutover
   with `SELECT product_id, warehouse_id, COUNT(*) FROM product_warehouse WHERE status = 1 GROUP BY 1, 2 HAVING
   COUNT(*) > 1` and merge them by hand (sum the quantities into the oldest row, delete the others).
+- Failed deliveries and writes to shops are kept in memory (a bounded inbox: failed deliveries older than 90 days,
+  failed pushes older than a week, are purged by the pull and push commands; the count in health is live).
+- "Also send to <shop> as an order note" writes a queued `order_note` row to the outbox, but the shop's capability to
+  receive notes must be enabled in its connection settings (each connection has an "Order notes" toggle in Settings ›
+  Shop connections).
+- Non-admins see shop names in the Source filter only for shops on the current page of results (the full list is
+  admin-only); unlinked orders show Web or Phone.
+- A new shop connection must be saved before "Test connection" will work (the test runs against the connection's
+  stored keys and URL).
+- ORD-35 smoke run may leave Usa orders behind if run before the orders.spec (the fake shop's pull cursor advances
+  past them); run orders.spec first or manually clear the cursor in Settings › Shop connections › Usa › Check now
+  before a smoke run.
 
 The security audit of the restructure (`docs/security/audits/2026-10-05-restructure.md`) left these open:
 
@@ -233,8 +246,9 @@ The security audit of the restructure (`docs/security/audits/2026-10-05-restruct
   decision 11): any account, an invoices-only one included, can record a partial shipment (stock out, order
   completed), replace an order's comments and rename a warehouse. Audit finding 1 (High): accepted by the user on
   2026-10-05, same as legacy.
-- **The WooCommerce webhook is admitted by its secret path and the `X-WC-Webhook-Source` header alone** unless
-  `WOO_COMMERCE_WEBHOOK_SECRET` is set (then the shop's signature is required). Set it in production (audit finding 2).
+- **Per-connection webhooks require an HMAC-SHA256 signature** (the connection's secret, constant-time comparison).
+  The legacy webhook allows its secret path and the `X-WC-Webhook-Source` header as before; setting `ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID`
+  during cutover determines which warehouse's orders are printed (audit finding 2, migrated).
 - No login throttling, and a disabled user can still sign in (as before; the user chose to keep both). Sign-in time
   tells whether a username exists (finding 14).
 - No script/style Content-Security-Policy (the screens load Bootstrap, jQuery and Font Awesome from CDNs) and no HSTS
@@ -243,9 +257,8 @@ The security audit of the restructure (`docs/security/audits/2026-10-05-restruct
 - The invoice roles are reached by no other role (as in production): an admin sees Invoices only when given them.
 - The redesign (`docs/pdr/prd-redesign.md`): PDFs, spreadsheets and emails stay English and keep their look; the
   Spanish texts are ours (one proofreading pass, no native review); the KF mark is a trace of a 180 px PNG until a vector file arrives;
-  "Sync shop orders" still pulls one of the four WooCommerce shops; the camera works only over HTTPS (or `localhost`),
-  so it is not available on the dev stack opened from a phone by IP, and it was not tried on real phones (the user's
-  decision; the tests use a fake detector); the customers search covers the current page only (the API pages
-  without searching). An order is Sent only when one shipment covers all of it, as before: the shipment that
-  completes a partial order leaves it Partial. `app:smoke:prepare --seed` alone cannot empty a database that holds
-  partial-shipment child orders (a foreign key): reset with `backend/e2e/prepare.sh` (drop, migrate, seed) instead.
+  the camera works only over HTTPS (or `localhost`), so it is not available on the dev stack opened from a phone by IP,
+  and it was not tried on real phones (the user's decision; the tests use a fake detector); the customers search covers
+  the current page only (the API pages without searching). An order is Sent only when one shipment covers all of it, as
+  before: the shipment that completes a partial order leaves it Partial. `app:smoke:prepare --seed` alone cannot empty
+  a database that holds partial-shipment child orders (a foreign key): reset with `backend/e2e/prepare.sh` (drop, migrate, seed) instead.

@@ -6,14 +6,10 @@
 parameters:
   locale: 'en'
   test: 'en'
-  # The printer email of a new order (Ordering): who else gets a copy, and the warehouse whose WooCommerce orders send
-  # it (the webhook: only that warehouse's shop orders are printed).
+  # The printer email of a new order (Ordering): who else gets a copy.
   ordering.order_email.cc: ['sales@klassicfab.com']
+  # The legacy webhook's printed warehouse (while the legacy URL is active). Per-connection webhooks use the connection's printer switch instead.
   ordering.webhook_email_warehouse_id: '%env(int:ORDER_WEBHOOK_EMAIL_WAREHOUSE_ID)%'
-  woo_commerce:
-    url: '%env(WOO_COMMERCE_URL)%'
-    api_key: '%env(WOO_COMMERCE_API_KEY)%'
-    api_secret: '%env(WOO_COMMERCE_API_SECRET)%'
   mailer:
     from_address: '%env(MAILER_FROM_ADDRESS)%'
     from_name: '%env(MAILER_FROM_NAME)%'
