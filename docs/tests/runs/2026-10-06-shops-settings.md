@@ -24,6 +24,7 @@ the last row is green.
 | # | When | Commit | Result | Failed |
 |---|---|---|---|---|
 | 1 | 2026-10-06 10:59 | `f3e75e2` | Not green: 112 passed, 1 failed, 6 skipped | CUS-03; skipped: CUS-04, CUS-05, CUS-06, CUS-07, CUS-08, CUS-09 |
+| 2 | 2026-10-06 11:06 | `9636ed2` | Green: 119 passed, 0 failed | — |
 <!-- smoke.py adds a row per run of the whole suite -->
 
 ### Smoke findings
