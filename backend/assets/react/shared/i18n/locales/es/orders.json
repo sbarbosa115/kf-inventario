@@ -48,7 +48,7 @@
     "confirmTitle": "¿Marcar {{code}} como {{status}}?",
     "confirmBody": "El pedido pasa de {{from}} a {{status}}. Sus existencias no cambian.",
     "confirm": "Marcar como {{status}}",
-    "changed": "El pedido {{code}} ahora está {{status}}."
+    "changed": "El pedido {{code}} ahora está en estado {{status}}."
   },
   "delete": {
     "title": "¿Eliminar el pedido {{code}}?",
@@ -78,7 +78,7 @@
   "products": {
     "code": "Código",
     "title": "Producto",
-    "quantity": "Pedido",
+    "quantity": "Cant. pedida",
     "empty": "Este pedido no tiene productos."
   },
   "comments": {
@@ -92,8 +92,8 @@
   },
   "errors": {
     "order_not_found": "Este pedido ya no existe. Recargue la lista.",
-    "order_sync_unavailable": "Traer los pedidos de las tiendas aún no está disponible.",
+    "order_sync_unavailable": "La sincronización de pedidos de las tiendas aún no está disponible.",
     "order_sync_failed": "No se pudo conectar con las tiendas, así que no se importó ningún pedido. Intente de nuevo en un momento.",
-    "validation_failed": "El cambio fue rechazado. Recargue el pedido e intente de nuevo."
+    "validation_failed": "Se rechazó el cambio. Recargue el pedido e intente de nuevo."
   }
 }

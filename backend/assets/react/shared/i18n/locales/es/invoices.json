@@ -47,7 +47,7 @@
     "paymentMethod": "Método de pago",
     "payment": {
       "credit_counted": "Crédito - contado",
-      "credit_card": "Tarjeta de crédito - Paypal"
+      "credit_card": "Tarjeta de crédito - PayPal"
     },
     "taxRate": "Impuesto de ventas",
     "comment": "Comentarios",
@@ -75,9 +75,9 @@
     "total": "Total",
     "submit": "Crear factura",
     "required": "Este campo no puede estar vacío.",
-    "noItems": "Agregue al menos un ítem a la factura.",
-    "badItems": "Cada ítem necesita una cantidad entera y un precio como 12.50.",
+    "noItems": "Agregue al menos una línea a la factura.",
+    "badItems": "Cada línea necesita una cantidad entera y un precio como 12.50.",
     "codeTaken": "Ya existe una factura con este código.",
-    "stockFailed": "No se pudieron cargar los productos de esta bodega. Las descripciones se pueden escribir igual."
+    "stockFailed": "No se pudieron cargar los productos de esta bodega. Las descripciones se pueden escribir de todos modos."
   }
 }

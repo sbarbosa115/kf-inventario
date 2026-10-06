@@ -28,5 +28,5 @@
     "invoices": "Facturas",
     "admin": "Administración"
   },
-  "adminNote": "Administrador incluye todo excepto las facturas."
+  "adminNote": "El rol Administrador incluye todo excepto las facturas."
 }

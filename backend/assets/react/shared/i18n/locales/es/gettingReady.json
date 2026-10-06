@@ -1,7 +1,7 @@
 {
   "title": "Alistamiento · {{code}}",
   "titleLoading": "Alistamiento",
-  "description": "Escanee cada producto a medida que entra en la caja, con la cámara o con la casilla del código de barras.",
+  "description": "Escanee cada producto a medida que entra en la caja, con la cámara o con el campo del código de barras.",
   "scanner": "Lector",
   "list": "Productos del pedido",
   "progress": "Enviado {{shipped}} de {{ordered}} · este envío {{current}}",
@@ -30,9 +30,9 @@
   "notFound": "Este pedido ya no existe.",
   "backToList": "Volver a los pedidos",
   "errors": {
-    "insufficient_stock": "La bodega no tiene suficiente de {{code}} ({{available}} disponibles).",
+    "insufficient_stock": "La bodega no tiene suficientes existencias de {{code}} ({{available}} disponibles).",
     "partial_exceeds_order": "Este envío lleva más de lo que falta del pedido, o el pedido ya se envió. Recargue la página.",
-    "stock_not_found": "La bodega no tiene ninguno de uno de estos productos.",
+    "stock_not_found": "Uno de estos productos no tiene existencias en la bodega.",
     "order_not_found": "Este pedido ya no existe.",
     "validation_failed": "Agregue al menos un producto al envío."
   }

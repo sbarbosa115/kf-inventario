@@ -41,6 +41,6 @@
     "disabled": "Inactivo",
     "required": "Este campo no puede estar vacío.",
     "invalidEmail": "Este valor no es un correo electrónico válido.",
-    "passwordTooShort": "La contraseña necesita al menos {{min}} caracteres."
+    "passwordTooShort": "La contraseña debe tener al menos {{min}} caracteres."
   }
 }

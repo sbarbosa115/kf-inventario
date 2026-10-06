@@ -2,7 +2,7 @@
   "appName": "KF Inventory",
   "loading": "Cargando…",
   "loadFailed": "No se pudo cargar. Revise su conexión e intente de nuevo.",
-  "serverFailed": "Algo falló de nuestro lado. Intente de nuevo en un momento.",
+  "serverFailed": "Ocurrió un error de nuestra parte. Intente de nuevo en un momento.",
   "retry": "Reintentar",
   "save": "Guardar",
   "saving": "Guardando…",
