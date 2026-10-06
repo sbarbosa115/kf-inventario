@@ -41,7 +41,9 @@ export function TestResultCard({result}: {result: ShopTestResult}) {
       {!rest.ok && rest.error && (
         <p className="kf-test-result__error">{rest.error}</p>
       )}
-      {rest.ok && <p className="kf-test-result__muted">{t(`shops.test.${canWrite}`)}</p>}
+      {rest.ok && (
+        <p className="kf-test-result__muted">{t(`shops.test.${canWrite}`)}</p>
+      )}
       <p className="kf-test-result__muted">{t('shops.test.webhook')}</p>
     </section>
   );

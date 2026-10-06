@@ -1,4 +1,4 @@
-import {useState, type FormEvent} from 'react';
+import {useEffect, useRef, useState, type FormEvent} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {
   createShop,
@@ -105,6 +105,11 @@ export function ShopConnectionForm({
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<ShopTestResult | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+  // The result lands at the end of the form: bring it into view (Test is pressed in the sticky action bar).
+  useEffect(() => {
+    if (result) resultRef.current?.scrollIntoView?.({block: 'nearest'});
+  }, [result]);
 
   const set = <K extends keyof Values>(key: K, value: Values[K]) =>
     setValues((now) => ({...now, [key]: value}));
@@ -312,7 +317,11 @@ export function ShopConnectionForm({
       </FormSection>
       {saved && <WebhookBlock shop={saved} initialSecret={initialSecret} />}
       {result && (
-        <div className="kf-shop-form__result" aria-live="polite">
+        <div
+          className="kf-shop-form__result"
+          aria-live="polite"
+          ref={resultRef}
+        >
           <TestResultCard result={result} />
         </div>
       )}

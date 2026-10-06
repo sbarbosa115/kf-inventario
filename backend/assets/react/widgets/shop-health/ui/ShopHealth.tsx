@@ -39,10 +39,7 @@ export function ShopHealth({refreshKey}: {refreshKey: number}) {
   if (issues.length === 0) return null;
 
   return (
-    <section
-      className="kf-shop-health"
-      aria-label={t('shops.health.label')}
-    >
+    <section className="kf-shop-health" aria-label={t('shops.health.label')}>
       <i
         className="fas fa-exclamation-triangle kf-shop-health__icon"
         aria-hidden="true"

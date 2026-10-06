@@ -44,10 +44,7 @@ describe('CheckNowButton', () => {
           imported: 3,
           skipped: 1,
           failed: 0,
-          connections: [
-            row(1, 'Kfvintage', 2, 1),
-            row(2, 'Klassicfab', 1, 0),
-          ],
+          connections: [row(1, 'Kfvintage', 2, 1), row(2, 'Klassicfab', 1, 0)],
         },
       ],
     });

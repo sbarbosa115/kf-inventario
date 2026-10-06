@@ -206,9 +206,7 @@ describe('ShopDeliveriesPage', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
     );
     await waitFor(() =>
-      expect(
-        screen.queryByRole('row', {name: /7502/}),
-      ).not.toBeInTheDocument(),
+      expect(screen.queryByRole('row', {name: /7502/})).not.toBeInTheDocument(),
     );
     expect(
       api.calls.filter((c) => c.path === '/shops/4/deliveries/11/retry'),
@@ -218,10 +216,7 @@ describe('ShopDeliveriesPage', () => {
   it('says why a retry still fails, and keeps the row', async () => {
     renderPage({
       'GET /shops/4/deliveries': inbox(() => [UNKNOWN]),
-      'POST /shops/4/deliveries/11/retry': [
-        200,
-        {...UNKNOWN, attempts: 2},
-      ],
+      'POST /shops/4/deliveries/11/retry': [200, {...UNKNOWN, attempts: 2}],
     });
 
     await userEvent.click(
@@ -276,9 +271,7 @@ describe('ShopDeliveriesPage', () => {
       'GET /shops/4/deliveries/12': [200, {...SIGNATURE, payload: null}],
     });
 
-    await userEvent.click(
-      await screen.findByRole('row', {name: /signature/i}),
-    );
+    await userEvent.click(await screen.findByRole('row', {name: /signature/i}));
 
     const panel = await screen.findByRole('dialog');
     expect(

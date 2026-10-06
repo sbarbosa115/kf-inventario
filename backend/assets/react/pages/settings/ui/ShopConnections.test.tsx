@@ -210,9 +210,7 @@ describe('ShopConnections', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(
       'Kfvintage answered: KF Vintage, WooCommerce 8.9.0.',
     );
-    expect(api.calls.find((c) => c.path === '/shops/4/test')?.body).toEqual(
-      {},
-    );
+    expect(api.calls.find((c) => c.path === '/shops/4/test')?.body).toEqual({});
   });
 
   it('says why a test failed, in a toast that stays', async () => {

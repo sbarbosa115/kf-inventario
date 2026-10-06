@@ -82,7 +82,10 @@ function HealthLines({shop}: {shop: ShopConnection}) {
           <span>
             {current && (
               <>
-                <i className="fas fa-exclamation-circle" aria-hidden="true" />{' '}
+                <i
+                  className="fas fa-exclamation-circle"
+                  aria-hidden="true"
+                />{' '}
               </>
             )}
             {dateTime(health.last_failure_at)} ·{' '}

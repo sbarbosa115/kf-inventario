@@ -89,6 +89,8 @@
 
 .kf-shop-form__result {
   grid-column: 1 / -1;
+  /* Clear of the sticky action bar (and the phone's tab bar) when scrolled into view. */
+  scroll-margin-bottom: calc(var(--kf-target) * 3);
 }
 
 .kf-shop-form__updates {

@@ -98,9 +98,7 @@ describe('ShopConnectionForm', () => {
       await screen.findByRole('heading', {level: 1, name: 'Add connection'}),
     ).toBeInTheDocument();
     await screen.findByRole('option', {name: 'Usa'});
-    expect(
-      within(section('Shop')).getByLabelText('Name'),
-    ).toBeInTheDocument();
+    expect(within(section('Shop')).getByLabelText('Name')).toBeInTheDocument();
     expect(within(section('Shop')).getByLabelText('Site URL')).toBeVisible();
     expect(
       within(section('Shop')).getByRole('switch', {name: 'Active'}),
@@ -148,9 +146,9 @@ describe('ShopConnectionForm', () => {
       screen.getByRole('button', {name: 'Save connection'}),
     );
 
-    expect(
-      within(section('Shop')).getAllByText('Fill this in.'),
-    ).toHaveLength(2);
+    expect(within(section('Shop')).getAllByText('Fill this in.')).toHaveLength(
+      2,
+    );
     expect(
       within(section('Orders')).getByText('Choose a warehouse.'),
     ).toBeInTheDocument();
@@ -207,9 +205,7 @@ describe('ShopConnectionForm', () => {
     );
     expect(clipboard).toHaveBeenCalledWith(SECRET.webhook_secret);
     expect(webhook).toHaveTextContent('Topic Order created');
-    expect(
-      screen.getByRole('button', {name: 'Test connection'}),
-    ).toBeEnabled();
+    expect(screen.getByRole('button', {name: 'Test connection'})).toBeEnabled();
   });
 
   it('edits a connection: blank keys are not sent, so the saved ones stay', async () => {
@@ -229,9 +225,7 @@ describe('ShopConnectionForm', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Warehouse')).toHaveValue('2'),
     );
-    expect(
-      screen.getByRole('switch', {name: /Order status/}),
-    ).toBeChecked();
+    expect(screen.getByRole('switch', {name: /Order status/})).toBeChecked();
     await userEvent.click(screen.getByRole('switch', {name: /Order notes/}));
     await userEvent.click(
       screen.getByRole('switch', {name: 'Email the printer'}),

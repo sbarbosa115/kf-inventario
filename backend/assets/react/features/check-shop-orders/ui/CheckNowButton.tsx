@@ -7,7 +7,10 @@ import {checkShops, type CheckResult} from '../api/checkShopsApi';
 const KNOWN_ERRORS = ['order_sync_failed', 'order_sync_unavailable'];
 
 /** "3 orders imported from 2 shops, 1 skipped." (+ "; Kfvintage could not be read." when some failed). */
-function summary(result: CheckResult, t: Translate): {
+function summary(
+  result: CheckResult,
+  t: Translate,
+): {
   text: string;
   failed: boolean;
 } {

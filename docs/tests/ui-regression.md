@@ -1192,10 +1192,77 @@ Settings › Shop connections (`/admin/settings/shops`): one connection per WooC
 warehouse, what the app may write back, its health and its failed-deliveries inbox. The dev stack seeds "Fake shop"
 (Colombia, prints orders, both capabilities).
 
-<!-- shops-settings item 6 (shops-ui) adds SHOP-01 – 10 here, smoke in e2e/shops.spec.ts: create a connection (webhook
-     URL and secret with Copy), Test connection with bad and good keys, blank keys kept on edit, deactivate, health and
-     counters, the failed-deliveries table (filters, body, Retry, Discard), the Orders warning line, Check now per
-     connection, the source filter and column naming the shops; SHOP-10 by hand (Spanish, 390 px). -->
+**SHOP-01 · A new connection shows its webhook URL and secret, each with Copy**
+Smoke: `e2e/shops.spec.ts`.
+Settings › Shop connections › "Add connection": four sections (Shop, WooCommerce REST API, Orders, What this app may
+update on the shop) and no Webhook section yet; "Test connection" is disabled with "Save the connection first to test
+it." Fill Name, Site URL (`http://smoke-1.test`, http is allowed in dev), both keys, warehouse Usa, Save connection: toast
+"Connection … created. Paste its webhook URL and secret in WooCommerce.", the address becomes
+`/admin/settings/shops/{id}`, and the Webhook section shows the URL (`…/webhooks/shops/<64 hex>`) and the signing secret
+in clear, each with "Copy" (a toast "Copied."), plus the WooCommerce steps and "Rotate secret" (asks first). Reopened
+later, the secret is dots until the eye button shows it.
+
+**SHOP-02 · Test connection says why bad keys fail and names the store with good ones**
+Smoke: `e2e/shops.spec.ts` (the dev stack's fake shop).
+Edit "Fake shop", type wrong keys and "Test connection": the result card under the form says "The shop did not answer"
+with the shop's message, in danger. Empty both key fields (the saved keys are tested) and test again: "Connected to Fake
+shop · WooCommerce 8.9.0", "Write access is proven by the first update the app sends." and the webhook reminder. The
+card's ⋯ › Test connection says the same in a toast.
+
+**SHOP-03 · Editing with blank keys keeps the saved ones**
+Smoke: `e2e/shops.spec.ts`.
+A connection with keys says "Keys are saved. Leave both blank to keep them." Rename it and turn "Order status" on with
+the key fields blank, Save: toast "Connection … saved."; `GET /api/v1/shops` still says `has_keys: true` and the test
+still connects. A refused URL (a private address) is said under Site URL with the server's reason; a taken name under
+Name.
+
+**SHOP-04 · A deactivated connection keeps what its shop sends**
+Smoke: `e2e/shops.spec.ts` (UI + API).
+Card ⋯ › Deactivate: toast "… is inactive. Its deliveries are kept in the failed deliveries.", the badge reads Inactive
+and the menu offers Activate. A signed delivery to its webhook answers 200 and waits in its inbox with reason
+`inactive`. ⋯ › Delete on a connection orders came from answers "… cannot be deleted" and offers Deactivate instead.
+
+**SHOP-05 · Health lines and counters**
+Smoke: `e2e/shops.spec.ts` (after a refused signature, as HOOK-04).
+Each card lists Last webhook, Last order imported, Last check and Last failure ("Never"/"None" when empty). After a
+delivery with a wrong signature, Last failure reads the date, "Bad signature" and the server's text (in danger while no
+success came after it), and "N failed deliveries" links to the inbox; failed write-backs show "N failed updates",
+linking to the connection's Failed updates list (Retry queues them again).
+
+**SHOP-06 · The failed deliveries: filters, body, Retry, Discard**
+Smoke: `e2e/shops.spec.ts`.
+⋯ › Failed deliveries: title "Failed deliveries", the shop's name under it, chip "Status: Failed". Columns Received,
+Shop order #, Customer, Lines ("KF-99 × 2"), Reason (badge + text), Status, each filterable under its header (removing
+the Failed chip shows placed and discarded ones too). A row opens a centred panel with the body (indented JSON; a refused
+signature says it kept no body). Retry: "Order 7502 placed." and the row leaves the failed filter once the product
+exists, else a toast that stays "Still not placed: …". ⋯ › Discard: "Delivery discarded." and the row leaves.
+
+**SHOP-07 · The Orders warning line links to the right connection**
+Smoke: `e2e/shops.spec.ts`.
+As admin, with Fake shop holding failed deliveries: Orders shows a warning above the table "Fake shop: N orders could not
+be placed · Fix in Settings" (several problems fold into "N shop problems need attention." with Show/Hide); the link
+opens that connection's failed deliveries. Updates that did not reach a shop, a failure newer than the last success,
+and the old webhook URL reached after it was turned off (→ Settings › General) each make a line; inactive connections
+none. People without ROLE_ADMIN never see it.
+
+**SHOP-08 · Check now answers per connection**
+Smoke: `e2e/shops.spec.ts`.
+Orders › "Check now" (secondary, ROLE_CAN_SYNC_ORDERS): "3 orders imported from 2 shops, 1 skipped." in a toast; when a
+shop could not be read the toast stays and ends "; Kfvintage could not be read."; with no active connection "No shop
+connection is active, so there was nothing to check."; the list and the warning line reload.
+
+**SHOP-09 · The Source column names the shop; its filter lists the shops**
+Smoke: `e2e/shops.spec.ts`.
+An order placed through a connection's webhook reads the shop's name with the globe in Orders' Source column (Web or
+Phone otherwise). The Source filter lists Phone, Web and every connection by name with its count; ticking "Fake shop"
+shows the chip "Source: Fake shop" and only its orders.
+
+**SHOP-10 · The whole flow in Spanish at 390 px (by hand)**
+At 390 × 844, Spanish, light and dark: Configuración › Conexiones con tiendas — the cards stack, the health lines go one
+under the other, the menu and every button are 44 px; "Agregar conexión", save, copy the URL and the secret (the copy
+fields wrap under the input), "Probar conexión" brings its result into view above the action bar; Entregas fallidas uses
+the "Filtros" sheet and the panel's Reintentar/Descartar; Pedidos shows the warning line and "Buscar ahora". No English
+string, no horizontal page scroll.
 
 ## 13. Table filters (FLT)
 

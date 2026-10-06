@@ -4,6 +4,7 @@
   padding: 0;
   list-style: none;
   font-size: var(--kf-text-sm);
+  white-space: nowrap;
 }
 
 .kf-deliveries__reason {

@@ -182,7 +182,11 @@ describe('OrdersPage', () => {
         'GET /shops': () => [200, [shop(4, 'Kfvintage', failed)]],
         'GET /settings/webhooks': [
           200,
-          {legacy_enabled: true, legacy_hits_since: 0, legacy_last_hit_at: null},
+          {
+            legacy_enabled: true,
+            legacy_hits_since: 0,
+            legacy_last_hit_at: null,
+          },
         ],
         'POST /orders/sync': () => {
           failed = 0;
@@ -222,7 +226,12 @@ describe('OrdersPage', () => {
             {...ORDER, source: 1, shop: {id: 4, name: 'Kfvintage'}},
             {...ORDER, id: 2, code: 'W00002', source: 1, shop: null},
           ]),
-          facets: {source: [{value: 'shop:4', count: 1}, {value: 'web', count: 1}]},
+          facets: {
+            source: [
+              {value: 'shop:4', count: 1},
+              {value: 'web', count: 1},
+            ],
+          },
         },
       ],
       'GET /shops': [200, [shop(4, 'Kfvintage', 0), shop(7, 'Klassicfab', 0)]],
@@ -243,7 +252,9 @@ describe('OrdersPage', () => {
     const filterRow = within(screen.getAllByRole('rowgroup')[0]!).getAllByRole(
       'row',
     )[1]!;
-    await userEvent.click(within(filterRow).getByRole('button', {name: 'Source'}));
+    await userEvent.click(
+      within(filterRow).getByRole('button', {name: 'Source'}),
+    );
     expect(
       screen
         .getAllByRole('checkbox')

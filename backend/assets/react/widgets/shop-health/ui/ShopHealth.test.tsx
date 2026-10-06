@@ -170,9 +170,10 @@ describe('ShopHealth', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(toggle);
 
-    expect(
-      within(region).getByRole('button', {name: 'Hide'}),
-    ).toHaveAttribute('aria-expanded', 'true');
+    expect(within(region).getByRole('button', {name: 'Hide'})).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
     const links = within(region).getAllByRole('link', {
       name: 'Fix in Settings',
     });
