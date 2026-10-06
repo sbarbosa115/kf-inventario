@@ -102,7 +102,7 @@ describe('SettingsPage', () => {
 
   it('shows the tabs other items build as not ready yet', () => {
     fakeApi({});
-    renderAt('/admin/settings/email');
+    renderAt('/admin/settings/shops');
 
     expect(
       screen.getByText('This section is not ready yet.'),

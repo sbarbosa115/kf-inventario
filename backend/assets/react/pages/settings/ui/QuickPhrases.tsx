@@ -1,6 +1,6 @@
-import {SettingsPending} from './SettingsPending';
+import {QuickPhraseAdmin} from '@/features/quick-phrase';
 
-/** Settings tab: shops-settings' item 4 builds it (docs/pdr/prd-shops-settings.md, "Screen proposals"). */
+/** Settings › Quick phrases: the list the order comment box offers as one-tap phrases. */
 export function QuickPhrases() {
-  return <SettingsPending />;
+  return <QuickPhraseAdmin />;
 }
