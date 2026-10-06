@@ -8,8 +8,7 @@
     "label": "Filtros de pedidos",
     "status": "Estado",
     "search": "Número de pedido o cliente",
-    "from": "Creado desde",
-    "to": "Creado hasta"
+    "pinnedOnly": "Solo fijados"
   },
   "columns": {
     "code": "Pedido",
