@@ -391,7 +391,7 @@ test.describe('5 Orders', () => {
     await page.goto('/admin/orders');
     const row = await findOrder(page, 'W00008');
 
-    await row.getByText('Jose Perez').click();
+    await row.getByText('Jose Perez', {exact: true}).click();
 
     const detail = page.getByRole('dialog', {name: 'Order W00008'});
     await expect(detail.getByRole('heading', {level: 3})).toHaveText([

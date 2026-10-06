@@ -282,8 +282,10 @@ test.describe('2 Products', () => {
     await menu.getByRole('menuitem', {name: 'Download stock sheet'}).click();
     expect((await download).suggestedFilename()).toBe('Products.xls');
 
+    // The fixtures' title is the code too: the Code cell comes first.
     await stockRow(page, 'KF-02')
       .getByRole('cell', {name: 'KF-02', exact: true})
+      .first()
       .click();
     await expect(page).toHaveURL(/\/admin\/products\/[^/]+\/edit$/);
     await expect(page.getByLabel('Code')).toHaveValue('KF-02');

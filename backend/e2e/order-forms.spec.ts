@@ -412,8 +412,11 @@ test.describe('5 Orders: the order form and getting ready, on a phone (390 px)',
       expect(scroll, `${path} scrolls sideways`).toBe(client);
     }
     await expect(page.getByLabel('Barcode', {exact: true})).toBeFocused();
+    // The smoke stack is plain http: the camera says why it cannot start (INV-26), typing still works.
     await expect(
-      page.getByRole('button', {name: 'Start camera'}),
+      page.getByText(
+        'The camera needs a secure address (https). Type the code instead.',
+      ),
     ).toBeVisible();
     expect(errors).toEqual([]);
   });

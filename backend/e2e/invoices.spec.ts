@@ -191,8 +191,7 @@ test.describe('6 Invoices', () => {
 
     await page
       .getByRole('row', {name: /INV-0002/})
-      .getByText('Jose Perez')
-      .first()
+      .getByText('Jose Perez', {exact: true})
       .click();
 
     const dialog = page.getByRole('dialog', {name: 'Invoice INV-0002'});
