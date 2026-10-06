@@ -419,66 +419,70 @@ hand, give those two roles to the user of USR-02).
 
 **ORD-01 · The list shows the first warehouse's orders, and the old address lands on it**
 Smoke: `e2e/orders.spec.ts`.
-Signed in as the admin, open `/admin/order/` (the previous version's address): `/admin/orders` opens, "View Orders", a
-warehouse picker on Colombia, a status picker on "Select Order Status (All)", Create an Order, and one row per order
-(newest first, ten a page): a comments count, "Jose Perez [jose.perez@example.com]", the order number, Phone or Web,
-the status in a select, the date (the day the fixtures were loaded, as `05 Oct 2026`), and Order Detail, edit, getting-ready, PDF and Excel buttons. No
-Delete and no Sync button for the admin (as before). The search box finds an order by its number or customer. The
-sidebar's Orders entry opens the same list.
+Signed in as the admin, open `/admin/order/` (the previous version's address): `/admin/orders` opens, "Orders" with
+Create order (primary) and Sync shop orders beside it; a toolbar with the warehouses (Colombia chosen, or the one last
+chosen in this browser), the status chips "All 12 · Created 2 · Processed 2 · …", a search box "Order number or
+customer" and Created from / Created to; one row per order (newest first, twenty a page): the order number (mono,
+first), "Jose Perez" with his email under it, Phone or Web with an icon, the status as a badge with a ▾, the date and
+time (`Oct 5, 2026, 6:38 PM`), the comments count and a "⋯" button. The search finds an order by its number or
+customer. The sidebar's Orders entry opens the same list.
 
 **ORD-02 · Another warehouse and a status narrow the list**
 Smoke: `e2e/orders.spec.ts`.
-Pick Delivered in the status picker: only W00006 and W00012 remain. Pick "Select Order Status (All)" again, then the
-warehouse Usa: "This warehouse has no orders yet. Create one, or sync the orders of the shops." By hand: with a
-status that no order of the warehouse has, "No order of this warehouse has that status." and Show all brings every
-order back.
+Press the Delivered chip: only W00006 and W00012 remain. Press All, then the warehouse Usa: "This warehouse has no
+orders yet. Create one, or sync the orders of the shops." Reload: Usa is still chosen (remembered); choose Colombia
+again.
 
-**ORD-03 · A status changes in its row and stays changed**
+**ORD-03 · A status changes from its badge, after a question, and stays changed**
 Smoke: `e2e/orders.spec.ts`.
-In W00001's row choose Processed: "Order W00001 is now Processed." and the row keeps it after a reload of the page. By
-hand: the order's stock in the Products list has not changed.
+W00001's status badge ("Status of order W00001") opens a menu of the six statuses, Created checked. Choose Processed:
+"Mark W00001 as Processed?" says "The order moves from Created to Processed. Its stock does not change."; Mark as
+Processed: the toast "Order W00001 is now Processed." and the badge says Processed after a reload. By hand: the
+order's stock in the Products list has not changed.
 
 **ORD-04 · Choosing Sent opens the getting-ready screen instead**
 Smoke: `e2e/orders.spec.ts`.
-In W00002's row choose Sent: the order's getting-ready screen opens (`/admin/orders/<id>/getting-ready`); back on the
-list, W00002 is still Processed (sending takes stock out, so only that screen does it). The getting-ready button of a
-row opens the same screen.
+In W00002's status menu choose Sent: no question, the order's getting-ready screen opens
+(`/admin/orders/<id>/getting-ready`); back on the list, W00002 is still Processed (sending takes stock out, so only that
+screen does it). Getting ready in the row's "⋯" opens the same screen.
 
 **ORD-05 · The detail shows the order, its customer and its products**
 Smoke: `e2e/orders.spec.ts`.
-Order Detail on W00003: a dialog "Order Detail" with Source Phone, Status Completed, Customer Jose Perez, his email,
-the order number, the creation date (as `October 5, 2026`), and the customer's first address (address, zip code, city,
-state, country); the Products Detail tab lists KF-01, KF-02 and KF-03 with 20 each. Close, the × and Escape close it.
-By hand: an order whose customer has no address shows no address line; a webhook order without a customer says "No
-customer".
+Press W00003 (the order number): a panel "Order W00003" slides in from the right with the list still behind it: the
+status badge (Completed), Source Phone, Warehouse Colombia, the creation date and time; then the sections Customer (Jose
+Perez, his email, phone and first address on one line), Products (KF-01, KF-02 and KF-03 with 20 ordered each) and
+Comments. The ×, Escape and a click on the dimmed list close it. By hand: a customer without an address shows "No
+address on file."; a webhook order without a customer says "No customer".
 
 **ORD-06 · Comments are added, edited and removed from the detail**
 Smoke: `e2e/orders.spec.ts`.
-W00004's comments count (1) opens the detail on the Comments tab: "Comment for W00004" in a box with its save and
-remove buttons. The + button adds an empty box and puts the cursor in it; type "Smoke comment" and its save button:
-"The comments were saved."; close: the count says 2. Reopen, remove the second comment: saved, the count says 1. By
-hand: saving an empty new box says "Write the comment, or remove it." and sends nothing; edit the first comment, save,
-reopen: the new text is there.
+W00004's comments count (1) opens its detail with the Comments section in view: "Comment for W00004" in a box with its
+save and remove buttons. Add a comment adds an empty box with the cursor in it; type "Smoke comment" and its save
+button: the toast "The comments were saved." and the list's count says 2 at once. Reopen, remove the second comment:
+the count says 1. By hand: saving an empty new box says "Write the comment, or remove it." under it and sends
+nothing; edit the first comment, save, reopen: the new text is there.
 
 **ORD-07 · The order's documents download**
-Smoke (part): `e2e/orders.spec.ts` checks that the PDF and Excel buttons of W00001 and the detail's Remaining Products
-answer a PDF, an Excel file and a PDF.
-By hand: the PDF button opens the order's PDF in a new tab (its products and customer); Excel downloads
-`file-upload-template-W00001.xls` with the order's products; in the detail, Download is the same PDF and Remaining
-Products lists what is left to ship.
+Smoke (part): `e2e/orders.spec.ts` checks that Order PDF, Remaining products PDF and Excel sheet in W00001's "⋯" answer a
+PDF, a PDF and an Excel file, each opening in a new tab.
+By hand: Order PDF shows the order's products and customer; Excel sheet downloads `file-upload-template-W00001.xls`
+with the order's products; Remaining products PDF lists what is left to ship. The detail's Documents menu has the same
+three.
 
 **ORD-08 · Deleting an order asks first**
 Smoke: `e2e/orders.spec.ts`.
-As the user holding `ROLE_MANAGE_ORDERS`: each row has a red delete button. On W00005: "Are you sure that you want to
-delete this order?"; Cancel keeps it; Delete: "The order was deleted." and the row is gone. By hand: W00005's old
-detail address (`/api/v1/orders/<id>`) answers 404.
+As the user holding `ROLE_MANAGE_ORDERS`: each row's "⋯" ends with Delete, in red. On W00005: "Delete order W00005?"
+with "Its products and comments are removed with it. This cannot be undone."; Cancel (not red) keeps it; Delete order:
+the toast "Order W00005 was deleted." and the row is gone. By hand: W00005's old detail address
+(`/api/v1/orders/<id>`) answers 404.
 
-**ORD-09 · Sync Orders says what it did**
+**ORD-09 · Sync shop orders says what it did**
 Smoke (part): `e2e/orders.spec.ts` checks that the button, for the user holding `ROLE_MANAGE_ORDERS`, answers with a
 message (imported/skipped, or why it could not).
-By hand, with the shops' credentials in `backend/.env.local` (item 13): the icon turns while it runs and cannot be
-pressed twice; then "N orders imported, M skipped." and the new orders are in the list; a second press imports 0.
-With a wrong key: "The shops could not be reached, so no order was imported. Try again in a moment."
+By hand, with the shops' credentials in `backend/.env.local` (item 13): the button says "Syncing shop orders…" with a
+spinner while it runs and cannot be pressed twice; then the toast "N orders imported, M skipped." and the new orders
+are in the list; a second press imports 0. With a wrong key: an error toast that stays, "The shops could not be
+reached, so no order was imported. Try again in a moment."
 
 **ORD-10 · A person without the orders roles is refused**
 Smoke: `e2e/orders.spec.ts`.
@@ -487,7 +491,55 @@ this."; `/api/v1/orders?warehouse_id=1` answers 403.
 
 ### Orders list and detail, redesigned (item 3)
 
-<!-- Item 3 (orders-ui) adds ORD-21 – 28 here, and updates the texts of ORD-01 – 10. -->
+**ORD-21 · Each status chip counts its orders and keeps only them**
+Smoke: `e2e/orders.spec.ts`.
+On Colombia, the Partial chip's count is the number of rows it leaves (W00004 and W00010 among them) and it shows
+pressed. By hand: type "W0001" in the search: the chips count only what the search keeps (All 3 …), and so with a
+date range.
+
+**ORD-22 · A date range that keeps nothing says so, and Show all clears every filter**
+Smoke: `e2e/orders.spec.ts`.
+Press Created and set Created from to a future day: "Nothing matches these filters." with Show all; Show all brings
+every order back, empties the dates and the search and presses All. By hand: Created from and Created to on the
+fixtures' day keep every order (both days included, Bogotá time); Clear filters in the toolbar does the same as Show
+all.
+
+**ORD-23 · A status change cancelled changes nothing**
+Smoke: `e2e/orders.spec.ts`.
+W00007's badge › Delivered: the question; Cancel (or Escape): nothing posted, W00007 still Created after a reload. By
+hand: choosing the status an order already has does nothing; the menu works with the arrow keys and Escape.
+
+**ORD-24 · The detail is a slide-over with sections and the order's actions**
+Smoke: `e2e/orders.spec.ts`.
+A click anywhere on W00008's row (not on its buttons) opens "Order W00008": sections Customer, Products, Comments (no
+tabs); Edit and Getting ready open their screens; Documents lists Order PDF, Remaining products PDF, Excel sheet.
+Escape closes the menu, Escape again the panel. By hand: the status badge in the panel changes the status as in
+ORD-03, and the list behind shows the new status at once; Escape on that question closes only the question.
+
+**ORD-25 · The row menu follows the roles**
+Smoke: `e2e/orders.spec.ts` (creates `smoke-orders-update` with `ROLE_UPDATE_ORDERS` alone).
+That user sees Create order, no Sync shop orders, and in a row's "⋯" Edit, Getting ready and the three documents but
+no Delete. By hand: an account that only reads orders sees the status as a plain badge (no ▾) and no Edit, in the
+list and in the detail.
+
+**ORD-26 · On a phone the orders are cards**
+Smoke (part): `e2e/orders.spec.ts` at 390 px: W00010 is a card, nothing scrolls sideways, a tap on the card opens the
+detail across the whole width.
+By hand at 390 px: each card is titled "W00010 · Jose Perez" with Source, Status, Created and Comments as labelled
+lines and the "⋯" at its top right; the status badge still opens its menu; Sync shop orders is behind More next to
+Create order; toasts sit above the tab bar.
+
+**ORD-27 · The orders screens in Spanish, light and dark**
+Choose ES: "Pedidos", "Crear pedido", "Sincronizar pedidos de las tiendas", the chips Todos · Creado · Procesado ·
+Completado · Parcial · Enviado · Entregado, "Número de pedido o cliente", dates as `5 de oct de 2026, 6:38 p. m.`; the
+detail "Pedido W00004" with Cliente, Productos, Comentarios; the row menu Editar, Alistamiento, PDF del pedido, …,
+Eliminar. No raw key, nothing unreadable in dark (badges, menu, panel, question).
+
+**ORD-28 · Keyboard only**
+With Tab and the arrow keys only: reach the chips, the search, the dates and a row's order number (Enter opens the
+detail, the focus moves into it and stays there, Escape closes it and the focus returns to the number); open a status
+menu with Enter, move with the arrows, Escape returns to the badge; the "⋯" menu likewise. The focus ring is visible on
+each.
 
 **ORD-11 · The old order form and getting-ready addresses land on the new screens**
 Smoke: `e2e/order-forms.spec.ts`.

@@ -2,52 +2,64 @@ import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {vi} from 'vitest';
 import {fakeApi} from '@/shared/test/fakeApi';
-import {DeleteOrderButton} from './DeleteOrderButton';
+import {ToastProvider} from '@/shared/ui';
+import {DeleteOrderConfirm} from './DeleteOrderConfirm';
 
 const ORDER = {id: 7, code: 'W00007'};
 
-function renderButton() {
+function renderConfirm() {
   const onDeleted = vi.fn();
-  render(<DeleteOrderButton order={ORDER} onDeleted={onDeleted} />);
-  return onDeleted;
+  const onCancel = vi.fn();
+  render(
+    <ToastProvider>
+      <DeleteOrderConfirm
+        order={ORDER}
+        onDeleted={onDeleted}
+        onCancel={onCancel}
+      />
+    </ToastProvider>,
+  );
+  return {onDeleted, onCancel};
 }
 
-const open = () =>
-  userEvent.click(screen.getByRole('button', {name: 'Delete Order W00007'}));
+const confirm = () =>
+  userEvent.click(screen.getByRole('button', {name: 'Delete order'}));
 
-describe('DeleteOrderButton', () => {
-  it('asks before deleting, then deletes the order and says so to the list', async () => {
+describe('DeleteOrderConfirm', () => {
+  it('names the order and what goes with it, then deletes it and says so', async () => {
     const api = fakeApi({'DELETE /orders/7': [204]});
-    const onDeleted = renderButton();
+    const {onDeleted} = renderConfirm();
 
-    await open();
-    const dialog = screen.getByRole('dialog');
+    const dialog = screen.getByRole('dialog', {name: 'Delete order W00007?'});
+    expect(dialog).toHaveTextContent(
+      'Its products and comments are removed with it. This cannot be undone.',
+    );
     expect(
-      within(dialog).getByText(
-        'Are you sure that you want to delete this order?',
-      ),
-    ).toBeInTheDocument();
+      within(dialog).getByRole('button', {name: 'Cancel'}),
+      'Cancel is never red',
+    ).not.toHaveClass('kf-btn--danger');
     expect(
-      api.calls,
-      'nothing is deleted before the question is answered',
-    ).toHaveLength(0);
-    await userEvent.click(within(dialog).getByRole('button', {name: 'Delete'}));
+      within(dialog).getByRole('button', {name: 'Delete order'}),
+    ).toHaveClass('kf-btn--danger');
+    expect(api.calls, 'nothing is deleted before the answer').toHaveLength(0);
+    await confirm();
 
     expect(api.calls.map((c) => `${c.method} ${c.path}`)).toEqual([
       'DELETE /orders/7',
     ]);
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Order W00007 was deleted.',
+    );
     expect(onDeleted).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('keeps the order when the question is cancelled', async () => {
     const api = fakeApi({});
-    const onDeleted = renderButton();
+    const {onDeleted, onCancel} = renderConfirm();
 
-    await open();
     await userEvent.click(screen.getByRole('button', {name: 'Cancel'}));
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(onCancel).toHaveBeenCalled();
     expect(api.calls).toHaveLength(0);
     expect(onDeleted).not.toHaveBeenCalled();
   });
@@ -59,25 +71,22 @@ describe('DeleteOrderButton', () => {
         {error: 'order_not_found', message: 'Not found'},
       ],
     });
-    const onDeleted = renderButton();
+    const {onDeleted} = renderConfirm();
 
-    await open();
-    await userEvent.click(screen.getByRole('button', {name: 'Delete'}));
+    await confirm();
 
     expect(onDeleted).toHaveBeenCalledTimes(1);
   });
 
   it('says why a delete failed and keeps the question open', async () => {
     fakeApi({'DELETE /orders/7': [500, {error: 'internal_error'}]});
-    const onDeleted = renderButton();
+    const {onDeleted} = renderConfirm();
 
-    await open();
-    await userEvent.click(screen.getByRole('button', {name: 'Delete'}));
+    await confirm();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Something went wrong on our side',
-    );
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(
+      await within(screen.getByRole('dialog')).findByRole('alert'),
+    ).toHaveTextContent('Something went wrong on our side');
     expect(onDeleted).not.toHaveBeenCalled();
   });
 
@@ -85,10 +94,9 @@ describe('DeleteOrderButton', () => {
     fakeApi({
       'DELETE /orders/7': [403, {error: 'forbidden', message: 'Forbidden'}],
     });
-    renderButton();
+    renderConfirm();
 
-    await open();
-    await userEvent.click(screen.getByRole('button', {name: 'Delete'}));
+    await confirm();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'You do not have permission to do this.',

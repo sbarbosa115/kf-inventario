@@ -1,56 +1,47 @@
 import {useState} from 'react';
 import {ApiError, failureMessage} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
+import {Button, useToast} from '@/shared/ui';
 import {syncOrders} from '../api/syncOrdersApi';
 
 const KNOWN_ERRORS = ['order_sync_failed', 'order_sync_unavailable'];
 
 /**
- * The Sync Orders button (ROLE_CAN_SYNC_ORDERS): pulls the shops' new orders and tells `onResult` what happened, in
- * the person's words. The list reloads on success.
+ * "Sync shop orders" (ROLE_CAN_SYNC_ORDERS): pulls the shops' new orders and says what happened in a toast;
+ * `onSynced` runs after a pull so the list reloads.
  */
-export function SyncOrdersButton({
-  onResult,
-}: {
-  onResult: (result: {ok: boolean; message: string}) => void;
-}) {
+export function SyncOrdersButton({onSynced}: {onSynced: () => void}) {
   const {t} = useTranslation();
+  const toast = useToast();
   const [running, setRunning] = useState(false);
 
   const run = async () => {
     setRunning(true);
     try {
       const result = await syncOrders();
-      onResult({ok: true, message: t('orders.sync.done', {...result})});
+      toast.success(t('orders.sync.done', {...result}));
+      onSynced();
     } catch (error) {
-      onResult({
-        ok: false,
-        message:
-          error instanceof ApiError && KNOWN_ERRORS.includes(error.code)
-            ? t(`orders.errors.${error.code}`)
-            : error instanceof ApiError && error.status === 403
-              ? t('errors.forbidden')
-              : failureMessage(error, t),
-      });
+      toast.error(
+        error instanceof ApiError && KNOWN_ERRORS.includes(error.code)
+          ? t(`orders.errors.${error.code}`)
+          : error instanceof ApiError && error.status === 403
+            ? t('errors.forbidden')
+            : failureMessage(error, t),
+      );
     } finally {
       setRunning(false);
     }
   };
 
-  const label = running ? t('orders.sync.running') : t('orders.sync.button');
   return (
-    <button
-      type="button"
-      className="btn btn-secondary ml-1"
-      title={label}
-      aria-label={label}
-      disabled={running}
+    <Button
+      variant="secondary"
+      icon="fa-sync"
+      loading={running}
       onClick={() => void run()}
     >
-      <i
-        className={`fas fa-sync${running ? ' fa-spin' : ''}`}
-        aria-hidden="true"
-      />
-    </button>
+      {running ? t('orders.sync.running') : t('orders.sync.button')}
+    </Button>
   );
 }

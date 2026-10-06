@@ -1,50 +1,57 @@
-import {useCallback, useRef, useState} from 'react';
+import {useCallback, useState} from 'react';
+import type {Order} from '@/entities/order';
+import {useCan} from '@/entities/session';
+import {SyncOrdersButton} from '@/features/sync-orders';
 import {useTranslation} from '@/shared/i18n';
-import {PageCard} from '@/shared/ui';
-import {OrderDetail, type OrderDetailTab} from '@/widgets/order-detail';
+import {Button, PageHeader} from '@/shared/ui';
+import {OrderDetail, type OrderDetailSection} from '@/widgets/order-detail';
 import {OrderTable} from '@/widgets/order-table';
 
 /**
- * View Orders (ROLE_CAN_READ_ORDERS): a warehouse's orders and, over them, the detail of one. Comments saved in the
- * detail show in the list's counts once it closes.
+ * Orders (ROLE_CAN_READ_ORDERS): a warehouse's orders, Create order and Sync shop orders by role, and one order's
+ * detail in a slide-over beside the list. What changes in the detail (status, comments) reloads the list at once.
  */
 export function OrdersPage() {
   const {t} = useTranslation();
+  const canCreate = useCan('ROLE_CAN_CREATE_ORDERS');
+  const canSync = useCan('ROLE_CAN_SYNC_ORDERS');
   const [detail, setDetail] = useState<{
-    id: number;
-    tab: OrderDetailTab;
+    order: Order;
+    section: OrderDetailSection;
   } | null>(null);
-  // A ref, not state: the dialog's onClose stays the same function (Modal refocuses itself when it changes).
-  const commented = useRef(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const refresh = useCallback(() => setRefreshKey((n) => n + 1), []);
   const open = useCallback(
-    (id: number, tab: OrderDetailTab) => setDetail({id, tab}),
+    (order: Order, section: OrderDetailSection) => setDetail({order, section}),
     [],
   );
-  const close = useCallback(() => {
-    setDetail(null);
-    if (commented.current) {
-      commented.current = false;
-      setRefreshKey((n) => n + 1);
-    }
-  }, []);
-  const onCommentsChanged = useCallback(() => {
-    commented.current = true;
-  }, []);
+  const close = useCallback(() => setDetail(null), []);
 
   return (
-    <PageCard title={t('orders.title')}>
+    <>
+      <PageHeader
+        title={t('orders.title')}
+        primary={
+          canCreate && (
+            <Button variant="primary" icon="fa-plus" to="/admin/orders/new">
+              {t('orders.create')}
+            </Button>
+          )
+        }
+        secondary={canSync && <SyncOrdersButton onSynced={refresh} />}
+      />
       <OrderTable onOpenDetail={open} refreshKey={refreshKey} />
       {detail && (
         <OrderDetail
-          key={detail.id}
-          orderId={detail.id}
-          initialTab={detail.tab}
+          key={detail.order.id}
+          orderId={detail.order.id}
+          code={detail.order.code}
+          section={detail.section}
           onClose={close}
-          onCommentsChanged={onCommentsChanged}
+          onChanged={refresh}
         />
       )}
-    </PageCard>
+    </>
   );
 }

@@ -6,16 +6,14 @@ import {
   expect,
   test,
 } from './support/test';
-import type {Page} from '@playwright/test';
+import type {Locator, Page} from '@playwright/test';
 
-// 5 Orders (ORD-01 – 10). The fixtures put twelve orders (W00001 – W00012) on the first warehouse, Colombia: W00001 –
-// W00006 by phone with the statuses 1 – 6, W00007 – W00012 from the web likewise. The cases run in order.
+// 5 Orders (ORD-01 – 10, and the redesign's ORD-21 – 26). The fixtures put twelve orders (W00001 – W00012) on the first
+// warehouse, Colombia: W00001 – W00006 by phone with the statuses 1 – 6, W00007 – W00012 from the web likewise. The
+// cases run in order.
 test.describe.configure({mode: 'serial'});
 
-/**
- * Deleting and syncing need ROLE_MANAGE_ORDERS, which no fixture account reaches (the admin's ROLE_ADMIN gives
- * ROLE_UPDATE_ORDERS only, as in production): the admin creates this account once.
- */
+/** ROLE_MANAGE_ORDERS (delete, sync), created once by the admin. */
 const ORDERS_CLERK = {
   name: 'Smoke Orders Clerk',
   username: 'smoke-orders',
@@ -23,24 +21,50 @@ const ORDERS_CLERK = {
   roles: ['ROLE_MANAGE_ORDERS', 'ROLE_UPDATE_ORDERS'],
 };
 
-async function ensureOrdersClerk(admin: Page, baseURL: string) {
+/** ROLE_UPDATE_ORDERS alone: create, read and update orders, but neither delete nor sync them. */
+const ORDERS_UPDATER = {
+  name: 'Smoke Orders Updater',
+  username: 'smoke-orders-update',
+  email: 'smoke.orders.update@kf.test',
+  roles: ['ROLE_UPDATE_ORDERS'],
+};
+
+async function ensureUser(
+  admin: Page,
+  baseURL: string,
+  user: typeof ORDERS_CLERK,
+) {
   const users = (await (await admin.request.get('/api/v1/users')).json()) as {
     username: string;
   }[];
-  if (users.some((user) => user.username === ORDERS_CLERK.username)) return;
+  if (users.some((known) => known.username === user.username)) return;
   const created = await admin.request.post('/api/v1/users', {
-    data: {...ORDERS_CLERK, password: PASSWORD, enabled: true},
+    data: {...user, password: PASSWORD, enabled: true},
     headers: {Origin: new URL(baseURL).origin},
   });
-  expect(created.status(), 'creating the orders clerk').toBe(201);
+  expect(created.status(), `creating ${user.username}`).toBe(201);
 }
 
-/** The list narrowed to one order by its code (twelve orders do not fit one page). */
+/** The list narrowed to one order by its number (the search box of the toolbar). */
 async function findOrder(page: Page, code: string) {
-  await page.getByRole('searchbox').fill(code);
+  await page
+    .getByRole('searchbox', {name: 'Order number or customer'})
+    .fill(code);
   const row = page.getByRole('row', {name: new RegExp(code)});
   await expect(row).toBeVisible();
   return row;
+}
+
+/** A toast (or any live message) with this text. */
+const toast = (page: Page, text: string | RegExp) =>
+  page.getByRole('status').filter({hasText: text});
+
+const statusChips = (page: Page) =>
+  page.getByRole('group', {name: 'Status', exact: true});
+
+async function rowMenu(page: Page, row: Locator, code: string) {
+  await row.getByRole('button', {name: `Actions for ${code}`}).click();
+  return page.getByRole('menu', {name: `Actions for ${code}`});
 }
 
 test.describe('5 Orders', () => {
@@ -54,26 +78,31 @@ test.describe('5 Orders', () => {
 
     await expect(page).toHaveURL(/\/admin\/orders$/);
     await expect(
-      page.getByRole('heading', {name: 'View Orders'}),
+      page.getByRole('heading', {level: 1, name: 'Orders'}),
     ).toBeVisible();
+    await expect(page.getByRole('link', {name: 'Create order'})).toBeVisible();
     await expect(
-      page.getByRole('link', {name: 'Create an Order'}),
+      page.getByRole('button', {name: 'Sync shop orders'}),
     ).toBeVisible();
-    for (const header of ['Customer', 'Order #', 'Source', 'Created Date']) {
+    for (const header of [
+      'Order',
+      'Customer',
+      'Source',
+      'Status',
+      'Created',
+      'Comments',
+    ]) {
       await expect(
-        page.getByRole('columnheader', {name: header}),
+        page.getByRole('columnheader', {name: header, exact: true}),
       ).toBeVisible();
     }
     const row = await findOrder(page, 'W00001');
-    await expect(
-      row.getByText('Jose Perez [jose.perez@example.com]'),
-    ).toBeVisible();
+    await expect(row.getByText('Jose Perez')).toBeVisible();
+    await expect(row.getByText('jose.perez@example.com')).toBeVisible();
     await expect(row.getByText('Phone')).toBeVisible();
-    // ROLE_ADMIN reaches ROLE_MANAGE_ORDERS (security.yaml): delete and sync, as the legacy page showed it.
     await expect(
-      page.getByRole('button', {name: /Delete Order/}).first(),
-    ).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Sync Orders'})).toBeVisible();
+      row.getByRole('button', {name: 'Status of order W00001'}),
+    ).toHaveText(/Created/);
     expect(errors).toEqual([]);
   });
 
@@ -84,45 +113,45 @@ test.describe('5 Orders', () => {
     await page.goto('/admin/orders');
     await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
 
-    await page
-      .getByRole('combobox', {name: 'Status', exact: true})
-      .selectOption('Delivered');
+    await statusChips(page)
+      .getByRole('button', {name: /^Delivered/})
+      .click();
     await expect(page.getByRole('row', {name: /W00006/})).toBeVisible();
     await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
     await expect(page.getByRole('row', {name: /W00001/})).toHaveCount(0);
 
-    await page
-      .getByRole('combobox', {name: 'Status', exact: true})
-      .selectOption('');
-    await page.getByRole('combobox', {name: 'Warehouse'}).selectOption('Usa');
+    await statusChips(page).getByRole('button', {name: /^All/}).click();
+    await page.getByRole('radio', {name: 'Usa'}).click();
     await expect(
       page.getByText(
         'This warehouse has no orders yet. Create one, or sync the orders of the shops.',
       ),
     ).toBeVisible();
+    // The warehouse is remembered: back to Colombia for the cases after this one.
+    await page.getByRole('radio', {name: 'Colombia'}).click();
+    await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
   });
 
-  test('ORD-03 · a status changes in its row and stays changed', async ({
+  test('ORD-03 · a status changes from its badge, after a question, and stays changed', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/orders');
     const row = await findOrder(page, 'W00001');
 
-    await row
-      .getByRole('combobox', {name: 'Status of order W00001'})
-      .selectOption('Processed');
+    await row.getByRole('button', {name: 'Status of order W00001'}).click();
+    await page.getByRole('menuitemradio', {name: 'Processed'}).click();
+    const question = page.getByRole('dialog', {
+      name: 'Mark W00001 as Processed?',
+    });
+    await question.getByRole('button', {name: 'Mark as Processed'}).click();
 
-    await expect(
-      page
-        .getByRole('status')
-        .filter({hasText: 'Order W00001 is now Processed.'}),
-    ).toBeVisible();
+    await expect(toast(page, 'Order W00001 is now Processed.')).toBeVisible();
     await page.reload();
     const again = await findOrder(page, 'W00001');
     await expect(
-      again.getByRole('combobox', {name: 'Status of order W00001'}),
-    ).toHaveValue('2');
+      again.getByRole('button', {name: 'Status of order W00001'}),
+    ).toHaveText(/Processed/);
   });
 
   test('ORD-04 · choosing Sent opens the order’s getting-ready screen', async ({
@@ -132,9 +161,8 @@ test.describe('5 Orders', () => {
     await page.goto('/admin/orders');
     const row = await findOrder(page, 'W00002');
 
-    await row
-      .getByRole('combobox', {name: 'Status of order W00002'})
-      .selectOption('Sent');
+    await row.getByRole('button', {name: 'Status of order W00002'}).click();
+    await page.getByRole('menuitemradio', {name: 'Sent'}).click();
 
     await expect(page).toHaveURL(/\/admin\/orders\/\d+\/getting-ready$/);
   });
@@ -147,18 +175,17 @@ test.describe('5 Orders', () => {
     await page.goto('/admin/orders');
     const row = await findOrder(page, 'W00003');
 
-    await row.getByRole('button', {name: 'Order Detail of W00003'}).click();
+    await row.getByRole('button', {name: 'W00003', exact: true}).click();
 
-    const dialog = page.getByRole('dialog', {name: 'Order Detail'});
-    await expect(dialog.getByText('Jose Perez', {exact: true})).toBeVisible();
-    await expect(dialog.getByText('Completed', {exact: true})).toBeVisible();
+    const detail = page.getByRole('dialog', {name: 'Order W00003'});
+    await expect(detail.getByText('Jose Perez', {exact: true})).toBeVisible();
     await expect(
-      dialog.getByRole('tab', {name: 'Products Detail'}),
-    ).toHaveAttribute('aria-selected', 'true');
+      detail.getByRole('button', {name: 'Status of order W00003'}),
+    ).toHaveText(/Completed/);
     // W00003 holds 20 of each product (src/DataFixtures/OrderFixtures.php).
-    await expect(dialog.getByRole('row', {name: /KF-01/})).toContainText('20');
-    await dialog.getByRole('button', {name: 'Close'}).last().click();
-    await expect(dialog).toBeHidden();
+    await expect(detail.getByRole('row', {name: /KF-01/})).toContainText('20');
+    await detail.getByRole('button', {name: 'Close'}).click();
+    await expect(detail).toBeHidden();
     expect(errors).toEqual([]);
   });
 
@@ -172,26 +199,28 @@ test.describe('5 Orders', () => {
     await row
       .getByRole('button', {name: 'Comments of order W00004: 1'})
       .click();
-    const dialog = page.getByRole('dialog', {name: 'Order Detail'});
-    await expect(dialog.getByLabel('Comment 1', {exact: true})).toHaveValue(
+    const detail = page.getByRole('dialog', {name: 'Order W00004'});
+    await expect(detail.getByLabel('Comment 1', {exact: true})).toHaveValue(
       'Comment for W00004',
     );
-    await dialog.getByRole('button', {name: 'Add a comment'}).click();
-    await dialog.getByLabel('Comment 2', {exact: true}).fill('Smoke comment');
-    await dialog.getByRole('button', {name: 'Save comment 2'}).click();
-    await expect(dialog.getByText('The comments were saved.')).toBeVisible();
-    await dialog.getByRole('button', {name: 'Close'}).last().click();
+    await detail.getByRole('button', {name: 'Add a comment'}).click();
+    await detail.getByLabel('Comment 2', {exact: true}).fill('Smoke comment');
+    await detail.getByRole('button', {name: 'Save comment 2'}).click();
+    await expect(toast(page, 'The comments were saved.')).toBeVisible();
+    await expect(
+      row.getByRole('button', {name: 'Comments of order W00004: 2'}),
+    ).toBeAttached();
+    await detail.getByRole('button', {name: 'Close'}).click();
 
     await row
       .getByRole('button', {name: 'Comments of order W00004: 2'})
       .click();
-    await expect(dialog.getByLabel('Comment 2', {exact: true})).toHaveValue(
+    await expect(detail.getByLabel('Comment 2', {exact: true})).toHaveValue(
       'Smoke comment',
     );
-    await dialog.getByRole('button', {name: 'Remove comment 2'}).click();
-    await expect(dialog.getByText('The comments were saved.')).toBeVisible();
-    await expect(dialog.getByLabel('Comment 2', {exact: true})).toHaveCount(0);
-    await dialog.getByRole('button', {name: 'Close'}).last().click();
+    await detail.getByRole('button', {name: 'Remove comment 2'}).click();
+    await expect(detail.getByLabel('Comment 2', {exact: true})).toHaveCount(0);
+    await detail.getByRole('button', {name: 'Close'}).click();
     await expect(
       row.getByRole('button', {name: 'Comments of order W00004: 1'}),
     ).toBeVisible();
@@ -204,24 +233,19 @@ test.describe('5 Orders', () => {
     await page.goto('/admin/orders');
     const row = await findOrder(page, 'W00001');
 
-    const pdf = row.getByRole('link', {name: 'View as PDF'});
-    await expect(pdf).toHaveAttribute('target', '_blank');
-    const xls = row.getByRole('link', {name: 'Download as Excel'});
-    await row.getByRole('button', {name: 'Order Detail of W00001'}).click();
-    const remaining = page
-      .getByRole('dialog')
-      .getByRole('link', {name: 'Remaining Products'});
-
-    const documents: [typeof pdf, string][] = [
-      [pdf, 'application/pdf'],
-      [xls, 'application/vnd.ms-excel'],
-      [remaining, 'application/pdf'],
+    const menu = await rowMenu(page, row, 'W00001');
+    const documents: [string, string][] = [
+      ['Order PDF', 'application/pdf'],
+      ['Remaining products PDF', 'application/pdf'],
+      ['Excel sheet', 'application/vnd.ms-excel'],
     ];
-    for (const [link, type] of documents) {
+    for (const [name, type] of documents) {
+      const link = menu.getByRole('menuitem', {name});
+      await expect(link).toHaveAttribute('target', '_blank');
       const answer = await page.request.get(
         (await link.getAttribute('href')) as string,
       );
-      expect(answer.status()).toBe(200);
+      expect(answer.status(), name).toBe(200);
       expect(answer.headers()['content-type']).toContain(type);
     }
   });
@@ -230,34 +254,40 @@ test.describe('5 Orders', () => {
     signedInAs,
     baseURL,
   }) => {
-    await ensureOrdersClerk(await signedInAs(ADMIN), baseURL as string);
+    await ensureUser(await signedInAs(ADMIN), baseURL as string, ORDERS_CLERK);
     const page = await signedInAs(ORDERS_CLERK.username);
     await page.goto('/admin/orders');
     const row = await findOrder(page, 'W00005');
 
-    await row.getByRole('button', {name: 'Delete Order W00005'}).click();
-    const dialog = page.getByRole('dialog');
-    await expect(
-      dialog.getByText('Are you sure that you want to delete this order?'),
-    ).toBeVisible();
-    await dialog.getByRole('button', {name: 'Cancel'}).click();
+    await (
+      await rowMenu(page, row, 'W00005')
+    )
+      .getByRole('menuitem', {name: 'Delete'})
+      .click();
+    const question = page.getByRole('dialog', {name: 'Delete order W00005?'});
+    await expect(question).toContainText(
+      'Its products and comments are removed with it.',
+    );
+    await question.getByRole('button', {name: 'Cancel'}).click();
     await expect(row).toBeVisible();
 
-    await row.getByRole('button', {name: 'Delete Order W00005'}).click();
-    await dialog.getByRole('button', {name: 'Delete'}).click();
+    await (
+      await rowMenu(page, row, 'W00005')
+    )
+      .getByRole('menuitem', {name: 'Delete'})
+      .click();
+    await question.getByRole('button', {name: 'Delete order'}).click();
 
-    await expect(
-      page.getByRole('status').filter({hasText: 'The order was deleted.'}),
-    ).toBeVisible();
+    await expect(toast(page, 'Order W00005 was deleted.')).toBeVisible();
     await expect(page.getByRole('row', {name: /W00005/})).toHaveCount(0);
   });
 
-  test('ORD-09 · Sync Orders answers in words', async ({signedInAs}) => {
+  test('ORD-09 · Sync shop orders answers in words', async ({signedInAs}) => {
     const page = await signedInAs(ORDERS_CLERK.username);
     await page.goto('/admin/orders');
     await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
 
-    await page.getByRole('button', {name: 'Sync Orders'}).click();
+    await page.getByRole('button', {name: 'Sync shop orders'}).click();
 
     // Without shop credentials on the smoke stack, either answer is right: what matters is a message, not a blank.
     await expect(
@@ -283,5 +313,167 @@ test.describe('5 Orders', () => {
     );
     const answer = await page.request.get('/api/v1/orders?warehouse_id=1');
     expect(answer.status()).toBe(403);
+  });
+
+  test('ORD-21 · each status chip counts its orders and keeps only them', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    await page.goto('/admin/orders');
+    await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
+
+    const partial = statusChips(page).getByRole('button', {name: /^Partial/});
+    const count = Number(
+      await partial.locator('.kf-chip__count').textContent(),
+    );
+    expect(count, 'W00004 and W00010 are partial').toBeGreaterThanOrEqual(2);
+    await partial.click();
+
+    await expect(partial).toHaveAttribute('aria-pressed', 'true');
+    // The header row, then one row per partial order.
+    await expect(page.getByRole('row')).toHaveCount(count + 1);
+    await expect(page.getByRole('row', {name: /W00004/})).toBeVisible();
+    await expect(page.getByRole('row', {name: /W00001/})).toHaveCount(0);
+  });
+
+  test('ORD-22 · a date range that keeps nothing says so, and Show all clears every filter', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    await page.goto('/admin/orders');
+    await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
+
+    await statusChips(page)
+      .getByRole('button', {name: /^Created/})
+      .click();
+    await page.getByLabel('Created from').fill('2999-01-01');
+
+    await expect(
+      page.getByText('Nothing matches these filters.'),
+    ).toBeVisible();
+    await page.getByRole('button', {name: 'Show all'}).click();
+    await expect(page.getByRole('row', {name: /W00012/})).toBeVisible();
+    await expect(page.getByLabel('Created from')).toHaveValue('');
+    await expect(
+      statusChips(page).getByRole('button', {name: /^All/}),
+    ).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('ORD-23 · a status change cancelled changes nothing', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    await page.goto('/admin/orders');
+    const row = await findOrder(page, 'W00007');
+
+    await row.getByRole('button', {name: 'Status of order W00007'}).click();
+    await page.getByRole('menuitemradio', {name: 'Delivered'}).click();
+    const question = page.getByRole('dialog', {
+      name: 'Mark W00007 as Delivered?',
+    });
+    await expect(question).toContainText('Its stock does not change.');
+    await question.getByRole('button', {name: 'Cancel'}).click();
+
+    await expect(question).toBeHidden();
+    await page.reload();
+    await expect(
+      (await findOrder(page, 'W00007')).getByRole('button', {
+        name: 'Status of order W00007',
+      }),
+    ).toHaveText(/Created/);
+  });
+
+  test('ORD-24 · the detail is a slide-over with sections and the order’s actions', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    const errors = consoleErrors(page);
+    await page.goto('/admin/orders');
+    const row = await findOrder(page, 'W00008');
+
+    await row.getByText('Jose Perez').click();
+
+    const detail = page.getByRole('dialog', {name: 'Order W00008'});
+    await expect(detail.getByRole('heading', {level: 3})).toHaveText([
+      'Customer',
+      'Products',
+      'Comments',
+    ]);
+    await expect(detail.getByRole('link', {name: 'Edit'})).toHaveAttribute(
+      'href',
+      /\/admin\/orders\/\d+\/edit$/,
+    );
+    await expect(
+      detail.getByRole('link', {name: 'Getting ready'}),
+    ).toHaveAttribute('href', /\/admin\/orders\/\d+\/getting-ready$/);
+    await detail.getByRole('button', {name: 'Documents'}).click();
+    await expect(
+      page.getByRole('menu', {name: 'Documents'}).getByRole('menuitem'),
+    ).toHaveText(['Order PDF', 'Remaining products PDF', 'Excel sheet']);
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await expect(detail).toBeHidden();
+    expect(errors).toEqual([]);
+  });
+
+  test('ORD-25 · the row menu follows the roles: no Delete or Sync without the managing role', async ({
+    signedInAs,
+    baseURL,
+  }) => {
+    await ensureUser(
+      await signedInAs(ADMIN),
+      baseURL as string,
+      ORDERS_UPDATER,
+    );
+    const page = await signedInAs(ORDERS_UPDATER.username);
+    await page.goto('/admin/orders');
+    const row = await findOrder(page, 'W00009');
+
+    const menu = await rowMenu(page, row, 'W00009');
+    await expect(menu.getByRole('menuitem')).toHaveText([
+      'Edit',
+      'Getting ready',
+      'Order PDF',
+      'Remaining products PDF',
+      'Excel sheet',
+    ]);
+    await expect(page.getByRole('link', {name: 'Create order'})).toBeVisible();
+    await expect(
+      page.getByRole('button', {name: 'Sync shop orders'}),
+    ).toHaveCount(0);
+  });
+});
+
+test.describe('5 Orders, on a phone (390 px)', () => {
+  test.use({
+    viewport: {width: 390, height: 844},
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  test('ORD-26 · the orders are cards, nothing scrolls sideways, and a card opens the detail full width', async ({
+    signedInAs,
+  }) => {
+    const page = await signedInAs(ADMIN);
+    const errors = consoleErrors(page);
+    await page.goto('/admin/orders');
+    const card = page.getByRole('row', {name: /W00010/});
+    await expect(card).toBeVisible();
+    await expect(
+      card.getByRole('columnheader'),
+      'no table header on a card',
+    ).toHaveCount(0);
+    const [scroll, client] = await page.evaluate(() => [
+      document.documentElement.scrollWidth,
+      document.documentElement.clientWidth,
+    ]);
+    expect(scroll, 'the page scrolls sideways').toBe(client);
+
+    // The card's title (the order and its customer) is a plain part of the row: a tap there opens the order.
+    await card.locator('.kf-table__card-title').click();
+    const detail = page.getByRole('dialog', {name: 'Order W00010'});
+    await expect(detail).toBeVisible();
+    expect((await detail.boundingBox())?.width).toBe(390);
+    expect(errors).toEqual([]);
   });
 });
