@@ -2,6 +2,7 @@ import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {pageOf} from '@/shared/test/fakeList';
 import {ToastProvider} from '@/shared/ui';
 import {OrderFormPage} from './OrderFormPage';
 
@@ -92,8 +93,8 @@ const BASE_ROUTES: Record<string, [number, unknown]> = {
   'GET /warehouses': [200, WAREHOUSES],
   'GET /locations': [200, LOCATIONS],
   'GET /customers/all': [200, [ANA]],
-  'GET /warehouses/1/stock': [200, STOCK_1],
-  'GET /warehouses/2/stock': [200, STOCK_2],
+  'GET /warehouses/1/stock': [200, pageOf(STOCK_1)],
+  'GET /warehouses/2/stock': [200, pageOf(STOCK_2)],
 };
 
 function OrdersList() {
@@ -366,8 +367,8 @@ describe('OrderFormPage', () => {
         .filter((call) => call.path.endsWith('/stock'))
         .map((call) => call.url.pathname + call.url.search),
     ).toEqual([
-      '/api/v1/warehouses/1/stock?status=1',
-      '/api/v1/warehouses/2/stock?status=1',
+      '/api/v1/warehouses/1/stock?per_page=0&status=1',
+      '/api/v1/warehouses/2/stock?per_page=0&status=1',
     ]);
   });
 

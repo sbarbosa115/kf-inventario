@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import type {StockItem} from '@/entities/product';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {fakeList} from '@/shared/test/fakeList';
 import {ToastProvider} from '@/shared/ui';
 import {StockTable} from './StockTable';
 
@@ -57,11 +58,33 @@ function renderTable(address = '/admin/products') {
   );
 }
 
+/** The stock list's contract, in memory (filters, q, sort, pages, the in_stock facet and the totals). */
+const STOCK_LIST = {
+  fields: {
+    code: (r: StockItem) => r.code,
+    title: (r: StockItem) => r.title,
+    quantity: (r: StockItem) => r.quantity,
+    price: (r: StockItem) => r.price,
+    in_stock: (r: StockItem) => (r.quantity > 0 ? 'yes' : 'no'),
+  },
+  search: [
+    (r: StockItem) => r.code,
+    (r: StockItem) => r.title,
+    (r: StockItem) => r.detail,
+  ],
+  extra: (rows: StockItem[]) => ({
+    totals: {
+      units: rows.reduce((sum, r) => sum + r.quantity, 0),
+      value: rows.reduce((sum, r) => sum + r.quantity * (r.price ?? 0), 0),
+    },
+  }),
+};
+
 function stockRoutes() {
   return {
     'GET /warehouses': [200, WAREHOUSES] as [number, unknown],
-    'GET /warehouses/1/stock': [200, COLOMBIA_STOCK] as [number, unknown],
-    'GET /warehouses/2/stock': [200, USA_STOCK] as [number, unknown],
+    'GET /warehouses/1/stock': fakeList(COLOMBIA_STOCK, STOCK_LIST),
+    'GET /warehouses/2/stock': fakeList(USA_STOCK, STOCK_LIST),
   };
 }
 
@@ -132,15 +155,17 @@ describe('StockTable', () => {
     await screen.findByText('KF-01');
 
     await userEvent.type(screen.getByRole('searchbox'), 'kf-02');
+    await vi.waitFor(() =>
+      expect(screen.queryByText('KF-01')).not.toBeInTheDocument(),
+    );
     expect(screen.getByText('KF-02')).toBeInTheDocument();
-    expect(screen.queryByText('KF-01')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', {name: /Out of stock/}));
     expect(
-      screen.getByText('Nothing matches these filters.'),
+      await screen.findByText('Nothing matches these filters.'),
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', {name: 'Show all'}));
-    expect(screen.getByText('KF-01')).toBeInTheDocument();
+    expect(await screen.findByText('KF-01')).toBeInTheDocument();
     expect(screen.getByText('KF-04')).toBeInTheDocument();
     expect(screen.getByRole('searchbox')).toHaveValue('');
   });
@@ -244,9 +269,12 @@ describe('StockTable', () => {
     let loads = 0;
     const api = fakeApi({
       ...stockRoutes(),
-      'GET /warehouses/1/stock': () => {
-        loads += 1;
-        return [200, loads === 1 ? COLOMBIA_STOCK : COLOMBIA_STOCK.slice(1)];
+      'GET /warehouses/1/stock': (body: unknown, url: URL) => {
+        if (url.searchParams.get('per_page') !== '1') loads += 1;
+        return fakeList(
+          loads <= 1 ? COLOMBIA_STOCK : COLOMBIA_STOCK.slice(1),
+          STOCK_LIST,
+        )(body, url);
       },
       'POST /warehouses/1/moves/2': [204],
     });
@@ -278,7 +306,10 @@ describe('StockTable', () => {
   });
 
   it('says so when the warehouse holds nothing', async () => {
-    fakeApi({...stockRoutes(), 'GET /warehouses/1/stock': [200, []]});
+    fakeApi({
+      ...stockRoutes(),
+      'GET /warehouses/1/stock': fakeList([] as StockItem[], STOCK_LIST),
+    });
     renderTable();
 
     expect(

@@ -1,8 +1,15 @@
-import {fireEvent, render, screen, within} from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {SessionProvider} from '@/entities/session';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {fakeList} from '@/shared/test/fakeList';
 import {InvoicesPage} from './InvoicesPage';
 
 const ME = {
@@ -71,10 +78,31 @@ function renderPage() {
   );
 }
 
+type Row = ReturnType<typeof invoice>;
+
+/** The invoices list's contract, in memory. */
+const invoices = (rows: Row[]) =>
+  fakeList(rows, {
+    fields: {
+      code: (i) => i.code,
+      created_at: (i) => i.created_at,
+      total: (i) => i.total,
+      walk_in: (i) => (i.customer === null ? 'yes' : 'no'),
+    },
+    search: [
+      (i) => i.code,
+      (i) => {
+        const c = i.customer as typeof ANA | null;
+        return c ? `${c.first_name} ${c.last_name}` : '';
+      },
+      (i) => (i.customer as typeof ANA | null)?.email,
+    ],
+  });
+
 type Routes = Parameters<typeof fakeApi>[0];
 const routes = (extra: Routes = {}): Routes => ({
   'GET /auth/me': [200, ME],
-  'GET /invoices': [200, [INV_2, INV_1]],
+  'GET /invoices': invoices([INV_2, INV_1]),
   ...extra,
 });
 
@@ -181,18 +209,18 @@ describe('InvoicesPage', () => {
     });
     await userEvent.type(search, 'gomez');
 
+    await waitFor(() => expect(shown('20260001')).toBe(false));
     expect(shown('20260002')).toBe(true);
-    expect(shown('20260001')).toBe(false);
 
     await userEvent.clear(search);
     await userEvent.type(search, 'walk-in');
 
+    await waitFor(() => expect(shown('20260002')).toBe(false));
     expect(shown('20260001')).toBe(true);
-    expect(shown('20260002')).toBe(false);
   });
 
   it('keeps the invoices of a date range, and Clear filters brings them all back', async () => {
-    fakeApi(routes({'GET /invoices': [200, [INV_2, INV_1, INV_0]]}));
+    fakeApi(routes({'GET /invoices': invoices([INV_2, INV_1, INV_0])}));
     renderPage();
     await codeCell('20250003');
 
@@ -200,7 +228,7 @@ describe('InvoicesPage', () => {
       target: {value: '2026-01-01'},
     });
 
-    expect(shown('20250003')).toBe(false);
+    await waitFor(() => expect(shown('20250003')).toBe(false));
     expect(shown('20260002')).toBe(true);
 
     fireEvent.change(screen.getByLabelText('To'), {
@@ -213,12 +241,12 @@ describe('InvoicesPage', () => {
 
     await userEvent.click(screen.getByRole('button', {name: 'Clear filters'}));
 
-    expect(shown('20250003')).toBe(true);
+    await waitFor(() => expect(shown('20250003')).toBe(true));
     expect(shown('20260002')).toBe(true);
   });
 
   it('says what the section is for when there are no invoices', async () => {
-    fakeApi(routes({'GET /invoices': [200, []]}));
+    fakeApi(routes({'GET /invoices': invoices([])}));
     renderPage();
 
     expect(

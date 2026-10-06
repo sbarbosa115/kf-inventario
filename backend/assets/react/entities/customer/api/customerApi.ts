@@ -1,13 +1,17 @@
-import {apiDelete, apiGet, apiPost, apiPut, type Schema} from '@/shared/api';
+import {
+  apiDelete,
+  apiGet,
+  apiPost,
+  apiPut,
+  listQueryString,
+  type ListQuery,
+  type Page,
+  type Schema,
+} from '@/shared/api';
 
 export type Customer = Schema<'CustomerOutput'>;
 
-export interface CustomerPage {
-  items: Customer[];
-  total: number;
-  page: number;
-  per_page: number;
-}
+export type CustomerPage = Page<Customer>;
 
 /** A place of an address: an existing one (its id) or a name to create (id null). */
 export interface PlacePayload {
@@ -37,8 +41,12 @@ export interface CustomerPayload {
 /** The customers' list is paged on the server: 100 a page, as the legacy list. */
 export const PAGE_SIZE = 100;
 
-export function listCustomers(page: number): Promise<CustomerPage> {
-  return apiGet<CustomerPage>(`/customers?page=${page}&per_page=${PAGE_SIZE}`);
+/**
+ * A page of customers, newest first: the list contract (q, filters name, email, phone, city, country[]; sorts name,
+ * email, city).
+ */
+export function listCustomers(query: ListQuery = {}): Promise<CustomerPage> {
+  return apiGet<CustomerPage>(`/customers${listQueryString(query)}`);
 }
 
 /**

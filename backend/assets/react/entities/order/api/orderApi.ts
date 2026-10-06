@@ -1,4 +1,11 @@
-import {API_BASE, apiGet, type Schema} from '@/shared/api';
+import {
+  API_BASE,
+  apiGet,
+  listQueryString,
+  type ListQuery,
+  type Page,
+  type Schema,
+} from '@/shared/api';
 
 /** An order as the list shows it. */
 export type Order = Schema<'OrderOutput'>;
@@ -6,9 +13,17 @@ export type Order = Schema<'OrderOutput'>;
 export type OrderDetail = Schema<'OrderDetailOutput'>;
 export type OrderComment = Schema<'OrderCommentOutput'>;
 
-/** A warehouse's orders, newest first (the list filters and pages them in the browser). */
-export function listOrders(warehouseId: number): Promise<Order[]> {
-  return apiGet<Order[]>(`/orders?warehouse_id=${warehouseId}`);
+/**
+ * A page of a warehouse's orders, newest first: the list contract (q, filters code, customer, status[], source[],
+ * created_at, pinned; sorts code, customer, status, created_at; facets status, source).
+ */
+export function listOrders(
+  warehouseId: number,
+  query: ListQuery = {},
+): Promise<Page<Order>> {
+  const params = new URLSearchParams(listQueryString(query));
+  params.set('warehouse_id', String(warehouseId));
+  return apiGet<Page<Order>>(`/orders?${params}`);
 }
 
 export function getOrder(id: number): Promise<OrderDetail> {

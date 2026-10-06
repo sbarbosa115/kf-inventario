@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {vi} from 'vitest';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {pageOf} from '@/shared/test/fakeList';
 import {ToastProvider} from '@/shared/ui';
 import {InvoiceFormPage} from './InvoiceFormPage';
 
@@ -59,7 +60,7 @@ const base = () => ({
     number,
     unknown,
   ],
-  'GET /warehouses/1/stock': [200, STOCK] as [number, unknown],
+  'GET /warehouses/1/stock': [200, pageOf(STOCK)] as [number, unknown],
 });
 
 function renderPage() {

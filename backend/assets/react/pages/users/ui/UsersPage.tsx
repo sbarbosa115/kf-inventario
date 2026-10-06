@@ -1,8 +1,8 @@
-import {useMemo, useState} from 'react';
+import {useMemo} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {listUsers, RoleBadges, visibleRoles, type User} from '@/entities/user';
+import {listUsers, RoleBadges, type User} from '@/entities/user';
 import {ApiError} from '@/shared/api';
-import {useLoad} from '@/shared/lib';
+import {useListQuery, useLoad} from '@/shared/lib';
 import {useTranslation} from '@/shared/i18n';
 import {
   Button,
@@ -17,22 +17,33 @@ import {
 
 type StatusFilter = 'active' | 'inactive';
 
-/** Users: every account, its roles in plain words, and the way into the form that edits it (ROLE_MANAGE_USERS). */
+/**
+ * Users: every account, its roles in plain words, and the way into the form that edits it (ROLE_MANAGE_USERS).
+ * Searched, filtered and paged on the server (the query in the address).
+ */
 export function UsersPage() {
   const {t} = useTranslation();
   const navigate = useNavigate();
-  const {data, loading, error, reload} = useLoad(listUsers, []);
-  const [status, setStatus] = useState<StatusFilter | null>(null);
+  const list = useListQuery({sort: 'name'});
+  const key = JSON.stringify(list.query);
+  const {data, loading, error, reload} = useLoad(
+    () => listUsers({...list.query, facets: ['enabled']}),
+    [key],
+  );
+  const enabledFilter = list.query.filters?.enabled;
+  const status: StatusFilter | null = Array.isArray(enabledFilter)
+    ? enabledFilter[0] === 'yes'
+      ? 'active'
+      : enabledFilter[0] === 'no'
+        ? 'inactive'
+        : null
+    : null;
 
   const forbidden = error instanceof ApiError && error.status === 403;
-  const activeCount = data?.filter((user) => user.enabled).length ?? 0;
-  const rows = useMemo(
-    () =>
-      status === null
-        ? data
-        : data?.filter((user) => user.enabled === (status === 'active')),
-    [data, status],
-  );
+  // The chips count what the search keeps (the enabled facet ignores the chip itself).
+  const facet = data?.facets?.enabled ?? [];
+  const activeCount = facet.find((f) => f.value === 'yes')?.count ?? 0;
+  const allCount = facet.reduce((sum, f) => sum + f.count, 0);
 
   const columns = useMemo<Column<User>[]>(
     () => [
@@ -40,31 +51,25 @@ export function UsersPage() {
         key: 'name',
         header: t('users.columns.name'),
         render: (user) => <strong>{user.name}</strong>,
-        sortValue: (user) => user.name.toLowerCase(),
-        searchValue: (user) => `${user.name} ${user.username}`,
+        sortField: 'name',
       },
       {
         key: 'username',
         header: t('users.columns.username'),
         render: (user) => user.username,
-        sortValue: (user) => user.username.toLowerCase(),
+        sortField: 'username',
         mono: true,
       },
       {
         key: 'email',
         header: t('users.columns.email'),
         render: (user) => user.email,
-        sortValue: (user) => user.email ?? '',
-        searchValue: (user) => user.email ?? null,
+        sortField: 'email',
       },
       {
         key: 'roles',
         header: t('users.columns.roles'),
         render: (user) => <RoleBadges roles={user.roles} />,
-        searchValue: (user) =>
-          visibleRoles(user.roles)
-            .map((role) => `${role} ${t(`roles.names.${role}`)}`)
-            .join(' '),
       },
       {
         key: 'status',
@@ -74,7 +79,6 @@ export function UsersPage() {
             {user.enabled ? t('users.active') : t('users.inactive')}
           </StatusBadge>
         ),
-        sortValue: (user) => (user.enabled ? 0 : 1),
       },
     ],
     [t],
@@ -87,7 +91,7 @@ export function UsersPage() {
         subtitle={
           data === undefined
             ? undefined
-            : t('users.count', {count: data.length})
+            : t('users.count', {count: allCount})
         }
         primary={
           <Button to="/admin/users/new" variant="primary" icon="fa-plus">
@@ -101,13 +105,18 @@ export function UsersPage() {
         </div>
       ) : (
         <>
-          {data !== undefined && data.length > 0 && (
+          {data !== undefined && (allCount > 0 || status !== null) && (
             <Toolbar label={t('users.filters.label')}>
               <FilterChips
                 label={t('users.filters.label')}
                 value={status}
-                onChange={(key) => setStatus(key as StatusFilter | null)}
-                allCount={data.length}
+                onChange={(key) =>
+                  list.setFilter(
+                    'enabled',
+                    key === null ? undefined : [key === 'active' ? 'yes' : 'no'],
+                  )
+                }
+                allCount={allCount}
                 options={[
                   {
                     key: 'active',
@@ -117,18 +126,23 @@ export function UsersPage() {
                   {
                     key: 'inactive',
                     label: t('users.filters.inactive'),
-                    count: data.length - activeCount,
+                    count: allCount - activeCount,
                   },
                 ]}
               />
               {status !== null && (
-                <ClearFilters onClick={() => setStatus(null)} />
+                <ClearFilters
+                  onClick={() => list.setFilter('enabled', undefined)}
+                />
               )}
             </Toolbar>
           )}
           <DataTable
             columns={columns}
-            rows={rows}
+            rows={data?.items}
+            query={list.query}
+            onQueryChange={list.update}
+            total={data?.total}
             rowKey={(user) => user.id}
             rowLabel={(user) => user.name}
             loading={loading && data === undefined}

@@ -34,9 +34,11 @@ async function ensureUser(
   baseURL: string,
   user: typeof ORDERS_CLERK,
 ) {
-  const users = (await (await admin.request.get('/api/v1/users')).json()) as {
-    username: string;
-  }[];
+  const users = (
+    (await (
+      await admin.request.get('/api/v1/users?per_page=100')
+    ).json()) as {items: {username: string}[]}
+  ).items;
   if (users.some((known) => known.username === user.username)) return;
   const created = await admin.request.post('/api/v1/users', {
     data: {...user, password: PASSWORD, enabled: true},

@@ -21,9 +21,13 @@ interface ApiOrder {
 }
 
 async function orderByCode(page: Page, code: string): Promise<ApiOrder> {
-  const list = (await (
-    await page.request.get('/api/v1/orders?warehouse_id=1')
-  ).json()) as ApiOrder[];
+  const list = (
+    (await (
+      await page.request.get(
+        `/api/v1/orders?warehouse_id=1&filter[code]=${encodeURIComponent(code)}`,
+      )
+    ).json()) as {items: ApiOrder[]}
+  ).items;
   const found = list.find((order) => order.code === code);
   expect(found, `order ${code} is in warehouse 1`).toBeDefined();
   return (await (

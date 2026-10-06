@@ -6,10 +6,21 @@ import {
   removeDraft,
   rowsFrom,
 } from './commentRows';
+import type {OrderComment} from '@/entities/order';
+
+/** A comment as the API answers it, with only its id and text set. */
+const comment = (id: number, content: string): OrderComment => ({
+  id,
+  content,
+  approximate: false,
+  origin: 'app',
+  pinned: false,
+  sent_to_shop: false,
+});
 
 const SAVED = rowsFrom([
-  {id: 1, content: 'first'},
-  {id: 2, content: 'second'},
+  comment(1, 'first'),
+  comment(2, 'second'),
 ]);
 
 describe('the comment rows of an order', () => {
@@ -67,9 +78,9 @@ describe('the comment rows of an order', () => {
     const rows = editRow(addDraft(addDraft(SAVED)), 'draft-1', 'new');
 
     const next = afterSave(rows, [
-      {id: 1, content: 'first'},
-      {id: 2, content: 'second'},
-      {id: 3, content: 'new'},
+      comment(1, 'first'),
+      comment(2, 'second'),
+      comment(3, 'new'),
     ]);
 
     expect(next.map((row) => [row.id, row.text])).toEqual([

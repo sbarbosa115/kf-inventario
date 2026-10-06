@@ -1,0 +1,35 @@
+{
+  "title": "Configuración",
+  "tabsLabel": "Secciones de la configuración",
+  "tabs": {
+    "general": "General",
+    "email": "Correo",
+    "analytics": "Analítica",
+    "shops": "Conexiones con tiendas",
+    "phrases": "Frases rápidas"
+  },
+  "pending": "Esta sección aún no está lista.",
+  "general": {
+    "facts": "Acerca de esta instalación",
+    "timeZone": "Zona horaria",
+    "timeZoneValue": "America/Bogota (las fechas se guardan en hora de Bogotá)",
+    "emailFrom": "El correo sale por",
+    "emailSource": {
+      "settings": "El servidor SMTP de Configuración › Correo",
+      "env": "El MAILER_DSN del servidor (no hay servidor SMTP en la configuración)",
+      "none": "Sin configurar: no se envía ningún correo"
+    },
+    "legacyTitle": "La URL anterior del webhook",
+    "legacyOn": "Activa: las tiendas aún pueden enviar pedidos a la URL anterior del webhook.",
+    "legacyOff": "Desactivada: la URL anterior del webhook responde 410 y no registra nada.",
+    "legacyHits_one": "{{count}} entrega llegó desde que se desactivó; la última el {{date}}.",
+    "legacyHits_other": "{{count}} entregas llegaron desde que se desactivó; la última el {{date}}.",
+    "legacyNoHits": "No ha llegado nada desde que se desactivó.",
+    "turnOff": "Desactivar la URL anterior del webhook",
+    "turnOn": "Volver a activar la URL anterior del webhook",
+    "confirmOffTitle": "¿Desactivar la URL anterior del webhook?",
+    "confirmOffBody": "Las tiendas que aún envíen ahí recibirán 410 y sus pedidos no se registrarán. Hágalo cuando cada tienda apunte a su conexión.",
+    "turnedOff": "La URL anterior del webhook está desactivada.",
+    "turnedOn": "La URL anterior del webhook está activa de nuevo."
+  }
+}

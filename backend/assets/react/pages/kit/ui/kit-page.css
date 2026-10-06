@@ -36,3 +36,10 @@
 .kit-page__scans {
   font-family: var(--kf-font-mono);
 }
+
+.kit-page__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--kf-space-2);
+  margin-bottom: var(--kf-space-3);
+}

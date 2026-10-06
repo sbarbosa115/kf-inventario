@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import {SessionProvider} from '@/entities/session';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {pageOf} from '@/shared/test/fakeList';
 import {ToastProvider} from '@/shared/ui';
 import {OrdersPage} from './OrdersPage';
 
@@ -45,7 +46,7 @@ describe('OrdersPage', () => {
   it('is titled Orders, with Create order as its one primary action and Sync shop orders beside it', async () => {
     renderPage(
       ['ROLE_USER', 'ROLE_CAN_CREATE_ORDERS', 'ROLE_CAN_SYNC_ORDERS'],
-      {'GET /orders': [200, [ORDER]]},
+      {'GET /orders': [200, pageOf([ORDER])]},
     );
 
     expect(
@@ -61,7 +62,7 @@ describe('OrdersPage', () => {
 
   it('shows neither create nor sync without their roles', async () => {
     renderPage(['ROLE_USER', 'ROLE_CAN_READ_ORDERS'], {
-      'GET /orders': [200, [ORDER]],
+      'GET /orders': [200, pageOf([ORDER])],
     });
 
     await screen.findByRole('row', {name: /W00001/}, {timeout: 3000});
@@ -76,7 +77,7 @@ describe('OrdersPage', () => {
   it('reloads the list after a sync', async () => {
     let rows = [ORDER];
     const api = renderPage(['ROLE_USER', 'ROLE_CAN_SYNC_ORDERS'], {
-      'GET /orders': () => [200, rows],
+      'GET /orders': () => [200, pageOf(rows)],
       'POST /orders/sync': () => {
         rows = [ORDER, {...ORDER, id: 2, code: 'W00002'}];
         return [202, {imported: 1, skipped: 0}];
@@ -100,7 +101,10 @@ describe('OrdersPage', () => {
   it('opens an order’s detail beside the list, and the list counts a comment saved there', async () => {
     let comments: {id: number; content: string}[] = [];
     const api = renderPage(['ROLE_USER'], {
-      'GET /orders': () => [200, [{...ORDER, comments_count: comments.length}]],
+      'GET /orders': () => [
+        200,
+        pageOf([{...ORDER, comments_count: comments.length}]),
+      ],
       'GET /orders/1': () => [200, {...ORDER, comments, products: []}],
       'PUT /orders/1/comments': () => {
         comments = [{id: 5, content: 'Ring twice'}];

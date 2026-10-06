@@ -1,12 +1,6 @@
 import {useMemo, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {
-  listStock,
-  matchesStock,
-  stockFigures,
-  type StockFilter,
-  type StockItem,
-} from '@/entities/product';
+import {listStock, type StockFilter, type StockItem} from '@/entities/product';
 import {listWarehouses, type Warehouse} from '@/entities/warehouse';
 import {
   DownloadStockSheet,
@@ -15,7 +9,12 @@ import {
 import {MoveStockPanel} from '@/features/move-stock';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {useLoad, useRememberedWarehouse} from '@/shared/lib';
+import {
+  useDebouncedText,
+  useListQuery,
+  useLoad,
+  useRememberedWarehouse,
+} from '@/shared/lib';
 import {
   Button,
   ClearFilters,
@@ -37,7 +36,8 @@ import './stock-table.css';
 
 /**
  * One warehouse's stock (the one in the address, else the last one chosen in this browser, else the first): its
- * figures, a toolbar to narrow it, and a selectable table whose bar moves or downloads the selection.
+ * figures, a toolbar to narrow it, and a selectable table whose bar moves or downloads the selection. Filtered,
+ * sorted and paged on the server; the query lives in the address (?q=&filter[in_stock][]=no&page=2).
  */
 export function StockTable() {
   const {t} = useTranslation();
@@ -77,32 +77,46 @@ function WarehouseStock({
   const {t} = useTranslation();
   const navigate = useNavigate();
   const toast = useToast();
+  const list = useListQuery({sort: 'code'});
+  const [refresh, setRefresh] = useState(0);
+  const key = JSON.stringify(list.query);
   const {data, loading, error, reload} = useLoad(
-    () => listStock(warehouse.id),
-    [warehouse.id],
+    () => listStock(warehouse.id, list.query),
+    [warehouse.id, key, refresh],
+  );
+  // The figures and the chips' counts are the whole warehouse's, whatever the filters: one row, the totals and the
+  // in-stock facet.
+  const summary = useLoad(
+    () => listStock(warehouse.id, {perPage: 1, facets: ['in_stock']}),
+    [warehouse.id, refresh],
   );
   const [selected, setSelected] = useState<Set<string | number>>(new Set());
   const [moving, setMoving] = useState<StockItem[] | null>(null);
-  const [chip, setChip] = useState<StockFilter | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useDebouncedText(list.query.q ?? '', (q) =>
+    list.update({q: q === '' ? undefined : q}),
+  );
 
-  const figures = useMemo(() => stockFigures(data ?? []), [data]);
-  const shown = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    return (data ?? []).filter(
-      (row) =>
-        matchesStock(row, chip) &&
-        (needle === '' ||
-          [row.code, row.title, row.detail ?? ''].some((text) =>
-            text.toLowerCase().includes(needle),
-          )),
-    );
-  }, [data, chip, search]);
-  const filtered = chip !== null || search.trim() !== '';
-  const clearFilters = () => {
-    setChip(null);
-    setSearch('');
-  };
+  const inStockFilter = list.query.filters?.in_stock;
+  const chip: StockFilter | null = Array.isArray(inStockFilter)
+    ? inStockFilter[0] === 'yes'
+      ? 'in'
+      : inStockFilter[0] === 'no'
+        ? 'out'
+        : null
+    : null;
+  const filtered = list.activeCount > 0;
+  const facet = summary.data?.facets?.in_stock ?? [];
+  const countOf = (value: string) =>
+    facet.find((f) => f.value === value)?.count ?? 0;
+  const figures = summary.data
+    ? {
+        products: summary.data.total,
+        units: summary.data.totals.units,
+        value: summary.data.totals.value,
+        inStock: countOf('yes'),
+        outOfStock: countOf('no'),
+      }
+    : undefined;
 
   const columns = useMemo<Column<StockItem>[]>(
     () => [
@@ -110,14 +124,14 @@ function WarehouseStock({
         key: 'code',
         header: t('products.columns.code'),
         render: (row) => row.code,
-        sortValue: (row) => row.code,
+        sortField: 'code',
         mono: true,
       },
       {
         key: 'title',
         header: t('products.columns.title'),
         render: (row) => row.title,
-        sortValue: (row) => row.title,
+        sortField: 'title',
       },
       {
         key: 'detail',
@@ -128,20 +142,19 @@ function WarehouseStock({
               {row.detail}
             </span>
           ) : null,
-        sortValue: (row) => row.detail ?? '',
       },
       {
         key: 'quantity',
         header: t('products.columns.quantity'),
         render: (row) => <Num value={row.quantity} />,
-        sortValue: (row) => row.quantity,
+        sortField: 'quantity',
         numeric: true,
       },
       {
         key: 'price',
         header: t('products.columns.price'),
         render: (row) => <Money amount={row.price} />,
-        sortValue: (row) => row.price ?? 0,
+        sortField: 'price',
         numeric: true,
       },
     ],
@@ -156,7 +169,6 @@ function WarehouseStock({
     );
   }
 
-  const loaded = data !== undefined;
   return (
     <div className="kf-stock">
       <Toolbar label={t('products.title')}>
@@ -173,24 +185,29 @@ function WarehouseStock({
         <FilterChips
           label={t('products.filters.label')}
           value={chip}
-          onChange={(key) => setChip(key as StockFilter | null)}
-          allCount={loaded ? figures.products : undefined}
+          onChange={(key) =>
+            list.setFilter(
+              'in_stock',
+              key === null ? undefined : [key === 'in' ? 'yes' : 'no'],
+            )
+          }
+          allCount={figures?.products}
           options={[
             {
               key: 'in',
               label: t('products.filters.inStock'),
-              count: loaded ? figures.inStock : undefined,
+              count: figures?.inStock,
             },
             {
               key: 'out',
               label: t('products.filters.outOfStock'),
-              count: loaded ? figures.outOfStock : undefined,
+              count: figures?.outOfStock,
             },
           ]}
         />
-        {filtered && <ClearFilters onClick={clearFilters} />}
+        {filtered && <ClearFilters onClick={list.clearFilters} />}
       </Toolbar>
-      {loaded ? (
+      {figures ? (
         <KpiStrip
           items={[
             {
@@ -208,61 +225,52 @@ function WarehouseStock({
           ]}
         />
       ) : (
-        !error && <Skeleton variant="kpi" lines={3} />
+        !summary.error && <Skeleton variant="kpi" lines={3} />
       )}
-      {loaded && data.length > 0 && shown.length === 0 ? (
-        <EmptyState
-          message={t('common.filteredEmpty')}
-          action={
-            <Button size="sm" onClick={clearFilters}>
-              {t('common.showAll')}
+      <DataTable
+        columns={columns}
+        rows={data?.items}
+        rowKey={(row) => row.id}
+        rowLabel={(row) => row.code}
+        loading={loading && data === undefined}
+        error={error}
+        onRetry={reload}
+        emptyMessage={t('products.empty')}
+        searchable={false}
+        query={list.query}
+        onQueryChange={list.update}
+        total={data?.total}
+        selected={selected}
+        onSelectedChange={setSelected}
+        onRowClick={(row) => navigate(`/admin/products/${row.uuid}/edit`)}
+        rowActions={(row) => [
+          {
+            label: t('products.actions.edit'),
+            icon: 'fa-pen',
+            href: `/admin/products/${row.uuid}/edit`,
+          },
+          {
+            label: t('products.sheet.download'),
+            icon: 'fa-file-excel',
+            onSelect: () => downloadStockSheet([row.uuid]),
+          },
+        ]}
+        selectionBar={(rows) => (
+          <>
+            <Button
+              variant="primary"
+              size="sm"
+              icon="fa-people-carry"
+              onClick={() => setMoving(rows)}
+            >
+              {t('products.move.open')}
             </Button>
-          }
-        />
-      ) : (
-        <DataTable
-          columns={columns}
-          rows={data === undefined ? undefined : shown}
-          rowKey={(row) => row.id}
-          rowLabel={(row) => row.code}
-          loading={loading && data === undefined}
-          error={error}
-          onRetry={reload}
-          emptyMessage={t('products.empty')}
-          pageSize={10}
-          searchable={false}
-          selected={selected}
-          onSelectedChange={setSelected}
-          onRowClick={(row) => navigate(`/admin/products/${row.uuid}/edit`)}
-          rowActions={(row) => [
-            {
-              label: t('products.actions.edit'),
-              icon: 'fa-pen',
-              href: `/admin/products/${row.uuid}/edit`,
-            },
-            {
-              label: t('products.sheet.download'),
-              icon: 'fa-file-excel',
-              onSelect: () => downloadStockSheet([row.uuid]),
-            },
-          ]}
-          selectionBar={(rows) => (
-            <>
-              <Button
-                variant="primary"
-                size="sm"
-                icon="fa-people-carry"
-                onClick={() => setMoving(rows)}
-              >
-                {t('products.move.open')}
-              </Button>
-              <DownloadStockSheet uuids={rows.map((row) => row.uuid)} />
-            </>
-          )}
-          cardTitle={(row) => row.title}
-          cardFacts={['code', 'quantity', 'price']}
-        />
-      )}
+            <DownloadStockSheet uuids={rows.map((row) => row.uuid)} />
+          </>
+        )}
+        cardTitle={(row) => row.title}
+        cardFacts={['code', 'quantity', 'price']}
+      />
       {moving && (
         <MoveStockPanel
           rows={moving}
@@ -273,7 +281,7 @@ function WarehouseStock({
             setMoving(null);
             setSelected(new Set());
             toast.success(t('products.moved', {warehouse: destination.name}));
-            reload();
+            setRefresh((n) => n + 1);
           }}
         />
       )}

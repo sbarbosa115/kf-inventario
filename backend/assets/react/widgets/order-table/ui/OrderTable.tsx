@@ -1,16 +1,13 @@
-import {useMemo, useState} from 'react';
+import {useState} from 'react';
 import {
-  countByStatus,
   customerName,
   listOrders,
-  matchesOrder,
   orderPdfUrl,
   orderRemainingPdfUrl,
   orderXlsUrl,
   ORDER_STATUSES,
   OrderSource,
   type Order,
-  type OrderFilter,
 } from '@/entities/order';
 import {useCan} from '@/entities/session';
 import {listWarehouses, type Warehouse} from '@/entities/warehouse';
@@ -18,7 +15,14 @@ import {OrderStatusMenu} from '@/features/change-order-status';
 import {DeleteOrderConfirm} from '@/features/delete-order';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {useFormat, useLoad, useRememberedWarehouse} from '@/shared/lib';
+import type {DateRangeValue} from '@/shared/api';
+import {
+  useDebouncedText,
+  useFormat,
+  useListQuery,
+  useLoad,
+  useRememberedWarehouse,
+} from '@/shared/lib';
 import {
   Button,
   ClearFilters,
@@ -44,12 +48,11 @@ interface Props {
   refreshKey: number;
 }
 
-const NO_FILTER = {status: null, query: '', from: '', to: ''};
-
 /**
  * One warehouse's orders (the remembered one, else the first): status chips counting what the other filters keep,
- * a search by number or customer and a creation-date range, all over the loaded list; a row per order with its status
- * menu and its ⋯ menu (edit, getting ready, documents, delete by role). A row opens the order's detail.
+ * a search by number or customer and a creation-date range, filtered, sorted and paged on the server (the query in
+ * the address); a row per order with its status menu and its ⋯ menu (edit, getting ready, documents, delete by
+ * role). A row opens the order's detail.
  */
 export function OrderTable(props: Props) {
   const {t} = useTranslation();
@@ -91,33 +94,29 @@ function WarehouseOrders({
   const {dateTime} = useFormat();
   const canEdit = useCan('ROLE_CAN_UPDATE_ORDERS');
   const canDelete = useCan('ROLE_CAN_DELETE_ORDERS');
+  const list = useListQuery({sort: '-created_at'});
+  const key = JSON.stringify(list.query);
   const {data, loading, error, reload} = useLoad(
-    () => listOrders(warehouse.id),
-    [warehouse.id, refreshKey],
+    () => listOrders(warehouse.id, {...list.query, facets: ['status']}),
+    [warehouse.id, key, refreshKey],
   );
-  const [filter, setFilter] = useState<Required<OrderFilter>>(NO_FILTER);
   const [deleting, setDeleting] = useState<Order | null>(null);
-  const change = (next: Partial<OrderFilter>) =>
-    setFilter((now) => ({...now, ...next}));
-  const filtered =
-    filter.status !== null ||
-    filter.query !== '' ||
-    filter.from !== '' ||
-    filter.to !== '';
+  const [search, setSearch] = useDebouncedText(list.query.q ?? '', (q) =>
+    list.update({q: q === '' ? undefined : q}),
+  );
+  const statusFilter = list.query.filters?.status;
+  const status = Array.isArray(statusFilter) ? (statusFilter[0] ?? null) : null;
+  const created = (list.query.filters?.created_at ?? {}) as DateRangeValue;
+  const setCreated = (range: DateRangeValue) =>
+    list.setFilter('created_at', range);
+  const filtered = list.activeCount > 0;
 
-  // The chips count what the search and the dates keep; the status chip then narrows it.
-  const unfiltered = useMemo(
-    () =>
-      (data ?? []).filter((order) =>
-        matchesOrder(order, {...filter, status: null}),
-      ),
-    [data, filter],
+  // The chips count what the search and the dates keep (the status facet ignores the status filter itself).
+  const facet = data?.facets?.status;
+  const counts = Object.fromEntries(
+    (facet ?? []).map((f) => [f.value, f.count]),
   );
-  const rows = useMemo(
-    () => unfiltered.filter((order) => matchesOrder(order, filter)),
-    [unfiltered, filter],
-  );
-  const counts = countByStatus(unfiltered);
+  const allCount = facet?.reduce((sum, f) => sum + f.count, 0);
 
   const columns: Column<Order>[] = [
     {
@@ -133,13 +132,13 @@ function WarehouseOrders({
           {order.code ?? order.id}
         </button>
       ),
-      sortValue: (order) => order.code ?? '',
+      sortField: 'code',
     },
     {
       key: 'customer',
       header: t('orders.columns.customer'),
       render: (order) => <CustomerCell order={order} />,
-      sortValue: (order) => customerName(order.customer) ?? '',
+      sortField: 'customer',
     },
     {
       key: 'source',
@@ -150,7 +149,7 @@ function WarehouseOrders({
       key: 'status',
       header: t('orders.columns.status'),
       render: (order) => <OrderStatusMenu order={order} onChanged={reload} />,
-      sortValue: (order) => order.status,
+      sortField: 'status',
     },
     {
       key: 'created',
@@ -158,7 +157,7 @@ function WarehouseOrders({
       render: (order) => (
         <span className="text-nowrap">{dateTime(order.created_at)}</span>
       ),
-      sortValue: (order) => order.created_at ?? '',
+      sortField: 'created_at',
     },
     {
       key: 'comments',
@@ -227,8 +226,6 @@ function WarehouseOrders({
   ];
 
   const forbidden = error instanceof ApiError && error.status === 403;
-  const nothingLeft =
-    data !== undefined && data.length > 0 && rows.length === 0;
 
   return (
     <div className="kf-order-table">
@@ -240,56 +237,49 @@ function WarehouseOrders({
         />
         <FilterChips
           label={t('orders.filters.status')}
-          value={filter.status === null ? null : String(filter.status)}
+          value={status}
           onChange={(key) =>
-            change({status: key === null ? null : Number(key)})
+            list.setFilter('status', key === null ? undefined : [key])
           }
-          allCount={data ? unfiltered.length : undefined}
-          options={ORDER_STATUSES.map((status) => ({
-            key: String(status),
-            label: t(`orders.statuses.${status}`),
-            count: data ? counts[status] : undefined,
+          allCount={allCount}
+          options={ORDER_STATUSES.map((value) => ({
+            key: String(value),
+            label: t(`orders.statuses.${value}`),
+            count: facet ? (counts[String(value)] ?? 0) : undefined,
           }))}
         />
         <div className="kf-order-table__search">
           <SearchBox
             label={t('orders.filters.search')}
-            value={filter.query}
-            onChange={(query) => change({query})}
+            value={search}
+            onChange={setSearch}
           />
         </div>
         <DateField
           label={t('orders.filters.from')}
-          value={filter.from}
-          max={filter.to || undefined}
-          onChange={(from) => change({from})}
+          value={created.from ?? ''}
+          max={created.to || undefined}
+          onChange={(from) => setCreated({...created, from})}
         />
         <DateField
           label={t('orders.filters.to')}
-          value={filter.to}
-          min={filter.from || undefined}
-          onChange={(to) => change({to})}
+          value={created.to ?? ''}
+          min={created.from || undefined}
+          onChange={(to) => setCreated({...created, to})}
         />
-        {filtered && <ClearFilters onClick={() => setFilter(NO_FILTER)} />}
+        {filtered && <ClearFilters onClick={list.clearFilters} />}
       </Toolbar>
       {forbidden ? (
         <div className="alert alert-warning" role="alert">
           {t('errors.forbidden')}
         </div>
-      ) : nothingLeft ? (
-        <EmptyState
-          icon="fa-filter"
-          message={t('common.filteredEmpty')}
-          action={
-            <Button size="sm" onClick={() => setFilter(NO_FILTER)}>
-              {t('common.showAll')}
-            </Button>
-          }
-        />
       ) : (
         <DataTable
           columns={columns}
-          rows={data === undefined ? undefined : rows}
+          rows={data?.items}
+          query={list.query}
+          onQueryChange={list.update}
+          total={data?.total}
           rowKey={(order) => order.id}
           rowLabel={(order) => order.code ?? String(order.id)}
           loading={loading && data === undefined}

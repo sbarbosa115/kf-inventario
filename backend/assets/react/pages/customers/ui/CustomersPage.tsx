@@ -1,14 +1,18 @@
-import {useMemo, useState} from 'react';
-import {useNavigate, useSearchParams} from 'react-router-dom';
+import {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import {listCustomers, PAGE_SIZE, type Customer} from '@/entities/customer';
 import {customerName, DeleteCustomerDialog} from '@/features/delete-customer';
 import {ApiError} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
-import {useFormat, useLoad} from '@/shared/lib';
+import {
+  useDebouncedText,
+  useFormat,
+  useListQuery,
+  useLoad,
+} from '@/shared/lib';
 import {
   Button,
   DataTable,
-  EmptyState,
   PageHeader,
   SearchBox,
   Toolbar,
@@ -24,23 +28,28 @@ const fullName = (customer: Customer) =>
 /** The city of a customer's first address: the one the list shows. */
 const cityOf = (customer: Customer) => customer.addresses[0]?.city?.name ?? '';
 
-/** Customers: 100 a page, paged on the server (/admin/customers?page=2), and the way into the form (ROLE_MANAGE_CUSTOMERS). */
+/**
+ * Customers: 100 a page, newest first, searched and paged on the server (the query in the address:
+ * /admin/customers?page=2&q=jose), and the way into the form (ROLE_MANAGE_CUSTOMERS).
+ */
 export function CustomersPage() {
   const {t} = useTranslation();
   const {num} = useFormat();
   const toast = useToast();
   const navigate = useNavigate();
-  const [params, setParams] = useSearchParams();
-  const page = Math.max(1, Number.parseInt(params.get('page') ?? '1', 10) || 1);
+  const list = useListQuery({perPage: PAGE_SIZE});
+  const key = JSON.stringify(list.query);
   const {data, loading, error, reload} = useLoad(
-    () => listCustomers(page),
-    [page],
+    () => listCustomers(list.query),
+    [key],
   );
-  const [query, setQuery] = useState('');
   const [deleting, setDeleting] = useState<Customer | null>(null);
+  const [search, setSearch] = useDebouncedText(list.query.q ?? '', (q) =>
+    list.update({q: q === '' ? undefined : q}),
+  );
+  const page = list.query.page;
 
-  const pages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
-  const from = (page - 1) * PAGE_SIZE + 1;
+  const from = (page - 1) * list.query.perPage + 1;
   const subtitle =
     data && data.items.length > 0
       ? t('customers.range', {
@@ -50,22 +59,10 @@ export function CustomersPage() {
         })
       : undefined;
 
-  // The search covers the page that is loaded: the API pages without searching.
-  const rows = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!data || needle === '') return data?.items;
-    return data.items.filter((customer) =>
-      [fullName(customer), customer.email, customer.phone, cityOf(customer)]
-        .join(' ')
-        .toLowerCase()
-        .includes(needle),
-    );
-  }, [data, query]);
-
   const afterDelete = () => {
     toast.success(t('customers.deleted'));
     if (page > 1 && data?.items.length === 1) {
-      setParams({page: String(page - 1)});
+      list.update({page: page - 1});
     } else {
       reload();
     }
@@ -78,25 +75,24 @@ export function CustomersPage() {
       render: (customer) => (
         <span className="customers-name">{fullName(customer)}</span>
       ),
-      sortValue: (customer) => fullName(customer).toLowerCase(),
+      sortField: 'name',
     },
     {
       key: 'email',
       header: t('customers.columns.email'),
       render: (customer) => customer.email,
-      sortValue: (customer) => customer.email ?? '',
+      sortField: 'email',
     },
     {
       key: 'phone',
       header: t('customers.columns.phone'),
       render: (customer) => customer.phone,
-      sortValue: (customer) => customer.phone ?? '',
     },
     {
       key: 'city',
       header: t('customers.columns.city'),
       render: (customer) => cityOf(customer),
-      sortValue: (customer) => cityOf(customer).toLowerCase(),
+      sortField: 'city',
     },
   ];
 
@@ -115,11 +111,6 @@ export function CustomersPage() {
   ];
 
   const forbidden = error instanceof ApiError && error.status === 403;
-  const filteredOut =
-    data !== undefined &&
-    data.items.length > 0 &&
-    rows?.length === 0 &&
-    query.trim() !== '';
 
   return (
     <>
@@ -140,63 +131,34 @@ export function CustomersPage() {
         <>
           <Toolbar label={t('customers.title')}>
             <SearchBox
-              value={query}
-              onChange={setQuery}
+              value={search}
+              onChange={setSearch}
               label={t('customers.search')}
             />
           </Toolbar>
-          {filteredOut ? (
-            <EmptyState
-              message={t('common.filteredEmpty')}
-              action={
-                <Button size="sm" onClick={() => setQuery('')}>
-                  {t('common.showAll')}
-                </Button>
-              }
-            />
-          ) : (
-            <DataTable
-              columns={columns}
-              rows={rows}
-              rowKey={(customer) => customer.id}
-              rowLabel={customerName}
-              loading={loading && data === undefined}
-              error={error}
-              onRetry={reload}
-              emptyMessage={t('customers.empty')}
-              pageSize={0}
-              searchable={false}
-              rowActions={rowActions}
-              onRowClick={(customer) =>
-                navigate(`/admin/customers/${customer.id}/edit`)
-              }
-              cardTitle={(customer) =>
-                fullName(customer) || customer.email || customer.id
-              }
-              cardFacts={['email', 'phone', 'city']}
-            />
-          )}
-          {data && pages > 1 && (
-            <nav aria-label={t('customers.pages')} className="customers-pager">
-              <Button
-                size="sm"
-                to={page <= 1 ? undefined : `?page=${page - 1}`}
-                disabled={page <= 1}
-              >
-                {t('common.previous')}
-              </Button>
-              <span className="customers-pager__label">
-                {t('common.pageOf', {page, pages})}
-              </span>
-              <Button
-                size="sm"
-                to={page >= pages ? undefined : `?page=${page + 1}`}
-                disabled={page >= pages}
-              >
-                {t('common.next')}
-              </Button>
-            </nav>
-          )}
+          <DataTable
+            columns={columns}
+            rows={data?.items}
+            rowKey={(customer) => customer.id}
+            rowLabel={customerName}
+            loading={loading && data === undefined}
+            error={error}
+            onRetry={reload}
+            emptyMessage={t('customers.empty')}
+            searchable={false}
+            query={list.query}
+            onQueryChange={list.update}
+            total={data?.total}
+            perPageOptions={[PAGE_SIZE]}
+            rowActions={rowActions}
+            onRowClick={(customer) =>
+              navigate(`/admin/customers/${customer.id}/edit`)
+            }
+            cardTitle={(customer) =>
+              fullName(customer) || customer.email || customer.id
+            }
+            cardFacts={['email', 'phone', 'city']}
+          />
         </>
       )}
       {deleting && (

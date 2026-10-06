@@ -53,9 +53,13 @@ test.describe('9 WooCommerce webhook', () => {
     expect(answer.status()).toBe(200);
     expect(await answer.json()).toEqual({status: true});
     const admin = await signedInAs(ADMIN);
-    const orders = (await (
-      await admin.request.get('/api/v1/orders?warehouse_id=1')
-    ).json()) as {id: number; code: string}[];
+    const orders = (
+      (await (
+        await admin.request.get(
+          `/api/v1/orders?warehouse_id=1&filter[code]=${code}`,
+        )
+      ).json()) as {items: {id: number; code: string}[]}
+    ).items;
     const placed = orders.find((order) => order.code === String(code));
     expect(placed, 'the order is in warehouse 1').toBeDefined();
     const detail = (await (
@@ -96,9 +100,13 @@ test.describe('9 WooCommerce webhook', () => {
     expect(await answer.json()).toEqual({status: true});
     const admin = await signedInAs(ADMIN);
     for (const warehouse of [1, 2, 3]) {
-      const orders = (await (
-        await admin.request.get(`/api/v1/orders?warehouse_id=${warehouse}`)
-      ).json()) as {code: string}[];
+      const orders = (
+        (await (
+          await admin.request.get(
+            `/api/v1/orders?warehouse_id=${warehouse}&filter[code]=${code}`,
+          )
+        ).json()) as {items: {code: string}[]}
+      ).items;
       expect(orders.map((order) => order.code)).not.toContain(String(code));
     }
     expect(await emailCount(request, PRINTER)).toBe(emailsBefore);

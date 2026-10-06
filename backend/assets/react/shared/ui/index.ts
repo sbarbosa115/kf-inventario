@@ -4,7 +4,23 @@ export type {ButtonSize, ButtonVariant} from './Button';
 export {CameraScanner} from './CameraScanner';
 export {ConfirmModal} from './ConfirmModal';
 export {DataTable} from './DataTable';
-export type {Column} from './DataTable';
+export type {Column, TableQuery} from './DataTable';
+export {ActiveFilters} from './filters/ActiveFilters';
+export {DateRangeFilter} from './filters/DateRangeFilter';
+export {FilterDropdown} from './filters/FilterDropdown';
+export {FilterRow} from './filters/FilterRow';
+export {FilterSheet, FiltersButton} from './filters/FilterSheet';
+export type {SheetDraft} from './filters/FilterSheet';
+export {Pager} from './filters/Pager';
+export {RangeFilter} from './filters/RangeFilter';
+export {TextFilterInput} from './filters/TextFilterInput';
+export type {
+  ColumnFilter,
+  Facets,
+  FilterColumn,
+  FilterOption,
+  Filters,
+} from './filters/types';
 export {EmptyState} from './EmptyState';
 export {ErrorState} from './ErrorState';
 export {Field} from './Field';

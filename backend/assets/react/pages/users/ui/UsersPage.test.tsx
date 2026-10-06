@@ -1,7 +1,8 @@
-import {render, screen, within} from '@testing-library/react';
+import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {fakeList} from '@/shared/test/fakeList';
 import {UsersPage} from './UsersPage';
 
 const ANA = {
@@ -21,6 +22,19 @@ const BEN = {
   enabled: false,
 };
 
+type Row = typeof ANA | typeof BEN;
+
+/** The users list's contract, in memory. */
+const users = (rows: Row[]) =>
+  fakeList(rows, {
+    fields: {
+      name: (u) => u.name,
+      enabled: (u) => (u.enabled ? 'yes' : 'no'),
+      roles: (u) => u.roles,
+    },
+    search: [(u) => u.name, (u) => u.username, (u) => u.email],
+  });
+
 function renderPage() {
   render(
     <MemoryRouter initialEntries={['/admin/users']}>
@@ -35,7 +49,7 @@ function renderPage() {
 
 describe('UsersPage', () => {
   it('names the roles in plain words, never as ROLE_ constants, and leaves out ROLE_USER', async () => {
-    fakeApi({'GET /users': [200, [ANA, BEN]]});
+    fakeApi({'GET /users': users([ANA, BEN])});
     renderPage();
 
     const ana = (await screen.findByRole('row', {name: /ana@kf\.test/}))!;
@@ -48,7 +62,7 @@ describe('UsersPage', () => {
   });
 
   it('titles the page "Users" with the count, and the column is "Roles"', async () => {
-    fakeApi({'GET /users': [200, [ANA, BEN]]});
+    fakeApi({'GET /users': users([ANA, BEN])});
     renderPage();
 
     expect(
@@ -61,7 +75,7 @@ describe('UsersPage', () => {
   });
 
   it('says in words, not in colour alone, who is inactive', async () => {
-    fakeApi({'GET /users': [200, [ANA, BEN]]});
+    fakeApi({'GET /users': users([ANA, BEN])});
     renderPage();
 
     const ben = await screen.findByRole('row', {name: /Ben Ruiz/});
@@ -71,7 +85,7 @@ describe('UsersPage', () => {
   });
 
   it('keeps one action in the row menu, Edit, and opens the form from it', async () => {
-    fakeApi({'GET /users': [200, [ANA]]});
+    fakeApi({'GET /users': users([ANA])});
     renderPage();
 
     const row = await screen.findByRole('row', {name: /Ana Gomez/});
@@ -87,7 +101,7 @@ describe('UsersPage', () => {
   });
 
   it('opens the edit form when a row is clicked', async () => {
-    fakeApi({'GET /users': [200, [ANA]]});
+    fakeApi({'GET /users': users([ANA])});
     renderPage();
 
     await userEvent.click(await screen.findByText('ana@kf.test'));
@@ -96,7 +110,7 @@ describe('UsersPage', () => {
   });
 
   it('filters by status with the count on each chip', async () => {
-    fakeApi({'GET /users': [200, [ANA, BEN]]});
+    fakeApi({'GET /users': users([ANA, BEN])});
     renderPage();
 
     await screen.findByText('Ana Gomez');
@@ -104,24 +118,29 @@ describe('UsersPage', () => {
     expect(inactive).toHaveTextContent('1');
     await userEvent.click(inactive);
 
-    expect(screen.queryByText('Ana Gomez')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText('Ana Gomez')).not.toBeInTheDocument(),
+    );
     expect(screen.getByText('Ben Ruiz')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', {name: /^All/}));
-    expect(screen.getByText('Ana Gomez')).toBeInTheDocument();
+    expect(await screen.findByText('Ana Gomez')).toBeInTheDocument();
   });
 
-  it('finds a user by the plain name of a role', async () => {
-    fakeApi({'GET /users': [200, [ANA, BEN]]});
+  it('searches on the server by name, username or email', async () => {
+    const api = fakeApi({'GET /users': users([ANA, BEN])});
     renderPage();
 
-    await userEvent.type(await screen.findByRole('searchbox'), 'Invoices');
+    await userEvent.type(await screen.findByRole('searchbox'), 'ben');
 
-    expect(screen.queryByText('Ana Gomez')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText('Ana Gomez')).not.toBeInTheDocument(),
+    );
     expect(screen.getByText('Ben Ruiz')).toBeInTheDocument();
+    expect(api.calls.at(-1)?.url.searchParams.get('q')).toBe('ben');
   });
 
   it('opens the new user form from Create user', async () => {
-    fakeApi({'GET /users': [200, [ANA]]});
+    fakeApi({'GET /users': users([ANA])});
     renderPage();
 
     await userEvent.click(
@@ -132,7 +151,7 @@ describe('UsersPage', () => {
   });
 
   it('says what the section is for when there are no users, and still offers Create user', async () => {
-    fakeApi({'GET /users': [200, []]});
+    fakeApi({'GET /users': users([])});
     renderPage();
 
     expect(
@@ -142,16 +161,16 @@ describe('UsersPage', () => {
   });
 
   it('offers a way back when the search matches nobody', async () => {
-    fakeApi({'GET /users': [200, [ANA, BEN]]});
+    fakeApi({'GET /users': users([ANA, BEN])});
     renderPage();
 
     await userEvent.type(await screen.findByRole('searchbox'), 'zzz');
     expect(
-      screen.getByText('Nothing matches these filters.'),
+      await screen.findByText('Nothing matches these filters.'),
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', {name: 'Show all'}));
 
-    expect(screen.getByText('Ben Ruiz')).toBeInTheDocument();
+    expect(await screen.findByText('Ben Ruiz')).toBeInTheDocument();
   });
 
   it('shows the failure with a retry when the list cannot be loaded', async () => {

@@ -1,4 +1,11 @@
-import {apiGet, apiPost, type Schema} from '@/shared/api';
+import {
+  apiGet,
+  apiPost,
+  listQueryString,
+  type ListQuery,
+  type Page,
+  type Schema,
+} from '@/shared/api';
 
 export type Invoice = Schema<'InvoiceOutput'>;
 export type InvoiceItem = Schema<'InvoiceItemOutput'>;
@@ -47,8 +54,12 @@ export interface InvoicePayload {
   items: InvoiceLinePayload[];
 }
 
-export function listInvoices(): Promise<Invoice[]> {
-  return apiGet<Invoice[]>('/invoices');
+/**
+ * A page of invoices, newest first: the list contract (q, filters code, customer, payment_method[], created_at, total,
+ * walk_in[]; sorts code, customer, created_at, total).
+ */
+export function listInvoices(query: ListQuery = {}): Promise<Page<Invoice>> {
+  return apiGet<Page<Invoice>>(`/invoices${listQueryString(query)}`);
 }
 
 export function getInvoice(id: number): Promise<Invoice> {

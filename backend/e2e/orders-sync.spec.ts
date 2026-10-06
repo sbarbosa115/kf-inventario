@@ -14,18 +14,22 @@ test.describe('5 Orders: WooCommerce sync', () => {
   }) => {
     const origin = new URL(baseURL as string).origin;
     const admin = await signedInAs(ADMIN);
-    const ordersBefore = (await (
-      await admin.request.get('/api/v1/orders?warehouse_id=1')
-    ).json()) as unknown[];
+    const ordersBefore = (
+      (await (
+        await admin.request.get('/api/v1/orders?warehouse_id=1')
+      ).json()) as {total: number}
+    ).total;
 
     const answer = await admin.request.post(SYNC, {headers: {Origin: origin}});
 
     expect(answer.status()).toBe(202);
     expect(await answer.json()).toEqual({imported: 0, skipped: 0});
-    const ordersAfter = (await (
-      await admin.request.get('/api/v1/orders?warehouse_id=1')
-    ).json()) as unknown[];
-    expect(ordersAfter).toHaveLength(ordersBefore.length);
+    const ordersAfter = (
+      (await (
+        await admin.request.get('/api/v1/orders?warehouse_id=1')
+      ).json()) as {total: number}
+    ).total;
+    expect(ordersAfter).toBe(ordersBefore);
 
     const clerk = await signedInAs(INVENTORY);
     const refused = await clerk.request.post(SYNC, {headers: {Origin: origin}});

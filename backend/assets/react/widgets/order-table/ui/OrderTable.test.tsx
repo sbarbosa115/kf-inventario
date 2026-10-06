@@ -10,6 +10,7 @@ import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {vi} from 'vitest';
 import {SessionProvider} from '@/entities/session';
 import {fakeApi} from '@/shared/test/fakeApi';
+import {fakeList, pageOf} from '@/shared/test/fakeList';
 import {ToastProvider} from '@/shared/ui';
 import {OrderTable} from './OrderTable';
 
@@ -55,6 +56,23 @@ const DELIVERED = order(6, 'W00006', 6, {
 });
 const USA_ORDER = order(20, 'U00020', 2, {warehouse: {id: 2, name: 'Usa'}});
 
+type Row = ReturnType<typeof order>;
+
+/** The orders list's contract, in memory: q over code and customer, status, created_at, the status facet. */
+const ORDER_LIST = {
+  fields: {
+    code: (o: Row) => o.code,
+    status: (o: Row) => String(o.status),
+    created_at: (o: Row) => o.created_at,
+    customer: (o: Row) => `${o.customer.first_name} ${o.customer.last_name}`,
+  },
+  search: [
+    (o: Row) => o.code,
+    (o: Row) => `${o.customer.first_name} ${o.customer.last_name}`,
+    (o: Row) => o.customer.email,
+  ],
+};
+
 const READ_ORDERS = ['ROLE_USER', 'ROLE_CAN_READ_ORDERS'];
 /** ROLE_UPDATE_ORDERS and what it reaches (the Orders entry of the sidebar). */
 const UPDATE_ORDERS = [
@@ -78,7 +96,7 @@ function renderTable({
 }: {
   roles?: string[];
   routes?: Parameters<typeof fakeApi>[0];
-  orders?: Record<number, unknown[]>;
+  orders?: Record<number, Row[]>;
 } = {}) {
   localStorage.clear();
   const api = fakeApi({
@@ -87,10 +105,11 @@ function renderTable({
       {id: 1, username: 'ana', name: 'Ana', email: 'ana@kf.test', roles},
     ],
     'GET /warehouses': [200, WAREHOUSES],
-    'GET /orders': (_body, url) => [
-      200,
-      orders[Number(url.searchParams.get('warehouse_id'))] ?? [],
-    ],
+    'GET /orders': (body, url) =>
+      fakeList(orders[Number(url.searchParams.get('warehouse_id'))] ?? [], ORDER_LIST)(
+        body,
+        url,
+      ),
     ...routes,
   });
   const onOpenDetail = vi.fn();
@@ -162,7 +181,7 @@ describe('OrderTable', () => {
       within(row).getByRole('button', {name: 'Status of order W00001'}),
     ).toHaveTextContent('Created');
     expect(within(await rowOf('W00004')).getByText('Web')).toBeInTheDocument();
-    expect(listCalls(api)[0]?.url.search).toBe('?warehouse_id=1');
+    expect(listCalls(api)[0]?.url.searchParams.get('warehouse_id')).toBe('1');
   });
 
   it('loads another warehouse’s orders when it is picked, and remembers it', async () => {
@@ -173,7 +192,9 @@ describe('OrderTable', () => {
 
     expect(await rowOf('U00020')).toBeInTheDocument();
     expect(screen.queryByRole('row', {name: /W00001/})).not.toBeInTheDocument();
-    expect(listCalls(api).at(-1)?.url.search).toBe('?warehouse_id=2');
+    expect(listCalls(api).at(-1)?.url.searchParams.get('warehouse_id')).toBe(
+      '2',
+    );
     expect(localStorage.getItem('kf.warehouse')).toBe('2');
   });
 
@@ -198,9 +219,11 @@ describe('OrderTable', () => {
     await userEvent.click(chip(/^Partial/));
 
     expect(chip(/^Partial/)).toHaveAttribute('aria-pressed', 'true');
-    expect(codes()).toEqual(['W00004']);
+    await waitFor(() => expect(codes()).toEqual(['W00004']));
     await userEvent.click(chip(/^All/));
-    expect(codes()).toEqual(['W00001', 'W00004', 'W00006']);
+    await waitFor(() =>
+      expect(codes()).toEqual(['W00001', 'W00004', 'W00006']),
+    );
   });
 
   it('finds an order by its number or its customer, and the counts follow the search', async () => {
@@ -212,7 +235,7 @@ describe('OrderTable', () => {
       'ruiz',
     );
 
-    expect(codes()).toEqual(['W00006']);
+    await waitFor(() => expect(codes()).toEqual(['W00006']));
     expect(chip(/^All/)).toHaveTextContent('All 1');
     expect(chip(/^Delivered/)).toHaveTextContent('Delivered 1');
     expect(chip(/^Created/)).toHaveTextContent('Created 0');
@@ -225,28 +248,31 @@ describe('OrderTable', () => {
     fireEvent.change(screen.getByLabelText('Created from'), {
       target: {value: '2026-10-01'},
     });
-    expect(codes()).toEqual(['W00001', 'W00004']);
+    await waitFor(() => expect(codes()).toEqual(['W00001', 'W00004']));
     fireEvent.change(screen.getByLabelText('Created to'), {
       target: {value: '2026-10-01'},
     });
-    expect(codes()).toEqual(['W00004']);
+    await waitFor(() => expect(codes()).toEqual(['W00004']));
   });
 
   it('says when the filters leave nothing, and Show all clears every filter', async () => {
     renderTable();
     await rowOf('W00001');
-    await userEvent.click(chip(/^Partial/));
     await userEvent.type(screen.getByRole('searchbox'), 'ruiz');
+    await waitFor(() => expect(codes()).toEqual(['W00006']));
+    await userEvent.click(chip(/^Partial/));
     fireEvent.change(screen.getByLabelText('Created from'), {
       target: {value: '2026-10-02'},
     });
 
     expect(
-      screen.getByText('Nothing matches these filters.'),
+      await screen.findByText('Nothing matches these filters.'),
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', {name: 'Show all'}));
 
-    expect(codes()).toEqual(['W00001', 'W00004', 'W00006']);
+    await waitFor(() =>
+      expect(codes()).toEqual(['W00001', 'W00004', 'W00006']),
+    );
     expect(screen.getByRole('searchbox')).toHaveValue('');
     expect(screen.getByLabelText('Created from')).toHaveValue('');
     expect(chip(/^All/)).toHaveAttribute('aria-pressed', 'true');
@@ -312,7 +338,7 @@ describe('OrderTable', () => {
     renderTable({
       roles: MANAGE_ORDERS,
       routes: {
-        'GET /orders': () => [200, rows],
+        'GET /orders': () => [200, pageOf(rows)],
         'DELETE /orders/1': () => {
           rows = [PARTIAL];
           return [204];
@@ -342,7 +368,7 @@ describe('OrderTable', () => {
     let status = 1;
     const {api} = renderTable({
       routes: {
-        'GET /orders': () => [200, [order(1, 'W00001', status)]],
+        'GET /orders': () => [200, pageOf([order(1, 'W00001', status)])],
         'POST /orders/1/status': (body) => {
           status = (body as {status: number}).status;
           return [200, {}];

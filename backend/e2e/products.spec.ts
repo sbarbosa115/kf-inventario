@@ -119,9 +119,11 @@ test.describe('2 Products', () => {
     await expect(dialog).toHaveCount(0);
     await expect.poll(() => quantityOf(page, 'KF-03')).toBe(before - 2);
     const incoming = await page.request.get(
-      '/api/v1/warehouses/2/stock?status=0',
+      '/api/v1/warehouses/2/stock?status=0&per_page=0',
     );
-    const rows = (await incoming.json()) as {code: string; quantity: number}[];
+    const rows = (
+      (await incoming.json()) as {items: {code: string; quantity: number}[]}
+    ).items;
     expect(
       rows.find((r) => r.code === 'KF-03')?.quantity,
     ).toBeGreaterThanOrEqual(2);
@@ -231,9 +233,13 @@ test.describe('2 Products', () => {
   }) => {
     const page = await signedInAs(INVENTORY);
     const errors = consoleErrors(page);
-    const stock = (await (
-      await page.request.get('/api/v1/warehouses/1/stock?status=1')
-    ).json()) as {code: string; quantity: number; price: number | null}[];
+    const stock = (
+      (await (
+        await page.request.get('/api/v1/warehouses/1/stock?status=1&per_page=0')
+      ).json()) as {
+        items: {code: string; quantity: number; price: number | null}[];
+      }
+    ).items;
     const units = stock.reduce((sum, row) => sum + row.quantity, 0);
     const inStock = stock.filter((row) => row.quantity > 0).length;
 
