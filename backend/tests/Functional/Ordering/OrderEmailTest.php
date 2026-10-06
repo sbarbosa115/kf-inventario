@@ -3,6 +3,7 @@
 namespace App\Tests\Functional\Ordering;
 
 use App\Audit\Domain\Model\Log;
+use App\Settings\Domain\Model\AppSetting;
 use App\Tests\Support\ApiTestCase;
 use App\Tests\Support\SignsIn;
 use Symfony\Component\Mime\Address;
@@ -60,6 +61,43 @@ final class OrderEmailTest extends ApiTestCase
         self::assertSame("order-{$id}.pdf", $attachments[0]->getFilename());
         self::assertSame('application/pdf', $attachments[0]->getMediaType().'/'.$attachments[0]->getMediaSubtype());
         self::assertStringStartsWith('%PDF', $attachments[0]->getBody());
+    }
+
+    public function testTheSettingsSenderPrinterAndCcWinOverTheEnv(): void
+    {
+        $at = new \DateTimeImmutable();
+        $this->save(
+            new AppSetting('email.from_address', 'office@kf.local', false, $at),
+            new AppSetting('email.from_name', 'KF Office', false, $at),
+            new AppSetting('email.printer_address', 'office-printer@kf.local', false, $at),
+            new AppSetting('email.cc', '["boss@kf.local","sales@kf.local"]', false, $at),
+        );
+        $this->signInAs(['ROLE_MANAGE_ORDERS']);
+        $warehouse = $this->aWarehouse();
+
+        $this->placeOrder($warehouse, $this->aCustomer(), [[$this->aProduct('KF-A', $warehouse), 1]], ['code' => 'WEB-1002']);
+
+        self::assertEmailCount(1);
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertSame(['office-printer@kf.local'], array_map(static fn (Address $a) => $a->getAddress(), $email->getTo()), 'Settings › Email first, env fallback (Decisions 3).');
+        self::assertSame(['boss@kf.local', 'sales@kf.local'], array_map(static fn (Address $a) => $a->getAddress(), $email->getCc()));
+        self::assertSame('office@kf.local', $email->getFrom()[0]->getAddress());
+        self::assertSame('KF Office', $email->getFrom()[0]->getName());
+    }
+
+    public function testAnEmptySettingFallsBackToTheEnv(): void
+    {
+        $this->save(new AppSetting('email.printer_address', null, false, new \DateTimeImmutable()));
+        $this->signInAs(['ROLE_MANAGE_ORDERS']);
+        $warehouse = $this->aWarehouse();
+
+        $this->placeOrder($warehouse, $this->aCustomer(), [[$this->aProduct('KF-A', $warehouse), 1]]);
+
+        self::assertEmailCount(1);
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertSame(['printer@kf.local'], array_map(static fn (Address $a) => $a->getAddress(), $email->getTo()), 'An empty row means "not set here".');
     }
 
     public function testEditingAnOrderSendsNoEmail(): void

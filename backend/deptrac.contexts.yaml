@@ -108,6 +108,20 @@ deptrac:
             value: '#^App\\Invoicing\\(Application|Domain\\Event)\\#',
           }
 
+    # Added by shops-settings: app settings, quick phrases, the secrets' encryption (docs/pdr/prd-shops-settings.md).
+    - name: Settings
+      collectors:
+        - {
+            type: classNameRegex,
+            value: '#^App\\Settings\\(Domain\\(?!Event\\|Model\\)|Infrastructure\\|UI\\)#',
+          }
+    - name: SettingsApi
+      collectors:
+        - {
+            type: classNameRegex,
+            value: '#^App\\Settings\\(Application|Domain\\Event)\\#',
+          }
+
     - name: Audit
       collectors:
         - {
@@ -132,7 +146,8 @@ deptrac:
     Customers: [Shared, CustomersApi, CustomersHttp, DomainModels]
     CustomersHttp: [Shared, Customers, CustomersApi, DomainModels]
     CustomersApi: [Shared, Customers, DomainModels]
-    # An order's customer is found or created through Customers (CustomerRegistry); its stock comes from Inventory.
+    # An order's customer is found or created through Customers (CustomerRegistry); its stock comes from Inventory; the
+    # order email's sender, printer and cc, and the legacy webhook's switch, from Settings.
     Ordering:
       [
         Shared,
@@ -142,8 +157,10 @@ deptrac:
         InventoryApi,
         CustomersHttp,
         InventoryHttp,
+        SettingsApi,
       ]
-    OrderingApi: [Shared, Ordering, DomainModels, CustomersApi, InventoryApi]
+    OrderingApi:
+      [Shared, Ordering, DomainModels, CustomersApi, InventoryApi, SettingsApi]
     # An invoice's customer comes from Customers; its lines may name an Inventory product.
     Invoicing:
       [
@@ -156,6 +173,8 @@ deptrac:
         InventoryHttp,
       ]
     InvoicingApi: [Shared, Invoicing, DomainModels, CustomersApi, InventoryApi]
+    Settings: [Shared, SettingsApi, DomainModels]
+    SettingsApi: [Shared, Settings, DomainModels]
     # The activity log implements Shared's ActivityLog port and records the signed-in user.
     Audit: [Shared, AuditApi, DomainModels]
     AuditApi: [Shared, Audit, DomainModels]
