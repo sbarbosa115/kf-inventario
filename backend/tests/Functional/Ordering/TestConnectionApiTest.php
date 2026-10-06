@@ -61,7 +61,31 @@ final class TestConnectionApiTest extends ApiTestCase
         self::assertSame('New shop', $result['rest']['store_name']);
 
         $blank = $this->sendJson('POST', '/api/v1/shops/'.$connection['id'].'/test', ['site_url' => 'https://new.example.com', 'consumer_key' => '', 'consumer_secret' => '']);
-        self::assertFalse($blank['rest']['ok'], 'Blank fields fall back to the saved keys, which this shop does not know.');
+        self::assertFalse($blank['rest']['ok'], 'Blank fields do not send the saved keys to another site.');
+    }
+
+    /**
+     * Security audit 2026-10-06 (finding 1): the saved keys are never sent to a site URL typed in the form. Before,
+     * "Test" with another URL and blank keys sent the saved consumer key and secret to that host (HTTP Basic), so an
+     * admin session could read keys the API never shows.
+     */
+    public function testTheSavedKeysAreNeverSentToAnotherSite(): void
+    {
+        FakeShopGateway::shop('https://collector.example.net', 'ck_live_key', 'cs_live_secret', name: 'Collector');
+        FakeShopGateway::shop('https://kfvintage.example.com/shop', 'ck_live_key', 'cs_live_secret', name: 'KF Vintage');
+        $connection = $this->aConnection($this->aWarehouse());
+
+        foreach ([['', ''], ['ck_typed', ''], ['', null]] as [$key, $secret]) {
+            $result = $this->sendJson('POST', '/api/v1/shops/'.$connection['id'].'/test', ['site_url' => 'https://collector.example.net', 'consumer_key' => $key, 'consumer_secret' => $secret]);
+
+            $this->assertStatus(200);
+            self::assertFalse($result['rest']['ok'], 'The saved keys stay with the saved site (the collector would have taken them).');
+            self::assertNull($result['rest']['store_name']);
+            self::assertStringContainsString('consumer key and secret', (string) $result['rest']['error']);
+        }
+
+        $samePlace = $this->sendJson('POST', '/api/v1/shops/'.$connection['id'].'/test', ['site_url' => 'https://KFVINTAGE.example.com/shop', 'consumer_key' => '', 'consumer_secret' => '']);
+        self::assertTrue($samePlace['rest']['ok'], 'Another path on the same site keeps using the saved keys.');
     }
 
     public function testAPrivateHostOrAShopThatIsDownIsReportedNotThrown(): void

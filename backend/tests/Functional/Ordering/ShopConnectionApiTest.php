@@ -147,6 +147,37 @@ final class ShopConnectionApiTest extends ApiTestCase
         self::assertSame('shop_not_found', $this->body()['error']);
     }
 
+    /**
+     * Security audit 2026-10-06 (finding 1): blank keys keep the saved ones only while the connection stays on the same
+     * site (scheme, host and port), as the SMTP password does: otherwise moving the URL to another host and pressing
+     * "Check now" sent the saved keys there.
+     */
+    public function testMovingAConnectionToAnotherSiteNeedsItsKeysTypedAgain(): void
+    {
+        $usa = $this->aWarehouse('Usa');
+        $created = $this->aConnection($usa);
+
+        $this->sendJson('PUT', '/api/v1/shops/'.$created['id'], ['consumer_key' => '', 'consumer_secret' => ''] + self::connectionPayload($usa, siteUrl: 'https://collector.example.net'));
+
+        $this->assertStatus(422);
+        self::assertSame('validation_failed', $this->body()['error']);
+        self::assertSame('consumer_key', $this->body()['violations'][0]['field']);
+        self::assertSame('https://kfvintage.example.com', $this->connection($created['id'])->siteUrl(), 'Nothing was saved.');
+
+        $this->sendJson('PUT', '/api/v1/shops/'.$created['id'], ['consumer_key' => 'ck_typed', 'consumer_secret' => ''] + self::connectionPayload($usa, siteUrl: 'https://collector.example.net'));
+        $this->assertStatus(422, 'Both keys: the saved secret does not go either.');
+
+        $this->sendJson('PUT', '/api/v1/shops/'.$created['id'], ['consumer_key' => '', 'consumer_secret' => ''] + self::connectionPayload($usa, siteUrl: 'https://KFVINTAGE.example.com/shop/'));
+        $this->assertStatus(200, 'Another path on the same site keeps the saved keys.');
+        self::assertSame('ck_live_key', $this->box()->open($this->connection($created['id'])->sealedConsumerKey()));
+
+        $this->sendJson('PUT', '/api/v1/shops/'.$created['id'], ['consumer_key' => 'ck_new', 'consumer_secret' => 'cs_new'] + self::connectionPayload($usa, siteUrl: 'https://collector.example.net'));
+        $this->assertStatus(200, 'With both keys typed the connection moves.');
+        $stored = $this->connection($created['id']);
+        self::assertSame('https://collector.example.net', $stored->siteUrl());
+        self::assertSame('cs_new', $this->box()->open($stored->sealedConsumerSecret()));
+    }
+
     public function testAConnectionOrdersCameFromCannotBeDeleted(): void
     {
         $warehouse = $this->aWarehouse();

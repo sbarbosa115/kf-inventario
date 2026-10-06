@@ -136,6 +136,26 @@ class ShopConnection
     }
 
     /**
+     * Whether two site URLs are the same site — scheme, host and port (another path on it is the same server): the
+     * saved keys are sent only there (security audit 2026-10-06, finding 1).
+     */
+    public static function sameSite(string $a, string $b): bool
+    {
+        $origin = static function (string $url): ?string {
+            $parts = parse_url(self::normaliseSiteUrl($url));
+            if (false === $parts || !isset($parts['scheme'], $parts['host'])) {
+                return null;
+            }
+            $port = $parts['port'] ?? ('https' === $parts['scheme'] ? 443 : 80);
+
+            return $parts['scheme'].'://'.$parts['host'].':'.$port;
+        };
+        $first = $origin($a);
+
+        return null !== $first && $first === $origin($b);
+    }
+
+    /**
      * @param array<string, bool> $capabilities
      */
     public function reconfigure(string $name, string $siteUrl, Warehouse $warehouse, bool $emailPrinter, bool $active, array $capabilities, \DateTimeImmutable $at): void
