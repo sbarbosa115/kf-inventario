@@ -86,22 +86,23 @@ first; Settings and shops: `ROLE_ADMIN`). Writes from another origin are refused
 (`docs/pdr/prd-shops-settings.md`, "List query contract"): `page`, `per_page` (25 by default, 100 at most; `0` = every
 row, stock only), `sort` (`field`/`-field` from the endpoint's allow-list), `q`, `filter[<field>]` by column type
 (text, `[]` any of, `[from|to]` Bogotá days, `[min|max]`), `facets=<enum fields>` → `{items, total, page, per_page,
-facets?}` (stock adds `totals: {units, value}`); an unknown field, sort or value is a 422 on `filter.<field>`. Until
-shops-settings' item 1 they filter in memory (`Shared\UI\Http\InMemoryList`); the rows below marked "ss-N" are
-shops-settings' items (501 `not_implemented` until built).
+facets?}` (stock adds `totals: {units, value}`); an unknown field, sort or value is a 422 on `filter.<field>`. They
+filter, sort, page and count in SQL (`Shared\Infrastructure\Persistence\ListQueryApplier`, every value a bound
+parameter, `%`/`_` matching themselves; facets one `GROUP BY` or `SUM(CASE …)` per asked column, over every filter but
+its own); the rows below marked "ss-N" are shops-settings' items (501 `not_implemented` until built).
 
 | Method | Path | Role | Built by item |
 |---|---|---|---|
 | `POST` | `/api/v1/auth/login` | public | 0: `{username, password, remember_me?}` → the session; 401 `invalid_credentials` |
 | `POST` | `/api/v1/auth/logout` | `ROLE_USER` | 0: 204 |
 | `GET` | `/api/v1/auth/me` | `ROLE_USER` | 0: who is signed in, with every reachable role; 401 signed out |
-| `GET` | `/api/v1/users` | `ROLE_MANAGE_USERS` | 1: every user by name, `UserOutput {id, name, username, email, roles, enabled}` (never the password) |
+| `GET` | `/api/v1/users` | `ROLE_MANAGE_USERS` | 1, ss-1: a page of `UserOutput {id, name, username, email, roles, enabled}` (never the password), by `name`; `q` over name, username, email; filters `name`, `username`, `email`, `roles[]` (the nine assignable; any of), `enabled[]` `yes`/`no`; sorts `name`, `username`, `email`; facets `roles`, `enabled` |
 | `GET` | `/api/v1/users/{id}` | `ROLE_MANAGE_USERS` | 1: one user; 404 `user_not_found` |
 | `POST` | `/api/v1/users` | `ROLE_MANAGE_USERS` | 1: `{name, username, email, password, roles, enabled}` → 201; the password is required, `roles` only the nine the screen assigns, else 422 |
 | `PUT` | `/api/v1/users/{id}` | `ROLE_MANAGE_USERS` | 1: same body; a blank or missing `password` keeps the current hash; 404 `user_not_found` |
 | `GET` | `/api/v1/warehouses` | `ROLE_USER` | 2: every warehouse by id, `WarehouseOutput {id, name, urls}` |
 | `PUT` | `/api/v1/warehouses/{id}` | `ROLE_USER` | 2: `{name}` → `WarehouseOutput`; 404 `warehouse_not_found` |
-| `GET` | `/api/v1/warehouses/{id}/stock` | `ROLE_MANAGE_INVENTORY` | 2: `?status=1` (default; `0` incoming) → list `StockOutput`, by product; 404 `warehouse_not_found` |
+| `GET` | `/api/v1/warehouses/{id}/stock` | `ROLE_MANAGE_INVENTORY` | 2, ss-1: `?status=1` (default; `0` incoming) → a page of `StockOutput` by `code`, plus `totals {units, value}` over every row the filters keep; `per_page=0` every row (the pickers); `q` over code, title, detail; filters `code`, `title`, `detail`, `quantity` and `price` `[min\|max]`, `in_stock[]` `yes`/`no`; sorts `code`, `title`, `quantity`, `price`; facet `in_stock`; 404 `warehouse_not_found` |
 | `POST` | `/api/v1/warehouses/{from}/moves/{to}` | `ROLE_MANAGE_INVENTORY` | 2: `{items: [{uuid\|code, quantity}]}` → 204, arrives incoming; 409 `same_warehouse`, 404 `product_not_found`/`stock_not_found`, 422 `insufficient_stock` (`detail: {code, available}`) |
 | `POST` | `/api/v1/warehouses/{id}/stock/add` | `ROLE_MANAGE_INVENTORY` | 2: `{items: [{code, quantity}]}` → 204 (unknown codes skipped) |
 | `POST` | `/api/v1/warehouses/{id}/stock/remove` | `ROLE_MANAGE_INVENTORY` | 2: `{items: [{code, quantity}]}` → 204; 404 `stock_not_found`, 422 `insufficient_stock` |
@@ -112,14 +113,14 @@ shops-settings' items (501 `not_implemented` until built).
 | `PUT` | `/api/v1/products/{uuid}` | `ROLE_MANAGE_INVENTORY` | 2: as `POST` → `ProductOutput`; 404 `product_not_found` |
 | `POST` | `/api/v1/products/upload` | `ROLE_MANAGE_INVENTORY` | 2: multipart `file` (xls/xlsx) + `warehouse_id` → `{stored}`; 415 `unsupported_media`, 422 `invalid_spreadsheet`, 404 `warehouse_not_found` |
 | `GET` | `/api/v1/products/template.xls` | `ROLE_MANAGE_INVENTORY` | 2: `?all=1` or `?uuid[]=…` → `Products.xls` (header alone with neither) |
-| `GET` | `/api/v1/customers` | `ROLE_MANAGE_CUSTOMERS` | 3 |
+| `GET` | `/api/v1/customers` | `ROLE_MANAGE_CUSTOMERS` | 3, ss-1: a page of `CustomerOutput` (with every address), newest first (`-id`); `q` over name, email, phone, city; filters `name`, `email`, `phone`, `city` (the first address's, as the list shows it), `country[]` (country ids, any address); sorts `name`, `email`, `city`; facet `country` |
 | `GET` | `/api/v1/customers/all` | `ROLE_MANAGE_CUSTOMERS`, `ROLE_CAN_CREATE_ORDERS`, `ROLE_CAN_UPDATE_ORDERS` or `ROLE_CAN_CREATE_INVOICES` | 3: every customer (`CustomerOutput[]`, those without an address too) for the order and invoice pickers; any role whose legacy form embedded the list |
 | `GET` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 |
 | `POST` | `/api/v1/customers` | `ROLE_MANAGE_CUSTOMERS` | 3 |
 | `PUT` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 |
 | `DELETE` | `/api/v1/customers/{id}` | `ROLE_MANAGE_CUSTOMERS` | 3 |
 | `GET` | `/api/v1/locations` | `ROLE_USER` | 3 |
-| `GET` | `/api/v1/orders` | `ROLE_CAN_READ_ORDERS` | 4: `?warehouse_id=` (required) → that warehouse's `OrderOutput[]`, newest first, orders without a customer included |
+| `GET` | `/api/v1/orders` | `ROLE_CAN_READ_ORDERS` | 4, ss-1: `?warehouse_id=` (required, 422 without) → a page of that warehouse's `OrderOutput`, newest first (`-created_at`, ties `-id`), orders without a customer included; `q` over code, customer name, email; filters `code`, `customer` (name or email), `status[]` 1–6, `source[]` `phone`/`web` (a web order no connection brought)/`shop:<id>`, `created_at` `[from\|to]`, `pinned[]` `1`; sorts `code`, `customer`, `status`, `created_at`; facets `status`, `source`, `pinned` |
 | `GET` | `/api/v1/orders/{id}` | `ROLE_CAN_READ_ORDERS` | 4: `OrderDetailOutput`; 404 `order_not_found` (also once deleted) |
 | `POST` | `/api/v1/orders` | `ROLE_CAN_CREATE_ORDERS` | 4: `OrderInput` → 201 `OrderDetailOutput`; customer by id, else email, else phone (updated), or created; queues the printer email; 422 `order_without_products`, 404 `product_not_found`/`warehouse_not_found` |
 | `PUT` | `/api/v1/orders/{id}` | `ROLE_CAN_UPDATE_ORDERS` | 4: `OrderInput` (its products replace the order's; comments untouched) → `OrderDetailOutput` |
@@ -132,7 +133,7 @@ shops-settings' items (501 `not_implemented` until built).
 | `GET` | `/api/v1/orders/{id}/pdf` | `ROLE_CAN_READ_ORDERS` | 4: `application/pdf` (`templates/pdf/order.html.twig`) |
 | `GET` | `/api/v1/orders/{id}/remaining-pdf` | `ROLE_CAN_READ_ORDERS` | 4: `application/pdf`, what is left to ship |
 | `GET` | `/api/v1/orders/{id}/xls` | `ROLE_USER` | 4: `application/vnd.ms-excel`, `file-upload-template-<code>.xls` (the legacy name) |
-| `GET` | `/api/v1/invoices` | `ROLE_CAN_READ_INVOICES` | 5: `InvoiceOutput[]`, newest first, with customer, lines and their products |
+| `GET` | `/api/v1/invoices` | `ROLE_CAN_READ_INVOICES` | 5, ss-1: a page of `InvoiceOutput`, newest first (`-created_at`), with customer, lines and their products; `q` over code, customer name, email; filters `code`, `customer` (name or email), `payment_method[]`, `created_at` `[from\|to]`, `total` `[min\|max]`, `walk_in[]` `yes` (no customer)/`no`; sorts `code`, `customer`, `created_at`, `total`; facets `payment_method`, `walk_in` |
 | `GET` | `/api/v1/invoices/next-code` | `ROLE_CAN_CREATE_INVOICES` | 5: `{code}`: the newest invoice's code plus one (`INV-0001` → `INV-0002`, `X` → `X-1`), or the year and `0001` for the first |
 | `GET` | `/api/v1/invoices/{id}` | `ROLE_CAN_READ_INVOICES` | 5: `InvoiceOutput`; 404 `invoice_not_found` |
 | `POST` | `/api/v1/invoices` | `ROLE_CAN_CREATE_INVOICES` | 5: `InvoiceInput` → 201 `InvoiceOutput`; customer by `customer_id` or found/created from `customer` (as orders do); with no address typed, the customer's first is copied; line totals and `tax_rate` % tax worked out as before; 409 `invoice_code_taken` |
