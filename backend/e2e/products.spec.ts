@@ -349,7 +349,10 @@ test.describe('2 Products', () => {
     await expect(
       page.getByRole('status').filter({hasText: 'Product saved'}),
     ).toBeVisible();
-    await page.getByRole('link', {name: 'Upload a stock sheet'}).click();
+    await page
+      .getByRole('status')
+      .getByRole('link', {name: 'Upload a stock sheet'})
+      .click();
     await expect(page).toHaveURL(/\/admin\/products\/upload$/);
   });
 });

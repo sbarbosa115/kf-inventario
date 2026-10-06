@@ -469,7 +469,9 @@ test.describe('5 Orders, on a phone (390 px)', () => {
     ]);
     expect(scroll, 'the page scrolls sideways').toBe(client);
 
-    // The card's title (the order and its customer) is a plain part of the row: a tap there opens the order.
+    // The card's title (the order and its customer) is a plain part of the row: a tap there opens the order. The
+    // list is narrowed first, so the card is not under the sticky filters or the tab bar when it is tapped.
+    await findOrder(page, 'W00010');
     await card.locator('.kf-table__card-title').click();
     const detail = page.getByRole('dialog', {name: 'Order W00010'});
     await expect(detail).toBeVisible();
