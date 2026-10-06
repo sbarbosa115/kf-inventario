@@ -34,7 +34,9 @@ export function Modal({
         tabIndex={-1}
         ref={dialog}
       >
-        <div className={`modal-dialog${size ? ` modal-${size}` : ''}`}>
+        <div
+          className={`modal-dialog modal-dialog-centered${size ? ` modal-${size}` : ''}`}
+        >
           <div className="modal-content">
             <div className="modal-header">
               <h2 className="modal-title h5" id={titleId}>

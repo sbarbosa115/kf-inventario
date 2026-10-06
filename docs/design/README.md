@@ -51,7 +51,7 @@ page **`/admin/_kit`** shows each one in its states, in the current theme and la
 | Figures from the loaded list | `KpiStrip` (2–4), with `Money` / `Num` |
 | Money, numbers, dates | `useFormat()` (`money`, `num`, `date`, `dateTime`: en-US / es-CO, USD, Bogotá time), `<Money>`, `<Num>` — never `toFixed` or a hard-coded locale |
 | A status | `StatusBadge` (`tone`, `filled`, words always; the item maps its statuses to tones) |
-| A detail or a quick edit, keeping the list in view | `SlideOver` (`md` 480 / `lg` 720 px, full width on phones) |
+| A detail or a quick edit, over the dimmed list | `SlideOver`: centred (`md` 560 / `lg` 800 px, 8 px from the edges on phones), body scrolls inside |
 | Creating or editing a record | a page: `FormLayout` (`narrow`, `columns={2}`), `FormSection`s, `Field`s, `ActionBar` (`primary`, Cancel as `secondary`/ghost, `status` such as "3 things missing") |
 | Before a destructive or state-changing action | `ConfirmModal` (title asks, body says the consequence, `danger` only when it destroys) |
 | After a save or a failure | `useToast()`: `success(text, {action: {label, href}})` (5 s), `error(text)` (stays) — no Undo |
@@ -61,8 +61,8 @@ page **`/admin/_kit`** shows each one in its states, in the current theme and la
 | A password | `PasswordField` (show/hide, Caps Lock hint) |
 | Scanning | `CameraScanner` (start after a tap, torch, the same label counted once, vibration + `beep()`) above `ScanInput` (Enter reads, keeps the focus); the sound toggle is `useSound()` |
 
-**SlideOver or page?** A slide-over for reading a record or changing one or two things where the list matters
-(order detail, move stock, invoice detail). A page for creating or editing a record with sections of fields (product,
+**SlideOver or page?** A `SlideOver` (a centred panel, as the legacy modals were) for reading a record or changing one
+or two things without leaving the list (order detail, move stock, invoice detail). A page for creating or editing a record with sections of fields (product,
 order, customer, invoice, user forms), so it has its own address and survives a reload.
 
 ## Copy

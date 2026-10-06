@@ -964,10 +964,15 @@
 }
 
 /* ---- SlideOver ------------------------------------------------------------------------------------------- */
+/* Centred over the page, as the legacy modals were (user decision, 2026-10-06): the page dims behind it, the body
+   scrolls inside, the header and the footer stay put. */
 .kf-slideover {
   position: fixed;
   inset: 0;
   z-index: var(--kf-z-dialog);
+  display: grid;
+  place-items: center;
+  padding: var(--kf-space-6) var(--kf-space-4);
 }
 
 .kf-slideover__backdrop {
@@ -978,21 +983,30 @@
 }
 
 .kf-slideover__panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
   display: flex;
   flex-direction: column;
-  width: min(480px, 100vw);
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 2 * var(--kf-space-6));
+  border-radius: var(--kf-radius-card);
   background-color: var(--kf-surface-raised);
   color: var(--kf-text);
   box-shadow: var(--kf-shadow-float);
-  animation: kf-slide-in var(--kf-duration) var(--kf-ease);
+  animation: kf-pop var(--kf-duration) var(--kf-ease);
 }
 
 .kf-slideover__panel--lg {
-  width: min(720px, 100vw);
+  width: min(800px, 100%);
+}
+
+@media (max-width: 599px) {
+  .kf-slideover {
+    padding: var(--kf-space-2);
+  }
+
+  .kf-slideover__panel {
+    max-height: calc(100dvh - 2 * var(--kf-space-2));
+  }
 }
 
 .kf-slideover__header {
@@ -1012,6 +1026,7 @@
 
 .kf-slideover__body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: var(--kf-space-5);
 }
@@ -1024,9 +1039,9 @@
   border-top: 1px solid var(--kf-border);
 }
 
-@keyframes kf-slide-in {
+@keyframes kf-pop {
   from {
-    transform: translateX(24px);
+    transform: translateY(8px) scale(0.98);
     opacity: 0;
   }
 }

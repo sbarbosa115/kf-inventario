@@ -475,10 +475,13 @@ test.describe('5 Orders, on a phone (390 px)', () => {
     await card.locator('.kf-table__card-title').click();
     const detail = page.getByRole('dialog', {name: 'Order W00010'});
     await expect(detail).toBeVisible();
-    // Measured once the slide-in is over (mid-animation it is a fraction short).
+    // Centred, 8 px from each edge of the phone; measured once its entry animation is over.
     await expect
-      .poll(async () => Math.round((await detail.boundingBox())?.width ?? 0))
-      .toBe(390);
+      .poll(async () => {
+        const box = await detail.boundingBox();
+        return box ? [Math.round(box.x), Math.round(box.width)] : null;
+      })
+      .toEqual([8, 374]);
     expect(errors).toEqual([]);
   });
 });

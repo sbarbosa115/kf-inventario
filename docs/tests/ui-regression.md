@@ -143,7 +143,7 @@ row of the page shown.
 
 **INV-04 · Move to Warehouse moves the chosen quantities; they arrive as incoming**
 Smoke (part): `e2e/products.spec.ts` moves 2 of KF-03 to Usa and checks both warehouses through the list and the API.
-Tick KF-03, Move to warehouse: a slide-over (the list stays in view) lists the ticked products, each with a quantity
+Tick KF-03, Move to warehouse: a centred panel (the list dimmed behind it) lists the ticked products, each with a quantity
 from 1 to what Colombia holds (starting at 1); a product with nothing left says "Product quantity is 0". Destination
 warehouse offers every warehouse but Colombia. Pick Usa and 2, Move: the panel closes, a toast says "Moved to Usa. The
 products arrive there as incoming.", the ticks are cleared and KF-03 shows 2 fewer. By hand: Incoming products, warehouse Usa: KF-03 with 2.
@@ -478,7 +478,7 @@ screen does it). Getting ready in the row's "⋯" opens the same screen.
 
 **ORD-05 · The detail shows the order, its customer and its products**
 Smoke: `e2e/orders.spec.ts`.
-Press W00003 (the order number): a panel "Order W00003" slides in from the right with the list still behind it: the
+Press W00003 (the order number): a centred panel "Order W00003" opens over the dimmed list: the
 status badge (Completed), Source Phone, Warehouse Colombia, the creation date and time; then the sections Customer (Jose
 Perez, his email, phone and first address on one line), Products (KF-01, KF-02 and KF-03 with 20 ordered each) and
 Comments. The ×, Escape and a click on the dimmed list close it. By hand: a customer without an address shows "No
@@ -766,7 +766,7 @@ that includes today keeps today's invoices; From later than To is not possible (
 
 **INVC-08 · A row opens the invoice in a slide-over beside the list**
 Smoke: `e2e/invoices.spec.ts`.
-Click on INV-0002's row (not on its ⋯): "Invoice INV-0002" slides over from the right with KF-02, "Sales tax 6%" and
+Click on INV-0002's row (not on its ⋯): "Invoice INV-0002" opens centred over the list with KF-02, "Sales tax 6%" and
 `$318.00`, the list still visible behind; Escape closes it and the focus is back on the list. By hand: at 1440 it is 720
 px wide, at 390 the whole width; Tab stays inside it; an invoice deleted meanwhile says "This invoice no longer exists."
 
