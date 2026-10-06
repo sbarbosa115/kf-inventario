@@ -658,40 +658,43 @@ back and empty `backend/.env.local` when done.
 
 **INVC-01 · The list shows the invoices, and the old addresses land on the new screens**
 Smoke: `e2e/invoices.spec.ts`.
-Signed in as `sales`, open `/admin/invoice/` (the previous version's address): `/admin/invoices` opens, "Invoices",
-a Create invoice button, one row per invoice (`Invoice #`, customer as `First Last [email]` or "POS Client", total, date
-as `05 Oct 2026`, an Invoice Detail button and a PDF button that opens in a new tab). The search box finds a row by
-code, customer, total or date; a search that matches nothing says so and "Show all" brings the rows back.
+Signed in as `sales`, open `/admin/invoice/` (the previous version's address): `/admin/invoices` opens, "Invoices" with
+the count under it ("2 invoices"), a Create invoice button, one row per invoice (`Invoice` in mono, the customer's name
+with the email under it or "Walk-in customer", the total as money (`$100.00`), the date (`Oct 5, 2026`)) and a ⋯ menu
+with Detail and Open PDF (the PDF opens in a new tab). The toolbar has a search by customer or number, From and To
+dates and, once one is used, Clear filters; a filter that matches nothing says so and "Show all" brings the rows back.
 `/admin/invoice/new` lands on `/admin/invoices/new`.
 
-**INVC-02 · The detail opens in a dialog with the lines and the PDF link**
+**INVC-02 · The detail opens in a slide-over with the lines and the PDF link**
 Smoke: `e2e/invoices.spec.ts`.
-Invoice Detail on INV-0001: a dialog with the code, the customer (or "POS Client"), the date, a row per line (product
-code, description, quantity, unit price, total), the total (with subtotal and tax when the invoice has tax) and View as
-PDF; Close, the x and Escape close it. By hand: View as PDF opens the PDF in a new tab.
+Detail in the ⋯ menu of INV-0001 (or a click on the row): a slide-over "Invoice INV-0001" with the customer (or
+"Walk-in customer"), the date, a row per line (code, description, qty, unit price, line total, as money), the
+totals block (subtotal and sales tax when the invoice has tax, then the total larger) and Open PDF; Close, the x and
+Escape close it. By hand: Open PDF opens the PDF in a new tab.
 
 **INVC-03 · An invoice is created with a customer, a product and tax, its PDF opens and the list shows it**
 Smoke (part): `e2e/invoices.spec.ts` creates the invoice and checks the list and that the PDF answers.
-Signed in as `sales`, Create invoice: `Invoice #` already holds the next code (`INV-0002` after `INV-0001`); pick the customer in
-`Customer` (their name, email, phone and address fill in); pick a product in `Product 1` (the description and the unit
-price fill in); quantity 2, Sale Tax 6%: the subtotal, tax and total follow as you type; Create Invoice: the PDF opens
-in a new tab and the list shows "The invoice was created successfully." and the new row. By hand: the PDF shows the
-code, the customer, the lines and the 6% tax; with no customer picked and nothing typed, the invoice is a "POS Client";
-typing a new customer (with a country, state and city that did not exist) creates it, and it is then in the Customers
-list and in the customer picker.
+Signed in as `sales`, Create invoice: `Invoice number` already holds the next code (`INV-0002` after `INV-0001`); pick
+the customer in `Customer` (their name, email, phone and address fill in); pick a product in `Product 1` (the
+description and the unit price fill in); quantity 2, Sales tax 6%: the line total, the subtotal, the tax and the total
+follow as you type, as money; Create invoice: the PDF opens in a new tab and the list shows "Invoice created." and the
+new row. By hand: the PDF shows the code, the customer, the lines and the 6% tax; with no customer picked and nothing
+typed, the invoice is a "Walk-in customer"; typing a new customer (with a country, state and city that did not exist)
+creates it, and it is then in the Customers list and in the customer picker.
 
-**INVC-04 · Add all products puts every product of the warehouse on the invoice, and an item can be removed**
+**INVC-04 · Add all products puts every product of the warehouse on the invoice, and a line can be removed**
 Smoke: `e2e/invoices.spec.ts`.
-Warehouse Colombia › Add all products: one item per product of its stock (KF-01, KF-02, KF-03) with its price, the
-total adds them up; a product already on the invoice is not added twice. Remove item takes one out and the total
-follows; Add item adds an empty one. Changing the Warehouse changes the products offered, not the items already added.
+"Add all products from Colombia": one line per product of its stock (KF-01, KF-02, KF-03) with its price, the total adds
+them up; a product already on the invoice is not added twice. Remove line takes one out and the total follows; Add line
+adds an empty one. Changing the Warehouse changes the products offered (and the name on the button), not the lines
+already added.
 
-**INVC-05 · An invoice needs an item, and a code already used is refused**
+**INVC-05 · An invoice needs a line, and a code already used is refused**
 Smoke: `e2e/invoices.spec.ts`.
-Create Invoice with nothing typed: "Please add at least one invoice item." and nothing is sent. A quantity of 0 or a
-price with three decimals says what is wrong. An item with a description only (no product) is accepted. With the code
-of an existing invoice (`INV-0001`): "An invoice with this code already exists." under `Invoice #`, no PDF opens and
-the typed items stay.
+Create invoice with nothing typed: "Please add at least one invoice item." and nothing is sent. A quantity of 0 or a
+price with three decimals says what is wrong. A line with a description only (no product) is accepted. With the code
+of an existing invoice (`INV-0001`): "An invoice with this code already exists." under `Invoice number`, no PDF opens and
+the typed lines stay.
 
 **INVC-06 · The admin is refused on invoices**
 Smoke: `e2e/invoices.spec.ts`.
@@ -701,7 +704,41 @@ only `ROLE_CAN_READ_INVOICES` sees the list and the detail but no Create invoice
 
 ### Invoices, redesigned (item 6)
 
-<!-- Item 6 (invoices-ui) adds INVC-07 – 11 here, and updates the texts of INVC-01 – 06. -->
+**INVC-07 · The list is filtered by customer or number and by a date range**
+Smoke: `e2e/invoices.spec.ts`.
+In the search "jose" keeps INV-0002 and hides INV-0001; "walk-in" does the opposite (the invoice without a customer).
+From a date in the future, or To a date long ago, leaves nothing: "Nothing matches these filters." with Show all. Clear
+filters (it appears with the first filter) empties the search and both dates and brings every row back. By hand: a range
+that includes today keeps today's invoices; From later than To is not possible (each date limits the other).
+
+**INVC-08 · A row opens the invoice in a slide-over beside the list**
+Smoke: `e2e/invoices.spec.ts`.
+Click on INV-0002's row (not on its ⋯): "Invoice INV-0002" slides over from the right with KF-02, "Sales tax 6%" and
+`$318.00`, the list still visible behind; Escape closes it and the focus is back on the list. By hand: at 1440 it is 720
+px wide, at 390 the whole width; Tab stays inside it; an invoice deleted meanwhile says "This invoice no longer exists."
+
+**INVC-09 · On a phone the invoice form and the list fit without scrolling sideways**
+Smoke: `e2e/invoices.spec.ts` (viewport 390 × 844).
+Create invoice, "Add all products from Colombia": three lines, each a card with its fields labelled (Product,
+Description, Qty, Unit price, Line total), the total `$450.00` in view, and the page is not wider than the screen. The
+list at 390 shows INV-0001 as a card with `$100.00`, also without a sideways scroll.
+
+**INVC-10 · The invoice form reads like the document**
+Manual (not automated).
+At 1440: Customer on the left (pick, name, email, phone, address cards), Invoice on the right (number, payment method,
+Sales tax, comments); under both, the lines as a table with the headers Product, Description, Qty, Unit price, Line
+total, and a remove button per line; "Add line" and "Add all products from <warehouse>" under it; the totals block
+right-aligned under the lines (Subtotal, Sales tax 6%, Total larger), all as money; the action bar sticks to the bottom
+with Cancel (ghost, never red) and Create invoice (the only primary). The product menu opens over the next line, not
+clipped. The line totals line up with the inputs' text. The keyboard reaches every field, line by line, in order.
+
+**INVC-11 · Spanish and the dark theme on both invoice screens**
+Manual (not automated).
+With ES chosen: the list ("Facturas", "Cliente de mostrador", Desde / Hasta, "Abrir PDF"), the slide-over ("Factura
+INV-0001", "Total de la línea", "Impuesto de ventas 6 %") and the form ("Número de factura", "Método de pago",
+"Agregar línea", "Agregar todos los productos de Colombia", "Crear factura"); money as `US$ 1.060,00`, dates as `5 de
+oct de 2026`; no raw key. In the dark theme: the totals block, the table header and the slide-over keep their
+contrast; the negative or empty states stay readable.
 
 ## 7. Users (USR)
 

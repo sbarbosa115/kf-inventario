@@ -4,16 +4,17 @@ import {listLocations} from '@/entities/location';
 import {listWarehouses} from '@/entities/warehouse';
 import {useTranslation} from '@/shared/i18n';
 import {useLoad} from '@/shared/lib';
-import {ErrorState, Loader, PageCard} from '@/shared/ui';
+import {ErrorState, PageHeader, Skeleton} from '@/shared/ui';
 import {InvoiceForm} from './InvoiceForm';
 
 /** Create invoice (/admin/invoices/new): the code, customers, places and warehouses first, then the form. */
 export function InvoiceFormPage() {
   const {t} = useTranslation();
   return (
-    <PageCard title={t('invoices.create')}>
+    <>
+      <PageHeader title={t('invoices.create')} back="/admin/invoices" />
       <Loaded />
-    </PageCard>
+    </>
   );
 }
 
@@ -44,7 +45,7 @@ function Loaded() {
     locations.data === undefined ||
     warehouses.data === undefined
   ) {
-    return <Loader />;
+    return <Skeleton variant="form" />;
   }
   return (
     <InvoiceForm
