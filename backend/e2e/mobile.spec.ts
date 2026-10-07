@@ -1161,6 +1161,8 @@ test.describe('15 On a phone', () => {
     await expect(toast(page, 'Delivery discarded.')).toBeVisible();
 
     await visit(page, '/admin/orders');
+    // The list first (SHOP-08 says why: the pull and the page's requests share the dev stack's PHP pool).
+    await expect(page.getByText('W00001').first()).toBeVisible();
     await page.getByRole('button', {name: 'More', exact: true}).first().tap();
     const check = page.getByRole('button', {name: 'Check now'});
     await expectInSight(check, 'Check now');
