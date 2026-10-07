@@ -1,4 +1,54 @@
-import {useId, type FormEventHandler, type ReactNode} from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  type FormEvent,
+  type FormEventHandler,
+  type ReactNode,
+  type RefObject,
+} from 'react';
+
+/** How long after a save the first field it marks invalid still takes the focus (the server's answer included). */
+const ANSWER_WINDOW_MS = 15_000;
+
+/**
+ * After a save, the first field the answer marks invalid (aria-invalid, as `Field` does) takes the focus and comes
+ * to the middle of the screen: on a phone Save is at the bottom and the field that says why is often out of sight.
+ * Typing in the form, or the window passing, ends the wait; a save that is not refused changes nothing.
+ */
+function useFocusFirstRefusal(form: RefObject<HTMLFormElement | null>) {
+  const waitingSince = useRef<number | null>(null);
+  useEffect(() => {
+    const node = form.current;
+    if (!node) return;
+    const stop = () => (waitingSince.current = null);
+    const observer = new MutationObserver(() => {
+      const since = waitingSince.current;
+      if (since === null) return;
+      if (Date.now() - since > ANSWER_WINDOW_MS) return stop();
+      const first = node.querySelector<HTMLElement>('[aria-invalid="true"]');
+      if (!first) return;
+      stop();
+      if (document.activeElement?.getAttribute('aria-invalid') === 'true') {
+        return;
+      }
+      first.focus({preventScroll: true});
+      first.scrollIntoView?.({block: 'center'});
+    });
+    observer.observe(node, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['aria-invalid'],
+    });
+    node.addEventListener('input', stop);
+    return () => {
+      observer.disconnect();
+      node.removeEventListener('input', stop);
+    };
+  }, [form]);
+  return () => (waitingSince.current = Date.now());
+}
 
 /** A form's frame: a readable width (720 px, 640 narrow), two columns from 1280 px with columns={2}. */
 export function FormLayout({
@@ -15,6 +65,8 @@ export function FormLayout({
   label?: string;
   children: ReactNode;
 }) {
+  const form = useRef<HTMLFormElement>(null);
+  const awaitAnswer = useFocusFirstRefusal(form);
   const className = [
     'kf-form',
     columns === 2 ? 'kf-form--two' : null,
@@ -24,8 +76,12 @@ export function FormLayout({
     .join(' ');
   return onSubmit ? (
     <form
+      ref={form}
       className={className}
-      onSubmit={onSubmit}
+      onSubmit={(event: FormEvent<HTMLFormElement>) => {
+        awaitAnswer();
+        onSubmit(event);
+      }}
       noValidate
       aria-label={label}
     >
@@ -78,8 +134,31 @@ export function ActionBar({
   status?: ReactNode;
   sticky?: boolean;
 }) {
+  const bar = useRef<HTMLDivElement>(null);
+  // Sticky, the bar covers the bottom of the window: its height joins the root's scroll padding, so a field the
+  // browser brings into view (focused, reached with Tab, named by the missing-fields line) stops above it.
+  useEffect(() => {
+    const node = bar.current;
+    if (!node || !sticky) return;
+    const root = document.documentElement;
+    const follow = () =>
+      root.style.setProperty(
+        '--kf-action-bar-height',
+        `${node.offsetHeight}px`,
+      );
+    follow();
+    const observer = new ResizeObserver(follow);
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty('--kf-action-bar-height');
+    };
+  }, [sticky]);
   return (
-    <div className={`kf-action-bar${sticky ? '' : ' kf-action-bar--static'}`}>
+    <div
+      ref={bar}
+      className={`kf-action-bar${sticky ? '' : ' kf-action-bar--static'}`}
+    >
       {status && (
         <div className="kf-action-bar__status" aria-live="polite">
           {status}

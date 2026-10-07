@@ -330,6 +330,22 @@
   text-align: center;
 }
 
+/* What sticks to the window's edges is kept clear when the browser brings something into view (a focused field, a
+   menu reached with Tab, scrollIntoView): the top bar, the phone's tab bar and a form's sticky action bar (ActionBar
+   sets its height). */
+html {
+  scroll-padding-top: var(--kf-topbar-height);
+  scroll-padding-bottom: calc(
+    var(--kf-tabbar-space, 0px) + var(--kf-action-bar-height, 0px)
+  );
+}
+
+html:has(> body.kf-has-tabbar) {
+  --kf-tabbar-space: calc(
+    var(--kf-tabbar-height) + env(safe-area-inset-bottom, 0px)
+  );
+}
+
 /* ---- Phones and tablets ---------------------------------------------------------------------------------- */
 body.kf-has-tabbar {
   --kf-shell-bottom: calc(

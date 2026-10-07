@@ -1,6 +1,8 @@
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {useState, type FormEvent} from 'react';
 import {Button} from './Button';
+import {Field} from './Field';
 import {ActionBar, FormLayout, FormSection} from './FormLayout';
 
 describe('FormLayout', () => {
@@ -54,5 +56,81 @@ describe('FormLayout', () => {
       />,
     );
     expect(bar()).toHaveClass('kf-action-bar--static');
+  });
+
+  it('moves to the first field a refused save marks, even when the answer comes later', async () => {
+    function Contact() {
+      const [errors, setErrors] = useState<Record<string, string>>({});
+      const save = (event: FormEvent) => {
+        event.preventDefault();
+        // The server answers later: the fields are marked after the submit has returned.
+        setTimeout(
+          () =>
+            setErrors({
+              phone: 'This value should not be blank.',
+              zip: 'Required.',
+            }),
+          10,
+        );
+      };
+      return (
+        <FormLayout onSubmit={save} label="Customer">
+          <Field label="Name">
+            <input />
+          </Field>
+          <Field label="Phone" error={errors.phone}>
+            <input />
+          </Field>
+          <Field label="Zip" error={errors.zip}>
+            <input />
+          </Field>
+          <ActionBar
+            primary={
+              <Button variant="primary" type="submit">
+                Save
+              </Button>
+            }
+          />
+        </FormLayout>
+      );
+    }
+    render(<Contact />);
+
+    await userEvent.click(screen.getByRole('button', {name: 'Save'}));
+
+    expect(
+      await screen.findByText('This value should not be blank.'),
+    ).toBeInTheDocument();
+    // Save is at the bottom of a phone's screen and the field above, out of sight: it comes to the finger.
+    expect(screen.getByLabelText('Phone')).toHaveFocus();
+  });
+
+  it('leaves the focus where the person is typing', async () => {
+    function Live() {
+      const [error, setError] = useState<string | null>(null);
+      return (
+        <FormLayout onSubmit={(event) => event.preventDefault()} label="Live">
+          <Field label="Code" error={error}>
+            <input
+              onChange={(e) =>
+                setError(e.target.value === 'x' ? 'Not x.' : null)
+              }
+            />
+          </Field>
+          <Field label="Title">
+            <input />
+          </Field>
+        </FormLayout>
+      );
+    }
+    render(<Live />);
+    await userEvent.type(screen.getByLabelText('Title'), 'abc');
+    await userEvent.type(screen.getByLabelText('Code'), 'x');
+    await userEvent.click(screen.getByLabelText('Title'));
+
+    expect(
+      screen.getByLabelText('Title'),
+      'no save was asked: nothing moves',
+    ).toHaveFocus();
   });
 });
