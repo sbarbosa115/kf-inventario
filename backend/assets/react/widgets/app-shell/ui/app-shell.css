@@ -336,7 +336,8 @@
 html {
   scroll-padding-top: var(--kf-topbar-height);
   scroll-padding-bottom: calc(
-    var(--kf-tabbar-space, 0px) + var(--kf-action-bar-height, 0px)
+    var(--kf-tabbar-space, 0px) + var(--kf-action-bar-height, 0px) +
+      var(--kf-floating-bar-height, 0px)
   );
 }
 
@@ -376,7 +377,10 @@ body.kf-has-tabbar {
 
 .kf-shell--compact .kf-main__inner {
   padding: var(--kf-space-4) var(--kf-space-4)
-    calc(var(--kf-space-4) + var(--kf-shell-bottom, 0px));
+    calc(
+      var(--kf-space-4) + var(--kf-shell-bottom, 0px) +
+        var(--kf-floating-bar-height, 0px)
+    );
 }
 
 @media (max-width: 599px) {

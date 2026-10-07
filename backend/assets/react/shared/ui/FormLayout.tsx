@@ -2,11 +2,13 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
   type FormEvent,
   type FormEventHandler,
   type ReactNode,
   type RefObject,
 } from 'react';
+import {useRootHeightVar} from './useRootHeightVar';
 
 /** How long after a save the first field it marks invalid still takes the focus (the server's answer included). */
 const ANSWER_WINDOW_MS = 15_000;
@@ -134,29 +136,13 @@ export function ActionBar({
   status?: ReactNode;
   sticky?: boolean;
 }) {
-  const bar = useRef<HTMLDivElement>(null);
+  const [bar, setBar] = useState<HTMLDivElement | null>(null);
   // Sticky, the bar covers the bottom of the window: its height joins the root's scroll padding, so a field the
   // browser brings into view (focused, reached with Tab, named by the missing-fields line) stops above it.
-  useEffect(() => {
-    const node = bar.current;
-    if (!node || !sticky) return;
-    const root = document.documentElement;
-    const follow = () =>
-      root.style.setProperty(
-        '--kf-action-bar-height',
-        `${node.offsetHeight}px`,
-      );
-    follow();
-    const observer = new ResizeObserver(follow);
-    observer.observe(node);
-    return () => {
-      observer.disconnect();
-      root.style.removeProperty('--kf-action-bar-height');
-    };
-  }, [sticky]);
+  useRootHeightVar(sticky ? bar : null, '--kf-action-bar-height');
   return (
     <div
-      ref={bar}
+      ref={setBar}
       className={`kf-action-bar${sticky ? '' : ' kf-action-bar--static'}`}
     >
       {status && (

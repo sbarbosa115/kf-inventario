@@ -778,6 +778,34 @@
   gap: var(--kf-space-2);
 }
 
+/* On a phone the bar floats above the tab bar, like a form's action bar: above the list, a card ticked low on the
+   screen put it out of sight. The page keeps room for it under the last card (DataTable shares its height as
+   --kf-floating-bar-height). The count and Clear share its first line, the actions the second. */
+@media (max-width: 599px) {
+  .kf-selection-bar {
+    position: fixed;
+    top: auto;
+    right: var(--kf-space-4);
+    bottom: calc(var(--kf-shell-bottom, 0px) + var(--kf-space-2));
+    left: var(--kf-space-4);
+    margin: 0;
+    box-shadow: var(--kf-shadow-float);
+  }
+
+  .kf-selection-bar__count {
+    flex: 1 1 auto;
+  }
+
+  .kf-selection-bar__actions {
+    order: 1;
+    flex: 1 1 100%;
+  }
+
+  .kf-selection-bar__actions > * {
+    flex: 1 1 auto;
+  }
+}
+
 .kf-pager {
   display: flex;
   align-items: center;

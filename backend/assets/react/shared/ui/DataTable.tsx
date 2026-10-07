@@ -12,6 +12,7 @@ import {
   type SheetDraft,
 } from './filters/FilterSheet';
 import {Pager, PER_PAGE_OPTIONS} from './filters/Pager';
+import {useRootHeightVar} from './useRootHeightVar';
 import type {ColumnFilter, Facets, FilterColumn} from './filters/types';
 import {RowMenu, type RowAction} from './RowMenu';
 import {SearchBox} from './Toolbar';
@@ -142,6 +143,9 @@ export function DataTable<Row>({
 }: Props<Row>) {
   const {t} = useTranslation();
   const phone = usePhone();
+  // On a phone the selection bar floats above the tab bar: the page keeps room for it under the last card.
+  const [floatingBar, setFloatingBar] = useState<HTMLDivElement | null>(null);
+  useRootHeightVar(phone ? floatingBar : null, '--kf-floating-bar-height');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<{key: string; desc: boolean} | null>(null);
   const [page, setPage] = useState(1);
@@ -376,6 +380,28 @@ export function DataTable<Row>({
     (cardTitle ? 1 : 0) +
     (hasActions ? 1 : 0);
 
+  // Above the table on a desktop (sticky under the toolbar); on a phone after the cards, floating above the tab bar
+  // like a form's action bar: above them, a card ticked low on the screen put the bar under the tab bar.
+  const selectionBarNode = selectable &&
+    selectionBar &&
+    selectedRows.length > 0 && (
+      <div className="kf-selection-bar" ref={setFloatingBar}>
+        <span className="kf-selection-bar__count">
+          {t('common.selected', {count: selectedRows.length})}
+        </span>
+        <div className="kf-selection-bar__actions">
+          {selectionBar(selectedRows)}
+        </div>
+        <button
+          type="button"
+          className="kf-btn kf-btn--ghost kf-btn--sm"
+          onClick={() => onSelectedChange(new Set())}
+        >
+          <span className="kf-btn__label">{t('common.clearSelection')}</span>
+        </button>
+      </div>
+    );
+
   const clickRow = (row: Row) => (event: MouseEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest(INTERACTIVE)) return;
     onRowClick?.(row);
@@ -403,23 +429,7 @@ export function DataTable<Row>({
         </div>
       )}
       {filterTools}
-      {selectable && selectionBar && selectedRows.length > 0 && (
-        <div className="kf-selection-bar">
-          <span className="kf-selection-bar__count">
-            {t('common.selected', {count: selectedRows.length})}
-          </span>
-          <div className="kf-selection-bar__actions">
-            {selectionBar(selectedRows)}
-          </div>
-          <button
-            type="button"
-            className="kf-btn kf-btn--ghost kf-btn--sm"
-            onClick={() => onSelectedChange(new Set())}
-          >
-            <span className="kf-btn__label">{t('common.clearSelection')}</span>
-          </button>
-        </div>
-      )}
+      {!phone && selectionBarNode}
       {filteredEmpty && !emptyInTable ? (
         filteredEmptyState
       ) : rows.length === 0 && !emptyInTable ? (
@@ -604,6 +614,7 @@ export function DataTable<Row>({
           </table>
         </div>
       )}
+      {phone && selectionBarNode}
       {server &&
         total !== undefined &&
         (total > (perPageOptions[0] ?? 25) || server.query.page > 1) && (
