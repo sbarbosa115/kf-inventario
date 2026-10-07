@@ -273,7 +273,10 @@ test.describe('15 On a phone', () => {
         ),
       'the detail is not cut',
     ).toBe(true);
-    await expect(page.getByText('Stock value')).toBeVisible();
+    await expect(
+      page.getByText('Stock value'),
+      'no stock value in this view',
+    ).toHaveCount(0);
 
     const menu = row.getByRole('button', {name: `Actions for ${PRODUCT}`});
     await expectReachable(menu, 'the card menu');

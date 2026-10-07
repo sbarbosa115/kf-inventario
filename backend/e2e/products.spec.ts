@@ -49,7 +49,7 @@ test.describe('2 Products', () => {
     ).toBeVisible();
     await expect(page.getByRole('radio', {name: 'Colombia'})).toBeChecked();
     const row = stockRow(page, 'KF-01');
-    await expect(row.getByRole('cell', {name: '$100.00'})).toBeVisible();
+    await expect(row.getByRole('cell', {name: '$100.00'}), 'no price in this view').toHaveCount(0);
     await expect(
       row.getByRole('button', {name: 'Actions for KF-01'}),
     ).toBeVisible();
@@ -351,7 +351,10 @@ test.describe('2 Products', () => {
       )
       .toBe(true);
     const inStock = stock.filter((row) => row.quantity > 0).length;
-    await expect(figure('Stock value')).toContainText('$');
+    await expect(
+      page.getByText('Stock value'),
+      'no stock value in this view',
+    ).toHaveCount(0);
     await expect(
       page.getByRole('button', {name: `All ${stock.length}`}),
     ).toHaveAttribute('aria-pressed', 'true');

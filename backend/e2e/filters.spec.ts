@@ -180,56 +180,51 @@ test.describe('13 Table filters', () => {
     await expect(bodyRows(page)).toHaveCount(2);
   });
 
-  test('FLT-04 · Products: a price and a quantity range narrow the stock on the server', async ({
+  test('FLT-04 · Products: a quantity range narrows the stock on the server, and there is no price filter', async ({
     signedInAs,
   }) => {
     const page = await signedInAs(INVENTORY);
     const stock = (
-      await apiJson<ListPage<{code: string; quantity: number; price: number}>>(
+      await apiJson<ListPage<{code: string; quantity: number}>>(
         page.request,
         '/api/v1/warehouses/1/stock?per_page=0',
       )
     ).items;
     await page.goto('/admin/products?warehouse=1');
     await expect(bodyRows(page).first()).toBeVisible();
+    await expect(
+      filterButton(page, /^Price/),
+      'prices are not shown in this view',
+    ).toHaveCount(0);
 
-    await filterButton(page, 'Price').click();
-    await page.getByRole('button', {name: 'Over $500'}).click();
-    await page.keyboard.press('Escape');
-    const over500 = stock.filter((s) => s.price > 500);
-    if (over500.length === 0) {
-      await expect(
-        page.getByText('Nothing matches these filters.'),
-      ).toBeVisible();
-    } else {
-      await expect(bodyRows(page)).toHaveCount(over500.length);
-    }
-    await expect(chip(page, 'Price: Over $500')).toBeVisible();
+    const expectRows = async (codes: string[]) => {
+      await expect(bodyRows(page)).toHaveCount(codes.length);
+      for (const code of codes) {
+        await expect(
+          bodyRows(page).filter({
+            has: page.getByRole('cell', {name: code, exact: true}),
+          }),
+        ).toHaveCount(1);
+      }
+    };
 
-    // A typed minimum, then the quantity's quick range.
-    const prices = [...new Set(stock.map((s) => s.price))].sort(
-      (a, b) => a - b,
-    );
-    const min = prices[Math.floor(prices.length / 2)]!;
-    await filterButton(page, /^Price/).click();
-    await page.getByLabel('Min').fill(String(min));
-    await page.getByLabel('Min').press('Enter');
-    await page.keyboard.press('Escape');
     await filterButton(page, 'Quantity').click();
     await page.getByRole('button', {name: 'Over 10'}).click();
     await page.keyboard.press('Escape');
-
-    const kept = stock.filter((s) => s.price >= min && s.quantity > 10);
-    await expect(bodyRows(page)).toHaveCount(kept.length);
-    for (const s of kept) {
-      await expect(
-        bodyRows(page).filter({
-          has: page.getByRole('cell', {name: s.code, exact: true}),
-        }),
-      ).toHaveCount(1);
-    }
+    await expectRows(stock.filter((s) => s.quantity > 10).map((s) => s.code));
     await expect(chip(page, 'Quantity: Over 10')).toBeVisible();
-    await expect(page).toHaveURL(/price.*min|quantity.*min/);
+    await expect(page).toHaveURL(/quantity.*min/);
+
+    // A typed minimum replaces the quick range.
+    const quantities = [...new Set(stock.map((s) => s.quantity))].sort(
+      (a, b) => a - b,
+    );
+    const min = quantities[Math.floor(quantities.length / 2)]!;
+    await filterButton(page, /^Quantity/).click();
+    await page.getByLabel('Min').fill(String(min));
+    await page.getByLabel('Min').press('Enter');
+    await page.keyboard.press('Escape');
+    await expectRows(stock.filter((s) => s.quantity >= min).map((s) => s.code));
   });
 
   test('FLT-05 · Customers: 1,240 of them are paged on the server, and an email filter finds one on a late page', async ({
