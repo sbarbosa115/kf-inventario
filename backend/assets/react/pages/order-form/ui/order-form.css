@@ -35,9 +35,13 @@
   margin-bottom: var(--kf-space-4);
 }
 
-/* The product lines: product takes the room, quantity is narrow, the remove button a touch target. */
-.order-lines {
+/* The product lines: product takes the room, quantity is narrow, the remove button a touch target. Never a table
+   that scrolls sideways (bootstrap-overrides.css does that to tables under 1024 px): it would cut the product
+   picker's list off at its edge. */
+table.table.order-lines {
+  display: table;
   margin-bottom: var(--kf-space-2);
+  overflow: visible;
   table-layout: fixed;
 }
 
@@ -86,4 +90,65 @@
 
 .order-form__missing-field:hover {
   color: var(--kf-text);
+}
+
+/* On a phone a line is a small card: the product picker the whole width (its list as wide, the title readable), then
+   the quantity and the remove button. */
+@media (max-width: 599px) {
+  .order-lines thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  table.table.order-lines,
+  .order-lines tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .order-lines tr {
+    display: grid;
+    grid-template-areas:
+      'product product'
+      'quantity remove';
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--kf-space-2) var(--kf-space-3);
+    margin-bottom: var(--kf-space-3);
+    padding: var(--kf-space-2) var(--kf-space-3);
+    border: 1px solid var(--kf-border);
+    border-radius: var(--kf-radius-card);
+  }
+
+  .order-lines td,
+  .order-lines td:last-child {
+    display: block;
+    width: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .order-lines td:first-child {
+    grid-area: product;
+  }
+
+  .order-lines td.order-lines__quantity {
+    grid-area: quantity;
+    max-width: 10rem;
+  }
+
+  .order-lines td.order-lines__remove {
+    grid-area: remove;
+  }
+
+  .order-lines td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: var(--kf-space-1);
+    color: var(--kf-text-muted);
+    font-size: var(--kf-text-label);
+  }
 }

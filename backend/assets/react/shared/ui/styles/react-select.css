@@ -46,8 +46,10 @@
   color: var(--kf-text);
 }
 
+/* Over the sticky bars (a form's action bar, the phone's tab bar): a list that opens down near the bottom of the
+   screen is picked from, not hidden under them. */
 .kf-select__menu.kf-select__menu {
-  z-index: var(--kf-z-dropdown);
+  z-index: var(--kf-z-popover);
   background-color: var(--kf-surface-raised);
   border: 1px solid var(--kf-border);
   border-radius: var(--kf-radius-control);
@@ -83,6 +85,12 @@
 /* On a touch screen the control is as tall as the other fields: a 44 px target (docs/design/README.md). */
 @media (pointer: coarse) {
   .kf-select__control.kf-select__control {
+    min-height: var(--kf-target);
+  }
+
+  .kf-select__option.kf-select__option {
+    display: flex;
+    align-items: center;
     min-height: var(--kf-target);
   }
 }

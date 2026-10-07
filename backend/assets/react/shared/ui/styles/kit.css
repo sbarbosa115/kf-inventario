@@ -778,6 +778,34 @@
   gap: var(--kf-space-2);
 }
 
+/* On a phone the bar floats above the tab bar, like a form's action bar: above the list, a card ticked low on the
+   screen put it out of sight. The page keeps room for it under the last card (DataTable shares its height as
+   --kf-floating-bar-height). The count and Clear share its first line, the actions the second. */
+@media (max-width: 599px) {
+  .kf-selection-bar {
+    position: fixed;
+    top: auto;
+    right: var(--kf-space-4);
+    bottom: calc(var(--kf-shell-bottom, 0px) + var(--kf-space-2));
+    left: var(--kf-space-4);
+    margin: 0;
+    box-shadow: var(--kf-shadow-float);
+  }
+
+  .kf-selection-bar__count {
+    flex: 1 1 auto;
+  }
+
+  .kf-selection-bar__actions {
+    order: 1;
+    flex: 1 1 100%;
+  }
+
+  .kf-selection-bar__actions > * {
+    flex: 1 1 auto;
+  }
+}
+
 .kf-pager {
   display: flex;
   align-items: center;
@@ -1029,11 +1057,46 @@
   font-weight: 600;
 }
 
+/* With content under the title, the header's line is drawn under that content instead. */
+.kf-slideover__header--summary {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.kf-slideover__scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.kf-slideover__summary {
+  flex: none;
+  padding: 0 var(--kf-space-5) var(--kf-space-4);
+  border-bottom: 1px solid var(--kf-border);
+}
+
 .kf-slideover__body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: var(--kf-space-5);
+}
+
+/* A phone has little height: only the title and × stay, the content under the title scrolls with the body. The
+   bottom padding moves to the scrolling part, so what sticks to the body's bottom (the comment box) stays flush. */
+@media (max-width: 599px) {
+  .kf-slideover__scroll {
+    overflow-y: auto;
+    padding-bottom: var(--kf-space-5);
+  }
+
+  .kf-slideover__body {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
+    padding-bottom: 0;
+  }
 }
 
 .kf-slideover__footer {
@@ -1126,15 +1189,28 @@
   color: var(--kf-text);
 }
 
+/* On a phone the bottom of the screen is where the thumb acts (the tab bar, a form's action bar, a panel's write
+   box, Ship, Add to the warehouse): a toast there covered them, an error one until closed. It comes down from the
+   top instead, over the top bar. */
 @media (max-width: 599px) {
   .kf-toasts {
+    top: calc(env(safe-area-inset-top, 0px) + var(--kf-space-2));
     right: var(--kf-space-4);
+    bottom: auto;
     left: var(--kf-space-4);
     align-items: stretch;
   }
 
   .kf-toast {
     width: auto;
+    animation-name: kf-toast-down;
+  }
+}
+
+@keyframes kf-toast-down {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
   }
 }
 
@@ -1208,6 +1284,10 @@
   padding: var(--kf-space-3) var(--kf-space-2);
   border-top: 1px solid var(--kf-border);
   background-color: var(--kf-bg);
+}
+
+.kf-action-bar--static {
+  position: static;
 }
 
 .kf-action-bar__status {

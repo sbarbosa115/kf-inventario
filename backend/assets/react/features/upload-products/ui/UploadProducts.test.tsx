@@ -130,6 +130,28 @@ describe('UploadProductsForm', () => {
     ).toBeNull();
   });
 
+  it('brings the summary into view: Upload is at the bottom, the summary at the top', async () => {
+    stubUpload(200, {stored: 3});
+    const scrolled = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (this: Element, arg) {
+      scrolled(this, arg);
+    };
+    try {
+      renderForm();
+      await userEvent.upload(fileBox(), aSheet());
+      await userEvent.click(upload());
+
+      const summary = await screen.findByRole('status');
+      expect(
+        scrolled,
+        'on a phone the page is scrolled down to Upload: the result would be out of sight',
+      ).toHaveBeenCalledWith(summary, {block: 'nearest'});
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
   it('says so when the server refuses the file', async () => {
     stubUpload(415, {error: 'unsupported_media', message: 'x'});
     renderForm();

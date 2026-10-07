@@ -13,7 +13,8 @@ import {defineConfig, devices} from '@playwright/test';
  *   1. side by side: orders and stock; the lists; the screens (which only read);
  *   2. then, alone: the shops, the comments, the settings and the webhook. Their requests to the fake shop are served
  *      by the stack's own PHP, which the first three lanes keep busy (a pull would time out waiting for it), and the
- *      settings switch the SMTP server the other lanes' emails go through.
+ *      settings switch the SMTP server the other lanes' emails go through;
+ *   3. last, alone: the phone (every role's jobs with a finger), which moves stock, places orders and changes Settings.
  */
 const desktop = {
   ...devices['Desktop Chrome'],
@@ -74,6 +75,19 @@ export default defineConfig({
       dependencies: ['orders-stock', 'lists', 'screens'],
       workers: 1,
       use: desktop,
+    },
+    {
+      // Operating every page on a phone with a finger (390 × 844, touch; some cases also at 360 × 740).
+      name: 'mobile',
+      testMatch: /\/mobile\.spec\.ts$/,
+      dependencies: ['shops-settings'],
+      workers: 1,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: {width: 390, height: 844},
+        isMobile: true,
+        hasTouch: true,
+      },
     },
   ],
 });

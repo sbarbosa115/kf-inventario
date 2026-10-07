@@ -206,6 +206,72 @@ describe('ScanStock', () => {
     });
   });
 
+  it('keeps its action bar off the box until something is scanned', async () => {
+    fakeApi({'GET /products/by-code/KF-01': [200, KF01]});
+    renderScan();
+    const bar = () =>
+      screen
+        .getByRole('button', {name: 'Add to Colombia'})
+        .closest('.kf-action-bar');
+
+    expect(
+      bar(),
+      'nothing to add yet: the bar stays where it is, under the box, not over it',
+    ).toHaveClass('kf-action-bar--static');
+    await scan('KF-01');
+    expect(bar(), 'with a list, the bar follows the thumb').not.toHaveClass(
+      'kf-action-bar--static',
+    );
+  });
+
+  it('on a phone, brings the box into view once the warehouse or the mode is chosen, and to the top with the first scan', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query.includes('max-width: 599.98px'),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    const scrolled = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (this: Element, arg) {
+      scrolled(this, arg);
+    };
+    try {
+      fakeApi({
+        'GET /products/by-code/KF-01': [200, KF01],
+        'GET /products/by-code/KF-02': [200, KF02],
+      });
+      renderScan();
+      const box = () => scanBox().closest('.scan-stock__box');
+
+      await userEvent.click(screen.getByRole('radio', {name: 'Usa'}));
+      expect(
+        scrolled,
+        'the box comes up, as little as needed',
+      ).toHaveBeenLastCalledWith(box(), {block: 'nearest'});
+      scrolled.mockClear();
+      await userEvent.click(screen.getByRole('radio', {name: 'Remove stock'}));
+      expect(scrolled).toHaveBeenLastCalledWith(box(), {block: 'nearest'});
+
+      scrolled.mockClear();
+      await scan('KF-01');
+      expect(
+        scrolled,
+        'the first scan puts the box on top, the list under it, clear of the action bar',
+      ).toHaveBeenCalledWith(box(), {block: 'start'});
+      scrolled.mockClear();
+      await scan('KF-02');
+      expect(
+        scrolled,
+        'later scans leave the page where it is',
+      ).not.toHaveBeenCalled();
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
   it('adds in one tap, naming the warehouse, then clears the list and returns the focus to the box', async () => {
     const api = fakeApi({
       'GET /products/by-code/KF-01': [200, KF01],

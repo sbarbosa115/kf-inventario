@@ -167,6 +167,47 @@ describe('DataTable, the kit additions', () => {
     expect(screen.queryByText('2 selected')).not.toBeInTheDocument();
   });
 
+  it('puts the selection bar under the cards on a phone, where it sticks above the tab bar', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query.includes('max-width: 599.98px'),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    try {
+      function WithBar() {
+        const [selected, setSelected] = useState<Set<string | number>>(
+          new Set(),
+        );
+        return (
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey={(r) => r.id}
+            selected={selected}
+            onSelectedChange={setSelected}
+            selectionBar={() => <button type="button">Move</button>}
+          />
+        );
+      }
+      render(<WithBar />);
+      await userEvent.click(
+        screen.getAllByRole('checkbox', {name: 'Select row'})[0]!,
+      );
+
+      const bar = screen.getByText('1 selected');
+      expect(
+        screen.getByRole('table').compareDocumentPosition(bar) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+        'above the cards, a card ticked low on the screen would put the bar under the tab bar',
+      ).toBeTruthy();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('loads as skeleton rows announced once, never a spinner', () => {
     const {container} = render(
       <DataTable

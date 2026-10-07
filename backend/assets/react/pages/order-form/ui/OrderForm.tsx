@@ -421,7 +421,7 @@ export function OrderForm({
               return (
                 // Rows have no stable id (a new one has no product yet); they are added at the end, removed anywhere.
                 <tr key={index}>
-                  <td>
+                  <td data-label={t('orderForm.productColumn')}>
                     <label
                       htmlFor={`${id}-product-${index}`}
                       className="sr-only"
@@ -444,7 +444,10 @@ export function OrderForm({
                       }
                     />
                   </td>
-                  <td className="order-lines__quantity">
+                  <td
+                    className="order-lines__quantity"
+                    data-label={t('orderForm.quantity')}
+                  >
                     <input
                       id={`${id}-quantity-${index}`}
                       type="number"

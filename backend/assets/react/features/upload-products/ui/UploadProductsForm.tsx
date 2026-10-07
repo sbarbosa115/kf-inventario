@@ -1,4 +1,11 @@
-import {useId, useRef, useState, type DragEvent, type FormEvent} from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type DragEvent,
+  type FormEvent,
+} from 'react';
 import {ApiError, failureMessage, type Schema} from '@/shared/api';
 import {useTranslation} from '@/shared/i18n';
 import {useFormat, useRememberedWarehouse} from '@/shared/lib';
@@ -36,6 +43,13 @@ export function UploadProductsForm({
   const [failure, setFailure] = useState<string | null>(null);
   const [stored, setStored] = useState<Stored | null>(null);
   const [busy, setBusy] = useState(false);
+  const result = useRef<HTMLElement>(null);
+
+  // The summary is above the three steps and Upload below them: on a phone, where Upload is pressed, the summary
+  // would be out of sight. It is brought into view (no further than needed).
+  useEffect(() => {
+    if (stored) result.current?.scrollIntoView?.({block: 'nearest'});
+  }, [stored]);
 
   const choose = (chosen: File | null | undefined) => {
     setFailure(null);
@@ -105,7 +119,7 @@ export function UploadProductsForm({
   return (
     <form className="upload" onSubmit={submit} noValidate>
       {stored && (
-        <section className="upload-result" role="status">
+        <section className="upload-result" role="status" ref={result}>
           <i
             className="fas fa-check-circle upload-result__icon"
             aria-hidden="true"

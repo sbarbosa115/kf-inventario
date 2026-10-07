@@ -206,3 +206,20 @@
 .scan-stock__invalid {
   color: var(--kf-danger-text);
 }
+
+/* The box clears the top bar and the tab bar when it is brought into view. On a phone it stays on top while the
+   list scrolls under it (as on Getting ready's scanner), so the next code is always typed where it can be seen. */
+.scan-stock__box {
+  scroll-margin-top: calc(var(--kf-toolbar-top, 0px) + var(--kf-space-2));
+  scroll-margin-bottom: calc(var(--kf-shell-bottom, 0px) + var(--kf-space-3));
+}
+
+@media (max-width: 599px) {
+  .scan-stock__box {
+    position: sticky;
+    top: var(--kf-toolbar-top, 0px);
+    z-index: var(--kf-z-sticky);
+    padding: var(--kf-space-2) 0;
+    background-color: var(--kf-bg);
+  }
+}

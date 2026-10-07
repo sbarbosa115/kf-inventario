@@ -351,6 +351,9 @@ test.describe('12 Shop connections', () => {
   test('SHOP-08 · Check now answers per connection', async ({signedInAs}) => {
     const page = await signedInAs(ADMIN);
     await page.goto('/admin/orders');
+    // The list first: the pull asks the fake shop, served by the same PHP pool, while the page's own requests wait
+    // on the session that the pull holds. Clicked mid-load, every worker waited and the pull timed out at 15 s.
+    await expect(page.getByRole('row', {name: /W00001/})).toBeVisible();
 
     await page.getByRole('button', {name: 'Check now'}).click();
 

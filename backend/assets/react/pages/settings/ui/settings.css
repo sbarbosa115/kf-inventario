@@ -43,6 +43,15 @@
   }
 }
 
+/* On a phone the five tabs do not fit one line: scrolled sideways, "Shop connections" was cut and "Quick phrases"
+   out of sight (and so was the open tab, on a link to it). They wrap to a second line instead, all in view. */
+@media (max-width: 599px) {
+  .kf-settings__tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
 .kf-settings__general {
   display: grid;
   gap: var(--kf-space-4);

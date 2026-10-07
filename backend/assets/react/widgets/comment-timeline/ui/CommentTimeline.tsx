@@ -77,6 +77,24 @@ export function CommentTimeline({
   const [saving, setSaving] = useState(false);
   const pin = usePinComment(order.id);
   const list = useRef<HTMLOListElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+
+  // The write box stays over the bottom of the panel: an entry brought into view (the new one, a menu reached with the
+  // keyboard) keeps clear of it by the box's height, which grows with the quick phrases and the shop note option.
+  useEffect(() => {
+    const node = box.current;
+    if (!node) return;
+    const follow = () =>
+      root.current?.style.setProperty(
+        '--kf-timeline-box',
+        `${node.offsetHeight}px`,
+      );
+    follow();
+    const observer = new ResizeObserver(follow);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (fresh === null) return;
@@ -138,7 +156,7 @@ export function CommentTimeline({
   const pinned = comments.find((comment) => comment.pinned);
 
   return (
-    <div className="kf-timeline">
+    <div className="kf-timeline" ref={root}>
       {pinned && (
         <section
           className="kf-timeline__pinned"
@@ -202,7 +220,7 @@ export function CommentTimeline({
         </ol>
       )}
 
-      <div className="kf-timeline__box">
+      <div className="kf-timeline__box" ref={box}>
         <QuickPhrases orderId={order.id} onAdded={added} />
         <AddComment
           orderId={order.id}

@@ -330,6 +330,23 @@
   text-align: center;
 }
 
+/* What sticks to the window's edges is kept clear when the browser brings something into view (a focused field, a
+   menu reached with Tab, scrollIntoView): the top bar, the phone's tab bar and a form's sticky action bar (ActionBar
+   sets its height). */
+html {
+  scroll-padding-top: var(--kf-topbar-height);
+  scroll-padding-bottom: calc(
+    var(--kf-tabbar-space, 0px) + var(--kf-action-bar-height, 0px) +
+      var(--kf-floating-bar-height, 0px)
+  );
+}
+
+html:has(> body.kf-has-tabbar) {
+  --kf-tabbar-space: calc(
+    var(--kf-tabbar-height) + env(safe-area-inset-bottom, 0px)
+  );
+}
+
 /* ---- Phones and tablets ---------------------------------------------------------------------------------- */
 body.kf-has-tabbar {
   --kf-shell-bottom: calc(
@@ -360,11 +377,21 @@ body.kf-has-tabbar {
 
 .kf-shell--compact .kf-main__inner {
   padding: var(--kf-space-4) var(--kf-space-4)
-    calc(var(--kf-space-4) + var(--kf-shell-bottom, 0px));
+    calc(
+      var(--kf-space-4) + var(--kf-shell-bottom, 0px) +
+        var(--kf-floating-bar-height, 0px)
+    );
 }
 
 @media (max-width: 599px) {
   .kf-shell--compact .kf-main__footer {
+    display: none;
+  }
+}
+
+/* On a phone the top bar's buttons leave its title a letter or two ("P…"): the page's own heading names it. */
+@media (max-width: 479px) {
+  .kf-shell--compact .kf-topbar__title {
     display: none;
   }
 }

@@ -44,7 +44,8 @@ case, and every case is a Playwright test in `backend/e2e/` (its title starts wi
 2026-10-06 baseline there are no manual cases. `python3 ~/.claude/skills/symfony-react-app/scripts/smoke.py` resets
 the dev database (`backend/e2e/prepare.sh`), runs the whole suite in lanes (orders and stock, the lists and every
 screen at 1440 and 390 px, light and dark, English and Spanish, side by side; then the shops, the comments, Settings
-and the webhook) and records the attempt in the feature's run file under `docs/tests/runs/`. What it cannot reach is
+and the webhook; last, every role's jobs operated with a finger on a 390 × 844 / 360 × 740 phone) and records the
+attempt in the feature's run file under `docs/tests/runs/`. What it cannot reach is
 listed just below.
 
 ### Not covered by the smoke suite

@@ -53,13 +53,16 @@ Specs that need another role create their account through the API (`smoke-orders
 First three side by side: *orders and stock* (order forms, orders, products, stock), *lists* (auth, customers, design
 system, filters, invoices, users) and *screens*; then, alone, *shops and settings* (comments, shop sync, settings,
 shops, webhook): their pulls from the fake shop are served by the stack's own PHP, and Settings switches the SMTP
-server every email goes through. A lane never counts or changes what another lane changes: the cases say which data
-they keep to (their own records, España, KF-03, the fixtures' delivered and partial orders).
+server every email goes through; last, alone, *mobile* (section 15: every role's jobs with a finger on a phone), which
+moves stock, places an order and changes Settings. A lane never counts or changes what another lane changes: the cases
+say which data they keep to (their own records, España, KF-03, the fixtures' delivered and partial orders).
 
 **On every screen.** Section 14 opens each screen at 1440 px and at 390 px (touch), light and dark, English and
 Spanish, and checks the same things on all of them: the title (h1) shown, the theme and the language applied, no
 sideways scroll, no raw translation key (`orders.title`) or unfilled `{{param}}` in the text or the accessible names,
-no console error, and on a phone every button, link, field and tab at least 44 × 44 px.
+no console error, and on a phone every button, link, field and tab at least 44 × 44 px. Section 15 then *operates* each
+screen on a phone: a step passes when it can be done with taps alone, what it needs is on the screen and nothing
+covers it (the tab bar, an action bar, a sticky header, a toast, the edge of the screen).
 
 ---
 
@@ -951,3 +954,157 @@ General, Email, Analytics, Shop connections, Quick phrases.
 **UI-11 · A shop connection's form and its failed deliveries look right**
 Smoke: `e2e/screens.spec.ts`.
 The Fake shop's form, and its failed deliveries.
+
+## 15. On a phone (MOB)
+
+A phone held upright, 390 × 844 with touch (`isMobile`, `hasTouch`; 360 × 740 too where the height decides), fingers
+only (`tap()`, never a hover), one signed-in browser per role kept for the whole section. Each case carries out a
+role's real job end to end and checks, at every step, that what the finger needs next is **in sight** (on the screen,
+and the tap lands on it: not under the tab bar, an action bar, a sticky header or a toast, not past the edge) or
+**reachable** (brought to the middle of the screen, then in sight). The camera itself, iOS's keyboard and the rest that
+needs a real phone are listed in `mobile-pass-2026-10-07.md`, "Check on a real phone". The section's own records are
+named "Mob …": product `SMOKE-MOB-01` (a long detail, five units in España), its order `MOB-<run>`, a customer, an
+invoice and a user.
+
+### Shell
+
+**MOB-01 · The shell with a finger: sign in, tab bar, More, the top bar, back and sign out**
+Smoke: `e2e/mobile.spec.ts`.
+`/admin/login` in a browser of its own: Username, Password, Sign in (in sight) → "Products", the tab reads "Products ·
+KF Inventory". The top bar's Menu, Open the reader, theme and `Sergio Barbosa` are in sight; its title is shown whole or
+not at all (under 480 px the page's heading names the page). Tab bar › Incoming opens Incoming; More opens the whole
+menu (every entry reachable) and Orders in it opens Orders and closes it; Menu › Close the menu closes it. ES in the top
+bar: "Pedidos"; EN again; theme › Dark (in sight): dark; Light again. On New order, Back returns to the list and the
+browser's back to the form. `Sergio Barbosa` › Sign out (in sight): the sign-in page, and `/admin/products` asks to
+sign in again.
+
+### Products
+
+**MOB-02 · Products: the Filters sheet, the whole detail on a card, the row menu and editing**
+Smoke: `e2e/mobile.spec.ts`.
+España's products › Filters · 0: Sort `Code, descending`, Code `MOB`, "Show 1 result" (in sight) → "Filters · 1". The
+card of `SMOKE-MOB-01` shows its whole Detail ("Front lip spoiler, matte black, …", wrapped, not cut); Stock value is
+still shown. Its "⋯" (reachable) › Edit and Download stock sheet in sight; Edit › a new title, Save (in sight, above the
+tab bar): "Product saved". Tapping the card's title opens Edit product too; no sideways scroll.
+
+**MOB-03 · Products: two cards ticked, the selection bar moves them in a dialog that fits, and downloads them**
+Smoke: `e2e/mobile.spec.ts`.
+Colombia: KF-01 and KF-02 ticked → "2 selected"; the bar floats above the tab bar with Move to warehouse, Download stock
+sheet and Clear in sight; Download stock sheet downloads `Products.xls`. Clear; España: `SMOKE-MOB-01` ticked › Move to
+warehouse: the panel is no taller than the screen; Destination `Usa`, quantity 2, Move and Cancel in sight; Move:
+"Moved to Usa.", the card shows 3.
+
+**MOB-04 · A product is created on the phone, and its form says what is missing**
+Smoke: `e2e/mobile.spec.ts`.
+Create product, Save (in sight) empty: "This value should not be blank."; Code `SMOKE-MOB-<run>`, Title, Price `12.5`,
+Save: back on the list with "Product saved".
+
+**MOB-05 · A stock sheet is uploaded with the file picker, and the result comes into view**
+Smoke: `e2e/mobile.spec.ts`.
+Upload a stock sheet: the drop zone (reachable) opens the file picker; the sheet of `SMOKE-MOB-01`, España, Upload
+(reachable): "1 row stored in España" and "Open the products of España" are in sight without scrolling back up.
+
+**MOB-06 · Incoming is approved and a warehouse renamed with a finger**
+Smoke: `e2e/mobile.spec.ts`.
+Incoming › Usa lists `SMOKE-MOB-01`; Approve all (in sight) › "Approve 1 product" (in sight): approved. Warehouses:
+tapping "España" opens its name field (in sight) with Save and Cancel in sight; Save keeps "España".
+
+**MOB-07 · Scan: the box is in sight above the bars, a typed code lists under it, and Add saves**
+Smoke: `e2e/mobile.spec.ts`.
+At 390 × 844 and at 360 × 740, with "What changed" shown: Scan stock says the camera needs a secure address; España and
+Add stock tapped: the Barcode box is in sight (not under the action bar or the tab bar). `SMOKE-MOB-01` and `MOB-NOPE`
+typed with Enter: the box is still in sight, both listed; Remove MOB-NOPE and One more (reachable) tapped; Undo last
+scan and "Add to España" in sight; Add: "Added 2 units to España.", and the toast does not cover Add.
+
+### Orders
+
+**MOB-08 · Orders: the Filters sheet, a status chip, a status change asked from a card, an order opened and its menus**
+Smoke: `e2e/mobile.spec.ts`.
+Colombia, the Created chip pressed; Filters › Order `W00004` after Clear filters: "Show 1 result" (in sight). W00004's
+status on its card (reachable) opens its menu; Delivered (in sight) asks "Mark W00004 as Delivered?" with Mark as
+Delivered and Cancel in sight; Cancel: still Partial. Its card opens "Order W00004", no taller
+than the screen: Edit and Getting ready reachable; Documents › Order PDF, Remaining products PDF, Excel sheet in sight;
+the Products section reachable and Close then in sight.
+
+**MOB-09 · Create an order with a finger: the pickers open over the bars, rows added and removed; edit it, change its status**
+Smoke: `e2e/mobile.spec.ts`.
+New order at 360 × 740 and 390 × 844: Search customer opens its list down over the action bar, its options in sight
+and 44 px tall; `Jose` › Jose Perez fills First name. The missing-fields line's "warehouse" focuses Warehouse, in sight;
+Colombia, PayPal. Product 1 (reachable) lists KF-03 in sight, as wide as the field (not cut by the lines table); KF-03,
+quantity 1; Add product; Product 2 KF-02, quantity 1; Remove product 2 (reachable) removes it. Order number
+`MOB-<run>`, Phone, Created; Create order (in sight): "The order was created." Its "⋯" › Edit: a new phone, Update
+order (in sight): updated. Its card's status (reachable) › Processed › Mark as Processed (in sight): Processed.
+
+**MOB-10 · Order comments with a finger: send, a quick phrase, pin and unpin, nothing under the write box or a toast**
+Smoke: `e2e/mobile.spec.ts`.
+With a quick phrase `Mob phrase <run>` active, the card's notes count of `MOB-<run>` opens the order at its comments:
+"Write a note…" in sight; three notes sent with Enter, each new one in sight above the write box; the phrase's chip
+adds it, in sight. "Mob note two" › ⋯ (reachable) › Pin: "The comment is pinned to the order." while the write box and
+Send stay in sight; the pinned card's Unpin (reachable) unpins it. The phrase is removed afterwards.
+
+**MOB-11 · Getting ready with a finger: the scan box, the steppers and the Ship bar**
+Smoke: `e2e/mobile.spec.ts`.
+`MOB-<run>` › ⋯ › Getting ready: the Barcode box in sight; `KF-03` Enter: this shipment 1; One less and One more
+reachable; "Ship 1 product" in sight; Ship: "Shipment saved…".
+
+### Customers, invoices, users
+
+**MOB-12 · Customers with a finger: filters, pages, create with the place pickers, delete**
+Smoke: `e2e/mobile.spec.ts`.
+Customers: Next (reachable) opens page 2; Filters › Clear filters in sight. Create customer `Mob Customer`, an email,
+address and zip, no phone: Save at the bottom puts the focus on Phone, in sight (its message says it is required).
+Phone filled; Country, State and City (each reachable) opened by a tap and picked: USA, Florida, West Palm Beach; Save
+(in sight): "The customer was created successfully." Searched, ⋯ › Delete › Delete (in sight): "The customer was
+deleted."
+
+**MOB-13 · Invoices with a finger: filters, the detail and its PDF, an invoice created with a line**
+Smoke: `e2e/mobile.spec.ts` (as `sales`).
+Invoices: Filters › Clear filters in sight. INV-0001's card opens its panel: Open PDF in sight, a PDF. Create invoice:
+Product 1 (reachable) › KF-01 (KF-01) fills the description; Remove line 1 and the total reachable; Create invoice (in
+sight): the PDF opens, "Invoice created."
+
+**MOB-14 · Users with a finger: filters, a user created with roles ticked, the password shown and hidden**
+Smoke: `e2e/mobile.spec.ts`.
+Users: the Inactive and All chips; Create user: name, email, username `mob-<run>`, a password; Show password shows it,
+Hide password hides it; Inventory and Orders (reachable) ticked with a tap; Save (in sight): "The user was created."
+
+### Settings
+
+**MOB-15 · Settings: every tab in reach without sideways scrolling, the test email panel, Analytics**
+Smoke: `e2e/mobile.spec.ts`.
+On Quick phrases and on General, every tab (General, Email, Analytics, Shop connections, Quick phrases) is in sight
+(they wrap to a second line). Email › Send test email: Send to and Send in sight; Send: the panel says how it went;
+Close in sight. Analytics: the GA field in sight once tapped, Save reachable; no sideways scroll.
+
+**MOB-16 · Shop connections with a finger: the card menu, the form with Copy and Test connection, Save**
+Smoke: `e2e/mobile.spec.ts`.
+Fake shop › ⋯: Edit, Test connection, Failed deliveries, Deactivate, Delete in sight; Edit › a Copy (reachable): a
+toast (the dev stack is plain http: the browser may refuse the clipboard) that leaves Save connection and Test
+connection in sight; Test connection: "Connected to Fake shop"; Save connection: saved.
+
+**MOB-17 · Quick phrases with a finger: add, move, switch off, delete**
+Smoke: `e2e/mobile.spec.ts`.
+`Mob packed` and `Mob courier` added with Add; with "Phrase added." shown, the new row's Move up, Rename and Delete are
+reachable; Move Mob courier up; Mob packed switched off; both deleted (Delete phrase in sight).
+
+**MOB-18 · Failed deliveries with a finger: the list, the detail, Retry and Discard; Check now on Orders**
+Smoke: `e2e/mobile.spec.ts`.
+A delivery to the Fake shop of an unknown product: its row opens "Shop order <n>", no taller than the screen, Retry
+and Discard in sight; Retry: "Still not placed…"; the row's ⋯ › Discard: "Delivery discarded." Orders › More › Check
+now (in sight): a message says how it went.
+
+### Spanish and the other roles
+
+**MOB-19 · In Spanish, the longest labels stay whole and in reach**
+Smoke: `e2e/mobile.spec.ts`.
+In Spanish at 390 × 844 and 360 × 740: KF-01 ticked: the selection bar cuts nothing off and "Trasladar a bodega" and
+"Descargar hoja de existencias" are in sight; the Filtros sheet cuts nothing off; Escanear › Colombia: the action bar
+cuts nothing off and "Código de barras" is in sight; Nuevo pedido: its action bar cuts nothing off and "Crear pedido"
+is in sight; Configuración: every tab in sight; no sideways scroll.
+
+**MOB-20 · The inventory and invoice clerks reach their pages from the tab bar and More**
+Smoke: `e2e/mobile.spec.ts`.
+As `inventory`: the tab bar reads Products, Scan, Incoming; Scan opens "Scan stock"; More has no Orders, and its Upload
+a stock sheet opens that page. As `invoices`: the tab bar holds Customers and Invoices, each opens its page; INV-0001's
+card opens its panel with Open PDF and Close in sight.
+

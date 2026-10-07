@@ -1,6 +1,7 @@
 /* The order's comment timeline (widgets/comment-timeline, shops-settings item 8): the pinned card, the entries with
    their avatar, and the write box kept at the bottom of the panel while its body scrolls. Tokens only. */
 .kf-timeline__pinned {
+  scroll-margin-bottom: calc(var(--kf-timeline-box, 0px) + var(--kf-space-2));
   margin-bottom: var(--kf-space-4);
   padding: var(--kf-space-3) var(--kf-space-4);
   border: 1px solid var(--kf-accent);
@@ -32,6 +33,8 @@
 }
 
 .kf-timeline__entry {
+  /* Brought into view above the write box, not under it (CommentTimeline sets the box's height). */
+  scroll-margin-bottom: calc(var(--kf-timeline-box, 0px) + var(--kf-space-2));
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: var(--kf-space-3);
