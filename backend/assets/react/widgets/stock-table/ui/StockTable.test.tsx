@@ -111,10 +111,7 @@ describe('StockTable', () => {
     renderTable();
 
     const row = (await screen.findByText('KF-01')).closest('tr')!;
-    expect(within(row).getByText('Detail KF-01')).toHaveAttribute(
-      'title',
-      'Detail KF-01',
-    );
+    expect(within(row).getByText('Detail KF-01')).toBeInTheDocument();
     expect(within(row).getAllByText('Title KF-01').length).toBeGreaterThan(0);
     expect(within(row).getByText('100')).toBeInTheDocument();
     expect(within(row).getByText('$100.00')).toBeInTheDocument();
@@ -126,6 +123,30 @@ describe('StockTable', () => {
     expect(screen.getByRole('radiogroup', {name: 'Warehouse'})).toBeVisible();
     const stockCall = api.calls.find((c) => c.path === '/warehouses/1/stock')!;
     expect(stockCall.url.searchParams.get('status')).toBe('1');
+  });
+
+  it('shows the whole detail, on the phone cards too, and keeps the stock value', async () => {
+    const long =
+      'Front lip spoiler, matte black, fits the 2016 – 2021 models with the factory bumper';
+    fakeApi({
+      ...stockRoutes(),
+      'GET /warehouses/1/stock': fakeList(
+        [{...stock(1, 'KF-01', 100, 100), detail: long}],
+        STOCK_LIST,
+      ),
+    });
+    renderTable();
+
+    const detail = await screen.findByText(long);
+    // The whole text, not a clipped line with the rest in a tooltip: it wraps.
+    expect(detail).not.toHaveAttribute('title');
+    expect(detail.textContent, 'the detail is not shortened').toBe(long);
+    const cell = detail.closest('td')!;
+    expect(cell, 'the detail is one of the phone card facts').not.toHaveClass(
+      'kf-table__card-hidden',
+    );
+    expect(cell).toHaveAttribute('data-label', 'Detail');
+    expect(await screen.findByText('Stock value')).toBeInTheDocument();
   });
 
   it('computes the products, units and stock value from the loaded list', async () => {

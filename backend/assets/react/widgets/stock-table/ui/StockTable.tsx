@@ -151,9 +151,7 @@ function WarehouseStock({
         header: t('products.columns.detail'),
         render: (row) =>
           row.detail ? (
-            <span className="kf-stock__detail" title={row.detail}>
-              {row.detail}
-            </span>
+            <span className="kf-stock__detail">{row.detail}</span>
           ) : null,
         filter: {type: 'text', field: 'detail'},
       },
@@ -305,7 +303,7 @@ function WarehouseStock({
           </>
         )}
         cardTitle={(row) => row.title}
-        cardFacts={['code', 'quantity', 'price']}
+        cardFacts={['code', 'detail', 'quantity', 'price']}
       />
       {moving && (
         <MoveStockPanel

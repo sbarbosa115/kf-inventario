@@ -3,12 +3,19 @@
   min-width: 0;
 }
 
+/* The whole detail, wrapped (never cut with "…"): on the phone cards too, where it is one of the facts. */
 .kf-stock__detail {
   display: inline-block;
-  max-width: 28ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: bottom;
+  min-width: 16ch;
+  max-width: 48ch;
+  overflow-wrap: anywhere;
+  white-space: normal;
   color: var(--kf-text-muted);
+}
+
+@media (max-width: 599px) {
+  .kf-stock__detail {
+    min-width: 0;
+    max-width: none;
+  }
 }
