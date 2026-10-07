@@ -6,7 +6,8 @@ import {useFocusTrap} from './useFocusTrap';
 /**
  * A centred panel for a detail or a quick edit (560 / 800 px wide, nearly the whole screen on phones; its body
  * scrolls, the header and footer stay): the page dims behind it and does not scroll, the focus stays inside, Escape
- * and the × close it.
+ * and the × close it. The `header` content (a status, facts, actions) sits under the title: fixed with it on a
+ * desktop, scrolling with the body on a phone, where it would otherwise take half the panel's height.
  */
 export function SlideOver({
   title,
@@ -43,10 +44,11 @@ export function SlideOver({
         tabIndex={-1}
         ref={panel}
       >
-        <header className="kf-slideover__header">
+        <header
+          className={`kf-slideover__header${header ? ' kf-slideover__header--summary' : ''}`}
+        >
           <div className="kf-slideover__heading">
             <h2 className="kf-slideover__title">{title}</h2>
-            {header}
           </div>
           <button
             type="button"
@@ -58,7 +60,10 @@ export function SlideOver({
             <i className="fas fa-times" aria-hidden="true" />
           </button>
         </header>
-        <div className="kf-slideover__body">{children}</div>
+        <div className="kf-slideover__scroll">
+          {header && <div className="kf-slideover__summary">{header}</div>}
+          <div className="kf-slideover__body">{children}</div>
+        </div>
         {footer && <footer className="kf-slideover__footer">{footer}</footer>}
       </div>
     </div>,

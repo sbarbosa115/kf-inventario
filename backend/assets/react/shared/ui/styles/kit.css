@@ -1029,11 +1029,46 @@
   font-weight: 600;
 }
 
+/* With content under the title, the header's line is drawn under that content instead. */
+.kf-slideover__header--summary {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.kf-slideover__scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.kf-slideover__summary {
+  flex: none;
+  padding: 0 var(--kf-space-5) var(--kf-space-4);
+  border-bottom: 1px solid var(--kf-border);
+}
+
 .kf-slideover__body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: var(--kf-space-5);
+}
+
+/* A phone has little height: only the title and × stay, the content under the title scrolls with the body. The
+   bottom padding moves to the scrolling part, so what sticks to the body's bottom (the comment box) stays flush. */
+@media (max-width: 599px) {
+  .kf-slideover__scroll {
+    overflow-y: auto;
+    padding-bottom: var(--kf-space-5);
+  }
+
+  .kf-slideover__body {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
+    padding-bottom: 0;
+  }
 }
 
 .kf-slideover__footer {

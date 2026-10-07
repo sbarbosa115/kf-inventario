@@ -90,4 +90,32 @@ describe('SlideOver', () => {
     await userEvent.keyboard('{Escape}');
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps the title and × apart from the facts under them, which share the scrolling part with the body', () => {
+    render(
+      <SlideOver
+        title="Order W00001"
+        onClose={vi.fn()}
+        header={<p>Status: Created</p>}
+      >
+        <p>Customer: Jose Perez</p>
+      </SlideOver>,
+    );
+
+    const facts = screen.getByText('Status: Created');
+    const header = screen
+      .getByRole('heading', {name: 'Order W00001'})
+      .closest('header')!;
+    expect(header).toContainElement(
+      screen.getByRole('button', {name: 'Close'}),
+    );
+    expect(
+      header,
+      'the facts are not part of the fixed header: on a phone they would take half of its height',
+    ).not.toContainElement(facts);
+    // One scrolling part on a phone (the CSS makes it the scroller there); on a desktop the body alone scrolls.
+    expect(facts.closest('.kf-slideover__scroll')).toContainElement(
+      screen.getByText('Customer: Jose Perez'),
+    );
+  });
 });
