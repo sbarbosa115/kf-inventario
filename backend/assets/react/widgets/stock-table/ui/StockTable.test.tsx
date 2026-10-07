@@ -114,7 +114,6 @@ describe('StockTable', () => {
     expect(within(row).getByText('Detail KF-01')).toBeInTheDocument();
     expect(within(row).getAllByText('Title KF-01').length).toBeGreaterThan(0);
     expect(within(row).getByText('100')).toBeInTheDocument();
-    expect(within(row).getByText('$100.00')).toBeInTheDocument();
     expect(
       screen.queryByRole('columnheader', {name: 'Warehouse'}),
     ).not.toBeInTheDocument();
@@ -146,10 +145,29 @@ describe('StockTable', () => {
       'kf-table__card-hidden',
     );
     expect(cell).toHaveAttribute('data-label', 'Detail');
-    expect(await screen.findByText('Stock value')).toBeInTheDocument();
   });
 
-  it('computes the products, units and stock value from the loaded list', async () => {
+  it('shows no price and no stock value in this view (the product form still has the price)', async () => {
+    fakeApi(stockRoutes());
+    renderTable();
+    await screen.findByText('KF-01');
+
+    expect(
+      screen.queryByRole('columnheader', {name: /Price/}),
+      'no Price column',
+    ).toBeNull();
+    expect(screen.queryByText('$100.00'), 'no price in any row').toBeNull();
+    expect(
+      screen.queryByText('Stock value'),
+      'no stock value figure',
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', {name: 'Price'}),
+      'no price filter',
+    ).toBeNull();
+  });
+
+  it('computes the products and units from the loaded list', async () => {
     fakeApi(stockRoutes());
     renderTable();
     await screen.findByText('KF-01');
@@ -158,7 +176,6 @@ describe('StockTable', () => {
       screen.getByText(label, {selector: 'dt'}).nextElementSibling;
     expect(figure('Products')).toHaveTextContent('4');
     expect(figure('Units')).toHaveTextContent('157');
-    expect(figure('Stock value')).toHaveTextContent('$11,095.00');
   });
 
   it('filters by In stock and Out of stock chips that count the list, and the figures stay', async () => {
@@ -390,7 +407,7 @@ describe('StockTable', () => {
     expect(screen.getByRole('button', {name: 'Try again'})).toBeInTheDocument();
   });
 
-  it('puts text filters under code, title and detail, and ranges under quantity and price', async () => {
+  it('puts text filters under code, title and detail, and a range under quantity', async () => {
     const api = fakeApi(stockRoutes());
     renderTable();
     await screen.findByText('KF-01');
@@ -403,22 +420,14 @@ describe('StockTable', () => {
         filters.getByRole('searchbox', {name: `Filter by ${name}`}),
       ).toBeInTheDocument();
     }
-    await userEvent.click(filters.getByRole('button', {name: 'Price'}));
-    await userEvent.click(screen.getByRole('button', {name: 'Under $100'}));
-    await waitFor(() =>
-      expect(screen.queryByText('KF-01')).not.toBeInTheDocument(),
-    );
-    await userEvent.keyboard('{Escape}');
     await userEvent.click(filters.getByRole('button', {name: 'Quantity'}));
     await userEvent.click(screen.getByRole('button', {name: '1 – 10'}));
     await userEvent.keyboard('{Escape}');
 
     await waitFor(() => expect(rows()).toEqual(['KF-03']));
     const asked = stockCalls(api).at(-1)!.url.searchParams;
-    expect(asked.get('filter[price][max]')).toBe('99.99');
     expect(asked.get('filter[quantity][min]')).toBe('1');
     expect(asked.get('filter[quantity][max]')).toBe('10');
-    expect(chipText('Price: Under $100')).toBeInTheDocument();
     expect(chipText('Quantity: 1 – 10')).toBeInTheDocument();
     const figure = (label: string) =>
       screen.getByText(label, {selector: 'dt'}).nextElementSibling;
@@ -426,7 +435,6 @@ describe('StockTable', () => {
       figure('Products'),
       "the figures are the warehouse's, from the server's totals, whatever the filters",
     ).toHaveTextContent('4');
-    expect(figure('Stock value')).toHaveTextContent('$11,095.00');
   });
 
   it('says the stock chip on a chip above the table, and offers it in the phone sheet', async () => {

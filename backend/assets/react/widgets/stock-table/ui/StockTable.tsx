@@ -22,7 +22,6 @@ import {
   ErrorState,
   FilterChips,
   KpiStrip,
-  Money,
   Num,
   SearchBox,
   Skeleton,
@@ -37,10 +36,10 @@ import './stock-table.css';
 
 /**
  * One warehouse's stock (the one in the address, else the last one chosen in this browser, else the first): its
- * figures, a toolbar to narrow it, a filter under each header (code, title and detail text, quantity and price ranges;
- * a sheet on a phone, with the in-stock choice too), and a selectable table whose bar moves or downloads the
- * selection. Filtered, sorted and paged on the server; the query lives in the address
- * (?q=&filter[in_stock][]=no&filter[price][min]=500.01&page=2).
+ * figures (products and units), a toolbar to narrow it, a filter under each header (code, title and detail text, a
+ * quantity range; a sheet on a phone, with the in-stock choice too), and a selectable table whose bar moves or
+ * downloads the selection. Prices are not shown in this view (the product form has them). Filtered, sorted and paged
+ * on the server; the query lives in the address (?q=&filter[in_stock][]=no&filter[quantity][min]=1&page=2).
  */
 export function StockTable() {
   const {t} = useTranslation();
@@ -123,7 +122,6 @@ function WarehouseStock({
     ? {
         products: summary.data.total,
         units: summary.data.totals.units,
-        value: summary.data.totals.value,
         inStock: countOf('yes'),
         outOfStock: countOf('no'),
       }
@@ -162,14 +160,6 @@ function WarehouseStock({
         sortField: 'quantity',
         numeric: true,
         filter: {type: 'number', field: 'quantity'},
-      },
-      {
-        key: 'price',
-        header: t('products.columns.price'),
-        render: (row) => <Money amount={row.price} />,
-        sortField: 'price',
-        numeric: true,
-        filter: {type: 'money', field: 'price'},
       },
     ],
     [t],
@@ -249,14 +239,10 @@ function WarehouseStock({
               label: t('products.kpi.units'),
               value: <Num value={figures.units} />,
             },
-            {
-              label: t('products.kpi.value'),
-              value: <Money amount={figures.value} />,
-            },
           ]}
         />
       ) : (
-        !summary.error && <Skeleton variant="kpi" lines={3} />
+        !summary.error && <Skeleton variant="kpi" lines={2} />
       )}
       <DataTable
         columns={columns}
@@ -303,7 +289,7 @@ function WarehouseStock({
           </>
         )}
         cardTitle={(row) => row.title}
-        cardFacts={['code', 'detail', 'quantity', 'price']}
+        cardFacts={['code', 'detail', 'quantity']}
       />
       {moving && (
         <MoveStockPanel

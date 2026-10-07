@@ -128,7 +128,7 @@ As `inventory`, the top bar's "Open the reader" leads to `/admin/products/barcod
 
 **INV-01 · The product list opens on the first warehouse, and the old address lands on it**
 Smoke: `e2e/products.spec.ts`.
-`/admin/product/` opens `/admin/products`, "Products", Colombia chosen, KF-01 with `$100.00` and its "Actions for
+`/admin/product/` opens `/admin/products`, "Products", Colombia chosen, KF-01 (no price shown in this view) and its "Actions for
 KF-01" menu; no console error.
 
 **INV-02 · Another warehouse reloads the list; the search narrows it**
@@ -213,7 +213,8 @@ screen.
 
 **INV-17 · The figures come from the list; the chips count it and narrow it**
 Smoke: `e2e/products.spec.ts`.
-`/admin/products?warehouse=1`: Products and Units are the rows and their quantities, Stock value in dollars; the chips
+`/admin/products?warehouse=1`: Products and Units are the rows and their quantities (no Stock value, no Price column: prices are not shown in
+this view, the product form has them); the chips
 read "All N", "In stock N", "Out of stock N"; Out of stock hides KF-01 and "Clear filters" brings it back.
 
 **INV-18 · Each row has one "⋯" menu, and a click on the row opens its form**
@@ -866,10 +867,10 @@ Smoke: `e2e/filters.spec.ts`.
 On the two delivered W000… orders, Created › Last 30 days: "Created: …" on the button and a chip, `created_at` in the
 address, both orders kept.
 
-**FLT-04 · Products: a price and a quantity range narrow the stock on the server**
+**FLT-04 · Products: a quantity range narrows the stock on the server, and there is no price filter**
 Smoke: `e2e/filters.spec.ts`.
-Price › Over $500: none on the fixtures ("Nothing matches these filters.") with its chip; a typed Min and Quantity ›
-Over 10: exactly the products at or over that price with more than 10, the chips, the range in the address.
+No Price filter (prices are not shown in this view). Quantity › Over 10: exactly the products with more than 10, its
+chip, the range in the address; a typed Min then keeps exactly the products at or over it.
 
 **FLT-05 · Customers: 1,240 of them are paged on the server, and an email filter finds one on a late page**
 Smoke: `e2e/filters.spec.ts`.
@@ -983,8 +984,8 @@ sign in again.
 **MOB-02 · Products: the Filters sheet, the whole detail on a card, the row menu and editing**
 Smoke: `e2e/mobile.spec.ts`.
 España's products › Filters · 0: Sort `Code, descending`, Code `MOB`, "Show 1 result" (in sight) → "Filters · 1". The
-card of `SMOKE-MOB-01` shows its whole Detail ("Front lip spoiler, matte black, …", wrapped, not cut); Stock value is
-still shown. Its "⋯" (reachable) › Edit and Download stock sheet in sight; Edit › a new title, Save (in sight, above the
+card of `SMOKE-MOB-01` shows its whole Detail ("Front lip spoiler, matte black, …", wrapped, not cut); no Stock value
+and no price on the card. Its "⋯" (reachable) › Edit and Download stock sheet in sight; Edit › a new title, Save (in sight, above the
 tab bar): "Product saved". Tapping the card's title opens Edit product too; no sideways scroll.
 
 **MOB-03 · Products: two cards ticked, the selection bar moves them in a dialog that fits, and downloads them**
