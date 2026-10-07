@@ -189,3 +189,8 @@
   color: var(--kf-text-muted);
   font-size: var(--kf-text-sm);
 }
+
+/* Brought into view after an upload: clear of the top bar. */
+.upload-result {
+  scroll-margin-top: calc(var(--kf-toolbar-top, 0px) + var(--kf-space-3));
+}
