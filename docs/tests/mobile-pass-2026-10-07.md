@@ -155,4 +155,5 @@ HTTPS site:
 - `gate.sh --fix` (repository root): PASS (cs, PHPStan, Deptrac, Prettier, ESLint, tsc, compose CPUs, schema drift).
   No PHP was touched, so PHPUnit was not run.
 - Smoke suite (`smoke.py`), recorded in [`runs/2026-10-06-mobile-pass.md`](runs/2026-10-06-mobile-pass.md): attempt 1
-  not green (SHOP-08, a dev-stack race; the mobile lane skipped behind it), fixed in the test; then green (194 of 194).
+  not green (SHOP-08, a dev-stack race; the mobile lane skipped behind it), fixed in the test; attempts 2 and 3 green,
+  194 of 194 (the last at `1d7a1de`, 9 min 22 s; the mobile lane about 2 minutes of it).

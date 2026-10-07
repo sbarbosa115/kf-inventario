@@ -25,6 +25,7 @@ the last row is green.
 |---|---|---|---|---|
 | 1 | 2026-10-06 22:09 | `62d27d0` | Not green: 173 passed, 1 failed, 20 skipped | SHOP-08; skipped: MOB-01, MOB-02, MOB-03, MOB-04, MOB-05, MOB-06, MOB-07, MOB-08, MOB-09, MOB-10, MOB-11, MOB-12, MOB-13, MOB-14, MOB-15, MOB-16, MOB-17, MOB-18, MOB-19, MOB-20 |
 | 2 | 2026-10-06 22:26 | `65509e1` | Green: 194 passed, 0 failed | — |
+| 3 | 2026-10-06 22:38 | `1d7a1de` | Green: 194 passed, 0 failed | — |
 <!-- smoke.py adds a row per run of the whole suite -->
 
 ### Smoke findings
@@ -49,8 +50,14 @@ passes into ranges (`AREA-01 – 05`) once done.
 
 ## Findings
 
-<!-- Numbered: what happened, which case, the cause, and the fix (commit) or why it was left. -->
+The mobile pass itself (what was checked on a phone, the twelve problems and their fixes, what is left for a real
+phone) is [`../mobile-pass-2026-10-07.md`](../mobile-pass-2026-10-07.md); its flows are section 15, MOB-01 – 20, all
+smoke tests. Attempt 3 is after MOB-08/09 changed (`6076c92`): green.
 
 ## Conditions
 
-<!-- Anything about the environment that could have affected the result. -->
+- Midway through the work the stack's containers disappeared (removed outside this session; the network and the
+  database volume were left) and were recreated with `docker compose up -d`; every attempt above ran after that, each
+  on data reset by `prepare.sh`.
+- The dev stack is plain http: the camera and the clipboard are refused by the browser (MOB-07 and MOB-16 check the
+  fallbacks).
