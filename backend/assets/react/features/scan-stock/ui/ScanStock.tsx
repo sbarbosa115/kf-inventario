@@ -3,6 +3,7 @@ import {ApiError, failureMessage, type Schema} from '@/shared/api';
 import {useTranslation, type Translate} from '@/shared/i18n';
 import {
   readSetting,
+  usePhone,
   useRememberedWarehouse,
   writeSetting,
   type DetectorFactory,
@@ -233,12 +234,27 @@ export function ScanStock({
   }, [focusRequest]);
   const refocus = () => setFocusRequest((n) => n + 1);
 
+  // A phone shows little of the page: the box would be under the tab bar (or the action bar) just when it is needed.
+  // Choosing the warehouse or the mode brings it up as little as needed; the first scan puts it on top (it stays
+  // there, sticky), with the list under it and the action bar below.
+  const phone = usePhone();
+  const showBox = (block: ScrollLogicalPosition) => {
+    if (phone) scanArea.current?.scrollIntoView?.({block});
+  };
+
+  const chooseWarehouse = (id: number) => {
+    pickWarehouse(id);
+    showBox('nearest');
+  };
+
   const chooseMode = (next: ScanMode) => {
     setMode(next);
     writeSetting(SCAN_MODE_KEY, next);
+    showBox('nearest');
   };
 
   const onScan = (code: string) => {
+    if (lines.length === 0) showBox('start');
     setFailure(null);
     setFlash(code);
     setHistory((now) => [...now, code]);
@@ -381,7 +397,7 @@ export function ScanStock({
           <WarehouseSwitch
             warehouses={warehouses}
             value={warehouse?.id ?? null}
-            onChange={pickWarehouse}
+            onChange={chooseWarehouse}
           />
           <ModeSwitch value={mode} onChange={chooseMode} />
         </div>
@@ -399,7 +415,7 @@ export function ScanStock({
           paused={confirming || sending}
           detector={detector}
         />
-        <div ref={scanArea}>
+        <div ref={scanArea} className="scan-stock__box">
           <ScanInput onScan={onScan} size="lg" autoFocus />
         </div>
         {failure && (
@@ -436,6 +452,7 @@ export function ScanStock({
       </section>
 
       <ActionBar
+        sticky={lines.length > 0}
         status={
           <>
             <span className="scan-stock__totals">

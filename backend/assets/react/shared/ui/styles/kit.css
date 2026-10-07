@@ -1210,6 +1210,10 @@
   background-color: var(--kf-bg);
 }
 
+.kf-action-bar--static {
+  position: static;
+}
+
 .kf-action-bar__status {
   margin-right: auto;
   color: var(--kf-text-muted);

@@ -38,4 +38,21 @@ describe('FormLayout', () => {
     await userEvent.click(screen.getByRole('button', {name: 'Create order'}));
     expect(onSubmit).toHaveBeenCalled();
   });
+
+  it('keeps the action bar in the page instead of over it when told it has nothing to do yet', () => {
+    const {rerender} = render(
+      <ActionBar primary={<Button variant="primary">Add</Button>} />,
+    );
+    const bar = () =>
+      screen.getByRole('button', {name: 'Add'}).closest('.kf-action-bar');
+    expect(bar(), 'sticky by default').not.toHaveClass('kf-action-bar--static');
+
+    rerender(
+      <ActionBar
+        sticky={false}
+        primary={<Button variant="primary">Add</Button>}
+      />,
+    );
+    expect(bar()).toHaveClass('kf-action-bar--static');
+  });
 });

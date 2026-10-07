@@ -62,18 +62,24 @@ export function FormSection({
   );
 }
 
-/** The form's actions, sticky at the bottom (above the tab bar on phones): what is missing, Cancel, the main action. */
+/**
+ * The form's actions, sticky at the bottom (above the tab bar on phones): what is missing, Cancel, the main action.
+ * `sticky={false}` leaves it in the page's flow while it has nothing to do, so it covers nothing (the scan screen
+ * before the first scan: its box sits just above the bar).
+ */
 export function ActionBar({
   primary,
   secondary,
   status,
+  sticky = true,
 }: {
   primary: ReactNode;
   secondary?: ReactNode;
   status?: ReactNode;
+  sticky?: boolean;
 }) {
   return (
-    <div className="kf-action-bar">
+    <div className={`kf-action-bar${sticky ? '' : ' kf-action-bar--static'}`}>
       {status && (
         <div className="kf-action-bar__status" aria-live="polite">
           {status}
