@@ -20,6 +20,11 @@ final class LocationController extends AbstractController
     #[ApiResponse(CountryOutput::class, list: true)]
     public function tree(Locations $locations): JsonResponse
     {
-        return $this->json(array_map(CountryOutput::of(...), $locations->tree()));
+        // Plain rows straight to JSON (the shape of CountryOutput): about 70,000 rows in production. A name the
+        // legacy data stored with broken UTF-8 comes out with a replacement character instead of failing the list.
+        $response = new JsonResponse($locations->tree());
+        $response->setEncodingOptions($response->getEncodingOptions() | \JSON_INVALID_UTF8_SUBSTITUTE);
+
+        return $response;
     }
 }

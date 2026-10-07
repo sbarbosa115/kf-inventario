@@ -15,7 +15,7 @@ class ShopOrderLink
 {
     #[ORM\Id]
     #[ORM\OneToOne(targetEntity: Order::class)]
-    #[ORM\JoinColumn(name: 'order_id', nullable: false)]
+    #[ORM\JoinColumn(name: 'order_id')]
     private Order $order;
 
     #[ORM\ManyToOne(targetEntity: ShopConnection::class)]
