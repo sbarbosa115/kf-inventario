@@ -529,7 +529,7 @@ test.describe('15 On a phone', () => {
     expect(errors).toEqual([]);
   });
 
-  test('MOB-08 · Orders: the Filters sheet, a status chip, a status changed from a card, an order opened and its menus', async ({
+  test('MOB-08 · Orders: the Filters sheet, a status chip, a status change asked from a card, an order opened and its menus', async ({
     browser,
     baseURL,
   }) => {
@@ -557,17 +557,23 @@ test.describe('15 On a phone', () => {
     await sheet.getByRole('button', {name: /^Show 1 result$/}).tap();
     await expect(sheet).toBeHidden();
 
-    // W00004 is Partial: its status menu from the card, then Cancel leaves it be.
+    // W00004 is Partial: Delivered from its card's status menu asks first; Cancel leaves it be (MOB-09 changes one).
     const status = page.getByRole('button', {name: 'Status of order W00004'});
     await expectReachable(status, 'the card status');
     await status.tap();
+    const delivered = page
+      .getByRole('menuitem', {name: 'Delivered'})
+      .or(page.getByRole('menuitemradio', {name: 'Delivered'}));
+    await expectInSight(delivered, 'Delivered');
+    await delivered.tap();
+    const ask = page.getByRole('dialog', {name: 'Mark W00004 as Delivered?'});
     await expectInSight(
-      page
-        .getByRole('menuitem', {name: 'Delivered'})
-        .or(page.getByRole('menuitemradio', {name: 'Delivered'})),
-      'Delivered',
+      ask.getByRole('button', {name: 'Mark as Delivered'}),
+      'Mark as Delivered',
     );
-    await page.keyboard.press('Escape');
+    await expectInSight(ask.getByRole('button', {name: 'Cancel'}), 'Cancel');
+    await ask.getByRole('button', {name: 'Cancel'}).tap();
+    await expect(status).toHaveText('Partial');
 
     // The order opens in a centred panel no taller than the screen; its actions and menus are in reach.
     await page
@@ -600,7 +606,7 @@ test.describe('15 On a phone', () => {
     expect(errors).toEqual([]);
   });
 
-  test('MOB-09 · Create an order with a finger: the customer and product pickers open over the bars, rows added and removed', async ({
+  test('MOB-09 · Create an order with a finger: the pickers open over the bars, rows added and removed; edit it, change its status', async ({
     browser,
     baseURL,
   }) => {
@@ -689,6 +695,26 @@ test.describe('15 On a phone', () => {
     );
     await page.getByRole('button', {name: 'Update order'}).tap();
     await expect(toast(page, /updated/)).toBeVisible();
+
+    // Its status changed from its card: Created › Processed, confirmed.
+    await page
+      .getByRole('searchbox', {name: 'Order number or customer'})
+      .fill(orderCode);
+    const status = page.getByRole('button', {
+      name: `Status of order ${orderCode}`,
+    });
+    await expectReachable(status, 'the card status');
+    await status.tap();
+    await page
+      .getByRole('menuitem', {name: 'Processed'})
+      .or(page.getByRole('menuitemradio', {name: 'Processed'}))
+      .tap();
+    const confirm = page
+      .getByRole('dialog')
+      .getByRole('button', {name: 'Mark as Processed'});
+    await expectInSight(confirm, 'Mark as Processed');
+    await confirm.tap();
+    await expect(status).toHaveText('Processed');
     expect(errors).toEqual([]);
   });
 

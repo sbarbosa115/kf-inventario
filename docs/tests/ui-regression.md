@@ -1018,21 +1018,22 @@ scan and "Add to España" in sight; Add: "Added 2 units to España.", and the to
 
 ### Orders
 
-**MOB-08 · Orders: the Filters sheet, a status chip, a status changed from a card, an order opened and its menus**
+**MOB-08 · Orders: the Filters sheet, a status chip, a status change asked from a card, an order opened and its menus**
 Smoke: `e2e/mobile.spec.ts`.
 Colombia, the Created chip pressed; Filters › Order `W00004` after Clear filters: "Show 1 result" (in sight). W00004's
-status on its card (reachable) opens its menu (Delivered in sight); Escape. Its card opens "Order W00004", no taller
+status on its card (reachable) opens its menu; Delivered (in sight) asks "Mark W00004 as Delivered?" with Mark as
+Delivered and Cancel in sight; Cancel: still Partial. Its card opens "Order W00004", no taller
 than the screen: Edit and Getting ready reachable; Documents › Order PDF, Remaining products PDF, Excel sheet in sight;
 the Products section reachable and Close then in sight.
 
-**MOB-09 · Create an order with a finger: the customer and product pickers open over the bars, rows added and removed**
+**MOB-09 · Create an order with a finger: the pickers open over the bars, rows added and removed; edit it, change its status**
 Smoke: `e2e/mobile.spec.ts`.
 New order at 360 × 740 and 390 × 844: Search customer opens its list down over the action bar, its options in sight
 and 44 px tall; `Jose` › Jose Perez fills First name. The missing-fields line's "warehouse" focuses Warehouse, in sight;
 Colombia, PayPal. Product 1 (reachable) lists KF-03 in sight, as wide as the field (not cut by the lines table); KF-03,
 quantity 1; Add product; Product 2 KF-02, quantity 1; Remove product 2 (reachable) removes it. Order number
 `MOB-<run>`, Phone, Created; Create order (in sight): "The order was created." Its "⋯" › Edit: a new phone, Update
-order (in sight): updated.
+order (in sight): updated. Its card's status (reachable) › Processed › Mark as Processed (in sight): Processed.
 
 **MOB-10 · Order comments with a finger: send, a quick phrase, pin and unpin, nothing under the write box or a toast**
 Smoke: `e2e/mobile.spec.ts`.
