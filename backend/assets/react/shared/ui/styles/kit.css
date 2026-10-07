@@ -1126,15 +1126,28 @@
   color: var(--kf-text);
 }
 
+/* On a phone the bottom of the screen is where the thumb acts (the tab bar, a form's action bar, a panel's write
+   box, Ship, Add to the warehouse): a toast there covered them, an error one until closed. It comes down from the
+   top instead, over the top bar. */
 @media (max-width: 599px) {
   .kf-toasts {
+    top: calc(env(safe-area-inset-top, 0px) + var(--kf-space-2));
     right: var(--kf-space-4);
+    bottom: auto;
     left: var(--kf-space-4);
     align-items: stretch;
   }
 
   .kf-toast {
     width: auto;
+    animation-name: kf-toast-down;
+  }
+}
+
+@keyframes kf-toast-down {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
   }
 }
 

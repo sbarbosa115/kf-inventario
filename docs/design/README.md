@@ -55,7 +55,7 @@ page **`/admin/_kit`** shows each one in its states, in the current theme and la
 | A detail or a quick edit, over the dimmed list | `SlideOver`: centred (`md` 560 / `lg` 800 px, 8 px from the edges on phones), body scrolls inside |
 | Creating or editing a record | a page: `FormLayout` (`narrow`, `columns={2}`), `FormSection`s, `Field`s, `ActionBar` (`primary`, Cancel as `secondary`/ghost, `status` such as "3 things missing") |
 | Before a destructive or state-changing action | `ConfirmModal` (title asks, body says the consequence, `danger` only when it destroys) |
-| After a save or a failure | `useToast()`: `success(text, {action: {label, href}})` (5 s), `error(text)` (stays) — no Undo |
+| After a save or a failure | `useToast()`: `success(text, {action: {label, href}})` (5 s), `error(text)` (stays) — no Undo. Bottom right on a desktop, at the top on a phone (the bottom is where the thumb acts) |
 | Loading | `Skeleton` (`text`, `row`, `card`, `form`, `kpi`); `DataTable` draws skeleton rows itself. `Loader` only inside a button or for the session |
 | Nothing to show | `EmptyState` (`icon`, `title`, `message`, `action`); the filtered-to-nothing state offers "Show all" |
 | A button or a link that looks like one | `Button` (`primary` once per view, `secondary`, `ghost`, `danger`; `sm`/`md`/`lg` 48 px; `loading`; `icon`; `to` / `href`) |
