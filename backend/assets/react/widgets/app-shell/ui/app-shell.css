@@ -385,6 +385,13 @@ body.kf-has-tabbar {
   }
 }
 
+/* On a phone the top bar's buttons leave its title a letter or two ("P…"): the page's own heading names it. */
+@media (max-width: 479px) {
+  .kf-shell--compact .kf-topbar__title {
+    display: none;
+  }
+}
+
 .kf-tabbar {
   position: fixed;
   right: 0;
